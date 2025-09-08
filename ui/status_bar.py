@@ -2,6 +2,7 @@
 
 from PySide6.QtWidgets import QStatusBar, QLabel
 from PySide6.QtCore import Qt
+from ui.vscode_theme import *
 
 
 class AppStatusBar(QStatusBar):
@@ -14,6 +15,9 @@ class AppStatusBar(QStatusBar):
     def setup_ui(self):
         """Initialize the status bar UI."""
         self.setObjectName("appStatusBar")
+        
+        # Apply VSCode theme
+        self.setStyleSheet(get_status_bar_stylesheet())
         
         # Create status widgets
         self.status_label = QLabel("Ready")

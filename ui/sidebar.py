@@ -2,6 +2,7 @@
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget, QLabel
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, Signal
+from ui.vscode_theme import *
 
 
 class Sidebar(QWidget):
@@ -19,6 +20,20 @@ class Sidebar(QWidget):
         self.setObjectName("sidebar")
         self.setMinimumWidth(0)
         self.setMaximumWidth(self.expanded_width)
+        
+        # Apply VSCode theme styling
+        self.setStyleSheet(f"""
+            QWidget#sidebar {{
+                background-color: {SIDEBAR_BACKGROUND};
+                border-right: 1px solid {SIDEBAR_BORDER};
+            }}
+            QLabel {{
+                color: {SIDEBAR_FOREGROUND};
+                padding: 10px;
+                font-size: 14px;
+                font-weight: bold;
+            }}
+        """)
         
         # Create layout
         layout = QVBoxLayout(self)

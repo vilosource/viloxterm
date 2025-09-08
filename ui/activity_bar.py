@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QToolBar, QWidget
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QAction, QIcon
 from ui.icon_manager import get_icon_manager
+from ui.vscode_theme import *
 
 
 class ActivityBar(QToolBar):
@@ -30,9 +31,34 @@ class ActivityBar(QToolBar):
         self.setIconSize(QSize(24, 24))
         self.setFixedWidth(48)
         
-        # Style the activity bar
+        # Style the activity bar with VSCode theme
         self.setObjectName("activityBar")
         self.setProperty("type", "activitybar")  # For QtVSCodeStyle
+        
+        # Apply activity bar styling with light icons
+        self.setStyleSheet(f"""
+            QToolBar#activityBar {{
+                background-color: {ACTIVITY_BAR_BACKGROUND};
+                border: none;
+                padding: 5px 0;
+            }}
+            QToolBar#activityBar QToolButton {{
+                background-color: transparent;
+                border: none;
+                padding: 8px;
+                margin: 2px 0;
+            }}
+            QToolBar#activityBar QToolButton:hover {{
+                background-color: rgba(255, 255, 255, 0.1);
+            }}
+            QToolBar#activityBar QToolButton:checked {{
+                background-color: rgba(255, 255, 255, 0.15);
+                border-left: 2px solid {ACTIVITY_BAR_ACTIVE_BORDER};
+            }}
+            QToolBar#activityBar QToolButton:pressed {{
+                background-color: rgba(255, 255, 255, 0.2);
+            }}
+        """)
         
         # Create actions
         self.create_actions()
