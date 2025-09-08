@@ -17,6 +17,138 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from ui.vscode_theme import *
 
 
+# Widget state serialization functions
+
+def serialize_text_editor(widget: QWidget) -> Dict[str, Any]:
+    """Serialize text editor state (QPlainTextEdit)."""
+    if isinstance(widget, QPlainTextEdit):
+        cursor = widget.textCursor()
+        return {
+            "content": widget.toPlainText(),
+            "cursor_position": cursor.position(),
+            "selection_start": cursor.selectionStart(),
+            "selection_end": cursor.selectionEnd(),
+            "scroll_value": widget.verticalScrollBar().value()
+        }
+    return {}
+
+def deserialize_text_editor(widget: QWidget, state: Dict[str, Any]) -> None:
+    """Restore text editor state."""
+    if isinstance(widget, QPlainTextEdit):
+        # Restore content
+        if "content" in state:
+            widget.setPlainText(state["content"])
+        
+        # Restore cursor and selection
+        if "cursor_position" in state:
+            cursor = widget.textCursor()
+            cursor.setPosition(state.get("selection_start", state["cursor_position"]))
+            if "selection_end" in state and state["selection_end"] != state.get("selection_start", state["cursor_position"]):
+                cursor.setPosition(state["selection_end"], cursor.KeepAnchor)
+            else:
+                cursor.setPosition(state["cursor_position"])
+            widget.setTextCursor(cursor)
+        
+        # Restore scroll position
+        if "scroll_value" in state:
+            widget.verticalScrollBar().setValue(state["scroll_value"])
+
+def serialize_terminal(widget: QWidget) -> Dict[str, Any]:
+    """Serialize terminal state (QTextEdit)."""
+    if isinstance(widget, QTextEdit):
+        cursor = widget.textCursor()
+        return {
+            "content": widget.toPlainText(),
+            "cursor_position": cursor.position(),
+            "scroll_value": widget.verticalScrollBar().value(),
+            "is_read_only": widget.isReadOnly()
+        }
+    return {}
+
+def deserialize_terminal(widget: QWidget, state: Dict[str, Any]) -> None:
+    """Restore terminal state."""
+    if isinstance(widget, QTextEdit):
+        # Restore content
+        if "content" in state:
+            widget.setPlainText(state["content"])
+        
+        # Restore cursor position
+        if "cursor_position" in state:
+            cursor = widget.textCursor()
+            cursor.setPosition(state["cursor_position"])
+            widget.setTextCursor(cursor)
+        
+        # Restore scroll position
+        if "scroll_value" in state:
+            widget.verticalScrollBar().setValue(state["scroll_value"])
+        
+        # Restore read-only state
+        if "is_read_only" in state:
+            widget.setReadOnly(state["is_read_only"])
+
+def serialize_table_view(widget: QWidget) -> Dict[str, Any]:
+    """Serialize table view state."""
+    if isinstance(widget, QTableWidget):
+        # Get column widths
+        column_widths = []
+        for i in range(widget.columnCount()):
+            column_widths.append(widget.columnWidth(i))
+        
+        # Get selected items
+        selected_items = []
+        for item in widget.selectedItems():
+            selected_items.append((item.row(), item.column()))
+        
+        return {
+            "column_count": widget.columnCount(),
+            "row_count": widget.rowCount(),
+            "column_widths": column_widths,
+            "selected_items": selected_items,
+            "current_row": widget.currentRow(),
+            "current_column": widget.currentColumn()
+        }
+    return {}
+
+def deserialize_table_view(widget: QWidget, state: Dict[str, Any]) -> None:
+    """Restore table view state."""
+    if isinstance(widget, QTableWidget):
+        # Restore column widths
+        if "column_widths" in state:
+            for i, width in enumerate(state["column_widths"]):
+                if i < widget.columnCount():
+                    widget.setColumnWidth(i, width)
+        
+        # Restore selection
+        if "selected_items" in state:
+            widget.clearSelection()
+            for row, col in state["selected_items"]:
+                if row < widget.rowCount() and col < widget.columnCount():
+                    widget.item(row, col).setSelected(True)
+        
+        # Restore current item
+        current_row = state.get("current_row", -1)
+        current_col = state.get("current_column", -1)
+        if current_row >= 0 and current_col >= 0:
+            widget.setCurrentCell(current_row, current_col)
+
+def serialize_label(widget: QWidget) -> Dict[str, Any]:
+    """Serialize label state."""
+    if isinstance(widget, QLabel):
+        return {
+            "text": widget.text(),
+            "alignment": int(widget.alignment())
+        }
+    return {}
+
+def deserialize_label(widget: QWidget, state: Dict[str, Any]) -> None:
+    """Restore label state."""
+    if isinstance(widget, QLabel):
+        if "text" in state:
+            widget.setText(state["text"])
+        if "alignment" in state:
+            widget.setAlignment(state["alignment"])
+
+
 class WidgetType(Enum):
     """Types of widgets that can be created in panes."""
     TEXT_EDITOR = "text_editor"
@@ -60,6 +192,10 @@ class WidgetConfig:
     
     # Styling
     stylesheet: str = ""  # Custom stylesheet for this widget type
+    
+    # State serialization
+    serializer: Optional[Callable[[QWidget], Dict[str, Any]]] = None  # Custom state serializer
+    deserializer: Optional[Callable[[QWidget, Dict[str, Any]], None]] = None  # Custom state deserializer
 
 
 # Default configurations for common widget types
@@ -70,7 +206,9 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
         show_header=True,
         allow_type_change=True,
         default_content="# Text Editor\n\n",
-        stylesheet=get_editor_stylesheet()
+        stylesheet=get_editor_stylesheet(),
+        serializer=serialize_text_editor,
+        deserializer=deserialize_text_editor
     ),
     
     WidgetType.TERMINAL: WidgetConfig(
@@ -79,7 +217,9 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
         show_header=True,
         allow_type_change=False,  # Terminals are specialized
         default_content="$ Terminal\n> ",
-        stylesheet=get_terminal_stylesheet()
+        stylesheet=get_terminal_stylesheet(),
+        serializer=serialize_terminal,
+        deserializer=deserialize_terminal
     ),
     
     WidgetType.OUTPUT: WidgetConfig(
@@ -96,7 +236,9 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
                 font-size: 12px;
                 border: none;
             }}
-        """
+        """,
+        serializer=serialize_terminal,  # Same as terminal
+        deserializer=deserialize_terminal
     ),
     
     WidgetType.EXPLORER: WidgetConfig(
@@ -127,7 +269,9 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
                 border: 1px solid {SPLITTER_BACKGROUND};
                 padding: 4px;
             }}
-        """
+        """,
+        serializer=serialize_table_view,
+        deserializer=deserialize_table_view
     ),
     
     WidgetType.IMAGE_VIEWER: WidgetConfig(
@@ -145,7 +289,9 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
                 border: none;
                 padding: 20px;
             }}
-        """
+        """,
+        serializer=serialize_label,
+        deserializer=deserialize_label
     ),
     
     WidgetType.PLACEHOLDER: WidgetConfig(
@@ -162,7 +308,9 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
                 padding: 20px;
                 border: 1px dashed {SPLITTER_BACKGROUND};
             }}
-        """
+        """,
+        serializer=serialize_label,
+        deserializer=deserialize_label
     ),
 }
 
@@ -235,6 +383,31 @@ class WidgetRegistry:
         if config:
             return config.header_compact, config.header_auto_hide
         return False, False
+    
+    def serialize_widget_state(self, widget: QWidget, widget_type: WidgetType) -> Dict[str, Any]:
+        """Serialize widget state using the appropriate serializer."""
+        config = self.get_config(widget_type)
+        if config and config.serializer:
+            try:
+                return config.serializer(widget)
+            except Exception as e:
+                print(f"Failed to serialize widget state for {widget_type}: {e}")
+        return {}
+    
+    def deserialize_widget_state(self, widget: QWidget, widget_type: WidgetType, state: Dict[str, Any]) -> bool:
+        """Deserialize widget state using the appropriate deserializer."""
+        if not state:
+            return True  # Empty state is valid
+        
+        config = self.get_config(widget_type)
+        if config and config.deserializer:
+            try:
+                config.deserializer(widget, state)
+                return True
+            except Exception as e:
+                print(f"Failed to deserialize widget state for {widget_type}: {e}")
+                return False
+        return True  # No deserializer means success (no state to restore)
 
 
 # Global registry instance

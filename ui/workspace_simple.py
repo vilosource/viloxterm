@@ -367,9 +367,11 @@ class Workspace(QWidget):
                 # Create tab (for now just create editor tabs)
                 index = self.add_editor_tab(tab_state.get("name", "Editor"))
                 
-                # TODO: Restore split state
-                # if index in self.tabs and "split_state" in tab_state:
-                #     self.tabs[index].split_widget.set_state(tab_state["split_state"])
+                # Restore split state
+                if index in self.tabs and "split_state" in tab_state:
+                    success = self.tabs[index].split_widget.set_state(tab_state["split_state"])
+                    if not success:
+                        print(f"Failed to restore split state for tab: {tab_state.get('name', 'Unknown')}")
         
         # Restore current tab
         if "current_tab" in state:
@@ -378,3 +380,13 @@ class Workspace(QWidget):
         # Create default tab if none were restored
         if self.tab_widget.count() == 0:
             self.create_default_tab()
+    
+    def reset_to_default_layout(self):
+        """Reset workspace to default single pane layout."""
+        # Clear all tabs
+        while self.tab_widget.count() > 0:
+            self.tab_widget.removeTab(0)
+        self.tabs.clear()
+        
+        # Create default tab
+        self.create_default_tab()

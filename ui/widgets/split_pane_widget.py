@@ -306,17 +306,28 @@ class PaneContent(QWidget):
         """Get the current state of the widget."""
         state = {"type": self.widget_type.value}
         
-        # Save content-specific state
-        if isinstance(self.content_widget, (QPlainTextEdit, QTextEdit)):
-            state["content"] = self.content_widget.toPlainText()
+        # Use widget registry for comprehensive serialization
+        if self.content_widget:
+            widget_state = widget_registry.serialize_widget_state(
+                self.content_widget, 
+                self.widget_type
+            )
+            if widget_state:
+                state.update(widget_state)
         
         return state
     
     def set_state(self, state: dict):
         """Restore widget state."""
-        # Restore content if applicable
-        if "content" in state and isinstance(self.content_widget, (QPlainTextEdit, QTextEdit)):
-            self.content_widget.setPlainText(state["content"])
+        # Use widget registry for comprehensive deserialization
+        if self.content_widget and state:
+            # Create a copy of state without the 'type' field for widget deserialization
+            widget_state = {k: v for k, v in state.items() if k != "type"}
+            widget_registry.deserialize_widget_state(
+                self.content_widget,
+                self.widget_type,
+                widget_state
+            )
 
 
 # ============================================================================
@@ -635,9 +646,124 @@ class SplitPaneWidget(QWidget):
     
     def set_state(self, state: dict):
         """Restore the split layout from a state dict."""
-        # This would deserialize the state and rebuild the tree
-        # Implementation left as an exercise
-        pass
+        if not state or "root" not in state:
+            return False
+            
+        try:
+            # Clear current state
+            self.leaves.clear()
+            self.widgets.clear()
+            
+            # Deserialize the tree structure
+            self.root = self._deserialize_node(state["root"])
+            if not self.root:
+                return False
+            
+            # Restore active pane
+            if "active_pane_id" in state and state["active_pane_id"] in self.leaves:
+                self.active_pane_id = state["active_pane_id"]
+            else:
+                # Fallback to first available pane
+                if self.leaves:
+                    self.active_pane_id = next(iter(self.leaves.keys()))
+            
+            # Refresh the view to display the restored tree
+            self.refresh_view()
+            
+            # Restore individual widget states after widgets are created
+            self._restore_widget_states()
+            
+            return True
+            
+        except Exception as e:
+            print(f"Failed to restore split pane state: {e}")
+            # On failure, create a default single pane
+            self.initialize_root(WidgetType.TEXT_EDITOR)
+            self.refresh_view()
+            return False
+    
+    def _deserialize_node(self, node_data: dict) -> Optional[Union[LeafNode, SplitNode]]:
+        """Deserialize a single node from state data."""
+        if not node_data or "type" not in node_data:
+            return None
+        
+        if node_data["type"] == "leaf":
+            return self._deserialize_leaf(node_data)
+        elif node_data["type"] == "split":
+            return self._deserialize_split(node_data)
+        
+        return None
+    
+    def _deserialize_leaf(self, leaf_data: dict) -> Optional[LeafNode]:
+        """Deserialize a leaf node from state data."""
+        try:
+            # Get widget type
+            widget_type_str = leaf_data.get("widget_type", "text_editor")
+            try:
+                widget_type = WidgetType(widget_type_str)
+            except ValueError:
+                # Fallback to text editor if widget type is unknown
+                widget_type = WidgetType.TEXT_EDITOR
+            
+            # Create leaf node
+            leaf = LeafNode(
+                id=leaf_data.get("id", str(uuid.uuid4())[:8]),
+                widget_type=widget_type
+            )
+            
+            # Store widget state for later restoration (after widget creation)
+            if "widget_state" in leaf_data:
+                leaf.widget_state = leaf_data["widget_state"]
+            
+            # Store in leaves dictionary
+            self.leaves[leaf.id] = leaf
+            
+            return leaf
+            
+        except Exception as e:
+            print(f"Failed to deserialize leaf node: {e}")
+            return None
+    
+    def _deserialize_split(self, split_data: dict) -> Optional[SplitNode]:
+        """Deserialize a split node from state data."""
+        try:
+            # Create split node
+            split = SplitNode(
+                id=split_data.get("id", str(uuid.uuid4())[:8]),
+                orientation=split_data.get("orientation", "horizontal"),
+                ratio=split_data.get("ratio", 0.5)
+            )
+            
+            # Recursively deserialize children
+            first_data = split_data.get("first")
+            if first_data:
+                split.first = self._deserialize_node(first_data)
+                if split.first:
+                    split.first.parent = split
+            
+            second_data = split_data.get("second")
+            if second_data:
+                split.second = self._deserialize_node(second_data)
+                if split.second:
+                    split.second.parent = split
+            
+            return split
+            
+        except Exception as e:
+            print(f"Failed to deserialize split node: {e}")
+            return None
+    
+    def _restore_widget_states(self):
+        """Restore individual widget states after widgets are created."""
+        for leaf in self.leaves.values():
+            if hasattr(leaf, 'widget_state') and leaf.widget_state:
+                # Get the corresponding widget
+                widget = self.widgets.get(leaf.id)
+                if isinstance(widget, PaneContent) and hasattr(widget, 'set_state'):
+                    try:
+                        widget.set_state(leaf.widget_state)
+                    except Exception as e:
+                        print(f"Failed to restore widget state for pane {leaf.id}: {e}")
     
     def get_pane_count(self) -> int:
         """Get the number of panes."""
