@@ -18,6 +18,7 @@ from PySide6.QtGui import QAction
 from ui.widgets.split_pane_model import SplitPaneModel, LeafNode, SplitNode
 from ui.widgets.widget_registry import WidgetType, widget_registry
 from ui.widgets.pane_header import PaneHeaderBar
+from ui.widgets.widget_pool import get_widget_pool, cleanup_widget_pool
 from ui.vscode_theme import get_splitter_stylesheet, EDITOR_BACKGROUND
 
 logger = logging.getLogger(__name__)
@@ -277,6 +278,9 @@ class SplitPaneWidget(QWidget):
         self.pane_wrappers: Dict[str, PaneContent] = {}
         self.splitters: Dict[str, QSplitter] = {}
         
+        # Initialize widget pool for reusing widgets
+        self.widget_pool = get_widget_pool()
+        
         # Set up UI
         self.setup_ui()
         
@@ -386,6 +390,10 @@ class SplitPaneWidget(QWidget):
             for wrapper in self.pane_wrappers.values():
                 wrapper.deleteLater()
             self.pane_wrappers.clear()
+            
+            # Release splitters back to pool for reuse
+            for splitter in self.splitters.values():
+                self.widget_pool.release(splitter)
             self.splitters.clear()
             
             # Render the model's tree
@@ -562,12 +570,11 @@ class SplitPaneWidget(QWidget):
             return wrapper
             
         elif isinstance(node, SplitNode):
-            # Create splitter
-            splitter = QSplitter(
-                Qt.Horizontal if node.orientation == "horizontal" else Qt.Vertical
-            )
+            # Get splitter from pool or create new one
+            orientation = Qt.Horizontal if node.orientation == "horizontal" else Qt.Vertical
+            splitter = self.widget_pool.acquire_splitter(orientation)
             
-            # Configure splitter for optimal rendering
+            # Pool already configures optimal settings, but ensure they're set
             splitter.setOpaqueResize(True)  # Real-time resize (actually reduces flashing)
             splitter.setChildrenCollapsible(False)  # Prevent child widgets from collapsing
             
@@ -724,3 +731,7 @@ class SplitPaneWidget(QWidget):
         logger.info("Cleaning up SplitPaneWidget")
         # No timer cleanup needed with event-driven focus
         self.model.cleanup_all_widgets()
+        
+        # Clean up widget pool and log statistics
+        self.widget_pool.log_stats()
+        # Note: Global pool cleanup is handled at application shutdown
