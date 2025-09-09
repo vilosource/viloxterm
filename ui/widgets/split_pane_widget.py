@@ -12,14 +12,13 @@ from typing import Dict, Optional, Union, List
 from PySide6.QtWidgets import (
     QWidget, QSplitter, QVBoxLayout, QHBoxLayout, QMenu, QSizePolicy
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QEvent
 from PySide6.QtGui import QAction
 
 from ui.widgets.split_pane_model import SplitPaneModel, LeafNode, SplitNode
 from ui.widgets.widget_registry import WidgetType, widget_registry
 from ui.widgets.pane_header import PaneHeaderBar
 from ui.vscode_theme import get_splitter_stylesheet
-from PySide6.QtCore import QTimer
 
 logger = logging.getLogger(__name__)
 
@@ -278,10 +277,7 @@ class SplitPaneWidget(QWidget):
         # Connect signals from model's AppWidgets
         self.connect_model_signals()
         
-        # Set up focus polling timer to detect which pane has focus
-        self.focus_timer = QTimer()
-        self.focus_timer.timeout.connect(self.check_focus)
-        self.focus_timer.start(100)  # Check every 100ms
+        # Event-driven focus detection will be set up when panes are created
         
         logger.info(f"SplitPaneWidget initialized with model root {self.model.root.id}")
         
@@ -406,6 +402,10 @@ class SplitPaneWidget(QWidget):
             # Create view wrapper for the AppWidget
             wrapper = PaneContent(node)
             self.pane_wrappers[node.id] = wrapper
+            
+            # Install event filter to detect focus changes
+            self.install_focus_event_filters(wrapper)
+            
             return wrapper
             
         elif isinstance(node, SplitNode):
@@ -452,26 +452,35 @@ class SplitPaneWidget(QWidget):
             ratio = sizes[0] / total
             self.model.update_split_ratio(node, ratio)
             
-    def check_focus(self):
-        """Check which pane currently has focus and update active pane accordingly."""
-        try:
-            focused_widget = self.focusWidget()
-            if focused_widget:
-                # Walk up the widget hierarchy to find which pane wrapper contains the focused widget
-                current = focused_widget
-                while current:
-                    # Check if current widget is a pane wrapper
-                    for pane_id, wrapper in self.pane_wrappers.items():
-                        if current == wrapper or wrapper.isAncestorOf(current):
-                            # Found which pane has focus - update active pane if different
-                            if pane_id != self.model.get_active_pane_id():
-                                print(f"🔍 Focus detected on pane {pane_id} via polling")
-                                self.set_active_pane(pane_id)
-                            return
-                    current = current.parent()
-        except Exception as e:
-            # Ignore errors in focus polling
-            pass
+    def eventFilter(self, obj, event):
+        """Event filter to detect focus changes without polling."""
+        if event.type() == QEvent.FocusIn:
+            # Check if this widget belongs to one of our panes
+            current = obj
+            while current:
+                for pane_id, wrapper in self.pane_wrappers.items():
+                    if current == wrapper or wrapper.isAncestorOf(current):
+                        # Found which pane got focus - update active pane if different
+                        if pane_id != self.model.get_active_pane_id():
+                            logger.debug(f"Focus detected on pane {pane_id} via event filter")
+                            self.set_active_pane(pane_id)
+                        return super().eventFilter(obj, event)
+                current = current.parent()
+        return super().eventFilter(obj, event)
+        
+    def install_focus_event_filters(self, wrapper):
+        """Install event filters on wrapper and its child widgets to detect focus changes."""
+        # Install filter on the wrapper itself
+        wrapper.installEventFilter(self)
+        
+        # Install filters on all child widgets recursively
+        def install_on_children(widget):
+            for child in widget.findChildren(QWidget):
+                child.installEventFilter(self)
+                # Recursively install on children's children
+                install_on_children(child)
+                
+        install_on_children(wrapper)
 
     def update_active_pane_visual(self):
         """Update visual indication of active pane."""
@@ -504,17 +513,17 @@ class SplitPaneWidget(QWidget):
     def set_active_pane(self, pane_id: str):
         """Set the active pane."""
         old_active = self.model.get_active_pane_id()
-        print(f"🎯 set_active_pane called: {old_active} → {pane_id}")
+        logger.debug(f"set_active_pane called: {old_active} → {pane_id}")
         logger.debug(f"🎯 set_active_pane called with: {pane_id}")
         logger.debug(f"🎯 Previous active pane: {old_active}")
         
         if self.model.set_active_pane(pane_id):
-            print(f"✅ Active pane successfully changed to: {pane_id}")
+            logger.debug(f"Active pane successfully changed to: {pane_id}")
             logger.debug(f"✅ Active pane successfully changed to: {pane_id}")
             self.update_active_pane_visual()
             self.active_pane_changed.emit(pane_id)
         else:
-            print(f"❌ Failed to set active pane to: {pane_id}")
+            logger.debug(f"Failed to set active pane to: {pane_id}")
             logger.warning(f"❌ Failed to set active pane to: {pane_id}")
             
     def get_current_split_widget(self):
@@ -546,6 +555,5 @@ class SplitPaneWidget(QWidget):
     def cleanup(self):
         """Clean up all resources."""
         logger.info("Cleaning up SplitPaneWidget")
-        if hasattr(self, 'focus_timer'):
-            self.focus_timer.stop()
+        # No timer cleanup needed with event-driven focus
         self.model.cleanup_all_widgets()

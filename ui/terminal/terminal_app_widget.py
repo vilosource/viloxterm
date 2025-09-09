@@ -59,15 +59,15 @@ class TerminalAppWidget(AppWidget):
         
     def mousePressEvent(self, event):
         """Handle mouse press to focus this terminal."""
-        print(f"🖱️ TerminalAppWidget.mousePressEvent called for widget {self.widget_id}")
+        logger.debug(f"TerminalAppWidget.mousePressEvent called for widget {self.widget_id}")
         # Request focus when user clicks anywhere on the terminal widget
         self.request_focus()
-        print(f"🎯 request_focus() called for terminal {self.widget_id}")
+        logger.debug(f"request_focus() called for terminal {self.widget_id}")
         super().mousePressEvent(event)
     
     def on_web_view_focus_in(self, event):
         """Handle web view focus in event - this should fire when user clicks on terminal."""
-        print(f"🌐 WebView focusInEvent for terminal {self.widget_id}")
+        logger.debug(f"WebView focusInEvent for terminal {self.widget_id}")
         # Request focus on the AppWidget when web view gets focus
         self.request_focus()
         # Call the original focusInEvent
@@ -76,7 +76,13 @@ class TerminalAppWidget(AppWidget):
     @Slot()
     def js_terminal_clicked(self):
         """Called from JavaScript when the terminal area is clicked."""
-        print(f"🌐 JavaScript terminal click detected for widget {self.widget_id}")
+        logger.debug(f"JavaScript terminal click detected for widget {self.widget_id}")
+        self.request_focus()
+        
+    @Slot()
+    def js_terminal_focused(self):
+        """Called from JavaScript when the terminal gains focus."""
+        logger.debug(f"JavaScript terminal focus detected for widget {self.widget_id}")
         self.request_focus()
         
     def start_terminal_session(self):

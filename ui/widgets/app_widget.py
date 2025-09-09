@@ -110,11 +110,9 @@ class AppWidget(QWidget):
         """Request focus on this widget."""
         import logging
         logger = logging.getLogger(__name__)
-        print(f"🎯 AppWidget.request_focus() called for widget {self.widget_id}")
-        logger.debug(f"🎯 AppWidget.request_focus() called for widget {self.widget_id}")
+        logger.debug(f"AppWidget.request_focus() called for widget {self.widget_id}")
         self.focus_requested.emit()
-        print(f"📡 focus_requested signal emitted for widget {self.widget_id}")
-        logger.debug(f"🎯 focus_requested signal emitted for widget {self.widget_id}")
+        logger.debug(f"focus_requested signal emitted for widget {self.widget_id}")
         
     def get_title(self) -> str:
         """

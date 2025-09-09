@@ -520,6 +520,34 @@ class TerminalServerManager:
             }}
             return true;
         }});
+        
+        // Focus detection for WebChannel integration
+        // These will communicate with the Qt WebChannel if available
+        const terminalElement = document.getElementById("terminal");
+        
+        // Detect focus on the terminal
+        terminalElement.addEventListener('focus', () => {{
+            if (typeof terminal !== 'undefined' && terminal.js_terminal_focused) {{
+                terminal.js_terminal_focused();
+            }}
+        }}, true);
+        
+        // Also detect clicks (existing functionality)
+        terminalElement.addEventListener('click', () => {{
+            if (typeof terminal !== 'undefined' && terminal.js_terminal_clicked) {{
+                terminal.js_terminal_clicked();
+            }}
+        }});
+        
+        // Make terminal focusable and detect focus on any child elements
+        terminalElement.setAttribute('tabindex', '0');
+        document.addEventListener('focusin', (event) => {{
+            if (terminalElement.contains(event.target)) {{
+                if (typeof terminal !== 'undefined' && terminal.js_terminal_focused) {{
+                    terminal.js_terminal_focused();
+                }}
+            }}
+        }});
     </script>
 </body>
 </html>
