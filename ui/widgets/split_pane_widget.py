@@ -494,6 +494,148 @@ class SplitPaneWidget(QWidget):
         
         self.layout_changed.emit()
     
+    def _incremental_split_update(self, original_leaf: LeafNode, new_leaf: LeafNode, split_node: SplitNode) -> bool:
+        """
+        Try to update the view incrementally when splitting to avoid flashing.
+        Returns True if successful, False if full refresh needed.
+        """
+        try:
+            # Get the existing widget for the original pane
+            existing_widget = self.widgets.get(original_leaf.id)
+            if not existing_widget:
+                return False
+            
+            # Check if this is the root widget (directly in layout)
+            if self.layout.indexOf(existing_widget) != -1:
+                # This is the root widget, replace it in the layout
+                self.layout.removeWidget(existing_widget)
+                
+                # Create new splitter
+                new_splitter = self._create_splitter_for_split(split_node, original_leaf, new_leaf, existing_widget)
+                self.layout.addWidget(new_splitter)
+                
+                # Update active pane visual
+                self._update_active_pane_visual()
+                self.layout_changed.emit()
+                return True
+            
+            # Find the parent widget that contains this pane
+            parent_widget = existing_widget.parent()
+            
+            # Parent is a QSplitter, we need to replace the widget in it
+            if parent_widget and isinstance(parent_widget, QSplitter):
+                index = parent_widget.indexOf(existing_widget)
+                if index == -1:
+                    return False
+                
+                # Create new splitter for the split
+                new_splitter = self._create_splitter_for_split(split_node, original_leaf, new_leaf, existing_widget)
+                
+                # Replace the widget in parent splitter
+                parent_widget.replaceWidget(index, new_splitter)
+                
+                # Update active pane visual
+                self._update_active_pane_visual()
+                self.layout_changed.emit()
+                return True
+                
+        except Exception as e:
+            print(f"Incremental update failed: {e}")
+            return False
+        
+        return False
+    
+    def _create_splitter_for_split(self, split_node: SplitNode, original_leaf: LeafNode, new_leaf: LeafNode, existing_widget: QWidget) -> QSplitter:
+        """Create a splitter for a split operation, reusing the existing widget."""
+        # Create splitter
+        splitter = QSplitter(
+            Qt.Horizontal if split_node.orientation == "horizontal" else Qt.Vertical
+        )
+        splitter.setHandleWidth(4)
+        splitter.setStyleSheet(get_splitter_stylesheet())
+        
+        # Create new widget for the new pane
+        new_widget = self.create_pane_widget(new_leaf)
+        
+        # Add widgets to splitter
+        splitter.addWidget(existing_widget)
+        splitter.addWidget(new_widget)
+        
+        # Set initial sizes based on ratio
+        total_size = 1000  # arbitrary total
+        first_size = int(total_size * split_node.ratio)
+        second_size = total_size - first_size
+        splitter.setSizes([first_size, second_size])
+        
+        # Connect splitter movement to ratio update
+        splitter.splitterMoved.connect(lambda: self._update_ratio(split_node, splitter))
+        
+        # Store references
+        split_node.splitter = splitter
+        self.widgets[new_leaf.id] = new_widget
+        new_leaf.widget = new_widget
+        
+        return splitter
+    
+    def _incremental_close_update(self, leaf: LeafNode, sibling: Union[LeafNode, SplitNode], 
+                                   parent: SplitNode, widget_to_remove: QWidget) -> bool:
+        """
+        Try to update the view incrementally when closing a pane to avoid flashing.
+        Returns True if successful, False if full refresh needed.
+        """
+        try:
+            # Get the parent splitter
+            parent_splitter = parent.splitter if parent else None
+            if not parent_splitter:
+                return False
+            
+            # Get the sibling widget
+            sibling_widget = None
+            if isinstance(sibling, LeafNode):
+                sibling_widget = self.widgets.get(sibling.id)
+            elif isinstance(sibling, SplitNode):
+                sibling_widget = sibling.splitter
+            
+            if not sibling_widget:
+                return False
+            
+            # Get grandparent
+            grandparent_widget = parent_splitter.parent()
+            
+            # Remove widgets from parent splitter
+            parent_splitter.widget(0).setParent(None)
+            parent_splitter.widget(0).setParent(None)
+            
+            if grandparent_widget and isinstance(grandparent_widget, QSplitter):
+                # Replace parent splitter with sibling widget in grandparent
+                index = grandparent_widget.indexOf(parent_splitter)
+                if index != -1:
+                    grandparent_widget.replaceWidget(index, sibling_widget)
+                    parent_splitter.deleteLater()
+                    widget_to_remove.deleteLater()
+                    
+                    # Update active pane visual
+                    self._update_active_pane_visual()
+                    self.layout_changed.emit()
+                    return True
+            elif self.layout.indexOf(parent_splitter) != -1:
+                # Parent splitter is root, replace it with sibling
+                self.layout.removeWidget(parent_splitter)
+                self.layout.addWidget(sibling_widget)
+                parent_splitter.deleteLater()
+                widget_to_remove.deleteLater()
+                
+                # Update active pane visual
+                self._update_active_pane_visual()
+                self.layout_changed.emit()
+                return True
+                
+        except Exception as e:
+            print(f"Incremental close update failed: {e}")
+            return False
+        
+        return False
+    
     def _update_ratio(self, node: SplitNode, splitter: QSplitter):
         """Update split ratio when user drags splitter."""
         sizes = splitter.sizes()
@@ -548,8 +690,10 @@ class SplitPaneWidget(QWidget):
         # Update tracking
         self.leaves[new_leaf.id] = new_leaf
         
-        # Refresh view
-        self.refresh_view()
+        # Try incremental update first to avoid flashing
+        if not self._incremental_split_update(leaf, new_leaf, split):
+            # Fall back to full refresh if incremental update fails
+            self.refresh_view()
         
         # Keep focus on the original pane that was split
         # This prevents the issue where subsequent splits always affect the newest pane
@@ -608,10 +752,15 @@ class SplitPaneWidget(QWidget):
             if isinstance(widget, PaneContent) and widget.content_widget:
                 if hasattr(widget.content_widget, 'close_terminal'):
                     widget.content_widget.close_terminal()
-            widget.deleteLater()
-        
-        # Refresh view
-        self.refresh_view()
+            
+            # Try incremental close to avoid flashing
+            if not self._incremental_close_update(leaf, sibling, parent, widget):
+                # Fall back to full refresh if incremental update fails
+                widget.deleteLater()
+                self.refresh_view()
+            else:
+                # Widget was already handled by incremental update
+                del self.widgets[pane_id]
         
         # Emit signal
         self.pane_removed.emit(pane_id)
