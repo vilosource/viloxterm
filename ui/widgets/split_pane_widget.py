@@ -53,10 +53,9 @@ class PaneFocusEventFilter(QObject):
 
 @dataclass
 class LeafNode:
-    """Leaf node containing a widget."""
+    """Leaf node in the tree model."""
     type: str = "leaf"
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
-    widget: Optional[QWidget] = None
     widget_type: WidgetType = WidgetType.PLACEHOLDER
     widget_state: dict = field(default_factory=dict)
     parent: Optional['SplitNode'] = None
@@ -72,7 +71,6 @@ class SplitNode:
     first: Optional[Union[LeafNode, 'SplitNode']] = None
     second: Optional[Union[LeafNode, 'SplitNode']] = None
     parent: Optional['SplitNode'] = None
-    splitter: Optional[QSplitter] = None  # View reference
 
 
 # ============================================================================
@@ -265,17 +263,9 @@ class PaneContent(QWidget):
             if self.focus_filter and self.content_widget:
                 self.content_widget.removeEventFilter(self.focus_filter)
             
-            # Clean up old widget (especially important for terminals)
-            old_widget = self.content_widget
-            self.layout().removeWidget(old_widget)
-            
-            # If it's a terminal widget, ensure it closes its session
-            if hasattr(old_widget, 'close_terminal'):
-                old_widget.close_terminal()
-            
-            old_widget.deleteLater()
-            
-            # Create new widget
+            # Replace content widget
+            self.layout().removeWidget(self.content_widget)
+            self.content_widget.deleteLater()
             self.content_widget = self.create_content_widget()
             self.layout().addWidget(self.content_widget)
             
@@ -309,13 +299,6 @@ class PaneContent(QWidget):
                     border: 1px solid #3c3c3c;
                 }
             """)
-    
-    def closeEvent(self, event):
-        """Handle widget close event."""
-        # Clean up terminal sessions when pane is closed
-        if self.content_widget and hasattr(self.content_widget, 'close_terminal'):
-            self.content_widget.close_terminal()
-        super().closeEvent(event)
     
     def get_state(self) -> dict:
         """Get the current state of the widget."""
@@ -399,35 +382,17 @@ class SplitPaneWidget(QWidget):
         # Create initial view
         self.refresh_view()
     
-    def create_pane_widget(self, leaf: LeafNode, old_widgets: Optional[Dict[str, QWidget]] = None) -> QWidget:
-        """Create a widget for a leaf node, reusing existing widget if available."""
-        widget = None
-        
-        # Try to reuse existing widget if available
-        if old_widgets and leaf.id in old_widgets:
-            widget = old_widgets[leaf.id]
-            # CRITICAL: Disconnect old signals to prevent duplicate connections
-            if isinstance(widget, PaneContent):
-                try:
-                    widget.split_horizontal_requested.disconnect()
-                    widget.split_vertical_requested.disconnect()
-                    widget.close_requested.disconnect()
-                    widget.widget_type_changed.disconnect()
-                    widget.pane_focused.disconnect()
-                except:
-                    pass  # Signals might not be connected
+    def create_pane_widget(self, leaf: LeafNode) -> QWidget:
+        """Create a widget for a leaf node."""
+        if self.widget_factory:
+            # Use custom factory
+            widget = self.widget_factory(leaf.id, leaf.widget_type)
         else:
-            # Create new widget
-            if self.widget_factory:
-                # Use custom factory
-                widget = self.widget_factory(leaf.id, leaf.widget_type)
-            else:
-                # Use default PaneContent
-                widget = PaneContent(leaf.id, leaf.widget_type)
+            # Use default PaneContent
+            widget = PaneContent(leaf.id, leaf.widget_type)
         
-        # ALWAYS reconnect signals - this ensures proper routing
+        # Connect signals if it's our PaneContent
         if isinstance(widget, PaneContent):
-            print(f"[DEBUG] Connecting signals for pane {leaf.id}")
             widget.split_horizontal_requested.connect(self.split_horizontal)
             widget.split_vertical_requested.connect(self.split_vertical)
             widget.close_requested.connect(self.close_pane)
@@ -436,13 +401,13 @@ class SplitPaneWidget(QWidget):
         
         return widget
     
-    def render_node(self, node: Union[LeafNode, SplitNode], old_widgets: Optional[Dict[str, QWidget]] = None) -> QWidget:
-        """Recursively render a node to Qt widgets, reusing widgets where possible."""
+    def render_node(self, node: Union[LeafNode, SplitNode]) -> QWidget:
+        """Recursively render a node to Qt widgets."""
         if isinstance(node, LeafNode):
             # Create widget for leaf
-            widget = self.create_pane_widget(node, old_widgets)
+            widget = self.create_pane_widget(node)
             
-            # Store widget reference in view only (not in model)
+            # Store widget reference in view only
             self.widgets[node.id] = widget
             
             return widget
@@ -457,13 +422,13 @@ class SplitPaneWidget(QWidget):
             # Apply VSCode theme to splitter
             splitter.setStyleSheet(get_splitter_stylesheet())
             
-            # Render children (passing old_widgets for reuse)
+            # Render children
             if node.first:
-                first_widget = self.render_node(node.first, old_widgets)
+                first_widget = self.render_node(node.first)
                 splitter.addWidget(first_widget)
             
             if node.second:
-                second_widget = self.render_node(node.second, old_widgets)
+                second_widget = self.render_node(node.second)
                 splitter.addWidget(second_widget)
             
             # Apply ratio
@@ -477,8 +442,8 @@ class SplitPaneWidget(QWidget):
                 lambda: self._update_ratio(node, splitter)
             )
             
-            # Don't store splitter in model - violates MVC
-            # View references should stay in view layer only
+            # Store reference
+            node.splitter = splitter
             
             return splitter
         
@@ -486,10 +451,7 @@ class SplitPaneWidget(QWidget):
     
     def refresh_view(self):
         """Rebuild the view from the model."""
-        # Store existing widgets that we might reuse
-        old_widgets = self.widgets.copy()
-        
-        # Clear existing layout (but don't destroy widgets yet)
+        # Clear existing layout
         while self.layout.count():
             item = self.layout.takeAt(0)
             if item.widget():
@@ -498,19 +460,9 @@ class SplitPaneWidget(QWidget):
         # Clear widget references
         self.widgets.clear()
         
-        # Create new view, reusing widgets where possible
-        root_widget = self.render_node(self.root, old_widgets)
+        # Create new view
+        root_widget = self.render_node(self.root)
         self.layout.addWidget(root_widget)
-        
-        # Clean up any unused widgets
-        for pane_id, widget in old_widgets.items():
-            if pane_id not in self.widgets:
-                # This widget is no longer needed
-                if isinstance(widget, PaneContent) and widget.content_widget:
-                    # Clean up terminal sessions before destroying widgets
-                    if hasattr(widget.content_widget, 'close_terminal'):
-                        widget.content_widget.close_terminal()
-                widget.deleteLater()
         
         # Update active pane visual
         self._update_active_pane_visual()
@@ -526,12 +478,10 @@ class SplitPaneWidget(QWidget):
     
     def split_horizontal(self, pane_id: str):
         """Split pane horizontally (left|right)."""
-        print(f"[DEBUG] split_horizontal called with pane_id: {pane_id}, active_pane: {self.active_pane_id}")
         self._split_pane(pane_id, "horizontal")
     
     def split_vertical(self, pane_id: str):
         """Split pane vertically (top|bottom)."""
-        print(f"[DEBUG] split_vertical called with pane_id: {pane_id}, active_pane: {self.active_pane_id}")
         self._split_pane(pane_id, "vertical")
     
     def _split_pane(self, pane_id: str, orientation: str):
@@ -573,12 +523,15 @@ class SplitPaneWidget(QWidget):
         # Update tracking
         self.leaves[new_leaf.id] = new_leaf
         
+        # Keep focus on the original pane that was split
+        # This prevents the issue where subsequent splits always affect the newest pane
+        # self.active_pane_id remains the same
+        
         # Refresh view
         self.refresh_view()
         
-        # Keep focus on the original pane that was split
-        # This prevents the issue where subsequent splits always affect the newest pane
-        self.set_active_pane(pane_id)
+        # Re-focus the original pane
+        self._focus_widget_in_pane(pane_id)
         
         # Emit signal
         self.pane_added.emit(new_leaf.id)
@@ -628,12 +581,7 @@ class SplitPaneWidget(QWidget):
         
         # Clean up widget
         if pane_id in self.widgets:
-            widget = self.widgets[pane_id]
-            # If it's a PaneContent, check if it has a terminal widget
-            if isinstance(widget, PaneContent) and widget.content_widget:
-                if hasattr(widget.content_widget, 'close_terminal'):
-                    widget.content_widget.close_terminal()
-            widget.deleteLater()
+            self.widgets[pane_id].deleteLater()
         
         # Refresh view
         self.refresh_view()
@@ -672,11 +620,16 @@ class SplitPaneWidget(QWidget):
         """Get the current state of the split layout."""
         def serialize_node(node):
             if isinstance(node, LeafNode):
+                # Get widget from our view tracking
+                widget = self.widgets.get(node.id)
+                widget_state = {}
+                if widget and hasattr(widget, 'get_state'):
+                    widget_state = widget.get_state()
                 return {
                     "type": "leaf",
                     "id": node.id,
                     "widget_type": node.widget_type.value,
-                    "widget_state": node.widget.get_state() if hasattr(node.widget, 'get_state') else {}
+                    "widget_state": widget_state
                 }
             elif isinstance(node, SplitNode):
                 return {
