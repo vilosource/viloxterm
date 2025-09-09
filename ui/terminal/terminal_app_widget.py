@@ -43,14 +43,28 @@ class TerminalAppWidget(AppWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
-        # Create web view
+        # Create web view with optimized initialization
         self.web_view = QWebEngineView()
+        
+        # Hide initially to prevent white flash
+        self.web_view.hide()
+        
+        # Set background color to match dark theme immediately
+        self.web_view.setStyleSheet("""
+            QWebEngineView {
+                background-color: #1e1e1e;
+                border: none;
+            }
+        """)
         
         # Set up JavaScript communication channel
         from PySide6.QtWebChannel import QWebChannel
         self.channel = QWebChannel()
         self.channel.registerObject("terminal", self)
         self.web_view.page().setWebChannel(self.channel)
+        
+        # Connect to show web view once content loads
+        self.web_view.loadFinished.connect(self.on_terminal_loaded)
         
         layout.addWidget(self.web_view)
         
@@ -84,6 +98,15 @@ class TerminalAppWidget(AppWidget):
         """Called from JavaScript when the terminal gains focus."""
         logger.debug(f"JavaScript terminal focus detected for widget {self.widget_id}")
         self.request_focus()
+        
+    def on_terminal_loaded(self, success: bool):
+        """Called when the web view finishes loading terminal content."""
+        if success and self.web_view:
+            logger.debug(f"Terminal content loaded successfully for widget {self.widget_id}")
+            # Show the web view now that content is ready
+            self.web_view.show()
+        else:
+            logger.warning(f"Terminal content failed to load for widget {self.widget_id}")
         
     def start_terminal_session(self):
         """Start a new terminal session."""

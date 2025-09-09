@@ -48,6 +48,12 @@ class PaneContent(QWidget):
         self.leaf_node = leaf_node
         self.header_bar = None
         self.is_active = False
+        
+        # Configure widget attributes to prevent white flash
+        self.setAttribute(Qt.WA_OpaquePaintEvent, True)  # Widget paints all pixels
+        self.setAttribute(Qt.WA_NoSystemBackground, True)  # No system background
+        self.setAutoFillBackground(False)  # No automatic background fill
+        
         self.setup_ui()
         
     def setup_ui(self):
@@ -359,29 +365,36 @@ class SplitPaneWidget(QWidget):
         """
         logger.debug("Refreshing view")
         
-        # Clear layout
-        while self.layout.count():
-            item = self.layout.takeAt(0)
-            if item.widget():
-                item.widget().setParent(None)
-                
-        # Clean up old view wrappers (NOT the AppWidgets!)
-        for wrapper in self.pane_wrappers.values():
-            wrapper.deleteLater()
-        self.pane_wrappers.clear()
-        self.splitters.clear()
-        
-        # Render the model's tree
-        root_widget = self.render_node(self.model.root)
-        if root_widget:
-            self.layout.addWidget(root_widget)
+        # Disable updates during the entire refresh to prevent white flash
+        self.setUpdatesEnabled(False)
+        try:
+            # Clear layout
+            while self.layout.count():
+                item = self.layout.takeAt(0)
+                if item.widget():
+                    item.widget().setParent(None)
+                    
+            # Clean up old view wrappers (NOT the AppWidgets!)
+            for wrapper in self.pane_wrappers.values():
+                wrapper.deleteLater()
+            self.pane_wrappers.clear()
+            self.splitters.clear()
             
-        # Reconnect signals (in case new widgets were created)
-        self.connect_model_signals()
-        
-        # Update active pane visual
-        self.update_active_pane_visual()
-        
+            # Render the model's tree
+            root_widget = self.render_node(self.model.root)
+            if root_widget:
+                self.layout.addWidget(root_widget)
+                
+            # Reconnect signals (in case new widgets were created)
+            self.connect_model_signals()
+            
+            # Update active pane visual
+            self.update_active_pane_visual()
+            
+        finally:
+            # Re-enable updates once the entire refresh is complete
+            self.setUpdatesEnabled(True)
+            
         # Emit signal
         self.layout_changed.emit()
         
@@ -413,6 +426,9 @@ class SplitPaneWidget(QWidget):
             splitter = QSplitter(
                 Qt.Horizontal if node.orientation == "horizontal" else Qt.Vertical
             )
+            
+            # Configure for smooth resizing without visual artifacts
+            splitter.setOpaqueResize(False)  # Only resize at end of drag operation
             
             # Apply styling
             splitter.setStyleSheet(get_splitter_stylesheet())
