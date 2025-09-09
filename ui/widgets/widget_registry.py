@@ -212,14 +212,15 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
     ),
     
     WidgetType.TERMINAL: WidgetConfig(
-        widget_class=QTextEdit,
+        widget_class=QTextEdit,  # Will be overridden by factory
+        factory=None,  # Will be set when terminal is imported
         preserve_context_menu=True,  # Terminal needs copy/paste
         show_header=True,
         allow_type_change=False,  # Terminals are specialized
-        default_content="$ Terminal\n> ",
-        stylesheet=get_terminal_stylesheet(),
-        serializer=serialize_terminal,
-        deserializer=deserialize_terminal
+        default_content="",  # Terminal creates its own content
+        stylesheet="",  # Terminal has its own styling
+        serializer=None,  # Will be set when terminal is imported
+        deserializer=None  # Will be set when terminal is imported
     ),
     
     WidgetType.OUTPUT: WidgetConfig(

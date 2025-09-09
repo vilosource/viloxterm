@@ -15,6 +15,14 @@ except ImportError:
     print("Warning: Resources not compiled. Run 'make resources' to compile icons.")
     pass
 
+# Register terminal widget if available
+try:
+    from ui.terminal.terminal_factory import register_terminal_widget
+    register_terminal_widget()
+except ImportError as e:
+    print(f"Warning: Could not import terminal module: {e}")
+    pass
+
 
 def main():
     """Initialize and run the application."""

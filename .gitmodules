@@ -1,0 +1,3 @@
+[submodule "references/viloxtermjs"]
+	path = references/viloxtermjs
+	url = git@github.com:vilosource/viloxtermjs.git

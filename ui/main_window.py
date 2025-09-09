@@ -84,8 +84,8 @@ class MainWindow(QMainWindow):
         file_menu.addAction(new_editor_tab_action)
         
         new_terminal_tab_action = QAction("New Terminal Tab", self)
-        new_terminal_tab_action.setShortcut(QKeySequence("Ctrl+Shift+T"))
-        new_terminal_tab_action.setToolTip("Create a new terminal tab (Ctrl+Shift+T)")
+        new_terminal_tab_action.setShortcut(QKeySequence("Ctrl+`"))
+        new_terminal_tab_action.setToolTip("Create a new terminal tab (Ctrl+`)")
         new_terminal_tab_action.triggered.connect(lambda: self.workspace.add_terminal_tab("Terminal"))
         file_menu.addAction(new_terminal_tab_action)
         
