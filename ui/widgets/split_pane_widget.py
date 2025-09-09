@@ -548,14 +548,12 @@ class SplitPaneWidget(QWidget):
         # Update tracking
         self.leaves[new_leaf.id] = new_leaf
         
-        # Make new pane active
-        self.active_pane_id = new_leaf.id
-        
         # Refresh view
         self.refresh_view()
         
-        # Focus the newly created widget
-        self._focus_widget_in_pane(new_leaf.id)
+        # Keep focus on the original pane that was split
+        # This prevents the issue where subsequent splits always affect the newest pane
+        self.set_active_pane(pane_id)
         
         # Emit signal
         self.pane_added.emit(new_leaf.id)
