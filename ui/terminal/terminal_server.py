@@ -71,7 +71,7 @@ class TerminalServerManager:
         self.server_thread = None
         self.sessions: Dict[str, TerminalSession] = {}
         self.running = False
-        self.max_sessions = 10
+        self.max_sessions = 20  # Increased limit for better UX
         self._setup_flask_app()
         self._initialized = True
         
@@ -285,6 +285,9 @@ class TerminalServerManager:
         time.sleep(0.5)
         logger.info(f"Terminal server started on {self.host}:{self.port}")
         
+        # Start periodic cleanup of inactive sessions
+        self._start_cleanup_timer()
+        
         return self.port
     
     def shutdown(self):
@@ -319,12 +322,30 @@ class TerminalServerManager:
         
         sessions_to_remove = []
         for session_id, session in self.sessions.items():
+            # Clean up inactive sessions
             if current_time - session.last_activity > timeout_seconds:
+                sessions_to_remove.append(session_id)
+            # Also clean up sessions where the process has died
+            elif session.child_pid and not session.active:
                 sessions_to_remove.append(session_id)
         
         for session_id in sessions_to_remove:
             logger.info(f"Cleaning up inactive session {session_id}")
             self.destroy_session(session_id)
+    
+    def _start_cleanup_timer(self):
+        """Start periodic cleanup of inactive sessions."""
+        def cleanup_task():
+            while self.running:
+                time.sleep(60)  # Run cleanup every minute
+                try:
+                    self.cleanup_inactive_sessions(timeout_minutes=15)  # 15 min timeout
+                except Exception as e:
+                    logger.error(f"Error during session cleanup: {e}")
+        
+        if self.running:
+            cleanup_thread = threading.Thread(target=cleanup_task, daemon=True)
+            cleanup_thread.start()
     
     def _get_html_template(self, session_id: str) -> str:
         """Get HTML template for terminal with session ID."""

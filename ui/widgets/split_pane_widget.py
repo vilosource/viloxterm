@@ -265,9 +265,17 @@ class PaneContent(QWidget):
             if self.focus_filter and self.content_widget:
                 self.content_widget.removeEventFilter(self.focus_filter)
             
-            # Replace content widget
-            self.layout().removeWidget(self.content_widget)
-            self.content_widget.deleteLater()
+            # Clean up old widget (especially important for terminals)
+            old_widget = self.content_widget
+            self.layout().removeWidget(old_widget)
+            
+            # If it's a terminal widget, ensure it closes its session
+            if hasattr(old_widget, 'close_terminal'):
+                old_widget.close_terminal()
+            
+            old_widget.deleteLater()
+            
+            # Create new widget
             self.content_widget = self.create_content_widget()
             self.layout().addWidget(self.content_widget)
             
@@ -301,6 +309,13 @@ class PaneContent(QWidget):
                     border: 1px solid #3c3c3c;
                 }
             """)
+    
+    def closeEvent(self, event):
+        """Handle widget close event."""
+        # Clean up terminal sessions when pane is closed
+        if self.content_widget and hasattr(self.content_widget, 'close_terminal'):
+            self.content_widget.close_terminal()
+        super().closeEvent(event)
     
     def get_state(self) -> dict:
         """Get the current state of the widget."""
@@ -454,6 +469,13 @@ class SplitPaneWidget(QWidget):
     
     def refresh_view(self):
         """Rebuild the view from the model."""
+        # Clean up existing widgets properly before clearing
+        for widget in self.widgets.values():
+            if isinstance(widget, PaneContent) and widget.content_widget:
+                # Clean up terminal sessions before destroying widgets
+                if hasattr(widget.content_widget, 'close_terminal'):
+                    widget.content_widget.close_terminal()
+        
         # Clear existing layout
         while self.layout.count():
             item = self.layout.takeAt(0)
@@ -583,7 +605,12 @@ class SplitPaneWidget(QWidget):
         
         # Clean up widget
         if pane_id in self.widgets:
-            self.widgets[pane_id].deleteLater()
+            widget = self.widgets[pane_id]
+            # If it's a PaneContent, check if it has a terminal widget
+            if isinstance(widget, PaneContent) and widget.content_widget:
+                if hasattr(widget.content_widget, 'close_terminal'):
+                    widget.content_widget.close_terminal()
+            widget.deleteLater()
         
         # Refresh view
         self.refresh_view()
