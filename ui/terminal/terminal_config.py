@@ -153,6 +153,11 @@ class TerminalConfig:
             return self.custom_shell_path
         return self.shell
     
+    def get_initial_directory(self) -> str:
+        """Get the initial directory for new terminal sessions."""
+        # Default to current working directory
+        return os.getcwd()
+    
     def get_color_scheme(self, is_dark_theme: bool = True) -> ColorScheme:
         """Get the appropriate color scheme based on theme."""
         if self.theme == "auto":

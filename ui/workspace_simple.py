@@ -74,16 +74,10 @@ class Workspace(QWidget):
         self.tab_widget.tabBar().customContextMenuRequested.connect(self.show_tab_context_menu)
     
     def _cleanup_split_widget(self, split_widget: SplitPaneWidget):
-        """Clean up a split widget and its terminals before removal."""
-        # Get all pane widgets
-        for pane_id in split_widget.get_all_pane_ids():
-            widget = split_widget.widgets.get(pane_id)
-            if widget:
-                # Check if it's a PaneContent with a terminal
-                from ui.widgets.split_pane_widget import PaneContent
-                if isinstance(widget, PaneContent) and widget.content_widget:
-                    if hasattr(widget.content_widget, 'close_terminal'):
-                        widget.content_widget.close_terminal()
+        """Clean up a split widget and all its AppWidgets before removal."""
+        # The new architecture: just call cleanup on the widget
+        # It will use the model's tree traversal to clean up all AppWidgets
+        split_widget.cleanup()
         
         # Delete the widget
         split_widget.deleteLater()

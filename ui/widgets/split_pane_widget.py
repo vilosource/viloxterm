@@ -1,187 +1,133 @@
 #!/usr/bin/env python3
 """
-Self-contained split pane widget with recursive splitting capability.
-Based on the proven tree-split algorithm, this widget manages its own 
-split layout independently and can be embedded in tabs or other containers.
+Split pane widget - VIEW LAYER ONLY.
+
+This is a complete rewrite using proper MVC architecture.
+The view renders the model's tree structure and handles user interactions.
+All content widgets (AppWidgets) are owned by the model.
 """
 
-import uuid
-from typing import Optional, Dict, Union, Callable, Any, List
-from dataclasses import dataclass, field
-
+import logging
+from typing import Dict, Optional, Union, List
 from PySide6.QtWidgets import (
-    QWidget, QSplitter, QTextEdit, QPlainTextEdit, QMenu, 
-    QVBoxLayout, QLabel, QSizePolicy
+    QWidget, QSplitter, QVBoxLayout, QHBoxLayout, QMenu, QSizePolicy
 )
-from PySide6.QtCore import Qt, Signal, QObject, QEvent
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QAction
 
-# Import our new components
-from ui.widgets.pane_header import PaneHeaderBar, CompactPaneHeader
+from ui.widgets.split_pane_model import SplitPaneModel, LeafNode, SplitNode
 from ui.widgets.widget_registry import WidgetType, widget_registry
-from ui.vscode_theme import *
+from ui.widgets.pane_header import PaneHeaderBar
+from ui.vscode_theme import get_splitter_stylesheet
+from PySide6.QtCore import QTimer
 
+logger = logging.getLogger(__name__)
 
-# Note: WidgetType is now imported from widget_registry
-
-
-# ============================================================================
-# Focus Event Filter
-# ============================================================================
-
-class PaneFocusEventFilter(QObject):
-    """Event filter to capture focus events from content widgets."""
-    
-    focus_clicked = Signal(str)  # pane_id
-    
-    def __init__(self, pane_id: str, parent=None):
-        super().__init__(parent)
-        self.pane_id = pane_id
-    
-    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
-        """Filter events to detect mouse clicks and focus changes."""
-        if event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.FocusIn):
-            self.focus_clicked.emit(self.pane_id)
-        
-        # Always let the event through
-        return False
-
-
-# ============================================================================
-# Tree Model Classes
-# ============================================================================
-
-@dataclass
-class LeafNode:
-    """Leaf node in the tree model."""
-    type: str = "leaf"
-    id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
-    widget_type: WidgetType = WidgetType.PLACEHOLDER
-    widget_state: dict = field(default_factory=dict)
-    parent: Optional['SplitNode'] = None
-
-
-@dataclass
-class SplitNode:
-    """Split node containing two children."""
-    type: str = "split"
-    id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
-    orientation: str = "horizontal"  # "horizontal" or "vertical"
-    ratio: float = 0.5
-    first: Optional[Union[LeafNode, 'SplitNode']] = None
-    second: Optional[Union[LeafNode, 'SplitNode']] = None
-    parent: Optional['SplitNode'] = None
-
-
-# ============================================================================
-# Pane Content Widget
-# ============================================================================
 
 class PaneContent(QWidget):
-    """Pane container with header bar and content widget."""
+    """
+    View wrapper for AppWidget.
     
-    split_horizontal_requested = Signal(str)
-    split_vertical_requested = Signal(str)
-    close_requested = Signal(str)
-    widget_type_changed = Signal(str, str)  # pane_id, new_type
-    pane_focused = Signal(str)  # pane_id
+    This is a thin presentation layer that:
+    - Adds borders and visual styling
+    - Provides header bar if configured
+    - Handles context menus
+    - Routes actions to the model
     
-    def __init__(self, pane_id: str, widget_type: WidgetType = WidgetType.PLACEHOLDER, parent=None):
+    It does NOT own the AppWidget - that's owned by the LeafNode in the model.
+    """
+    
+    def __init__(self, leaf_node: LeafNode, parent=None):
+        """
+        Initialize the pane wrapper.
+        
+        Args:
+            leaf_node: The model node containing the AppWidget
+            parent: Parent widget
+        """
         super().__init__(parent)
-        self.pane_id = pane_id
-        self.widget_type = widget_type
-        self.content_widget = None
+        self.leaf_node = leaf_node
         self.header_bar = None
         self.is_active = False
-        self.focus_filter = None
         self.setup_ui()
-    
+        
     def setup_ui(self):
-        """Initialize the pane UI with header and content."""
+        """Set up the UI wrapper around the AppWidget."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
         # Check if we should show header for this widget type
-        config = widget_registry.get_config(self.widget_type)
+        config = widget_registry.get_config(self.leaf_node.widget_type)
         if config and config.show_header:
             # Create header bar
-            self.header_bar = PaneHeaderBar(self.pane_id, show_type_menu=config.allow_type_change)
+            self.header_bar = PaneHeaderBar(
+                self.leaf_node.id,
+                show_type_menu=config.allow_type_change if config else False
+            )
+            
+            # Connect header signals to request actions through AppWidget
             self.header_bar.split_horizontal_requested.connect(
-                lambda: self.split_horizontal_requested.emit(self.pane_id)
+                lambda: self.request_split("horizontal")
             )
             self.header_bar.split_vertical_requested.connect(
-                lambda: self.split_vertical_requested.emit(self.pane_id)
+                lambda: self.request_split("vertical")
             )
             self.header_bar.close_requested.connect(
-                lambda: self.close_requested.emit(self.pane_id)
+                lambda: self.request_close()
             )
-            self.header_bar.type_menu_requested.connect(self.show_type_menu)
+            if hasattr(self.header_bar, 'type_menu_requested'):
+                self.header_bar.type_menu_requested.connect(self.show_type_menu)
+                
             layout.addWidget(self.header_bar)
-        
-        # Create content widget
-        self.content_widget = self.create_content_widget()
-        layout.addWidget(self.content_widget)
-        
+            
+        # Add the AppWidget from the model
+        if self.leaf_node.app_widget:
+            layout.addWidget(self.leaf_node.app_widget)
+        else:
+            logger.error(f"No AppWidget in leaf node {self.leaf_node.id}")
+            
         # Set size policy
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-    
-    def create_content_widget(self) -> QWidget:
-        """Create the actual content widget using the registry."""
-        widget = widget_registry.create_widget(self.widget_type, self.pane_id)
         
-        if widget is None:
-            # Fallback to placeholder if type not found
-            widget = QLabel(f"{self.widget_type.value}\n[{self.pane_id}]")
-            widget.setAlignment(Qt.AlignCenter)
-            widget.setStyleSheet("""
-                QLabel {
-                    background-color: #2d2d30;
-                    color: #969696;
-                    border: 1px solid #3c3c3c;
-                    padding: 20px;
-                    font-size: 14px;
-                }
-            """)
-        
-        # Add pane ID to the content for identification
-        if hasattr(widget, 'setPlainText'):
-            current_text = widget.toPlainText() if hasattr(widget, 'toPlainText') else ""
-            if not current_text:
-                widget.setPlainText(f"Pane {self.pane_id}\n")
-        
-        # Install focus event filter to capture clicks on content widgets
-        self.focus_filter = PaneFocusEventFilter(self.pane_id, self)
-        self.focus_filter.focus_clicked.connect(self.pane_focused.emit)
-        widget.installEventFilter(self.focus_filter)
-        
-        # For widgets that can receive focus, ensure they can be clicked
-        if hasattr(widget, 'setFocusPolicy'):
-            widget.setFocusPolicy(Qt.StrongFocus)
-        
-        return widget
-    
+    def request_split(self, orientation: str):
+        """Request a split action through the AppWidget."""
+        if self.leaf_node.app_widget:
+            self.leaf_node.app_widget.request_action('split', {
+                'orientation': orientation,
+                'leaf_id': self.leaf_node.id
+            })
+            
+    def request_close(self):
+        """Request a close action through the AppWidget."""
+        if self.leaf_node.app_widget:
+            self.leaf_node.app_widget.request_action('close', {
+                'leaf_id': self.leaf_node.id
+            })
+            
     def mousePressEvent(self, event):
         """Handle mouse press to focus this pane."""
         if event.button() == Qt.LeftButton:
-            self.pane_focused.emit(self.pane_id)
+            if self.leaf_node.app_widget:
+                self.leaf_node.app_widget.request_focus()
         super().mousePressEvent(event)
-    
+        
     def contextMenuEvent(self, event):
-        """Show context menu only for widgets that don't need native menu."""
-        # Emit focus signal when context menu is requested
-        self.pane_focused.emit(self.pane_id)
-        
+        """Show context menu."""
+        # Request focus first
+        if self.leaf_node.app_widget:
+            self.leaf_node.app_widget.request_focus()
+            
         # Check if we should preserve native context menu
-        config = widget_registry.get_config(self.widget_type)
+        config = widget_registry.get_config(self.leaf_node.widget_type)
         if config and config.preserve_context_menu:
-            # Let the content widget handle its own context menu
-            if self.content_widget:
-                # Forward the event to the content widget
-                self.content_widget.contextMenuEvent(event)
+            # Let the AppWidget handle its own context menu
+            if self.leaf_node.app_widget:
+                # Forward the event to the AppWidget
+                self.leaf_node.app_widget.contextMenuEvent(event)
             return
-        
-        # Show our custom menu for widgets without important native menus
+            
+        # Show our custom menu
         menu = QMenu(self)
         menu.setStyleSheet("""
             QMenu {
@@ -197,35 +143,38 @@ class PaneContent(QWidget):
         # If no header bar, add split/close actions to context menu
         if not self.header_bar:
             split_h = QAction("Split Horizontal →", self)
-            split_h.triggered.connect(lambda: self.split_horizontal_requested.emit(self.pane_id))
+            split_h.triggered.connect(lambda: self.request_split("horizontal"))
             menu.addAction(split_h)
             
             split_v = QAction("Split Vertical ↓", self)
-            split_v.triggered.connect(lambda: self.split_vertical_requested.emit(self.pane_id))
+            split_v.triggered.connect(lambda: self.request_split("vertical"))
             menu.addAction(split_v)
             
             menu.addSeparator()
             
             close = QAction("Close Pane", self)
-            close.triggered.connect(lambda: self.close_requested.emit(self.pane_id))
+            close.triggered.connect(lambda: self.request_close())
             menu.addAction(close)
-        
+            
         # Always allow type change from context menu if configured
+        config = widget_registry.get_config(self.leaf_node.widget_type)
         if config and config.allow_type_change:
             if not self.header_bar:
                 menu.addSeparator()
             type_menu = menu.addMenu("Change Type")
             for widget_type in WidgetType:
                 action = QAction(widget_type.value.replace("_", " ").title(), self)
-                action.triggered.connect(lambda checked, wt=widget_type: self.change_widget_type(wt))
-                if widget_type == self.widget_type:
+                action.triggered.connect(
+                    lambda checked, wt=widget_type: self.change_widget_type(wt)
+                )
+                if widget_type == self.leaf_node.widget_type:
                     action.setCheckable(True)
                     action.setChecked(True)
                 type_menu.addAction(action)
-        
+                
         if menu.actions():
             menu.exec(event.globalPos())
-    
+            
     def show_type_menu(self):
         """Show menu for changing widget type."""
         menu = QMenu(self)
@@ -242,42 +191,30 @@ class PaneContent(QWidget):
         
         for widget_type in WidgetType:
             action = QAction(widget_type.value.replace("_", " ").title(), self)
-            action.triggered.connect(lambda checked, wt=widget_type: self.change_widget_type(wt))
-            if widget_type == self.widget_type:
+            action.triggered.connect(
+                lambda checked, wt=widget_type: self.change_widget_type(wt)
+            )
+            if widget_type == self.leaf_node.widget_type:
                 action.setCheckable(True)
                 action.setChecked(True)
             menu.addAction(action)
-        
+            
         # Show menu below the type button
         if self.header_bar and hasattr(self.header_bar, 'type_button'):
-            menu.exec(self.header_bar.type_button.mapToGlobal(self.header_bar.type_button.rect().bottomLeft()))
+            menu.exec(self.header_bar.type_button.mapToGlobal(
+                self.header_bar.type_button.rect().bottomLeft()
+            ))
         else:
             menu.exec(self.mapToGlobal(self.rect().topLeft()))
-    
+            
     def change_widget_type(self, new_type: WidgetType):
-        """Change the widget type."""
-        if new_type != self.widget_type:
-            self.widget_type = new_type
+        """Request widget type change through AppWidget."""
+        if self.leaf_node.app_widget:
+            self.leaf_node.app_widget.request_action('change_type', {
+                'leaf_id': self.leaf_node.id,
+                'new_type': new_type
+            })
             
-            # Remove old event filter
-            if self.focus_filter and self.content_widget:
-                self.content_widget.removeEventFilter(self.focus_filter)
-            
-            # Replace content widget
-            self.layout().removeWidget(self.content_widget)
-            self.content_widget.deleteLater()
-            self.content_widget = self.create_content_widget()
-            self.layout().addWidget(self.content_widget)
-            
-            # Update header if it exists
-            config = widget_registry.get_config(new_type)
-            if self.header_bar and config:
-                # Update type menu button visibility
-                if hasattr(self.header_bar, 'type_button'):
-                    self.header_bar.type_button.setVisible(config.allow_type_change)
-            
-            self.widget_type_changed.emit(self.pane_id, new_type.value)
-    
     def set_active(self, active: bool):
         """Set the active state of this pane."""
         self.is_active = active
@@ -285,7 +222,7 @@ class PaneContent(QWidget):
         # Update header bar if it exists
         if self.header_bar:
             self.header_bar.set_active(active)
-        
+            
         # Update border for visual feedback
         if active:
             self.setStyleSheet("""
@@ -299,43 +236,17 @@ class PaneContent(QWidget):
                     border: 1px solid #3c3c3c;
                 }
             """)
-    
-    def get_state(self) -> dict:
-        """Get the current state of the widget."""
-        state = {"type": self.widget_type.value}
-        
-        # Use widget registry for comprehensive serialization
-        if self.content_widget:
-            widget_state = widget_registry.serialize_widget_state(
-                self.content_widget, 
-                self.widget_type
-            )
-            if widget_state:
-                state.update(widget_state)
-        
-        return state
-    
-    def set_state(self, state: dict):
-        """Restore widget state."""
-        # Use widget registry for comprehensive deserialization
-        if self.content_widget and state:
-            # Create a copy of state without the 'type' field for widget deserialization
-            widget_state = {k: v for k, v in state.items() if k != "type"}
-            widget_registry.deserialize_widget_state(
-                self.content_widget,
-                self.widget_type,
-                widget_state
-            )
 
-
-# ============================================================================
-# Split Pane Widget
-# ============================================================================
 
 class SplitPaneWidget(QWidget):
     """
-    Self-contained widget that manages recursive split panes.
-    Can be embedded in tabs or other containers.
+    View layer for split pane - renders the model's tree structure.
+    
+    This widget:
+    - Uses SplitPaneModel for all data and operations
+    - Renders the tree structure as Qt widgets
+    - Connects AppWidget signals to model operations
+    - Preserves AppWidgets during refresh (they live in the model)
     """
     
     # Signals
@@ -344,450 +255,297 @@ class SplitPaneWidget(QWidget):
     active_pane_changed = Signal(str)  # pane_id
     layout_changed = Signal()
     
-    def __init__(self, initial_widget_type: WidgetType = WidgetType.TEXT_EDITOR,
-                 widget_factory: Optional[Callable[[str, WidgetType], QWidget]] = None,
-                 parent=None):
+    def __init__(self, initial_widget_type: WidgetType = WidgetType.TEXT_EDITOR, parent=None):
         """
         Initialize the split pane widget.
         
         Args:
-            initial_widget_type: Type of widget to create in the initial pane
-            widget_factory: Optional factory function to create custom widgets
-                           Should accept (pane_id, widget_type) and return QWidget
+            initial_widget_type: Type of widget for initial pane
             parent: Parent widget
         """
         super().__init__(parent)
         
-        self.widget_factory = widget_factory
-        self.root: Union[LeafNode, SplitNode] = None
-        self.leaves: Dict[str, LeafNode] = {}
-        self.widgets: Dict[str, QWidget] = {}
-        self.active_pane_id: Optional[str] = None
+        # Create the model - it owns all AppWidgets
+        self.model = SplitPaneModel(initial_widget_type)
         
-        self.initialize_root(initial_widget_type)
+        # View tracking
+        self.pane_wrappers: Dict[str, PaneContent] = {}
+        self.splitters: Dict[str, QSplitter] = {}
+        
+        # Set up UI
         self.setup_ui()
-    
-    def initialize_root(self, widget_type: WidgetType):
-        """Create initial root leaf."""
-        self.root = LeafNode(widget_type=widget_type)
-        self.leaves[self.root.id] = self.root
-        self.active_pane_id = self.root.id
-    
+        
+        # Connect signals from model's AppWidgets
+        self.connect_model_signals()
+        
+        # Set up focus polling timer to detect which pane has focus
+        self.focus_timer = QTimer()
+        self.focus_timer.timeout.connect(self.check_focus)
+        self.focus_timer.start(100)  # Check every 100ms
+        
+        logger.info(f"SplitPaneWidget initialized with model root {self.model.root.id}")
+        
     def setup_ui(self):
         """Initialize the UI."""
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         
-        # Create initial view
+        # Initial render
         self.refresh_view()
-    
-    def create_pane_widget(self, leaf: LeafNode) -> QWidget:
-        """Create a widget for a leaf node."""
-        if self.widget_factory:
-            # Use custom factory
-            widget = self.widget_factory(leaf.id, leaf.widget_type)
-        else:
-            # Use default PaneContent
-            widget = PaneContent(leaf.id, leaf.widget_type)
         
-        # Connect signals if it's our PaneContent
-        if isinstance(widget, PaneContent):
-            widget.split_horizontal_requested.connect(self.split_horizontal)
-            widget.split_vertical_requested.connect(self.split_vertical)
-            widget.close_requested.connect(self.close_pane)
-            widget.widget_type_changed.connect(self._on_widget_type_changed)
-            widget.pane_focused.connect(self.set_active_pane)
+    def connect_model_signals(self):
+        """Connect signals from all AppWidgets in the model to our handlers."""
+        def connect_widget(leaf: LeafNode):
+            if leaf.app_widget:
+                # Clean slate - disconnect all existing connections
+                try:
+                    leaf.app_widget.action_requested.disconnect()
+                except (RuntimeError, TypeError):
+                    pass  # No connections to disconnect
+                try:
+                    leaf.app_widget.focus_requested.disconnect()
+                except (RuntimeError, TypeError):
+                    pass  # No connections to disconnect
+                    
+                # Connect to our handlers - use default arguments to capture current values
+                leaf.app_widget.action_requested.connect(
+                    lambda action, params, leaf_id=leaf.id: self.handle_widget_action(leaf_id, action, params)
+                )
+                leaf.app_widget.focus_requested.connect(
+                    lambda leaf_id=leaf.id: self.set_active_pane(leaf_id)
+                )
+                
+        # Connect all widgets in tree
+        self.model.traverse_tree(callback=connect_widget)
         
-        return widget
-    
-    def render_node(self, node: Union[LeafNode, SplitNode]) -> QWidget:
-        """Recursively render a node to Qt widgets."""
+    def handle_widget_action(self, leaf_id: str, action: str, params: dict):
+        """
+        Handle action from an AppWidget.
+        
+        Args:
+            leaf_id: ID of leaf that initiated the action
+            action: Action type
+            params: Action parameters
+        """
+        logger.info(f"Handling action from {leaf_id}: {action} with params {params}")
+        
+        if action == 'split':
+            orientation = params.get('orientation', 'horizontal')
+            target_id = params.get('leaf_id', leaf_id)
+            new_id = self.model.split_pane(target_id, orientation)
+            if new_id:
+                self.refresh_view()
+                self.pane_added.emit(new_id)
+                
+        elif action == 'close':
+            target_id = params.get('leaf_id', leaf_id)
+            if self.model.close_pane(target_id):
+                self.refresh_view()
+                self.pane_removed.emit(target_id)
+                
+        elif action == 'change_type':
+            target_id = params.get('leaf_id', leaf_id)
+            new_type = params.get('new_type')
+            if new_type and self.model.change_pane_type(target_id, new_type):
+                self.refresh_view()
+                
+        elif action == 'focus':
+            target_id = params.get('leaf_id', leaf_id)
+            self.set_active_pane(target_id)
+            
+    def refresh_view(self):
+        """
+        Rebuild the view from the model.
+        
+        AppWidgets are preserved - they live in the model.
+        Only the view wrappers (PaneContent) are recreated.
+        """
+        logger.debug("Refreshing view")
+        
+        # Clear layout
+        while self.layout.count():
+            item = self.layout.takeAt(0)
+            if item.widget():
+                item.widget().setParent(None)
+                
+        # Clean up old view wrappers (NOT the AppWidgets!)
+        for wrapper in self.pane_wrappers.values():
+            wrapper.deleteLater()
+        self.pane_wrappers.clear()
+        self.splitters.clear()
+        
+        # Render the model's tree
+        root_widget = self.render_node(self.model.root)
+        if root_widget:
+            self.layout.addWidget(root_widget)
+            
+        # Reconnect signals (in case new widgets were created)
+        self.connect_model_signals()
+        
+        # Update active pane visual
+        self.update_active_pane_visual()
+        
+        # Emit signal
+        self.layout_changed.emit()
+        
+    def render_node(self, node: Optional[Union[LeafNode, SplitNode]]) -> Optional[QWidget]:
+        """
+        Render a node from the model as Qt widgets.
+        
+        Args:
+            node: Node to render
+            
+        Returns:
+            QWidget representing the node
+        """
+        if not node:
+            return None
+            
         if isinstance(node, LeafNode):
-            # Create widget for leaf
-            widget = self.create_pane_widget(node)
+            # Create view wrapper for the AppWidget
+            wrapper = PaneContent(node)
+            self.pane_wrappers[node.id] = wrapper
+            return wrapper
             
-            # Store widget reference in view only
-            self.widgets[node.id] = widget
-            
-            return widget
-        
         elif isinstance(node, SplitNode):
             # Create splitter
-            if node.orientation == "horizontal":
-                splitter = QSplitter(Qt.Horizontal)
-            else:
-                splitter = QSplitter(Qt.Vertical)
+            splitter = QSplitter(
+                Qt.Horizontal if node.orientation == "horizontal" else Qt.Vertical
+            )
             
-            # Apply VSCode theme to splitter
+            # Apply styling
             splitter.setStyleSheet(get_splitter_stylesheet())
             
             # Render children
             if node.first:
                 first_widget = self.render_node(node.first)
-                splitter.addWidget(first_widget)
-            
+                if first_widget:
+                    splitter.addWidget(first_widget)
+                    
             if node.second:
                 second_widget = self.render_node(node.second)
-                splitter.addWidget(second_widget)
-            
+                if second_widget:
+                    splitter.addWidget(second_widget)
+                    
             # Apply ratio
-            total_size = 1000
-            first_size = int(total_size * node.ratio)
-            second_size = total_size - first_size
-            splitter.setSizes([first_size, second_size])
-            
+            if splitter.count() == 2:
+                total = 1000
+                first_size = int(total * node.ratio)
+                splitter.setSizes([first_size, total - first_size])
+                
             # Track ratio changes
             splitter.splitterMoved.connect(
-                lambda: self._update_ratio(node, splitter)
+                lambda: self.update_ratio(node, splitter)
             )
             
-            # Store reference
-            node.splitter = splitter
-            
+            self.splitters[node.id] = splitter
             return splitter
+            
+        return None
         
-        return QWidget()
-    
-    def refresh_view(self):
-        """Rebuild the view from the model."""
-        # Clear existing layout
-        while self.layout.count():
-            item = self.layout.takeAt(0)
-            if item.widget():
-                item.widget().setParent(None)
-        
-        # Clean up old widgets properly (especially terminals)
-        for pane_id, widget in self.widgets.items():
-            if isinstance(widget, PaneContent) and widget.content_widget:
-                # Clean up terminal sessions before destroying widgets
-                if hasattr(widget.content_widget, 'close_terminal'):
-                    widget.content_widget.close_terminal()
-            widget.deleteLater()
-        
-        # Clear widget references
-        self.widgets.clear()
-        
-        # Create new view
-        root_widget = self.render_node(self.root)
-        self.layout.addWidget(root_widget)
-        
-        # Update active pane visual
-        self._update_active_pane_visual()
-        
-        self.layout_changed.emit()
-    
-    def _update_ratio(self, node: SplitNode, splitter: QSplitter):
+    def update_ratio(self, node: SplitNode, splitter: QSplitter):
         """Update split ratio when user drags splitter."""
         sizes = splitter.sizes()
         total = sum(sizes)
         if total > 0:
-            node.ratio = sizes[0] / total
+            ratio = sizes[0] / total
+            self.model.update_split_ratio(node, ratio)
+            
+    def check_focus(self):
+        """Check which pane currently has focus and update active pane accordingly."""
+        try:
+            focused_widget = self.focusWidget()
+            if focused_widget:
+                # Walk up the widget hierarchy to find which pane wrapper contains the focused widget
+                current = focused_widget
+                while current:
+                    # Check if current widget is a pane wrapper
+                    for pane_id, wrapper in self.pane_wrappers.items():
+                        if current == wrapper or wrapper.isAncestorOf(current):
+                            # Found which pane has focus - update active pane if different
+                            if pane_id != self.model.get_active_pane_id():
+                                print(f"🔍 Focus detected on pane {pane_id} via polling")
+                                self.set_active_pane(pane_id)
+                            return
+                    current = current.parent()
+        except Exception as e:
+            # Ignore errors in focus polling
+            pass
+
+    def update_active_pane_visual(self):
+        """Update visual indication of active pane."""
+        active_id = self.model.get_active_pane_id()
+        for pane_id, wrapper in self.pane_wrappers.items():
+            wrapper.set_active(pane_id == active_id)
+            
+    # Public API methods that delegate to model
     
     def split_horizontal(self, pane_id: str):
-        """Split pane horizontally (left|right)."""
-        self._split_pane(pane_id, "horizontal")
-    
+        """Split pane horizontally."""
+        new_id = self.model.split_pane(pane_id, "horizontal")
+        if new_id:
+            self.refresh_view()
+            self.pane_added.emit(new_id)
+            
     def split_vertical(self, pane_id: str):
-        """Split pane vertically (top|bottom)."""
-        self._split_pane(pane_id, "vertical")
-    
-    def _split_pane(self, pane_id: str, orientation: str):
-        """Split a pane."""
-        leaf = self.leaves.get(pane_id)
-        if not leaf:
-            return
-        
-        # Store the parent before creating split
-        old_parent = leaf.parent
-        
-        # Create new leaf with same type as current
-        new_leaf = LeafNode(widget_type=leaf.widget_type)
-        
-        # Create split node
-        split = SplitNode(
-            orientation=orientation,
-            ratio=0.5
-        )
-        
-        # Set up the tree structure
-        split.first = leaf
-        split.second = new_leaf
-        leaf.parent = split
-        new_leaf.parent = split
-        
-        # Update tree structure
-        if old_parent:
-            # Replace leaf with split in parent
-            if old_parent.first == leaf:
-                old_parent.first = split
-            else:
-                old_parent.second = split
-            split.parent = old_parent
-        else:
-            # Leaf is root - split becomes new root
-            self.root = split
-        
-        # Update tracking
-        self.leaves[new_leaf.id] = new_leaf
-        
-        # Keep focus on the original pane that was split
-        # This prevents the issue where subsequent splits always affect the newest pane
-        # self.active_pane_id remains the same
-        
-        # Refresh view
-        self.refresh_view()
-        
-        # Re-focus the original pane
-        self._focus_widget_in_pane(pane_id)
-        
-        # Emit signal
-        self.pane_added.emit(new_leaf.id)
-    
+        """Split pane vertically."""
+        new_id = self.model.split_pane(pane_id, "vertical")
+        if new_id:
+            self.refresh_view()
+            self.pane_added.emit(new_id)
+            
     def close_pane(self, pane_id: str):
-        """Close a pane and promote its sibling."""
-        leaf = self.leaves.get(pane_id)
-        if not leaf:
-            return
-        
-        # Don't close the last pane
-        if leaf == self.root:
-            return
-        
-        parent = leaf.parent
-        if not parent:
-            return
-        
-        # Find sibling
-        sibling = parent.second if parent.first == leaf else parent.first
-        if not sibling:
-            return
-        
-        # Promote sibling
-        grandparent = parent.parent
-        
-        if grandparent:
-            # Replace parent with sibling in grandparent
-            if grandparent.first == parent:
-                grandparent.first = sibling
-            else:
-                grandparent.second = sibling
-            sibling.parent = grandparent
-        else:
-            # Parent is root - sibling becomes new root
-            self.root = sibling
-            sibling.parent = None
-        
-        # Clean up
-        del self.leaves[pane_id]
-        
-        # Update active pane if necessary
-        if self.active_pane_id == pane_id:
-            # Find first available leaf
-            if self.leaves:
-                self.active_pane_id = next(iter(self.leaves.keys()))
-        
-        # Clean up widget's terminal session before refreshing
-        if pane_id in self.widgets:
-            widget = self.widgets[pane_id]
-            if isinstance(widget, PaneContent) and widget.content_widget:
-                if hasattr(widget.content_widget, 'close_terminal'):
-                    widget.content_widget.close_terminal()
-        
-        # Refresh view (will clean up widgets)
-        self.refresh_view()
-        
-        # Emit signal
-        self.pane_removed.emit(pane_id)
-    
+        """Close a pane."""
+        if self.model.close_pane(pane_id):
+            self.refresh_view()
+            self.pane_removed.emit(pane_id)
+            
     def set_active_pane(self, pane_id: str):
         """Set the active pane."""
-        if pane_id in self.leaves:
-            self.active_pane_id = pane_id
-            self._update_active_pane_visual()
-            self._focus_widget_in_pane(pane_id)
+        old_active = self.model.get_active_pane_id()
+        print(f"🎯 set_active_pane called: {old_active} → {pane_id}")
+        logger.debug(f"🎯 set_active_pane called with: {pane_id}")
+        logger.debug(f"🎯 Previous active pane: {old_active}")
+        
+        if self.model.set_active_pane(pane_id):
+            print(f"✅ Active pane successfully changed to: {pane_id}")
+            logger.debug(f"✅ Active pane successfully changed to: {pane_id}")
+            self.update_active_pane_visual()
             self.active_pane_changed.emit(pane_id)
-    
-    def _update_active_pane_visual(self):
-        """Update visual indication of active pane."""
-        for pid, widget in self.widgets.items():
-            if isinstance(widget, PaneContent):
-                widget.set_active(pid == self.active_pane_id)
-    
-    def _focus_widget_in_pane(self, pane_id: str):
-        """Set focus to the content widget in the specified pane."""
-        widget = self.widgets.get(pane_id)
-        if isinstance(widget, PaneContent) and widget.content_widget:
-            # Set focus to the content widget
-            widget.content_widget.setFocus(Qt.MouseFocusReason)
-    
-    def _on_widget_type_changed(self, pane_id: str, new_type: str):
-        """Handle widget type change."""
-        leaf = self.leaves.get(pane_id)
-        if leaf:
-            leaf.widget_type = WidgetType(new_type)
-    
-    def get_state(self) -> dict:
-        """Get the current state of the split layout."""
-        def serialize_node(node):
-            if isinstance(node, LeafNode):
-                # Get widget from our view tracking
-                widget = self.widgets.get(node.id)
-                widget_state = {}
-                if widget and hasattr(widget, 'get_state'):
-                    widget_state = widget.get_state()
-                return {
-                    "type": "leaf",
-                    "id": node.id,
-                    "widget_type": node.widget_type.value,
-                    "widget_state": widget_state
-                }
-            elif isinstance(node, SplitNode):
-                return {
-                    "type": "split",
-                    "id": node.id,
-                    "orientation": node.orientation,
-                    "ratio": node.ratio,
-                    "first": serialize_node(node.first) if node.first else None,
-                    "second": serialize_node(node.second) if node.second else None
-                }
-            return None
+        else:
+            print(f"❌ Failed to set active pane to: {pane_id}")
+            logger.warning(f"❌ Failed to set active pane to: {pane_id}")
+            
+    def get_current_split_widget(self):
+        """Compatibility method - returns self."""
+        return self
         
-        return {
-            "root": serialize_node(self.root),
-            "active_pane_id": self.active_pane_id
-        }
-    
-    def set_state(self, state: dict):
-        """Restore the split layout from a state dict."""
-        if not state or "root" not in state:
-            return False
-            
-        try:
-            # Clear current state
-            self.leaves.clear()
-            self.widgets.clear()
-            
-            # Deserialize the tree structure
-            self.root = self._deserialize_node(state["root"])
-            if not self.root:
-                return False
-            
-            # Restore active pane
-            if "active_pane_id" in state and state["active_pane_id"] in self.leaves:
-                self.active_pane_id = state["active_pane_id"]
-            else:
-                # Fallback to first available pane
-                if self.leaves:
-                    self.active_pane_id = next(iter(self.leaves.keys()))
-            
-            # Refresh the view to display the restored tree
-            self.refresh_view()
-            
-            # Restore individual widget states after widgets are created
-            self._restore_widget_states()
-            
-            return True
-            
-        except Exception as e:
-            print(f"Failed to restore split pane state: {e}")
-            # On failure, create a default single pane
-            self.initialize_root(WidgetType.TEXT_EDITOR)
-            self.refresh_view()
-            return False
-    
-    def _deserialize_node(self, node_data: dict) -> Optional[Union[LeafNode, SplitNode]]:
-        """Deserialize a single node from state data."""
-        if not node_data or "type" not in node_data:
-            return None
+    @property
+    def active_pane_id(self) -> str:
+        """Get active pane ID from model."""
+        return self.model.get_active_pane_id()
         
-        if node_data["type"] == "leaf":
-            return self._deserialize_leaf(node_data)
-        elif node_data["type"] == "split":
-            return self._deserialize_split(node_data)
-        
-        return None
-    
-    def _deserialize_leaf(self, leaf_data: dict) -> Optional[LeafNode]:
-        """Deserialize a leaf node from state data."""
-        try:
-            # Get widget type
-            widget_type_str = leaf_data.get("widget_type", "text_editor")
-            try:
-                widget_type = WidgetType(widget_type_str)
-            except ValueError:
-                # Fallback to text editor if widget type is unknown
-                widget_type = WidgetType.TEXT_EDITOR
-            
-            # Create leaf node
-            leaf = LeafNode(
-                id=leaf_data.get("id", str(uuid.uuid4())[:8]),
-                widget_type=widget_type
-            )
-            
-            # Store widget state for later restoration (after widget creation)
-            if "widget_state" in leaf_data:
-                leaf.widget_state = leaf_data["widget_state"]
-            
-            # Store in leaves dictionary
-            self.leaves[leaf.id] = leaf
-            
-            return leaf
-            
-        except Exception as e:
-            print(f"Failed to deserialize leaf node: {e}")
-            return None
-    
-    def _deserialize_split(self, split_data: dict) -> Optional[SplitNode]:
-        """Deserialize a split node from state data."""
-        try:
-            # Create split node
-            split = SplitNode(
-                id=split_data.get("id", str(uuid.uuid4())[:8]),
-                orientation=split_data.get("orientation", "horizontal"),
-                ratio=split_data.get("ratio", 0.5)
-            )
-            
-            # Recursively deserialize children
-            first_data = split_data.get("first")
-            if first_data:
-                split.first = self._deserialize_node(first_data)
-                if split.first:
-                    split.first.parent = split
-            
-            second_data = split_data.get("second")
-            if second_data:
-                split.second = self._deserialize_node(second_data)
-                if split.second:
-                    split.second.parent = split
-            
-            return split
-            
-        except Exception as e:
-            print(f"Failed to deserialize split node: {e}")
-            return None
-    
-    def _restore_widget_states(self):
-        """Restore individual widget states after widgets are created."""
-        for leaf in self.leaves.values():
-            if hasattr(leaf, 'widget_state') and leaf.widget_state:
-                # Get the corresponding widget
-                widget = self.widgets.get(leaf.id)
-                if isinstance(widget, PaneContent) and hasattr(widget, 'set_state'):
-                    try:
-                        widget.set_state(leaf.widget_state)
-                    except Exception as e:
-                        print(f"Failed to restore widget state for pane {leaf.id}: {e}")
-    
     def get_pane_count(self) -> int:
-        """Get the number of panes."""
-        return len(self.leaves)
-    
+        """Get number of panes."""
+        return len(self.model.leaves)
+        
     def get_all_pane_ids(self) -> List[str]:
         """Get all pane IDs."""
-        return list(self.leaves.keys())
-    
-    def focus_active_pane(self):
-        """Focus the currently active pane's content widget."""
-        if self.active_pane_id:
-            self._focus_widget_in_pane(self.active_pane_id)
+        return list(self.model.leaves.keys())
+        
+    def get_state(self) -> dict:
+        """Get state for persistence."""
+        return self.model.to_dict()
+        
+    def set_state(self, state: dict):
+        """Restore state from persistence."""
+        self.model.from_dict(state)
+        self.refresh_view()
+        
+    def cleanup(self):
+        """Clean up all resources."""
+        logger.info("Cleaning up SplitPaneWidget")
+        if hasattr(self, 'focus_timer'):
+            self.focus_timer.stop()
+        self.model.cleanup_all_widgets()

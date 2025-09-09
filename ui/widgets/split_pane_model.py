@@ -1,29 +1,54 @@
 #!/usr/bin/env python3
 """
-Pure model for split pane - no widget references, just data structure.
-This maintains clean separation of concerns.
+Pure model for split pane tree structure with AppWidget management.
+
+This is the MODEL layer - it manages the tree structure and AppWidget lifecycle.
+No view concerns, no Qt widgets except the AppWidgets themselves (which are content/data).
 """
 
 import uuid
-from typing import Optional, Dict, Union, Any
+import logging
+from typing import Optional, Dict, Union, Any, List, Callable
 from dataclasses import dataclass, field
+
 from ui.widgets.widget_registry import WidgetType
+from ui.widgets.app_widget import AppWidget
+from ui.terminal.terminal_app_widget import TerminalAppWidget
+from ui.widgets.editor_app_widget import EditorAppWidget
+from ui.widgets.placeholder_app_widget import PlaceholderAppWidget
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class LeafNode:
-    """Leaf node containing widget metadata - no actual widget references."""
+    """
+    Leaf node containing an AppWidget.
+    
+    The AppWidget is the actual content (terminal, editor, etc.).
+    This node owns the widget and manages its lifecycle.
+    """
     type: str = "leaf"
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     widget_type: WidgetType = WidgetType.PLACEHOLDER
-    widget_state: dict = field(default_factory=dict)
+    app_widget: Optional[AppWidget] = None  # The actual content widget
     parent: Optional['SplitNode'] = None
-    # NO widget reference here - that belongs in the view
+    
+    def cleanup(self):
+        """Clean up the AppWidget."""
+        if self.app_widget:
+            logger.info(f"Cleaning up AppWidget in leaf {self.id}")
+            self.app_widget.cleanup()
+            self.app_widget = None
 
 
-@dataclass  
+@dataclass
 class SplitNode:
-    """Split node containing two children - pure data, no widget references."""
+    """
+    Split node containing two children.
+    
+    Pure data structure - no view widgets here.
+    """
     type: str = "split"
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     orientation: str = "horizontal"  # "horizontal" or "vertical"
@@ -31,35 +56,139 @@ class SplitNode:
     first: Optional[Union[LeafNode, 'SplitNode']] = None
     second: Optional[Union[LeafNode, 'SplitNode']] = None
     parent: Optional['SplitNode'] = None
-    # NO splitter reference here - that belongs in the view
 
 
 class SplitPaneModel:
     """
-    Pure model for split pane tree structure.
-    Manages the tree and active pane state without any view dependencies.
+    Model managing the split pane tree structure and AppWidgets.
+    
+    This is the single source of truth for:
+    - Tree structure (nodes and relationships)
+    - AppWidget instances and lifecycle
+    - Active pane tracking
+    
+    All operations go through this model.
     """
     
     def __init__(self, initial_widget_type: WidgetType = WidgetType.PLACEHOLDER):
-        """Initialize with a single root leaf."""
+        """Initialize with a single root leaf containing an AppWidget."""
         self.root = LeafNode(widget_type=initial_widget_type)
         self.leaves: Dict[str, LeafNode] = {self.root.id: self.root}
-        self.active_pane_id: str = self.root.id  # Active pane is MODEL state
-    
+        self.active_pane_id: str = self.root.id
+        
+        # Create initial AppWidget
+        self.root.app_widget = self.create_app_widget(initial_widget_type, self.root.id)
+        self.root.app_widget.leaf_node = self.root  # Set back-reference
+        
+        logger.info(f"SplitPaneModel initialized with root leaf {self.root.id}")
+        
+    def create_app_widget(self, widget_type: WidgetType, widget_id: str) -> AppWidget:
+        """
+        Factory method to create AppWidgets.
+        
+        Args:
+            widget_type: Type of widget to create
+            widget_id: Unique ID for the widget
+            
+        Returns:
+            New AppWidget instance
+        """
+        logger.info(f"Creating AppWidget: type={widget_type}, id={widget_id}")
+        
+        if widget_type == WidgetType.TERMINAL:
+            return TerminalAppWidget(widget_id)
+        elif widget_type == WidgetType.TEXT_EDITOR:
+            return EditorAppWidget(widget_id)
+        elif widget_type == WidgetType.PLACEHOLDER:
+            return PlaceholderAppWidget(widget_id, widget_type)
+        else:
+            # Fallback for any other type
+            return PlaceholderAppWidget(widget_id, widget_type)
+            
+    def traverse_tree(self, node: Optional[Union[LeafNode, SplitNode]] = None, 
+                      callback: Optional[Callable[[LeafNode], None]] = None) -> List[LeafNode]:
+        """
+        Traverse the tree and optionally apply a callback to each leaf.
+        
+        Args:
+            node: Starting node (defaults to root)
+            callback: Optional function to call on each leaf
+            
+        Returns:
+            List of all leaf nodes encountered
+        """
+        if node is None:
+            node = self.root
+            
+        leaves = []
+        
+        if isinstance(node, LeafNode):
+            leaves.append(node)
+            if callback:
+                callback(node)
+        elif isinstance(node, SplitNode):
+            if node.first:
+                leaves.extend(self.traverse_tree(node.first, callback))
+            if node.second:
+                leaves.extend(self.traverse_tree(node.second, callback))
+                
+        return leaves
+        
+    def find_leaf(self, leaf_id: str) -> Optional[LeafNode]:
+        """Find a leaf node by ID."""
+        return self.leaves.get(leaf_id)
+        
+    def find_node(self, node_id: str) -> Optional[Union[LeafNode, SplitNode]]:
+        """
+        Find any node by ID using tree traversal.
+        
+        Args:
+            node_id: ID to search for
+            
+        Returns:
+            Node if found, None otherwise
+        """
+        def search(node: Optional[Union[LeafNode, SplitNode]]) -> Optional[Union[LeafNode, SplitNode]]:
+            if not node:
+                return None
+            if node.id == node_id:
+                return node
+            if isinstance(node, SplitNode):
+                result = search(node.first)
+                if result:
+                    return result
+                return search(node.second)
+            return None
+            
+        return search(self.root)
+        
     def split_pane(self, pane_id: str, orientation: str) -> Optional[str]:
         """
-        Split a pane in the model.
-        Returns the ID of the new pane or None if split failed.
+        Split a pane, creating a new AppWidget.
+        
+        Args:
+            pane_id: ID of pane to split
+            orientation: "horizontal" or "vertical"
+            
+        Returns:
+            ID of the new pane, or None if split failed
         """
-        leaf = self.leaves.get(pane_id)
+        leaf = self.find_leaf(pane_id)
         if not leaf:
+            logger.error(f"Cannot split: leaf {pane_id} not found")
             return None
+            
+        logger.info(f"Splitting pane {pane_id} {orientation}ly")
         
         # Store the parent before creating split
         old_parent = leaf.parent
         
-        # Create new leaf with same type as current
+        # Create new leaf with same widget type
         new_leaf = LeafNode(widget_type=leaf.widget_type)
+        
+        # Create AppWidget for new leaf
+        new_leaf.app_widget = self.create_app_widget(leaf.widget_type, new_leaf.id)
+        new_leaf.app_widget.leaf_node = new_leaf  # Set back-reference
         
         # Create split node
         split = SplitNode(
@@ -84,38 +213,49 @@ class SplitPaneModel:
         else:
             # Leaf is root - split becomes new root
             self.root = split
-        
+            
         # Update tracking
         self.leaves[new_leaf.id] = new_leaf
         
-        # Keep focus on the original pane (not the new one)
-        # This is important - the active pane doesn't change on split
-        # self.active_pane_id remains the same
-        
+        logger.info(f"Split complete: created new pane {new_leaf.id}")
         return new_leaf.id
-    
+        
     def close_pane(self, pane_id: str) -> bool:
         """
-        Close a pane in the model.
-        Returns True if successful.
-        """
-        leaf = self.leaves.get(pane_id)
-        if not leaf:
-            return False
+        Close a pane, cleaning up its AppWidget.
         
+        Args:
+            pane_id: ID of pane to close
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        leaf = self.find_leaf(pane_id)
+        if not leaf:
+            logger.error(f"Cannot close: leaf {pane_id} not found")
+            return False
+            
         # Don't close the last pane
         if leaf == self.root:
+            logger.warning("Cannot close the last remaining pane")
             return False
-        
+            
         parent = leaf.parent
         if not parent:
+            logger.error(f"Cannot close: leaf {pane_id} has no parent")
             return False
+            
+        logger.info(f"Closing pane {pane_id}")
+        
+        # Clean up AppWidget
+        leaf.cleanup()
         
         # Find sibling
         sibling = parent.second if parent.first == leaf else parent.first
         if not sibling:
+            logger.error(f"Cannot close: no sibling found")
             return False
-        
+            
         # Promote sibling
         grandparent = parent.parent
         
@@ -130,7 +270,7 @@ class SplitPaneModel:
             # Parent is root - sibling becomes new root
             self.root = sibling
             sibling.parent = None
-        
+            
         # Clean up
         del self.leaves[pane_id]
         
@@ -139,59 +279,173 @@ class SplitPaneModel:
             # Find first available leaf
             if self.leaves:
                 self.active_pane_id = next(iter(self.leaves.keys()))
-        
+                logger.info(f"Active pane changed to {self.active_pane_id}")
+                
+        logger.info(f"Pane {pane_id} closed successfully")
         return True
-    
+        
     def set_active_pane(self, pane_id: str) -> bool:
-        """Set the active pane if it exists."""
+        """
+        Set the active pane.
+        
+        Args:
+            pane_id: ID of pane to activate
+            
+        Returns:
+            True if successful, False if pane not found
+        """
         if pane_id in self.leaves:
             self.active_pane_id = pane_id
+            logger.debug(f"Active pane set to {pane_id}")
             return True
         return False
-    
+        
     def get_active_pane_id(self) -> str:
         """Get the currently active pane ID."""
         return self.active_pane_id
-    
+        
+    def get_active_leaf(self) -> Optional[LeafNode]:
+        """Get the currently active leaf node."""
+        return self.find_leaf(self.active_pane_id)
+        
     def change_pane_type(self, pane_id: str, new_type: WidgetType) -> bool:
-        """Change the widget type of a pane."""
-        leaf = self.leaves.get(pane_id)
-        if leaf:
-            leaf.widget_type = new_type
-            return True
-        return False
-    
+        """
+        Change the widget type of a pane.
+        
+        Args:
+            pane_id: ID of pane to change
+            new_type: New widget type
+            
+        Returns:
+            True if successful
+        """
+        leaf = self.find_leaf(pane_id)
+        if not leaf:
+            return False
+            
+        logger.info(f"Changing pane {pane_id} type from {leaf.widget_type} to {new_type}")
+        
+        # Clean up old widget
+        leaf.cleanup()
+        
+        # Update type
+        leaf.widget_type = new_type
+        
+        # Create new widget
+        leaf.app_widget = self.create_app_widget(new_type, leaf.id)
+        leaf.app_widget.leaf_node = leaf
+        
+        return True
+        
     def update_split_ratio(self, split_node: SplitNode, ratio: float):
-        """Update the split ratio for a split node."""
+        """
+        Update the split ratio for a split node.
+        
+        Args:
+            split_node: Split node to update
+            ratio: New ratio (0.0 to 1.0)
+        """
         split_node.ratio = max(0.1, min(0.9, ratio))  # Clamp between 10% and 90%
-    
+        
+    def cleanup_all_widgets(self):
+        """Clean up all AppWidgets by traversing the tree."""
+        logger.info("Cleaning up all AppWidgets")
+        
+        def cleanup_leaf(leaf: LeafNode):
+            leaf.cleanup()
+            
+        self.traverse_tree(callback=cleanup_leaf)
+        
+    def get_all_app_widgets(self) -> List[AppWidget]:
+        """
+        Get all AppWidgets from the tree.
+        
+        Returns:
+            List of all AppWidget instances
+        """
+        widgets = []
+        
+        def collect_widget(leaf: LeafNode):
+            if leaf.app_widget:
+                widgets.append(leaf.app_widget)
+                
+        self.traverse_tree(callback=collect_widget)
+        return widgets
+        
+    def move_widget(self, from_pane_id: str, to_pane_id: str) -> bool:
+        """
+        Move an AppWidget from one pane to another.
+        
+        Args:
+            from_pane_id: Source pane ID
+            to_pane_id: Destination pane ID
+            
+        Returns:
+            True if successful
+        """
+        from_leaf = self.find_leaf(from_pane_id)
+        to_leaf = self.find_leaf(to_pane_id)
+        
+        if not from_leaf or not to_leaf:
+            return False
+            
+        logger.info(f"Moving widget from {from_pane_id} to {to_pane_id}")
+        
+        # Swap AppWidgets
+        from_leaf.app_widget, to_leaf.app_widget = to_leaf.app_widget, from_leaf.app_widget
+        
+        # Update back-references
+        if from_leaf.app_widget:
+            from_leaf.app_widget.leaf_node = from_leaf
+        if to_leaf.app_widget:
+            to_leaf.app_widget.leaf_node = to_leaf
+            
+        # Swap widget types
+        from_leaf.widget_type, to_leaf.widget_type = to_leaf.widget_type, from_leaf.widget_type
+        
+        return True
+        
     def to_dict(self) -> dict:
-        """Serialize model to dictionary."""
+        """
+        Serialize model to dictionary for persistence.
+        
+        Returns:
+            Dictionary representation of the model
+        """
         def node_to_dict(node):
             if isinstance(node, LeafNode):
                 return {
                     "type": "leaf",
                     "id": node.id,
                     "widget_type": node.widget_type.value,
-                    "widget_state": node.widget_state
+                    "widget_state": node.app_widget.get_state() if node.app_widget else {}
                 }
             elif isinstance(node, SplitNode):
                 return {
                     "type": "split",
+                    "id": node.id,
                     "orientation": node.orientation,
                     "ratio": node.ratio,
                     "first": node_to_dict(node.first) if node.first else None,
                     "second": node_to_dict(node.second) if node.second else None
                 }
             return None
-        
+            
         return {
             "root": node_to_dict(self.root),
             "active_pane_id": self.active_pane_id
         }
-    
+        
     def from_dict(self, data: dict):
-        """Restore model from dictionary."""
+        """
+        Restore model from dictionary.
+        
+        Args:
+            data: Dictionary representation of the model
+        """
+        # Clean up existing widgets first
+        self.cleanup_all_widgets()
+        
         def dict_to_node(node_dict, parent=None):
             if not node_dict:
                 return None
@@ -200,13 +454,23 @@ class SplitPaneModel:
                 leaf = LeafNode(
                     id=node_dict["id"],
                     widget_type=WidgetType(node_dict["widget_type"]),
-                    widget_state=node_dict.get("widget_state", {}),
                     parent=parent
                 )
+                
+                # Create AppWidget
+                leaf.app_widget = self.create_app_widget(leaf.widget_type, leaf.id)
+                leaf.app_widget.leaf_node = leaf
+                
+                # Restore widget state
+                if "widget_state" in node_dict:
+                    leaf.app_widget.set_state(node_dict["widget_state"])
+                    
                 self.leaves[leaf.id] = leaf
                 return leaf
+                
             elif node_dict["type"] == "split":
                 split = SplitNode(
+                    id=node_dict["id"],
                     orientation=node_dict["orientation"],
                     ratio=node_dict["ratio"],
                     parent=parent
@@ -214,8 +478,9 @@ class SplitPaneModel:
                 split.first = dict_to_node(node_dict.get("first"), split)
                 split.second = dict_to_node(node_dict.get("second"), split)
                 return split
+                
             return None
-        
+            
         self.leaves.clear()
         self.root = dict_to_node(data["root"])
         self.active_pane_id = data.get("active_pane_id", "")

@@ -35,6 +35,7 @@ class TerminalSession:
     child_pid: Optional[int] = None
     command: str = "bash"
     cmd_args: list = field(default_factory=list)
+    cwd: Optional[str] = None
     created_at: float = field(default_factory=time.time)
     last_activity: float = field(default_factory=time.time)
     rows: int = 24
@@ -149,6 +150,9 @@ class TerminalServerManager:
         child_pid, fd = pty.fork()
         if child_pid == 0:
             # Child process - execute shell
+            # Change to working directory if specified
+            if session.cwd and os.path.exists(session.cwd):
+                os.chdir(session.cwd)
             subprocess_cmd = [session.command] + session.cmd_args
             os.execvp(subprocess_cmd[0], subprocess_cmd)
         else:
@@ -200,7 +204,7 @@ class TerminalServerManager:
         winsize = struct.pack("HHHH", rows, cols, xpix, ypix)
         fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
     
-    def create_session(self, command: str = "bash", cmd_args: str = "") -> str:
+    def create_session(self, command: str = "bash", cmd_args: str = "", cwd: Optional[str] = None) -> str:
         """Create a new terminal session."""
         if len(self.sessions) >= self.max_sessions:
             raise RuntimeError(f"Maximum number of sessions ({self.max_sessions}) reached")
@@ -211,7 +215,8 @@ class TerminalServerManager:
         session = TerminalSession(
             session_id=session_id,
             command=command,
-            cmd_args=args_list
+            cmd_args=args_list,
+            cwd=cwd
         )
         
         self.sessions[session_id] = session
@@ -222,6 +227,12 @@ class TerminalServerManager:
             self.start_server()
         
         return session_id
+    
+    def get_terminal_url(self, session_id: str) -> str:
+        """Get the terminal URL for a specific session."""
+        if session_id not in self.sessions:
+            raise ValueError(f"Session {session_id} not found")
+        return f"http://127.0.0.1:{self.port}/terminal/{session_id}"
     
     def destroy_session(self, session_id: str):
         """Destroy a terminal session."""
