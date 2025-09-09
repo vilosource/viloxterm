@@ -18,7 +18,7 @@ from PySide6.QtGui import QAction
 from ui.widgets.split_pane_model import SplitPaneModel, LeafNode, SplitNode
 from ui.widgets.widget_registry import WidgetType, widget_registry
 from ui.widgets.pane_header import PaneHeaderBar
-from ui.vscode_theme import get_splitter_stylesheet
+from ui.vscode_theme import get_splitter_stylesheet, EDITOR_BACKGROUND
 
 logger = logging.getLogger(__name__)
 
@@ -289,6 +289,14 @@ class SplitPaneWidget(QWidget):
         
     def setup_ui(self):
         """Initialize the UI."""
+        # Set dark background to prevent white flash
+        self.setStyleSheet(f"""
+            SplitPaneWidget {{
+                background-color: {EDITOR_BACKGROUND};
+            }}
+        """)
+        self.setAutoFillBackground(True)
+        
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
@@ -427,8 +435,9 @@ class SplitPaneWidget(QWidget):
                 Qt.Horizontal if node.orientation == "horizontal" else Qt.Vertical
             )
             
-            # Configure for smooth resizing without visual artifacts
-            splitter.setOpaqueResize(False)  # Only resize at end of drag operation
+            # Configure splitter for optimal rendering
+            splitter.setOpaqueResize(True)  # Real-time resize (actually reduces flashing)
+            splitter.setChildrenCollapsible(False)  # Prevent child widgets from collapsing
             
             # Apply styling
             splitter.setStyleSheet(get_splitter_stylesheet())

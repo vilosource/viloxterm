@@ -270,6 +270,9 @@ def get_menu_stylesheet():
 def get_splitter_stylesheet():
     """Get stylesheet for splitters."""
     return f"""
+        QSplitter {{
+            background-color: {EDITOR_BACKGROUND};
+        }}
         QSplitter::handle {{
             background-color: {SPLITTER_BACKGROUND};
         }}
