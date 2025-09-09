@@ -405,6 +405,138 @@ class SplitPaneWidget(QWidget):
             
         # Emit signal
         self.layout_changed.emit()
+    
+    def incremental_update_for_split(self, original_pane_id: str, new_pane_id: str):
+        """
+        Incrementally update the view for a split operation without full refresh.
+        This avoids destroying and recreating the entire widget tree.
+        
+        Args:
+            original_pane_id: ID of the pane that was split (now first child of split)
+            new_pane_id: ID of the newly created pane (second child of split)
+        """
+        logger.debug(f"Incremental update for split: {original_pane_id} -> {new_pane_id}")
+        
+        # Disable updates during the incremental change
+        self.setUpdatesEnabled(False)
+        try:
+            # Find the widget that needs to be replaced (the original pane that was split)
+            old_wrapper = self.pane_wrappers.get(original_pane_id)
+            if not old_wrapper:
+                logger.warning(f"Could not find wrapper for {original_pane_id}, falling back to full refresh")
+                self.refresh_view()
+                return
+            
+            # Find the parent widget of the old wrapper
+            parent_widget = old_wrapper.parent()
+            if not parent_widget:
+                logger.warning("Old wrapper has no parent, falling back to full refresh")
+                self.refresh_view()
+                return
+            
+            # Find the original leaf node in the model
+            original_leaf = self.model.find_leaf(original_pane_id)
+            if not original_leaf or not original_leaf.parent:
+                logger.warning(f"Could not find original leaf or its parent for {original_pane_id}, falling back to full refresh")
+                self.refresh_view()
+                return
+            
+            # The parent of the original leaf should now be the split node
+            split_node = original_leaf.parent
+            if not isinstance(split_node, SplitNode):
+                logger.warning(f"Parent of {original_pane_id} is not a SplitNode, falling back to full refresh")
+                self.refresh_view()
+                return
+            
+            # Create the new splitter widget for this split node
+            new_splitter = self.render_node(split_node)
+            if not new_splitter:
+                logger.warning("Failed to render split node, falling back to full refresh")
+                self.refresh_view()
+                return
+            
+            # Replace the old wrapper with the new splitter in the parent
+            if isinstance(parent_widget, QSplitter):
+                # Find the index of the old widget
+                index = -1
+                for i in range(parent_widget.count()):
+                    if parent_widget.widget(i) == old_wrapper:
+                        index = i
+                        break
+                
+                if index >= 0:
+                    # Get the size of the old widget before removing
+                    sizes = parent_widget.sizes()
+                    
+                    # Remove old wrapper from parent splitter
+                    old_wrapper.setParent(None)
+                    old_wrapper.deleteLater()
+                    del self.pane_wrappers[original_pane_id]
+                    
+                    # Insert new splitter at the same position
+                    parent_widget.insertWidget(index, new_splitter)
+                    
+                    # Restore the size
+                    parent_widget.setSizes(sizes)
+                else:
+                    logger.warning("Could not find old wrapper in parent splitter")
+                    self.refresh_view()
+                    return
+            elif isinstance(parent_widget, QWidget) and parent_widget == self:
+                # This is the root widget
+                # Remove old wrapper from layout
+                self.layout.removeWidget(old_wrapper)
+                old_wrapper.setParent(None)
+                old_wrapper.deleteLater()
+                del self.pane_wrappers[original_pane_id]
+                
+                # Add new splitter to layout
+                self.layout.addWidget(new_splitter)
+            else:
+                logger.warning(f"Unexpected parent widget type: {type(parent_widget)}")
+                self.refresh_view()
+                return
+            
+            # Reconnect signals for new widgets
+            self.connect_model_signals()
+            
+            # Update active pane visual
+            self.update_active_pane_visual()
+            
+            logger.debug("Incremental update completed successfully")
+            
+        finally:
+            # Re-enable updates
+            self.setUpdatesEnabled(True)
+        
+        # Emit signal
+        self.layout_changed.emit()
+    
+    def _find_node_by_id(self, node: Optional[Union[LeafNode, SplitNode]], node_id: str) -> Optional[Union[LeafNode, SplitNode]]:
+        """
+        Recursively find a node in the tree by its ID.
+        
+        Args:
+            node: Current node to search from
+            node_id: ID of the node to find
+            
+        Returns:
+            The node with the given ID, or None if not found
+        """
+        if not node:
+            return None
+        
+        if node.id == node_id:
+            return node
+        
+        if isinstance(node, SplitNode):
+            # Search in children
+            result = self._find_node_by_id(node.first, node_id)
+            if result:
+                return result
+            return self._find_node_by_id(node.second, node_id)
+        
+        return None
         
     def render_node(self, node: Optional[Union[LeafNode, SplitNode]]) -> Optional[QWidget]:
         """
@@ -519,14 +651,24 @@ class SplitPaneWidget(QWidget):
         """Split pane horizontally."""
         new_id = self.model.split_pane(pane_id, "horizontal")
         if new_id:
-            self.refresh_view()
+            # Try incremental update first
+            try:
+                self.incremental_update_for_split(pane_id, new_id)
+            except Exception as e:
+                logger.warning(f"Incremental update failed: {e}, falling back to full refresh")
+                self.refresh_view()
             self.pane_added.emit(new_id)
             
     def split_vertical(self, pane_id: str):
         """Split pane vertically."""
         new_id = self.model.split_pane(pane_id, "vertical")
         if new_id:
-            self.refresh_view()
+            # Try incremental update first
+            try:
+                self.incremental_update_for_split(pane_id, new_id)
+            except Exception as e:
+                logger.warning(f"Incremental update failed: {e}, falling back to full refresh")
+                self.refresh_view()
             self.pane_added.emit(new_id)
             
     def close_pane(self, pane_id: str):
