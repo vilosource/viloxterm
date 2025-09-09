@@ -457,6 +457,14 @@ class SplitPaneWidget(QWidget):
             if item.widget():
                 item.widget().setParent(None)
         
+        # Clean up old widgets properly (especially terminals)
+        for pane_id, widget in self.widgets.items():
+            if isinstance(widget, PaneContent) and widget.content_widget:
+                # Clean up terminal sessions before destroying widgets
+                if hasattr(widget.content_widget, 'close_terminal'):
+                    widget.content_widget.close_terminal()
+            widget.deleteLater()
+        
         # Clear widget references
         self.widgets.clear()
         
@@ -579,11 +587,14 @@ class SplitPaneWidget(QWidget):
             if self.leaves:
                 self.active_pane_id = next(iter(self.leaves.keys()))
         
-        # Clean up widget
+        # Clean up widget's terminal session before refreshing
         if pane_id in self.widgets:
-            self.widgets[pane_id].deleteLater()
+            widget = self.widgets[pane_id]
+            if isinstance(widget, PaneContent) and widget.content_widget:
+                if hasattr(widget.content_widget, 'close_terminal'):
+                    widget.content_widget.close_terminal()
         
-        # Refresh view
+        # Refresh view (will clean up widgets)
         self.refresh_view()
         
         # Emit signal
