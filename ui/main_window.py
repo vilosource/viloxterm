@@ -260,8 +260,13 @@ class MainWindow(QMainWindow):
             )
         
     def closeEvent(self, event):
-        """Save state before closing."""
+        """Save state and clean up resources before closing."""
         self.save_state()
+        
+        # Clean up all terminal sessions before closing
+        from ui.terminal.terminal_server import terminal_server
+        terminal_server.cleanup_all_sessions()
+        
         event.accept()
         
     def save_state(self):

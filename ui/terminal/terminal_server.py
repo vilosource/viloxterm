@@ -333,6 +333,13 @@ class TerminalServerManager:
             logger.info(f"Cleaning up inactive session {session_id}")
             self.destroy_session(session_id)
     
+    def cleanup_all_sessions(self):
+        """Clean up all terminal sessions. Called on app shutdown."""
+        logger.info(f"Cleaning up all {len(self.sessions)} terminal sessions")
+        session_ids = list(self.sessions.keys())
+        for session_id in session_ids:
+            self.destroy_session(session_id)
+    
     def _start_cleanup_timer(self):
         """Start periodic cleanup of inactive sessions."""
         def cleanup_task():

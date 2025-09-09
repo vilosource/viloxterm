@@ -73,6 +73,21 @@ class Workspace(QWidget):
         self.tab_widget.tabBar().setContextMenuPolicy(Qt.CustomContextMenu)
         self.tab_widget.tabBar().customContextMenuRequested.connect(self.show_tab_context_menu)
     
+    def _cleanup_split_widget(self, split_widget: SplitPaneWidget):
+        """Clean up a split widget and its terminals before removal."""
+        # Get all pane widgets
+        for pane_id in split_widget.get_all_pane_ids():
+            widget = split_widget.widgets.get(pane_id)
+            if widget:
+                # Check if it's a PaneContent with a terminal
+                from ui.widgets.split_pane_widget import PaneContent
+                if isinstance(widget, PaneContent) and widget.content_widget:
+                    if hasattr(widget.content_widget, 'close_terminal'):
+                        widget.content_widget.close_terminal()
+        
+        # Delete the widget
+        split_widget.deleteLater()
+    
     def create_default_tab(self):
         """Create the initial default tab."""
         self.add_editor_tab("Welcome")
@@ -185,6 +200,10 @@ class Workspace(QWidget):
         # Get tab data
         if index in self.tabs:
             tab_data = self.tabs[index]
+            
+            # Clean up the split widget's terminals before removing
+            if tab_data.split_widget:
+                self._cleanup_split_widget(tab_data.split_widget)
             
             # Remove from tabs dict
             del self.tabs[index]
@@ -383,6 +402,11 @@ class Workspace(QWidget):
     
     def reset_to_default_layout(self):
         """Reset workspace to default single pane layout."""
+        # Clean up all existing tabs properly
+        for tab_data in self.tabs.values():
+            if tab_data.split_widget:
+                self._cleanup_split_widget(tab_data.split_widget)
+        
         # Clear all tabs
         while self.tab_widget.count() > 0:
             self.tab_widget.removeTab(0)
