@@ -401,22 +401,33 @@ class SplitPaneWidget(QWidget):
     
     def create_pane_widget(self, leaf: LeafNode, old_widgets: Optional[Dict[str, QWidget]] = None) -> QWidget:
         """Create a widget for a leaf node, reusing existing widget if available."""
+        widget = None
+        
         # Try to reuse existing widget if available
         if old_widgets and leaf.id in old_widgets:
             widget = old_widgets[leaf.id]
-            # Widget already exists with signals connected
-            return widget
-        
-        # Create new widget
-        if self.widget_factory:
-            # Use custom factory
-            widget = self.widget_factory(leaf.id, leaf.widget_type)
+            # CRITICAL: Disconnect old signals to prevent duplicate connections
+            if isinstance(widget, PaneContent):
+                try:
+                    widget.split_horizontal_requested.disconnect()
+                    widget.split_vertical_requested.disconnect()
+                    widget.close_requested.disconnect()
+                    widget.widget_type_changed.disconnect()
+                    widget.pane_focused.disconnect()
+                except:
+                    pass  # Signals might not be connected
         else:
-            # Use default PaneContent
-            widget = PaneContent(leaf.id, leaf.widget_type)
+            # Create new widget
+            if self.widget_factory:
+                # Use custom factory
+                widget = self.widget_factory(leaf.id, leaf.widget_type)
+            else:
+                # Use default PaneContent
+                widget = PaneContent(leaf.id, leaf.widget_type)
         
-        # Connect signals if it's our PaneContent
+        # ALWAYS reconnect signals - this ensures proper routing
         if isinstance(widget, PaneContent):
+            print(f"[DEBUG] Connecting signals for pane {leaf.id}")
             widget.split_horizontal_requested.connect(self.split_horizontal)
             widget.split_vertical_requested.connect(self.split_vertical)
             widget.close_requested.connect(self.close_pane)
@@ -431,8 +442,7 @@ class SplitPaneWidget(QWidget):
             # Create widget for leaf
             widget = self.create_pane_widget(node, old_widgets)
             
-            # Store references
-            node.widget = widget
+            # Store widget reference in view only (not in model)
             self.widgets[node.id] = widget
             
             return widget
@@ -467,8 +477,8 @@ class SplitPaneWidget(QWidget):
                 lambda: self._update_ratio(node, splitter)
             )
             
-            # Store reference
-            node.splitter = splitter
+            # Don't store splitter in model - violates MVC
+            # View references should stay in view layer only
             
             return splitter
         
@@ -516,10 +526,12 @@ class SplitPaneWidget(QWidget):
     
     def split_horizontal(self, pane_id: str):
         """Split pane horizontally (left|right)."""
+        print(f"[DEBUG] split_horizontal called with pane_id: {pane_id}, active_pane: {self.active_pane_id}")
         self._split_pane(pane_id, "horizontal")
     
     def split_vertical(self, pane_id: str):
         """Split pane vertically (top|bottom)."""
+        print(f"[DEBUG] split_vertical called with pane_id: {pane_id}, active_pane: {self.active_pane_id}")
         self._split_pane(pane_id, "vertical")
     
     def _split_pane(self, pane_id: str, orientation: str):
