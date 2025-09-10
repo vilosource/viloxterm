@@ -663,9 +663,9 @@ class SplitPaneWidget(QWidget):
     
     def split_horizontal(self, pane_id: str):
         """Split pane horizontally."""
-        # Begin transition overlay
-        if self.transition_manager:
-            self.transition_manager.begin_transition()
+        # Temporarily disabled overlay transition - causing splits to not show
+        # if self.transition_manager:
+        #     self.transition_manager.begin_transition()
         
         new_id = self.model.split_pane(pane_id, "horizontal")
         if new_id:
@@ -678,14 +678,14 @@ class SplitPaneWidget(QWidget):
             self.pane_added.emit(new_id)
         
         # End transition with fade
-        if self.transition_manager:
-            self.transition_manager.end_transition(delay=100)
+        # if self.transition_manager:
+        #     self.transition_manager.end_transition(delay=100)
             
     def split_vertical(self, pane_id: str):
         """Split pane vertically."""
-        # Begin transition overlay
-        if self.transition_manager:
-            self.transition_manager.begin_transition()
+        # Temporarily disabled overlay transition - causing splits to not show
+        # if self.transition_manager:
+        #     self.transition_manager.begin_transition()
         
         new_id = self.model.split_pane(pane_id, "vertical")
         if new_id:
@@ -698,21 +698,21 @@ class SplitPaneWidget(QWidget):
             self.pane_added.emit(new_id)
         
         # End transition with fade
-        if self.transition_manager:
-            self.transition_manager.end_transition(delay=100)
+        # if self.transition_manager:
+        #     self.transition_manager.end_transition(delay=100)
             
     def close_pane(self, pane_id: str):
         """Close a pane."""
-        # Begin transition overlay
-        if self.transition_manager:
-            self.transition_manager.begin_transition()
+        # Temporarily disabled overlay transition - causing issues
+        # if self.transition_manager:
+        #     self.transition_manager.begin_transition()
         
         if self.model.close_pane(pane_id):
             self.refresh_view()
         
         # End transition with fade
-        if self.transition_manager:
-            self.transition_manager.end_transition(delay=100)
+        # if self.transition_manager:
+        #     self.transition_manager.end_transition(delay=100)
             self.pane_removed.emit(pane_id)
             
     def set_active_pane(self, pane_id: str):
