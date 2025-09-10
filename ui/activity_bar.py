@@ -72,21 +72,21 @@ class ActivityBar(QToolBar):
         self.explorer_action.setCheckable(True)
         self.explorer_action.setChecked(True)
         self.explorer_action.setToolTip("Explorer (Ctrl+Shift+E)")
-        self.explorer_action.triggered.connect(lambda: self.on_view_selected("explorer"))
+        self.explorer_action.triggered.connect(lambda: self.on_action_clicked("explorer"))
         self.addAction(self.explorer_action)
         
         # Search action
         self.search_action = QAction(icon_manager.get_icon("search"), "Search", self)
         self.search_action.setCheckable(True)
         self.search_action.setToolTip("Search (Ctrl+Shift+F)")
-        self.search_action.triggered.connect(lambda: self.on_view_selected("search"))
+        self.search_action.triggered.connect(lambda: self.on_action_clicked("search"))
         self.addAction(self.search_action)
         
         # Git action
         self.git_action = QAction(icon_manager.get_icon("git"), "Git", self)
         self.git_action.setCheckable(True)
         self.git_action.setToolTip("Source Control (Ctrl+Shift+G)")
-        self.git_action.triggered.connect(lambda: self.on_view_selected("git"))
+        self.git_action.triggered.connect(lambda: self.on_action_clicked("git"))
         self.addAction(self.git_action)
         
         # Add separator
@@ -96,10 +96,10 @@ class ActivityBar(QToolBar):
         self.settings_action = QAction(icon_manager.get_icon("settings"), "Settings", self)
         self.settings_action.setCheckable(True)
         self.settings_action.setToolTip("Settings (Ctrl+,)")
-        self.settings_action.triggered.connect(lambda: self.on_view_selected("settings"))
+        self.settings_action.triggered.connect(lambda: self.on_action_clicked("settings"))
         self.addAction(self.settings_action)
         
-        # Group actions for exclusive selection
+        # Group actions for easy access
         self.view_actions = [
             self.explorer_action,
             self.search_action,
@@ -107,31 +107,47 @@ class ActivityBar(QToolBar):
             self.settings_action
         ]
         
-    def on_view_selected(self, view_name: str):
-        """Handle view selection."""
-        # Find the action that was clicked
+    def on_action_clicked(self, view_name: str):
+        """Handle action click - manually manage checked states.
+        
+        This method completely controls the checked state of actions
+        to avoid Qt's automatic toggling behavior that causes the triple-click bug.
+        """
+        # Get the clicked action
         clicked_action = None
         for action in self.view_actions:
             if action.text().lower() == view_name:
                 clicked_action = action
                 break
         
+        if not clicked_action:
+            return
+        
+        # Get current checked state (Qt has already toggled it)
+        is_now_checked = clicked_action.isChecked()
+        
         if view_name == self.current_view:
-            # Same view clicked - toggle sidebar
-            # Important: Keep the action checked when sidebar is visible,
-            # unchecked when hidden. This prevents the triple-click bug.
+            # Same view clicked - this is a toggle request
+            # The checked state has already been toggled by Qt
+            # Just emit the toggle signal
             self.toggle_sidebar.emit()
-            # Don't change current_view, but we need to track sidebar state
-            # The action's checked state will be managed by the main window
         else:
-            # Different view clicked - switch to new view
+            # Different view clicked - switch views
+            # First, uncheck all actions
+            for action in self.view_actions:
+                action.blockSignals(True)
+                action.setChecked(False)
+                action.blockSignals(False)
+            
+            # Check the clicked action
+            clicked_action.blockSignals(True)
+            clicked_action.setChecked(True)
+            clicked_action.blockSignals(False)
+            
+            # Update current view
             self.current_view = view_name
             
-            # Update checked states - ensure only the clicked action is checked
-            for action in self.view_actions:
-                action.setChecked(action == clicked_action)
-                
-            # Emit signal to change view
+            # Emit view change signal
             self.view_changed.emit(view_name)
             
     def set_sidebar_visible(self, visible: bool):
