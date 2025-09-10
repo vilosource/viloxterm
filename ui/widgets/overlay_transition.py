@@ -10,7 +10,7 @@ captured image of the current state while changes happen underneath.
 import logging
 from typing import Optional
 from PySide6.QtWidgets import QWidget, QLabel
-from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, Signal, QTimer
+from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, Signal, QTimer, QPoint
 from PySide6.QtGui import QPixmap, QPainter
 
 logger = logging.getLogger(__name__)
@@ -78,7 +78,8 @@ class OverlayWidget(QLabel):
             
             # Render widget to pixmap
             painter = QPainter(pixmap)
-            widget.render(painter)
+            # render() requires a targetOffset parameter when using QPainter
+            widget.render(painter, QPoint(0, 0))
             painter.end()
             
             # Set the pixmap
