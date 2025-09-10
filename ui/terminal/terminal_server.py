@@ -19,9 +19,10 @@ import atexit
 import signal
 from typing import Dict, Optional, Tuple, Any
 from dataclasses import dataclass, field
-from flask import Flask, render_template_string, request, send_from_directory
+from flask import Flask, render_template_string, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import sys
+from ui.terminal.terminal_assets import terminal_asset_bundler
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -92,13 +93,8 @@ class TerminalServerManager:
             """Serve terminal page for a specific session."""
             if session_id not in self.sessions:
                 return "Session not found", 404
-            return self._get_html_template(session_id)
-        
-        @self.app.route("/static/<path:filename>")
-        def serve_static(filename):
-            """Serve static files (JS, CSS) for terminal."""
-            static_dir = os.path.join(os.path.dirname(__file__), 'static')
-            return send_from_directory(static_dir, filename)
+            # Use bundled assets instead of serving static files
+            return terminal_asset_bundler.get_bundled_html(session_id, self.port)
         
         @self.socketio.on("connect", namespace="/terminal")
         def handle_connect():
@@ -371,225 +367,6 @@ class TerminalServerManager:
         if self.running:
             cleanup_thread = threading.Thread(target=cleanup_task, daemon=True)
             cleanup_thread.start()
-    
-    def _get_html_template(self, session_id: str) -> str:
-        """Get HTML template for terminal with session ID."""
-        # This will be moved to a separate file later
-        return f'''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <title>Terminal - {session_id}</title>
-    <style>
-        body {{ 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            background: #1e1e1e; 
-        }}
-        #terminal {{ 
-            width: 100%; 
-            height: 100vh; 
-        }}
-        
-        /* VSCode-style scrollbars */
-        .xterm-viewport::-webkit-scrollbar {{
-            width: 10px !important;
-        }}
-        
-        .xterm-viewport::-webkit-scrollbar-track {{
-            background: #1e1e1e !important;
-        }}
-        
-        .xterm-viewport::-webkit-scrollbar-thumb {{
-            background: #464647 !important;
-            border-radius: 5px !important;
-        }}
-        
-        .xterm-viewport::-webkit-scrollbar-thumb:hover {{
-            background: #5a5a5c !important;
-        }}
-    </style>
-    <link rel="stylesheet" href="/static/css/xterm.css" />
-</head>
-<body>
-    <div id="terminal"></div>
-    <script src="/static/js/xterm.js"></script>
-    <script src="/static/js/xterm-addon-fit.js"></script>
-    <script src="/static/js/xterm-addon-web-links.js"></script>
-    <script src="/static/js/socket.io.min.js"></script>
-    <script>
-        const SESSION_ID = '{session_id}';
-        
-        // Wait for libraries to load
-        function initTerminal() {{
-            console.log('Checking libraries...');
-            console.log('Terminal:', typeof Terminal);
-            console.log('FitAddon:', typeof FitAddon);
-            console.log('WebLinksAddon:', typeof WebLinksAddon);
-            console.log('io:', typeof io);
-            
-            if (typeof Terminal === 'undefined' || typeof FitAddon === 'undefined' || 
-                typeof WebLinksAddon === 'undefined' || typeof io === 'undefined') {{
-                console.log('Waiting for libraries to load...');
-                setTimeout(initTerminal, 100);
-                return;
-            }}
-            
-            console.log('All libraries loaded, initializing terminal...');
-            
-            try {{
-                // Initialize terminal
-                const term = new Terminal({{
-            cursorBlink: true,
-            macOptionIsMeta: true,
-            scrollback: 1000,
-            theme: {{
-                background: '#1e1e1e',
-                foreground: '#d4d4d4',
-                cursor: '#ffffff',
-                cursorAccent: '#000000',
-                selection: '#264f78',
-                black: '#000000',
-                red: '#cd3131',
-                green: '#0dbc79',
-                yellow: '#e5e510',
-                blue: '#2472c8',
-                magenta: '#bc3fbc',
-                cyan: '#11a8cd',
-                white: '#e5e5e5',
-                brightBlack: '#666666',
-                brightRed: '#f14c4c',
-                brightGreen: '#23d18b',
-                brightYellow: '#f5f543',
-                brightBlue: '#3b8eea',
-                brightMagenta: '#d670d6',
-                brightCyan: '#29b8db',
-                brightWhite: '#e5e5e5'
-            }},
-            fontFamily: 'Consolas, "Courier New", monospace',
-            fontSize: 14,
-            lineHeight: 1.2
-        }});
-        
-        // Load addons
-        const fitAddon = new FitAddon.FitAddon();
-        const webLinksAddon = new WebLinksAddon.WebLinksAddon();
-        term.loadAddon(fitAddon);
-        term.loadAddon(webLinksAddon);
-        
-        // Open terminal
-        term.open(document.getElementById("terminal"));
-        
-        // Connect to server
-        const socket = io.connect('/terminal', {{
-            query: {{ session_id: SESSION_ID }}
-        }});
-        
-        // Handle terminal input
-        term.onData((data) => {{
-            socket.emit("pty-input", {{ 
-                input: data, 
-                session_id: SESSION_ID 
-            }});
-        }});
-        
-        // Handle server output
-        socket.on("pty-output", function (data) {{
-            if (data.session_id === SESSION_ID) {{
-                term.write(data.output);
-            }}
-        }});
-        
-        // Handle resize
-        function fitTerminal() {{
-            fitAddon.fit();
-            const dims = {{ 
-                cols: term.cols, 
-                rows: term.rows,
-                session_id: SESSION_ID
-            }};
-            socket.emit("resize", dims);
-        }}
-        
-        // Initial fit
-        socket.on("connect", () => {{
-            setTimeout(fitTerminal, 100);
-        }});
-        
-        // Handle window resize
-        window.addEventListener('resize', () => {{
-            clearTimeout(window.resizeTimer);
-            window.resizeTimer = setTimeout(fitTerminal, 100);
-        }});
-        
-        // Keyboard shortcuts
-        term.attachCustomKeyEventHandler((e) => {{
-            if (e.type !== "keydown") return true;
-            
-            if (e.ctrlKey && e.shiftKey) {{
-                const key = e.key.toLowerCase();
-                if (key === "v") {{
-                    navigator.clipboard.readText().then((text) => {{
-                        term.paste(text);
-                    }});
-                    return false;
-                }} else if (key === "c") {{
-                    const selection = term.getSelection();
-                    if (selection) {{
-                        navigator.clipboard.writeText(selection);
-                        return false;
-                    }}
-                }}
-            }}
-            return true;
-        }});
-        
-        // Focus detection for WebChannel integration
-        // These will communicate with the Qt WebChannel if available
-        const terminalElement = document.getElementById("terminal");
-        
-        // Detect focus on the terminal
-        terminalElement.addEventListener('focus', () => {{
-            if (typeof terminal !== 'undefined' && terminal.js_terminal_focused) {{
-                terminal.js_terminal_focused();
-            }}
-        }}, true);
-        
-        // Also detect clicks (existing functionality)
-        terminalElement.addEventListener('click', () => {{
-            if (typeof terminal !== 'undefined' && terminal.js_terminal_clicked) {{
-                terminal.js_terminal_clicked();
-            }}
-        }});
-        
-        // Make terminal focusable and detect focus on any child elements
-        terminalElement.setAttribute('tabindex', '0');
-        document.addEventListener('focusin', (event) => {{
-            if (terminalElement.contains(event.target)) {{
-                if (typeof terminal !== 'undefined' && terminal.js_terminal_focused) {{
-                    terminal.js_terminal_focused();
-                }}
-            }}
-        }});
-        
-        console.log('Terminal initialized successfully');
-        }} catch (error) {{
-            console.error('Failed to initialize terminal:', error);
-            document.getElementById('terminal').innerHTML = 
-                '<div style="color: red; padding: 20px;">Failed to initialize terminal: ' + error.message + '</div>';
-        }}
-        }}
-        
-        // Start initialization when page loads
-        window.addEventListener('load', initTerminal);
-        // Also try immediately in case scripts are already loaded
-        initTerminal();
-    </script>
-</body>
-</html>
-'''
 
 
 # Create singleton instance

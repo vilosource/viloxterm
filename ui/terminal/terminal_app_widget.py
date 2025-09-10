@@ -10,13 +10,16 @@ import logging
 from typing import Dict, Any, Optional
 from PySide6.QtWidgets import QVBoxLayout
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtCore import Slot, QUrl
+from PySide6.QtCore import Slot, QUrl, Signal
 from PySide6.QtGui import QColor
 
 from ui.widgets.app_widget import AppWidget
 from ui.widgets.widget_registry import WidgetType
 from ui.terminal.terminal_server import terminal_server
 from ui.terminal.terminal_config import TerminalConfig
+from ui.terminal.terminal_themes import get_terminal_theme
+from ui.terminal.terminal_assets import terminal_asset_bundler
+from ui.icon_manager import get_icon_manager
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +31,22 @@ class TerminalAppWidget(AppWidget):
     Manages its own terminal session and WebEngine view.
     """
     
+    # Signal for theme changes from Qt to JavaScript
+    themeChanged = Signal(dict)
+    
     def __init__(self, widget_id: str, parent=None):
         """Initialize the terminal widget."""
         super().__init__(widget_id, WidgetType.TERMINAL, parent)
         self.session_id = None
         self.web_view = None
         self.config = TerminalConfig()
+        self.current_theme = "dark"
+        
+        # Connect to theme changes from IconManager
+        icon_manager = get_icon_manager()
+        self.current_theme = icon_manager.theme
+        icon_manager.theme_changed.connect(self.on_app_theme_changed)
+        
         self.setup_terminal()
         
     def setup_terminal(self):
@@ -161,10 +174,17 @@ class TerminalAppWidget(AppWidget):
                 cwd=initial_dir
             )
             
-            # Load terminal URL
-            terminal_url = terminal_server.get_terminal_url(self.session_id)
-            logger.info(f"Loading terminal URL: {terminal_url}")
-            self.web_view.setUrl(QUrl(terminal_url))
+            # Get bundled HTML instead of using URL
+            bundled_html = terminal_asset_bundler.get_bundled_html(
+                self.session_id, 
+                terminal_server.port
+            )
+            
+            # Set base URL for Socket.IO to work correctly
+            base_url = QUrl(f"http://127.0.0.1:{terminal_server.port}/")
+            
+            logger.info(f"Loading bundled terminal HTML for session: {self.session_id}")
+            self.web_view.setHtml(bundled_html, base_url)
             
             logger.info(f"Terminal session started: {self.session_id}")
             
@@ -231,11 +251,46 @@ class TerminalAppWidget(AppWidget):
     def reload(self):
         """Reload the terminal (reconnect to session)."""
         if self.session_id and self.web_view:
-            terminal_url = terminal_server.get_terminal_url(self.session_id)
-            self.web_view.setUrl(QUrl(terminal_url))
+            # Get bundled HTML
+            bundled_html = terminal_asset_bundler.get_bundled_html(
+                self.session_id, 
+                terminal_server.port
+            )
+            # Set base URL for Socket.IO
+            base_url = QUrl(f"http://127.0.0.1:{terminal_server.port}/")
+            self.web_view.setHtml(bundled_html, base_url)
             
     def execute_command(self, command: str):
         """Execute a command in the terminal."""
         # This would require WebChannel or similar to communicate with xterm.js
         # For now, this is a placeholder
         pass
+    
+    @Slot(result=dict)
+    def getCurrentTheme(self):
+        """
+        Provide current theme to JavaScript via QWebChannel.
+        Called from JavaScript when terminal initializes.
+        """
+        theme_data = get_terminal_theme(self.current_theme)
+        logger.debug(f"Providing theme data to terminal: {self.current_theme}")
+        return theme_data
+    
+    @Slot(str)
+    def on_app_theme_changed(self, theme_name: str):
+        """
+        Handle theme change from IconManager.
+        Push new theme to terminal via signal.
+        """
+        logger.info(f"Terminal theme changing to: {theme_name}")
+        self.current_theme = theme_name
+        theme_data = get_terminal_theme(theme_name)
+        
+        # Emit signal for QWebChannel
+        self.themeChanged.emit(theme_data)
+        
+        # Also try direct JavaScript injection as fallback
+        if self.web_view:
+            theme_json = str(theme_data).replace("'", '"')
+            js_code = f"if (window.applyTerminalTheme) {{ window.applyTerminalTheme({theme_json}); }}"
+            self.web_view.page().runJavaScript(js_code)
