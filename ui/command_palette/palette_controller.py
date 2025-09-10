@@ -12,6 +12,7 @@ import logging
 
 from core.commands.base import Command, CommandContext
 from core.commands.registry import command_registry
+from core.commands.executor import command_executor
 from core.context.manager import context_manager  
 from core.settings.service import SettingsService
 from services.service_locator import ServiceLocator
@@ -140,14 +141,12 @@ class CommandPaletteController(QObject):
             
             # Create command context
             context = CommandContext(
-                command_id=command_id,
-                args=kwargs,
                 main_window=self.main_window,
-                service_locator=self.service_locator
+                args=kwargs
             )
             
-            # Execute command through registry
-            result = command_registry.execute_command(context)
+            # Execute command through executor
+            result = command_executor.execute(command_id, context)
             
             if result.success:
                 logger.info(f"Command {command_id} executed successfully")
