@@ -254,23 +254,23 @@ class MainWindow(QMainWindow):
         if widget is None:
             return
             
-        # Don't install on WebEngineView directly to avoid issues
+        # Install on the widget first (including WebEngineView)
+        # This is safe now that we're not using QApplication filter
+        widget.installEventFilter(self)
+        
+        # For WebEngineView, also try to install on focus proxy
         from PySide6.QtWebEngineWidgets import QWebEngineView
         if isinstance(widget, QWebEngineView):
-            # Install on focus proxy if available
             focus_proxy = widget.focusProxy()
             if focus_proxy:
                 focus_proxy.installEventFilter(self)
-        else:
-            # Install on the widget
-            widget.installEventFilter(self)
-            
-            # Recursively install on children
-            from PySide6.QtWidgets import QWidget
-            for child in widget.findChildren(QWidget):
-                # Skip WebEngine internal widgets
-                if "RenderWidgetHostViewQtDelegateWidget" not in child.__class__.__name__:
-                    self._install_filters_recursively(child)
+        
+        # Recursively install on children
+        from PySide6.QtWidgets import QWidget
+        for child in widget.findChildren(QWidget):
+            # Skip WebEngine internal widgets to avoid recursion issues
+            if "RenderWidgetHostViewQtDelegateWidget" not in child.__class__.__name__:
+                self._install_filters_recursively(child)
     
     def eventFilter(self, obj, event) -> bool:
         """
@@ -285,9 +285,14 @@ class MainWindow(QMainWindow):
         
         # Only handle KeyPress events
         if event.type() == QEvent.KeyPress:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"eventFilter received KeyPress from {obj.__class__.__name__}")
+            
             # Let keyboard service handle the event first
             if hasattr(self, 'keyboard_service') and self.keyboard_service.handle_key_event(event):
                 # Event was handled by keyboard service - stop propagation
+                logger.debug("Event handled by keyboard service via eventFilter")
                 return True
         
         # Let the event continue to the target widget
