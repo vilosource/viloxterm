@@ -692,8 +692,9 @@ class SplitPaneWidget(QWidget):
             # Full refresh is more reliable for now
             self.refresh_view()
             self.pane_added.emit(new_id)
-            # Restore focus to active pane after refresh
-            self.restore_active_pane_focus()
+            # Only restore focus if this widget is visible (i.e., in the active tab)
+            if self.isVisible():
+                self.restore_active_pane_focus()
         
         # End transition with fade
         # if self.transition_manager:
@@ -712,8 +713,9 @@ class SplitPaneWidget(QWidget):
             # Full refresh is more reliable for now
             self.refresh_view()
             self.pane_added.emit(new_id)
-            # Restore focus to active pane after refresh
-            self.restore_active_pane_focus()
+            # Only restore focus if this widget is visible (i.e., in the active tab)
+            if self.isVisible():
+                self.restore_active_pane_focus()
         
         # End transition with fade
         # if self.transition_manager:
