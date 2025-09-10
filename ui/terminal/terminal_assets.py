@@ -258,6 +258,29 @@ class TerminalAssetBundler:
                 term.attachCustomKeyEventHandler((e) => {{
                     if (e.type !== "keydown") return true;
                     
+                    // Let Qt handle these global shortcuts - return false to prevent terminal from consuming them
+                    if (e.ctrlKey && !e.shiftKey && !e.altKey) {{
+                        const key = e.key.toLowerCase();
+                        // Global app shortcuts that should bubble up to Qt
+                        if (key === "b" ||     // Toggle sidebar
+                            key === "\\" ||    // Split horizontal
+                            key === "t" ||     // Toggle theme
+                            key === "n" ||     // New tab
+                            key === "w" ||     // Close tab
+                            key === "o" ||     // Open file
+                            key === "s" ||     // Save file
+                            key === "`" ||     // New terminal
+                            key === "p") {{    // Command palette
+                            return false;  // Don't let terminal consume these
+                        }}
+                    }}
+                    
+                    // Let Qt handle Ctrl+Shift+\ for vertical split
+                    if (e.ctrlKey && e.shiftKey && (e.key === "\\" || e.key === "|")) {{
+                        return false;  // Don't let terminal consume this
+                    }}
+                    
+                    // Terminal-specific shortcuts
                     if (e.ctrlKey && e.shiftKey) {{
                         const key = e.key.toLowerCase();
                         if (key === "v") {{
@@ -273,7 +296,8 @@ class TerminalAssetBundler:
                             }}
                         }}
                     }}
-                    return true;
+                    
+                    return true;  // Let terminal handle everything else
                 }});
                 
                 console.log('Terminal initialized successfully with bundled assets');
