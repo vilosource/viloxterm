@@ -40,7 +40,10 @@ class TerminalService(Service):
             self._terminal_server = terminal_server
             
             # Ensure server is started
-            if not self._terminal_server.is_running():
+            # Check if server has a thread and it's alive
+            if not hasattr(self._terminal_server, 'server_thread') or \
+               not self._terminal_server.server_thread or \
+               not self._terminal_server.server_thread.is_alive():
                 self.start_server()
                 
         except Exception as e:
@@ -54,7 +57,8 @@ class TerminalService(Service):
             self.close_session(session_id)
         
         # Stop server if running
-        if self._terminal_server and self._terminal_server.is_running():
+        if self._terminal_server and hasattr(self._terminal_server, 'server_thread') and \
+           self._terminal_server.server_thread and self._terminal_server.server_thread.is_alive():
             self.stop_server()
         
         self._terminal_server = None
@@ -120,7 +124,8 @@ class TerminalService(Service):
         Returns:
             True if server is running
         """
-        return self._terminal_server and self._terminal_server.is_running()
+        return self._terminal_server and hasattr(self._terminal_server, 'server_thread') and \
+               self._terminal_server.server_thread and self._terminal_server.server_thread.is_alive()
     
     def get_server_url(self) -> Optional[str]:
         """
@@ -164,15 +169,11 @@ class TerminalService(Service):
             if not self.start_server():
                 return None
         
-        # Generate session ID
-        session_id = str(uuid.uuid4())
-        
         try:
-            # Create session via terminal server
-            self._terminal_server.create_session(
-                session_id,
+            # Create session via terminal server (it generates its own ID)
+            session_id = self._terminal_server.create_session(
                 command=command or "bash",
-                cmd_args=args or [],
+                cmd_args=" ".join(args) if args else "",
                 cwd=cwd
             )
             
