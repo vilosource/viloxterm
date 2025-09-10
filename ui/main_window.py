@@ -128,12 +128,21 @@ class MainWindow(QMainWindow):
         # Register with service locator
         self.service_locator.register(KeyboardService, self.keyboard_service)
         
-        # Install application-wide event filter to intercept shortcuts
-        QApplication.instance().installEventFilter(self)
+        # Install event filter on MainWindow instead of QApplication
+        # to avoid segfaults with Qt WebEngine
+        self.installEventFilter(self)
         
         # Register any pending shortcuts from commands
         from core.commands.decorators import register_pending_shortcuts
         register_pending_shortcuts()
+        
+        # Install event filters on workspace widgets to catch shortcuts
+        # This is needed because WebEngine widgets don't bubble events up
+        self._install_workspace_filters()
+        
+        # Re-install filters when new panes are added
+        if hasattr(self.workspace, 'split_widget'):
+            self.workspace.split_widget.pane_added.connect(self._on_pane_added)
         
         # Register shortcuts for all commands with the keyboard service
         from core.commands.registry import command_registry
@@ -222,12 +231,57 @@ class MainWindow(QMainWindow):
         
         return result
     
+    def _on_pane_added(self, pane_id: str):
+        """Handle new pane being added - install event filters."""
+        # Re-install filters to include the new pane
+        self._install_workspace_filters()
+    
+    def _install_workspace_filters(self):
+        """
+        Install event filters on workspace and its children.
+        This ensures keyboard shortcuts work even when terminal has focus.
+        """
+        if hasattr(self, 'workspace'):
+            # Install on workspace itself
+            self.workspace.installEventFilter(self)
+            
+            # Install on split pane widget if it exists
+            if hasattr(self.workspace, 'split_widget'):
+                self._install_filters_recursively(self.workspace.split_widget)
+    
+    def _install_filters_recursively(self, widget):
+        """Recursively install event filters on widget and its children."""
+        if widget is None:
+            return
+            
+        # Don't install on WebEngineView directly to avoid issues
+        from PySide6.QtWebEngineWidgets import QWebEngineView
+        if isinstance(widget, QWebEngineView):
+            # Install on focus proxy if available
+            focus_proxy = widget.focusProxy()
+            if focus_proxy:
+                focus_proxy.installEventFilter(self)
+        else:
+            # Install on the widget
+            widget.installEventFilter(self)
+            
+            # Recursively install on children
+            from PySide6.QtWidgets import QWidget
+            for child in widget.findChildren(QWidget):
+                # Skip WebEngine internal widgets
+                if "RenderWidgetHostViewQtDelegateWidget" not in child.__class__.__name__:
+                    self._install_filters_recursively(child)
+    
     def eventFilter(self, obj, event) -> bool:
         """
-        Filter events at the application level to intercept shortcuts.
+        Filter events to intercept shortcuts.
         This ensures shortcuts work even when other widgets have focus.
         """
         from PySide6.QtCore import QEvent
+        
+        # Skip WebEngine internal widgets to avoid issues
+        if "RenderWidgetHostViewQtDelegateWidget" in obj.__class__.__name__:
+            return False
         
         # Only handle KeyPress events
         if event.type() == QEvent.KeyPress:
@@ -241,9 +295,14 @@ class MainWindow(QMainWindow):
     
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Handle key press events for keyboard shortcuts."""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"MainWindow.keyPressEvent called with key: {event.key()}, modifiers: {event.modifiers()}")
+        
         # Let keyboard service handle the event first
         if hasattr(self, 'keyboard_service') and self.keyboard_service.handle_key_event(event):
             # Event was handled by keyboard service
+            logger.debug("Event handled by keyboard service")
             return
         
         # If not handled, pass to parent

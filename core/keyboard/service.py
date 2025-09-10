@@ -371,6 +371,36 @@ class KeyboardService(Service):
         if qt_key in special_keys:
             return special_keys[qt_key]
         
+        # Handle shifted characters - map back to base key for shortcuts
+        # When Shift is pressed, Qt gives us the shifted character
+        # But shortcuts are defined with the base key + shift modifier
+        shifted_to_base = {
+            Qt.Key_Bar: "\\",  # | -> \ (for ctrl+shift+\)
+            Qt.Key_Plus: "=",  # + -> =
+            Qt.Key_Underscore: "-",  # _ -> -
+            Qt.Key_BraceLeft: "[",  # { -> [
+            Qt.Key_BraceRight: "]",  # } -> ]
+            Qt.Key_Colon: ";",  # : -> ;
+            Qt.Key_QuoteDbl: "'",  # " -> '
+            Qt.Key_Less: ",",  # < -> ,
+            Qt.Key_Greater: ".",  # > -> .
+            Qt.Key_Question: "/",  # ? -> /
+            Qt.Key_AsciiTilde: "`",  # ~ -> `
+            Qt.Key_Exclam: "1",  # ! -> 1
+            Qt.Key_At: "2",  # @ -> 2
+            Qt.Key_NumberSign: "3",  # # -> 3
+            Qt.Key_Dollar: "4",  # $ -> 4
+            Qt.Key_Percent: "5",  # % -> 5
+            Qt.Key_AsciiCircum: "6",  # ^ -> 6
+            Qt.Key_Ampersand: "7",  # & -> 7
+            Qt.Key_Asterisk: "8",  # * -> 8
+            Qt.Key_ParenLeft: "9",  # ( -> 9
+            Qt.Key_ParenRight: "0",  # ) -> 0
+        }
+        
+        if qt_key in shifted_to_base:
+            return shifted_to_base[qt_key]
+        
         # Regular keys (letters, numbers, symbols)
         if 32 <= qt_key <= 126:  # Printable ASCII
             return chr(qt_key).lower()
