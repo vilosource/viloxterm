@@ -127,6 +127,9 @@ class MainWindow(QMainWindow):
         # Register with service locator
         self.service_locator.register(KeyboardService, self.keyboard_service)
         
+        # Install application-wide event filter to intercept shortcuts
+        QApplication.instance().installEventFilter(self)
+        
         # Register any pending shortcuts from commands
         from core.commands.decorators import register_pending_shortcuts
         register_pending_shortcuts()
@@ -217,6 +220,23 @@ class MainWindow(QMainWindow):
             logger.warning(f"Command {command_id} failed: {result.error}")
         
         return result
+    
+    def eventFilter(self, obj, event) -> bool:
+        """
+        Filter events at the application level to intercept shortcuts.
+        This ensures shortcuts work even when other widgets have focus.
+        """
+        from PySide6.QtCore import QEvent
+        
+        # Only handle KeyPress events
+        if event.type() == QEvent.KeyPress:
+            # Let keyboard service handle the event first
+            if hasattr(self, 'keyboard_service') and self.keyboard_service.handle_key_event(event):
+                # Event was handled by keyboard service - stop propagation
+                return True
+        
+        # Let the event continue to the target widget
+        return False
     
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Handle key press events for keyboard shortcuts."""

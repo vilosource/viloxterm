@@ -385,9 +385,10 @@ class KeyboardService(Service):
             if not app:
                 return {}
             
+            from PySide6.QtCore import Qt
             return {
                 "platform": app.platformName(),
-                "applicationActive": app.applicationState() == app.ApplicationActive
+                "applicationActive": app.applicationState() == Qt.ApplicationState.ApplicationActive
             }
         
         self.add_context_provider(app_context)
