@@ -103,6 +103,7 @@ class MainWindow(QMainWindow):
     
     def initialize_keyboard(self):
         """Initialize keyboard service and shortcuts."""
+        from PySide6.QtWidgets import QApplication
         from core.keyboard import KeyboardService
         from core.keyboard.keymaps import KeymapManager
         
