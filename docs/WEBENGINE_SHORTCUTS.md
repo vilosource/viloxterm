@@ -80,11 +80,38 @@ class MyWebWidget(AppWidget):
         # No need for special keyboard handling!
 ```
 
+## Terminal-Specific Configuration
+
+For terminal widgets using xterm.js, you MUST configure the custom key event handler to let global shortcuts pass through:
+
+```javascript
+term.attachCustomKeyEventHandler((e) => {
+    if (e.type !== "keydown") return true;
+    
+    // Let Qt handle global shortcuts
+    if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+        const key = e.key.toLowerCase();
+        if (key === "b" ||  // Toggle sidebar
+            key === "\\" ||  // Split horizontal
+            key === "t" ||  // Toggle theme
+            // ... other global shortcuts
+            ) {
+            return false;  // Don't let terminal consume these
+        }
+    }
+    
+    return true;  // Let terminal handle everything else
+});
+```
+
+Without this, the terminal will consume ALL keyboard events, preventing Qt from receiving them.
+
 ## Known Limitations
 
 1. **Copy/Paste in Terminal**: Ctrl+C/V may need special handling as terminals traditionally use these differently
 2. **Focus Management**: WebEngine widgets may grab focus aggressively - use `setFocusPolicy()` if needed
 3. **Performance**: Installing many event filters has minimal overhead but monitor if you have many widgets
+4. **JavaScript Key Handlers**: Web content may consume events before Qt sees them - configure appropriately
 
 ## Testing Shortcuts
 
