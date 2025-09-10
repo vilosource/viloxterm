@@ -83,14 +83,14 @@ class DefaultKeymapProvider(KeymapProvider):
             {"id": "view.theme", "sequence": "ctrl+t", "command_id": "view.toggleTheme"},
             
             # Workspace operations
-            {"id": "workspace.split_horizontal", "sequence": "ctrl+shift+\\", "command_id": "workspace.splitActivePane", "args": {"orientation": "horizontal"}},
-            {"id": "workspace.split_vertical", "sequence": "ctrl+\\", "command_id": "workspace.splitActivePane", "args": {"orientation": "vertical"}},
-            {"id": "workspace.next_pane", "sequence": "ctrl+k ctrl+right", "command_id": "workspace.navigateToNextPane"},
-            {"id": "workspace.prev_pane", "sequence": "ctrl+k ctrl+left", "command_id": "workspace.navigateToPreviousPane"},
+            {"id": "workspace.split_horizontal", "sequence": "ctrl+\\", "command_id": "workbench.action.splitRight"},
+            {"id": "workspace.split_vertical", "sequence": "ctrl+shift+\\", "command_id": "workbench.action.splitDown"},
+            {"id": "workspace.next_pane", "sequence": "ctrl+k ctrl+right", "command_id": "workbench.action.focusNextPane"},
+            {"id": "workspace.prev_pane", "sequence": "ctrl+k ctrl+left", "command_id": "workbench.action.focusPreviousPane"},
             
             # Terminal operations
-            {"id": "terminal.new", "sequence": "ctrl+shift+`", "command_id": "terminal.newTerminal"},
-            {"id": "terminal.kill", "sequence": "ctrl+shift+k", "command_id": "terminal.killActiveTerminal"},
+            {"id": "terminal.new", "sequence": "ctrl+shift+`", "command_id": "file.newTerminalTab"},
+            {"id": "terminal.kill", "sequence": "ctrl+shift+k", "command_id": "file.closeTab"},
             
             # Help
             {"id": "help.about", "sequence": "f1", "command_id": "help.about"},
@@ -136,21 +136,21 @@ class VSCodeKeymapProvider(KeymapProvider):
             {"id": "view.command_palette", "sequence": "ctrl+shift+p", "command_id": "commandPalette.show"},
             
             # Workspace operations
-            {"id": "workspace.split_editor", "sequence": "ctrl+\\", "command_id": "workspace.splitActivePane"},
-            {"id": "workspace.focus_left", "sequence": "ctrl+k ctrl+left", "command_id": "workspace.navigateToPreviousPane"},
-            {"id": "workspace.focus_right", "sequence": "ctrl+k ctrl+right", "command_id": "workspace.navigateToNextPane"},
-            {"id": "workspace.close_group", "sequence": "ctrl+k w", "command_id": "workspace.closeActivePane"},
+            {"id": "workspace.split_editor", "sequence": "ctrl+\\", "command_id": "workbench.action.splitRight"},
+            {"id": "workspace.focus_left", "sequence": "ctrl+k ctrl+left", "command_id": "workbench.action.focusPreviousPane"},
+            {"id": "workspace.focus_right", "sequence": "ctrl+k ctrl+right", "command_id": "workbench.action.focusNextPane"},
+            {"id": "workspace.close_group", "sequence": "ctrl+k w", "command_id": "workbench.action.closeActivePane"},
             
             # Navigation
-            {"id": "nav.next_tab", "sequence": "ctrl+tab", "command_id": "workspace.switchToNextTab"},
-            {"id": "nav.prev_tab", "sequence": "ctrl+shift+tab", "command_id": "workspace.switchToPreviousTab"},
-            {"id": "nav.tab_1", "sequence": "ctrl+1", "command_id": "workspace.switchToTab", "args": {"index": 0}},
-            {"id": "nav.tab_2", "sequence": "ctrl+2", "command_id": "workspace.switchToTab", "args": {"index": 1}},
-            {"id": "nav.tab_3", "sequence": "ctrl+3", "command_id": "workspace.switchToTab", "args": {"index": 2}},
+            {"id": "nav.next_tab", "sequence": "ctrl+tab", "command_id": "workbench.action.nextTab"},
+            {"id": "nav.prev_tab", "sequence": "ctrl+shift+tab", "command_id": "workbench.action.previousTab"},
+            {"id": "nav.tab_1", "sequence": "ctrl+1", "command_id": "workbench.action.firstTab"},
+            {"id": "nav.tab_2", "sequence": "ctrl+2", "command_id": "workbench.action.firstTab"},
+            {"id": "nav.tab_3", "sequence": "ctrl+3", "command_id": "workbench.action.firstTab"},
             
             # Terminal operations
-            {"id": "terminal.new", "sequence": "ctrl+shift+`", "command_id": "terminal.newTerminal"},
-            {"id": "terminal.kill", "sequence": "ctrl+shift+k", "command_id": "terminal.killActiveTerminal"},
+            {"id": "terminal.new", "sequence": "ctrl+shift+`", "command_id": "file.newTerminalTab"},
+            {"id": "terminal.kill", "sequence": "ctrl+shift+k", "command_id": "file.closeTab"},
         ]
 
 
@@ -188,14 +188,14 @@ class VimKeymapProvider(KeymapProvider):
             {"id": "view.terminal", "sequence": "space t", "command_id": "view.toggleTerminal", "when": "vimMode"},
             
             # Workspace operations with vim-style navigation
-            {"id": "workspace.split_horizontal", "sequence": "space s", "command_id": "workspace.splitActivePane", "args": {"orientation": "horizontal"}, "when": "vimMode"},
-            {"id": "workspace.split_vertical", "sequence": "space v", "command_id": "workspace.splitActivePane", "args": {"orientation": "vertical"}, "when": "vimMode"},
-            {"id": "workspace.focus_left", "sequence": "space h", "command_id": "workspace.navigateToPreviousPane", "when": "vimMode"},
-            {"id": "workspace.focus_right", "sequence": "space l", "command_id": "workspace.navigateToNextPane", "when": "vimMode"},
+            {"id": "workspace.split_horizontal", "sequence": "space s", "command_id": "workbench.action.splitRight", "when": "vimMode"},
+            {"id": "workspace.split_vertical", "sequence": "space v", "command_id": "workbench.action.splitDown", "when": "vimMode"},
+            {"id": "workspace.focus_left", "sequence": "space h", "command_id": "workbench.action.focusPreviousPane", "when": "vimMode"},
+            {"id": "workspace.focus_right", "sequence": "space l", "command_id": "workbench.action.focusNextPane", "when": "vimMode"},
             
             # Buffer/tab navigation
-            {"id": "nav.next_buffer", "sequence": "space b n", "command_id": "workspace.switchToNextTab", "when": "vimMode"},
-            {"id": "nav.prev_buffer", "sequence": "space b p", "command_id": "workspace.switchToPreviousTab", "when": "vimMode"},
+            {"id": "nav.next_buffer", "sequence": "space b n", "command_id": "workbench.action.nextTab", "when": "vimMode"},
+            {"id": "nav.prev_buffer", "sequence": "space b p", "command_id": "workbench.action.previousTab", "when": "vimMode"},
         ]
 
 
