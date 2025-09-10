@@ -10,8 +10,8 @@ import logging
 from typing import Dict, Any, Optional
 from PySide6.QtWidgets import QVBoxLayout
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtCore import Slot
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import Slot, QUrl
+from PySide6.QtGui import QColor
 
 from ui.widgets.app_widget import AppWidget
 from ui.widgets.widget_registry import WidgetType
@@ -46,9 +46,6 @@ class TerminalAppWidget(AppWidget):
         # Create web view with optimized initialization
         self.web_view = QWebEngineView()
         
-        # Hide initially to prevent white flash
-        self.web_view.hide()
-        
         # Set background color to match dark theme immediately
         self.web_view.setStyleSheet("""
             QWebEngineView {
@@ -57,13 +54,19 @@ class TerminalAppWidget(AppWidget):
             }
         """)
         
+        # Set the page background color before any content loads
+        self.web_view.page().setBackgroundColor(QColor("#1e1e1e"))
+        
+        # Don't hide the web view - let it show with dark background
+        # self.web_view.hide()  # REMOVED - causes white flash on re-render
+        
         # Set up JavaScript communication channel
         from PySide6.QtWebChannel import QWebChannel
         self.channel = QWebChannel()
         self.channel.registerObject("terminal", self)
         self.web_view.page().setWebChannel(self.channel)
         
-        # Connect to show web view once content loads
+        # Connect to log when terminal loads (no longer need to show/hide)
         self.web_view.loadFinished.connect(self.on_terminal_loaded)
         
         layout.addWidget(self.web_view)
@@ -101,10 +104,9 @@ class TerminalAppWidget(AppWidget):
         
     def on_terminal_loaded(self, success: bool):
         """Called when the web view finishes loading terminal content."""
-        if success and self.web_view:
+        if success:
             logger.debug(f"Terminal content loaded successfully for widget {self.widget_id}")
-            # Show the web view now that content is ready
-            self.web_view.show()
+            # No longer need to show() here - web view is always visible with dark background
         else:
             logger.warning(f"Terminal content failed to load for widget {self.widget_id}")
         
