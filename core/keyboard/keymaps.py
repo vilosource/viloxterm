@@ -133,7 +133,7 @@ class VSCodeKeymapProvider(KeymapProvider):
             {"id": "view.sidebar", "sequence": "ctrl+b", "command_id": "view.toggleSidebar"},
             {"id": "view.terminal", "sequence": "ctrl+`", "command_id": "view.toggleTerminal"},
             {"id": "view.fullscreen", "sequence": "f11", "command_id": "view.toggleFullscreen"},
-            {"id": "view.command_palette", "sequence": "ctrl+shift+p", "command_id": "view.showCommandPalette"},
+            {"id": "view.command_palette", "sequence": "ctrl+shift+p", "command_id": "commandPalette.show"},
             
             # Workspace operations
             {"id": "workspace.split_editor", "sequence": "ctrl+\\", "command_id": "workspace.splitActivePane"},

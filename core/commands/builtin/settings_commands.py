@@ -133,7 +133,7 @@ def show_settings_info_command(context: CommandContext) -> CommandResult:
     title="Toggle Theme",
     category="Settings",
     description="Toggle between light and dark themes",
-    shortcut="ctrl+t",
+    # Removed ctrl+t to avoid conflict with view.toggleTheme
     icon="sun"
 )
 def toggle_theme_command(context: CommandContext) -> CommandResult:
@@ -271,7 +271,7 @@ def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     title="Show Keyboard Shortcuts",
     category="Settings",
     description="Display all keyboard shortcuts",
-    shortcut="ctrl+k ctrl+s",
+    shortcut="ctrl+k ctrl+s",  # This is a chord, not conflicting with ctrl+s
     icon="keyboard"
 )
 def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:

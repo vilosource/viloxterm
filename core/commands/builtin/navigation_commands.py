@@ -305,7 +305,7 @@ def focus_sidebar_command(context: CommandContext) -> CommandResult:
     title="Focus Active Pane",
     category="Navigation",
     description="Focus the currently active pane",
-    shortcut="escape",
+    # Removed escape to avoid conflict with commandPalette.hide
     when="workbench.pane.count > 0"
 )
 def focus_active_pane_command(context: CommandContext) -> CommandResult:

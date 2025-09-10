@@ -60,6 +60,11 @@ class CommandPaletteController(QObject):
     def show_palette(self):
         """Show the command palette with filtered commands."""
         try:
+            # Update context to indicate palette is visible
+            from core.context.keys import ContextKey
+            context_manager.set(ContextKey.COMMAND_PALETTE_VISIBLE, True)
+            context_manager.set(ContextKey.COMMAND_PALETTE_FOCUS, True)
+            
             # Get current context for filtering
             self.current_context = context_manager.get_all()
             logger.debug(f"Current context keys: {list(self.current_context.keys())}")
@@ -153,7 +158,6 @@ class CommandPaletteController(QObject):
                 # Emit success signal
                 self.command_executed.emit(command_id, {
                     'success': True,
-                    'message': result.message,
                     'value': result.value
                 })
                 
@@ -182,6 +186,12 @@ class CommandPaletteController(QObject):
     def on_palette_closed(self):
         """Handle palette being closed."""
         logger.debug("Command palette closed")
+        
+        # Update context to indicate palette is hidden
+        from core.context.keys import ContextKey
+        context_manager.set(ContextKey.COMMAND_PALETTE_VISIBLE, False)
+        context_manager.set(ContextKey.COMMAND_PALETTE_FOCUS, False)
+        
         self.current_context = None
         self.palette_hidden.emit()
     

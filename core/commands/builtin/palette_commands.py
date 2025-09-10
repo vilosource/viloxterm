@@ -31,7 +31,7 @@ def show_command_palette_command(context: CommandContext) -> CommandResult:
         # Show the palette
         controller.show_palette()
         
-        return CommandResult(success=True, message="Command palette shown")
+        return CommandResult(success=True, value="Command palette shown")
         
     except Exception as e:
         logger.error(f"Failed to show command palette: {e}")
@@ -58,7 +58,7 @@ def hide_command_palette_command(context: CommandContext) -> CommandResult:
         # Hide the palette
         controller.hide_palette()
         
-        return CommandResult(success=True, message="Command palette hidden")
+        return CommandResult(success=True, value="Command palette hidden")
         
     except Exception as e:
         logger.error(f"Failed to hide command palette: {e}")
@@ -84,7 +84,7 @@ def refresh_command_palette_command(context: CommandContext) -> CommandResult:
         # Refresh commands
         controller.refresh_commands()
         
-        return CommandResult(success=True, message="Command palette refreshed")
+        return CommandResult(success=True, value="Command palette refreshed")
         
     except Exception as e:
         logger.error(f"Failed to refresh command palette: {e}")

@@ -132,10 +132,28 @@ class MainWindow(QMainWindow):
         from core.commands.decorators import register_pending_shortcuts
         register_pending_shortcuts()
         
+        # Register shortcuts for all commands with the keyboard service
+        from core.commands.registry import command_registry
+        commands_with_shortcuts = 0
+        for command in command_registry.get_all_commands():
+            if command.shortcut:
+                # Register the shortcut with the keyboard service
+                success = self.keyboard_service.register_shortcut_from_string(
+                    shortcut_id=f"cmd_{command.id}",
+                    sequence_str=command.shortcut,
+                    command_id=command.id,
+                    when=command.when,
+                    description=command.title,
+                    source="command"
+                )
+                if success:
+                    commands_with_shortcuts += 1
+        
         # Log keyboard initialization
         import logging
         logger = logging.getLogger(__name__)
         logger.info("Keyboard service initialized successfully")
+        logger.info(f"Registered {commands_with_shortcuts} command shortcuts with keyboard service")
     
     def initialize_command_palette(self):
         """Initialize the command palette controller."""
@@ -191,7 +209,7 @@ class MainWindow(QMainWindow):
         
         # Create context and execute
         context = self.create_command_context()
-        result = self._command_executor.execute(command_id, context, kwargs)
+        result = self._command_executor.execute(command_id, context, **kwargs)
         
         # Log result if failed
         if not result.success:
