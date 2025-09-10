@@ -85,6 +85,11 @@ class WorkspaceService(Service):
             'index': index
         })
         
+        # Update context
+        from core.context.manager import context_manager
+        context_manager.set('workbench.tabs.count', self.get_tab_count())
+        context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
+        
         logger.info(f"Added editor tab '{name}' at index {index}")
         return index
     
@@ -120,6 +125,11 @@ class WorkspaceService(Service):
             'name': name,
             'index': index
         })
+        
+        # Update context
+        from core.context.manager import context_manager
+        context_manager.set('workbench.tabs.count', self.get_tab_count())
+        context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
         
         logger.info(f"Added terminal tab '{name}' at index {index}")
         return index
@@ -157,6 +167,11 @@ class WorkspaceService(Service):
             'index': index,
             'name': tab_info.get('name') if tab_info else None
         })
+        
+        # Update context
+        from core.context.manager import context_manager
+        context_manager.set('workbench.tabs.count', self.get_tab_count())
+        context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
         
         logger.info(f"Closed tab at index {index}")
         return True
@@ -248,6 +263,11 @@ class WorkspaceService(Service):
                 'parent_pane_id': widget.active_pane_id
             })
             
+            # Update context
+            from core.context.manager import context_manager
+            context_manager.set('workbench.pane.count', self.get_pane_count())
+            context_manager.set('workbench.pane.hasMultiple', self.get_pane_count() > 1)
+            
             logger.info(f"Split pane {orientation}ly, created pane {new_id}")
         
         return new_id
@@ -282,6 +302,11 @@ class WorkspaceService(Service):
         
         # Notify observers
         self.notify('pane_closed', {'pane_id': pane_id})
+        
+        # Update context
+        from core.context.manager import context_manager
+        context_manager.set('workbench.pane.count', self.get_pane_count())
+        context_manager.set('workbench.pane.hasMultiple', self.get_pane_count() > 1)
         
         logger.info(f"Closed pane {pane_id}")
         return True

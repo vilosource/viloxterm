@@ -225,8 +225,13 @@ class Workspace(QWidget):
     def get_current_split_widget(self) -> Optional[SplitPaneWidget]:
         """Get the current tab's split widget."""
         index = self.tab_widget.currentIndex()
-        if index >= 0 and index in self.tabs:
-            return self.tabs[index].split_widget
+        if index >= 0:
+            widget = self.tab_widget.widget(index)
+            if isinstance(widget, SplitPaneWidget):
+                return widget
+            # If stored in tabs dict, get from there
+            if index in self.tabs:
+                return self.tabs[index].split_widget
         return None
     
     def on_tab_changed(self, index: int):

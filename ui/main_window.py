@@ -2,7 +2,7 @@
 
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QSplitter, QMenuBar, QMessageBox
 from PySide6.QtCore import Qt, QSettings
-from PySide6.QtGui import QAction, QKeySequence, QShortcut, QKeyEvent
+from PySide6.QtGui import QAction, QKeySequence, QKeyEvent
 from ui.activity_bar import ActivityBar
 from ui.sidebar import Sidebar
 from ui.workspace_simple import Workspace  # Using new tab-based workspace
@@ -69,9 +69,8 @@ class MainWindow(QMainWindow):
         # Connect signals
         self.activity_bar.toggle_sidebar.connect(self.toggle_sidebar)
         
-        # Create global shortcuts that work even when menu bar is hidden
-        self.menu_toggle_shortcut = QShortcut(QKeySequence("Ctrl+Shift+M"), self)
-        self.menu_toggle_shortcut.activated.connect(self.toggle_menu_bar)
+        # Note: Ctrl+Shift+M shortcut for menu bar toggle is handled by the command system
+        # This ensures it works even when the menu bar is hidden
     
     def initialize_services(self):
         """Initialize and register all services."""
@@ -300,13 +299,13 @@ class MainWindow(QMainWindow):
         
         # New tab actions (now using commands)
         new_editor_tab_action = QAction("New Editor Tab", self)
-        new_editor_tab_action.setShortcut(QKeySequence("Ctrl+N"))
+        # Shortcut handled by command system, not QAction
         new_editor_tab_action.setToolTip("Create a new editor tab (Ctrl+N)")
         new_editor_tab_action.triggered.connect(lambda: self.execute_command("file.newEditorTab"))
         file_menu.addAction(new_editor_tab_action)
         
         new_terminal_tab_action = QAction("New Terminal Tab", self)
-        new_terminal_tab_action.setShortcut(QKeySequence("Ctrl+`"))
+        # Shortcut handled by command system, not QAction
         new_terminal_tab_action.setToolTip("Create a new terminal tab (Ctrl+`)")
         new_terminal_tab_action.triggered.connect(lambda: self.execute_command("file.newTerminalTab"))
         file_menu.addAction(new_terminal_tab_action)
@@ -318,14 +317,14 @@ class MainWindow(QMainWindow):
         
         # Theme toggle action (now using commands)
         theme_action = QAction("Toggle Theme", self)
-        theme_action.setShortcut(QKeySequence("Ctrl+T"))
+        # Shortcut handled by command system, not QAction
         theme_action.setToolTip("Toggle between light and dark theme (Ctrl+T)")
         theme_action.triggered.connect(lambda: self.execute_command("view.toggleTheme"))
         view_menu.addAction(theme_action)
         
         # Sidebar toggle action (now using commands)
         sidebar_action = QAction("Toggle Sidebar", self)
-        sidebar_action.setShortcut(QKeySequence("Ctrl+B"))
+        # Shortcut handled by command system, not QAction
         sidebar_action.setToolTip("Toggle sidebar visibility (Ctrl+B)")
         sidebar_action.triggered.connect(lambda: self.execute_command("view.toggleSidebar"))
         view_menu.addAction(sidebar_action)
@@ -334,19 +333,19 @@ class MainWindow(QMainWindow):
         
         # Split actions (now using commands)
         split_horizontal_action = QAction("Split Pane Right", self)
-        split_horizontal_action.setShortcut(QKeySequence("Ctrl+\\"))
+        # Shortcut handled by command system, not QAction
         split_horizontal_action.setToolTip("Split the active pane horizontally (Ctrl+\\)")
         split_horizontal_action.triggered.connect(lambda: self.execute_command("workbench.action.splitRight"))
         view_menu.addAction(split_horizontal_action)
         
         split_vertical_action = QAction("Split Pane Down", self)
-        split_vertical_action.setShortcut(QKeySequence("Ctrl+Shift+\\"))
+        # Shortcut handled by command system, not QAction
         split_vertical_action.setToolTip("Split the active pane vertically (Ctrl+Shift+\\)")
         split_vertical_action.triggered.connect(lambda: self.execute_command("workbench.action.splitDown"))
         view_menu.addAction(split_vertical_action)
         
         close_pane_action = QAction("Close Pane", self)
-        close_pane_action.setShortcut(QKeySequence("Ctrl+W"))
+        # Shortcut handled by command system, not QAction
         close_pane_action.setToolTip("Close the active pane (Ctrl+W)")
         close_pane_action.triggered.connect(lambda: self.execute_command("workbench.action.closeActivePane"))
         view_menu.addAction(close_pane_action)
@@ -364,7 +363,7 @@ class MainWindow(QMainWindow):
         
         # Reset app state action (now using commands)
         reset_state_action = QAction("Reset App State", self)
-        reset_state_action.setShortcut(QKeySequence("Ctrl+Shift+R"))
+        # Shortcut handled by command system, not QAction
         reset_state_action.setToolTip("Reset application to default state, clearing all saved settings (Ctrl+Shift+R)")
         reset_state_action.triggered.connect(lambda: self.execute_command("debug.resetAppState"))
         debug_menu.addAction(reset_state_action)
