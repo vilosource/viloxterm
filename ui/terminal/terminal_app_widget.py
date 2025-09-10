@@ -57,6 +57,16 @@ class TerminalAppWidget(AppWidget):
         # Set the page background color before any content loads
         self.web_view.page().setBackgroundColor(QColor("#1e1e1e"))
         
+        # Allow local content to be loaded
+        from PySide6.QtWebEngineCore import QWebEngineSettings
+        settings = self.web_view.settings()
+        settings.setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
+        settings.setAttribute(QWebEngineSettings.LocalContentCanAccessFileUrls, True)
+        settings.setAttribute(QWebEngineSettings.AllowRunningInsecureContent, True)
+        settings.setAttribute(QWebEngineSettings.JavascriptEnabled, True)
+        settings.setAttribute(QWebEngineSettings.JavascriptCanOpenWindows, True)
+        settings.setAttribute(QWebEngineSettings.ErrorPageEnabled, True)
+        
         # Don't hide the web view - let it show with dark background
         # self.web_view.hide()  # REMOVED - causes white flash on re-render
         
@@ -68,6 +78,11 @@ class TerminalAppWidget(AppWidget):
         
         # Connect to log when terminal loads (no longer need to show/hide)
         self.web_view.loadFinished.connect(self.on_terminal_loaded)
+        
+        # Add JavaScript console message handler for debugging
+        from PySide6.QtWebEngineCore import QWebEnginePage
+        page = self.web_view.page()
+        page.javaScriptConsoleMessage = self.handle_console_message
         
         layout.addWidget(self.web_view)
         
@@ -86,6 +101,16 @@ class TerminalAppWidget(AppWidget):
         """Set keyboard focus on the terminal web view."""
         if self.web_view:
             self.web_view.setFocus()
+    
+    def handle_console_message(self, level, msg, line, source):
+        """Handle JavaScript console messages for debugging."""
+        level_map = {
+            0: "INFO",
+            1: "WARNING", 
+            2: "ERROR"
+        }
+        level_str = level_map.get(level, str(level))
+        logger.info(f"JS Console [{level_str}] {source}:{line}: {msg}")
     
     def on_web_view_focus_in(self, event):
         """Handle web view focus in event - this should fire when user clicks on terminal."""
@@ -110,10 +135,18 @@ class TerminalAppWidget(AppWidget):
     def on_terminal_loaded(self, success: bool):
         """Called when the web view finishes loading terminal content."""
         if success:
-            logger.debug(f"Terminal content loaded successfully for widget {self.widget_id}")
-            # No longer need to show() here - web view is always visible with dark background
+            logger.info(f"Terminal content loaded successfully for widget {self.widget_id}")
+            # Inject a test to see if JavaScript runs
+            self.web_view.page().runJavaScript(
+                "console.log('Page loaded, checking libraries...'); "
+                "console.log('Terminal available:', typeof Terminal !== 'undefined'); "
+                "console.log('Socket.io available:', typeof io !== 'undefined');"
+            )
         else:
-            logger.warning(f"Terminal content failed to load for widget {self.widget_id}")
+            logger.error(f"Terminal content FAILED to load for widget {self.widget_id}")
+            # Try to get more info about the failure
+            url = self.web_view.url().toString()
+            logger.error(f"Failed URL was: {url}")
         
     def start_terminal_session(self):
         """Start a new terminal session."""
@@ -130,6 +163,7 @@ class TerminalAppWidget(AppWidget):
             
             # Load terminal URL
             terminal_url = terminal_server.get_terminal_url(self.session_id)
+            logger.info(f"Loading terminal URL: {terminal_url}")
             self.web_view.setUrl(QUrl(terminal_url))
             
             logger.info(f"Terminal session started: {self.session_id}")

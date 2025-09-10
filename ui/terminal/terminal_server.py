@@ -19,7 +19,7 @@ import atexit
 import signal
 from typing import Dict, Optional, Tuple, Any
 from dataclasses import dataclass, field
-from flask import Flask, render_template_string, request
+from flask import Flask, render_template_string, request, send_from_directory
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import sys
 
@@ -93,6 +93,12 @@ class TerminalServerManager:
             if session_id not in self.sessions:
                 return "Session not found", 404
             return self._get_html_template(session_id)
+        
+        @self.app.route("/static/<path:filename>")
+        def serve_static(filename):
+            """Serve static files (JS, CSS) for terminal."""
+            static_dir = os.path.join(os.path.dirname(__file__), 'static')
+            return send_from_directory(static_dir, filename)
         
         @self.socketio.on("connect", namespace="/terminal")
         def handle_connect():
@@ -292,8 +298,9 @@ class TerminalServerManager:
         self.server_thread = threading.Thread(target=run_server, daemon=True)
         self.server_thread.start()
         
-        # Wait for server to start
-        time.sleep(0.5)
+        # Wait for server to start properly
+        # Give it more time since we're loading local files now
+        time.sleep(1.0)
         logger.info(f"Terminal server started on {self.host}:{self.port}")
         
         # Start periodic cleanup of inactive sessions
@@ -404,19 +411,37 @@ class TerminalServerManager:
             background: #5a5a5c !important;
         }}
     </style>
-    <link rel="stylesheet" href="https://unpkg.com/xterm@4.19.0/css/xterm.css" />
+    <link rel="stylesheet" href="/static/css/xterm.css" />
 </head>
 <body>
     <div id="terminal"></div>
-    <script src="https://unpkg.com/xterm@4.19.0/lib/xterm.js"></script>
-    <script src="https://unpkg.com/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.js"></script>
-    <script src="https://unpkg.com/xterm-addon-web-links@0.6.0/lib/xterm-addon-web-links.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="/static/js/xterm.js"></script>
+    <script src="/static/js/xterm-addon-fit.js"></script>
+    <script src="/static/js/xterm-addon-web-links.js"></script>
+    <script src="/static/js/socket.io.min.js"></script>
     <script>
         const SESSION_ID = '{session_id}';
         
-        // Initialize terminal
-        const term = new Terminal({{
+        // Wait for libraries to load
+        function initTerminal() {{
+            console.log('Checking libraries...');
+            console.log('Terminal:', typeof Terminal);
+            console.log('FitAddon:', typeof FitAddon);
+            console.log('WebLinksAddon:', typeof WebLinksAddon);
+            console.log('io:', typeof io);
+            
+            if (typeof Terminal === 'undefined' || typeof FitAddon === 'undefined' || 
+                typeof WebLinksAddon === 'undefined' || typeof io === 'undefined') {{
+                console.log('Waiting for libraries to load...');
+                setTimeout(initTerminal, 100);
+                return;
+            }}
+            
+            console.log('All libraries loaded, initializing terminal...');
+            
+            try {{
+                // Initialize terminal
+                const term = new Terminal({{
             cursorBlink: true,
             macOptionIsMeta: true,
             scrollback: 1000,
@@ -548,6 +573,19 @@ class TerminalServerManager:
                 }}
             }}
         }});
+        
+        console.log('Terminal initialized successfully');
+        }} catch (error) {{
+            console.error('Failed to initialize terminal:', error);
+            document.getElementById('terminal').innerHTML = 
+                '<div style="color: red; padding: 20px;">Failed to initialize terminal: ' + error.message + '</div>';
+        }}
+        }}
+        
+        // Start initialization when page loads
+        window.addEventListener('load', initTerminal);
+        // Also try immediately in case scripts are already loaded
+        initTerminal();
     </script>
 </body>
 </html>

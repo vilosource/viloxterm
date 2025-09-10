@@ -91,8 +91,22 @@ class PaneContent(QWidget):
         # Add the AppWidget from the model
         if self.leaf_node.app_widget:
             layout.addWidget(self.leaf_node.app_widget)
+            logger.debug(f"Added AppWidget {self.leaf_node.app_widget.widget_id} to PaneContent")
         else:
-            logger.error(f"No AppWidget in leaf node {self.leaf_node.id}")
+            logger.error(f"No AppWidget in leaf node {self.leaf_node.id} of type {self.leaf_node.widget_type}")
+            # Create a placeholder to show the issue visually
+            from PySide6.QtWidgets import QLabel
+            placeholder = QLabel(f"Widget Loading Failed\nNode: {self.leaf_node.id}\nType: {self.leaf_node.widget_type}")
+            placeholder.setStyleSheet("""
+                QLabel {
+                    background-color: #3c3c3c;
+                    color: #ff6b6b;
+                    padding: 20px;
+                    font-family: monospace;
+                }
+            """)
+            placeholder.setAlignment(Qt.AlignCenter)
+            layout.addWidget(placeholder)
             
         # Set size policy
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -395,7 +409,12 @@ class SplitPaneWidget(QWidget):
                     item.widget().setParent(None)
                     
             # Clean up old view wrappers (NOT the AppWidgets!)
+            # IMPORTANT: Detach AppWidgets first to prevent them from being deleted
             for wrapper in self.pane_wrappers.values():
+                if hasattr(wrapper, 'leaf_node') and wrapper.leaf_node.app_widget:
+                    # Detach the AppWidget from the wrapper before deleting wrapper
+                    wrapper.leaf_node.app_widget.setParent(None)
+                    logger.debug(f"Detached AppWidget {wrapper.leaf_node.app_widget.widget_id} from wrapper before deletion")
                 wrapper.deleteLater()
             self.pane_wrappers.clear()
             
@@ -776,10 +795,22 @@ class SplitPaneWidget(QWidget):
         """Get state for persistence."""
         return self.model.to_dict()
         
-    def set_state(self, state: dict):
-        """Restore state from persistence."""
-        self.model.from_dict(state)
-        self.refresh_view()
+    def set_state(self, state: dict) -> bool:
+        """
+        Restore state from persistence.
+        
+        Returns:
+            True if state was restored successfully, False otherwise
+        """
+        try:
+            self.model.from_dict(state)
+            self.refresh_view()
+            # Restore focus to active pane after state restoration
+            self.restore_active_pane_focus()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to restore state: {e}")
+            return False
         
     def cleanup(self):
         """Clean up all resources."""

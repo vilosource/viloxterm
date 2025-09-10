@@ -33,6 +33,12 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt, QCoreApplication
 from ui.main_window import MainWindow
 
+# Start terminal server early to ensure it's ready before any widgets are created
+from ui.terminal.terminal_server import terminal_server
+logger.info("Starting terminal server...")
+terminal_server.start_server()
+logger.info("Terminal server initialization complete")
+
 # Import compiled resources
 try:
     import resources.resources_rc

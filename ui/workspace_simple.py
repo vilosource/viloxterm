@@ -4,6 +4,7 @@ New workspace implementation using tabs with SplitPaneWidget.
 Each tab has its own independent split layout.
 """
 
+import logging
 from typing import Optional, Dict, List
 from PySide6.QtWidgets import (
     QWidget, QTabWidget, QVBoxLayout, QMenu, QMessageBox
@@ -14,6 +15,8 @@ from PySide6.QtGui import QAction
 from ui.widgets.split_pane_widget import SplitPaneWidget
 from ui.widgets.widget_registry import WidgetType
 from ui.vscode_theme import *
+
+logger = logging.getLogger(__name__)
 
 
 class WorkspaceTab:
@@ -382,9 +385,12 @@ class Workspace(QWidget):
                 
                 # Restore split state
                 if index in self.tabs and "split_state" in tab_state:
-                    success = self.tabs[index].split_widget.set_state(tab_state["split_state"])
-                    if not success:
-                        print(f"Failed to restore split state for tab: {tab_state.get('name', 'Unknown')}")
+                    try:
+                        success = self.tabs[index].split_widget.set_state(tab_state["split_state"])
+                        if not success:
+                            logger.warning(f"Failed to restore split state for tab: {tab_state.get('name', 'Unknown')}")
+                    except Exception as e:
+                        logger.error(f"Error restoring split state for tab {tab_state.get('name', 'Unknown')}: {e}")
         
         # Restore current tab
         if "current_tab" in state:

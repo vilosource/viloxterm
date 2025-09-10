@@ -442,7 +442,14 @@ class SplitPaneModel:
         
         Args:
             data: Dictionary representation of the model
+            
+        Raises:
+            ValueError: If the data format is invalid
+            RuntimeError: If widget creation fails
         """
+        if not data or "root" not in data:
+            raise ValueError("Invalid state data: missing root node")
+            
         # Clean up existing widgets first
         self.cleanup_all_widgets()
         
@@ -450,41 +457,90 @@ class SplitPaneModel:
             if not node_dict:
                 return None
                 
-            if node_dict["type"] == "leaf":
-                leaf = LeafNode(
-                    id=node_dict["id"],
-                    widget_type=WidgetType(node_dict["widget_type"]),
-                    parent=parent
-                )
-                
-                # Create AppWidget
-                leaf.app_widget = self.create_app_widget(leaf.widget_type, leaf.id)
-                leaf.app_widget.leaf_node = leaf
-                
-                # Restore widget state
-                if "widget_state" in node_dict:
-                    leaf.app_widget.set_state(node_dict["widget_state"])
+            try:
+                if node_dict["type"] == "leaf":
+                    leaf = LeafNode(
+                        id=node_dict["id"],
+                        widget_type=WidgetType(node_dict["widget_type"]),
+                        parent=parent
+                    )
                     
-                self.leaves[leaf.id] = leaf
-                return leaf
-                
-            elif node_dict["type"] == "split":
-                split = SplitNode(
-                    id=node_dict["id"],
-                    orientation=node_dict["orientation"],
-                    ratio=node_dict["ratio"],
-                    parent=parent
-                )
-                split.first = dict_to_node(node_dict.get("first"), split)
-                split.second = dict_to_node(node_dict.get("second"), split)
-                return split
+                    # Create AppWidget
+                    logger.debug(f"Creating AppWidget for leaf {leaf.id} of type {leaf.widget_type}")
+                    leaf.app_widget = self.create_app_widget(leaf.widget_type, leaf.id)
+                    if not leaf.app_widget:
+                        logger.error(f"Failed to create widget for leaf {leaf.id} of type {leaf.widget_type}")
+                        # Create a placeholder editor widget as fallback
+                        leaf.widget_type = WidgetType.TEXT_EDITOR
+                        logger.info(f"Attempting fallback to TEXT_EDITOR for leaf {leaf.id}")
+                        leaf.app_widget = self.create_app_widget(leaf.widget_type, leaf.id)
+                        if not leaf.app_widget:
+                            logger.critical(f"Even fallback widget creation failed for leaf {leaf.id}")
+                    
+                    if leaf.app_widget:
+                        leaf.app_widget.leaf_node = leaf
+                        logger.debug(f"Successfully created AppWidget {leaf.app_widget.widget_id} for leaf {leaf.id}")
+                    
+                    # Restore widget state
+                    if "widget_state" in node_dict and leaf.app_widget:
+                        try:
+                            leaf.app_widget.set_state(node_dict["widget_state"])
+                        except Exception as e:
+                            logger.warning(f"Failed to restore widget state for {leaf.id}: {e}")
+                        
+                    self.leaves[leaf.id] = leaf
+                    return leaf
+                    
+                elif node_dict["type"] == "split":
+                    split = SplitNode(
+                        id=node_dict["id"],
+                        orientation=node_dict["orientation"],
+                        ratio=node_dict.get("ratio", 0.5),
+                        parent=parent
+                    )
+                    split.first = dict_to_node(node_dict.get("first"), split)
+                    split.second = dict_to_node(node_dict.get("second"), split)
+                    
+                    # Validate split node has at least one valid child
+                    if not split.first and not split.second:
+                        logger.error(f"Split node {split.id} has no valid children")
+                        return None
+                        
+                    return split
+                    
+            except Exception as e:
+                logger.error(f"Failed to restore node: {e}")
+                # Return a default leaf node as fallback
+                if parent is None:  # Only create fallback for root level
+                    fallback_id = f"fallback_{uuid.uuid4().hex[:8]}"
+                    leaf = LeafNode(
+                        id=fallback_id,
+                        widget_type=WidgetType.TEXT_EDITOR,
+                        parent=parent
+                    )
+                    leaf.app_widget = self.create_app_widget(leaf.widget_type, leaf.id)
+                    leaf.app_widget.leaf_node = leaf
+                    self.leaves[leaf.id] = leaf
+                    return leaf
+                return None
                 
             return None
             
         self.leaves.clear()
         self.root = dict_to_node(data["root"])
+        
+        # If root restoration failed completely, create a default root
+        if not self.root:
+            logger.error("Failed to restore root node, creating default")
+            default_id = f"default_{uuid.uuid4().hex[:8]}"
+            self.root = LeafNode(id=default_id, widget_type=WidgetType.TEXT_EDITOR)
+            self.root.app_widget = self.create_app_widget(self.root.widget_type, default_id)
+            self.root.app_widget.leaf_node = self.root
+            self.leaves[default_id] = self.root
+            
         self.active_pane_id = data.get("active_pane_id", "")
         
         # Validate active pane
         if self.active_pane_id not in self.leaves and self.leaves:
             self.active_pane_id = next(iter(self.leaves.keys()))
+            logger.warning(f"Active pane {self.active_pane_id} not found, using {self.active_pane_id}")
