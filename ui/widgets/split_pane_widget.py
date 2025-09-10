@@ -758,6 +758,10 @@ class SplitPaneWidget(QWidget):
         
         Uses QTimer to ensure the widget tree is fully rendered before setting focus.
         """
+        # Prevent multiple simultaneous focus restorations
+        if hasattr(self, '_restoring_focus') and self._restoring_focus:
+            return
+            
         active_id = self.model.get_active_pane_id()
         if not active_id:
             return
@@ -767,14 +771,21 @@ class SplitPaneWidget(QWidget):
         if not leaf or not leaf.app_widget:
             return
             
+        # Mark that we're restoring focus
+        self._restoring_focus = True
+        
         # Use a minimal timer delay to ensure widgets are ready
         def set_focus():
             try:
                 # Call the focus_widget method on the AppWidget
-                leaf.app_widget.focus_widget()
-                logger.debug(f"Focus restored to pane {active_id} after split")
+                if leaf.app_widget and hasattr(leaf.app_widget, 'focus_widget'):
+                    leaf.app_widget.focus_widget()
+                    logger.debug(f"Focus restored to pane {active_id} after split")
             except Exception as e:
                 logger.warning(f"Failed to restore focus to pane {active_id}: {e}")
+            finally:
+                # Clear the flag
+                self._restoring_focus = False
                 
         QTimer.singleShot(10, set_focus)
             
