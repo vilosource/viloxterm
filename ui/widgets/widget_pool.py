@@ -92,6 +92,9 @@ class WidgetPool:
             widget = splitter.widget(0)
             widget.setParent(None)
         
+        # Make sure the splitter is visible (it was hidden when pooled)
+        splitter.show()
+        
         # Track as in-use
         self._in_use.add(splitter)
         
@@ -194,7 +197,7 @@ class WidgetPool:
         
         # Reset common properties
         widget.setEnabled(True)
-        widget.setVisible(True)
+        widget.show()  # Make sure widget is shown
         widget.setStyleSheet("")
     
     def _destroy_widget(self, widget: QWidget):
