@@ -1,10 +1,13 @@
 """Activity bar implementation with icon buttons."""
 
+import logging
 from PySide6.QtWidgets import QToolBar, QWidget
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QAction, QIcon
 from ui.icon_manager import get_icon_manager
 from ui.vscode_theme import *
+
+logger = logging.getLogger(__name__)
 
 
 class ActivityBar(QToolBar):
@@ -17,6 +20,7 @@ class ActivityBar(QToolBar):
         super().__init__()
         self.setup_ui()
         self.current_view = "explorer"
+        self.is_sidebar_collapsed = False  # Track sidebar state
         
         # Connect to theme changes
         icon_manager = get_icon_manager()
@@ -72,21 +76,22 @@ class ActivityBar(QToolBar):
         self.explorer_action.setCheckable(True)
         self.explorer_action.setChecked(True)
         self.explorer_action.setToolTip("Explorer (Ctrl+Shift+E)")
-        self.explorer_action.triggered.connect(lambda: self.on_action_clicked("explorer"))
+        # Use toggled signal which gives us the new state
+        self.explorer_action.toggled.connect(lambda checked: self.on_action_toggled("explorer", checked))
         self.addAction(self.explorer_action)
         
         # Search action
         self.search_action = QAction(icon_manager.get_icon("search"), "Search", self)
         self.search_action.setCheckable(True)
         self.search_action.setToolTip("Search (Ctrl+Shift+F)")
-        self.search_action.triggered.connect(lambda: self.on_action_clicked("search"))
+        self.search_action.toggled.connect(lambda checked: self.on_action_toggled("search", checked))
         self.addAction(self.search_action)
         
         # Git action
         self.git_action = QAction(icon_manager.get_icon("git"), "Git", self)
         self.git_action.setCheckable(True)
         self.git_action.setToolTip("Source Control (Ctrl+Shift+G)")
-        self.git_action.triggered.connect(lambda: self.on_action_clicked("git"))
+        self.git_action.toggled.connect(lambda checked: self.on_action_toggled("git", checked))
         self.addAction(self.git_action)
         
         # Add separator
@@ -96,7 +101,7 @@ class ActivityBar(QToolBar):
         self.settings_action = QAction(icon_manager.get_icon("settings"), "Settings", self)
         self.settings_action.setCheckable(True)
         self.settings_action.setToolTip("Settings (Ctrl+,)")
-        self.settings_action.triggered.connect(lambda: self.on_action_clicked("settings"))
+        self.settings_action.toggled.connect(lambda checked: self.on_action_toggled("settings", checked))
         self.addAction(self.settings_action)
         
         # Group actions for easy access
@@ -107,59 +112,108 @@ class ActivityBar(QToolBar):
             self.settings_action
         ]
         
-    def on_action_clicked(self, view_name: str):
-        """Handle action click - manually manage checked states.
+    def on_action_toggled(self, view_name: str, checked: bool):
+        """Handle action toggle - properly manage state transitions.
         
-        This method completely controls the checked state of actions
-        to avoid Qt's automatic toggling behavior that causes the triple-click bug.
+        Using the toggled signal instead of triggered gives us better control
+        because we know the exact state Qt has set.
         """
-        # Get the clicked action
-        clicked_action = None
-        for action in self.view_actions:
-            if action.text().lower() == view_name:
-                clicked_action = action
-                break
+        logger.debug(f"=== ACTIVITY BAR TOGGLED ===")
+        logger.debug(f"View: {view_name}, Checked: {checked}")
+        logger.debug(f"Current view: {self.current_view}")
+        logger.debug(f"Sidebar collapsed: {self.is_sidebar_collapsed}")
         
-        if not clicked_action:
+        # Ignore signals if we're programmatically updating states
+        if hasattr(self, '_updating_states') and self._updating_states:
+            logger.debug("Ignoring signal during programmatic update")
             return
         
-        # Get current checked state (Qt has already toggled it)
-        is_now_checked = clicked_action.isChecked()
+        # Get the action that was toggled
+        toggled_action = None
+        for action in self.view_actions:
+            if action.text().lower() == view_name:
+                toggled_action = action
+                break
         
-        if view_name == self.current_view:
-            # Same view clicked - this is a toggle request
-            # The checked state has already been toggled by Qt
-            # Just emit the toggle signal
-            self.toggle_sidebar.emit()
-        else:
-            # Different view clicked - switch views
-            # First, uncheck all actions
-            for action in self.view_actions:
-                action.blockSignals(True)
-                action.setChecked(False)
-                action.blockSignals(False)
-            
-            # Check the clicked action
-            clicked_action.blockSignals(True)
-            clicked_action.setChecked(True)
-            clicked_action.blockSignals(False)
-            
-            # Update current view
-            self.current_view = view_name
-            
-            # Emit view change signal
-            self.view_changed.emit(view_name)
+        if not toggled_action:
+            logger.error(f"Could not find action for view: {view_name}")
+            return
+        
+        # Block further signals while we update states
+        self._updating_states = True
+        
+        try:
+            if view_name == self.current_view:
+                # Same view toggled - this is a sidebar visibility toggle
+                logger.debug("Same view toggled - toggling sidebar visibility")
+                
+                # Update sidebar collapsed state based on the new checked state
+                self.is_sidebar_collapsed = not checked
+                logger.debug(f"Sidebar collapsed: {self.is_sidebar_collapsed}")
+                
+                # Emit toggle signal
+                self.toggle_sidebar.emit()
+                
+            else:
+                # Different view selected
+                logger.debug(f"Different view selected: {view_name}")
+                
+                if checked:
+                    # New view was checked - switch to it
+                    # Uncheck all other actions
+                    for action in self.view_actions:
+                        if action != toggled_action:
+                            action.setChecked(False)
+                    
+                    # Update current view
+                    old_view = self.current_view
+                    self.current_view = view_name
+                    self.is_sidebar_collapsed = False  # Sidebar will be shown
+                    logger.debug(f"Switched from {old_view} to {view_name}")
+                    
+                    # Emit view change signal
+                    self.view_changed.emit(view_name)
+                else:
+                    # A different view was unchecked - this shouldn't happen normally
+                    # but if it does, just ignore it
+                    logger.debug(f"Ignoring uncheck of non-current view {view_name}")
+        
+        finally:
+            self._updating_states = False
+        
+        # Log final state
+        logger.debug("Final action states:")
+        for action in self.view_actions:
+            logger.debug(f"  {action.text()}: checked={action.isChecked()}")
+        logger.debug(f"Current view: {self.current_view}, Sidebar collapsed: {self.is_sidebar_collapsed}")
+        logger.debug(f"=== END ACTIVITY BAR TOGGLED ===")
             
     def set_sidebar_visible(self, visible: bool):
         """Update the current action's checked state based on sidebar visibility."""
-        # Find the action for the current view
+        logger.debug(f"set_sidebar_visible called with visible={visible}")
+        logger.debug(f"Current view: {self.current_view}")
+        
+        # Update our internal state
+        self.is_sidebar_collapsed = not visible
+        logger.debug(f"Updated is_sidebar_collapsed to {self.is_sidebar_collapsed}")
+        
+        # Set flag to prevent signal handling during programmatic update
+        self._updating_states = True
+        
+        try:
+            # Find the action for the current view
+            for action in self.view_actions:
+                if action.text().lower() == self.current_view:
+                    logger.debug(f"Setting {action.text()} checked state to {visible}")
+                    action.setChecked(visible)
+                    break
+        finally:
+            self._updating_states = False
+        
+        # Log final state of all actions
+        logger.debug("Action states after set_sidebar_visible:")
         for action in self.view_actions:
-            if action.text().lower() == self.current_view:
-                # Block signals to prevent triggering on_view_selected
-                action.blockSignals(True)
-                action.setChecked(visible)
-                action.blockSignals(False)
-                break
+            logger.debug(f"  {action.text()}: checked={action.isChecked()}")
     
     def update_icons(self):
         """Update icons when theme changes."""

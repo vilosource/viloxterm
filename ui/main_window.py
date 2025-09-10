@@ -172,6 +172,10 @@ class MainWindow(QMainWindow):
         self.sidebar.set_current_view(view_name)
         if self.sidebar.is_collapsed:
             self.sidebar.expand()
+            # Ensure splitter sizes are updated
+            self.main_splitter.setSizes([250, self.main_splitter.width() - 250])
+            # Update activity bar to reflect that sidebar is now visible
+            self.activity_bar.set_sidebar_visible(True)
             
     def toggle_sidebar(self):
         """Toggle sidebar visibility."""
