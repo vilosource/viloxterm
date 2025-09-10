@@ -2,7 +2,7 @@
 
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QSplitter, QMenuBar, QMessageBox
 from PySide6.QtCore import Qt, QSettings
-from PySide6.QtGui import QAction, QKeySequence, QShortcut
+from PySide6.QtGui import QAction, QKeySequence, QShortcut, QKeyEvent
 from ui.activity_bar import ActivityBar
 from ui.sidebar import Sidebar
 from ui.workspace_simple import Workspace  # Using new tab-based workspace
@@ -17,6 +17,10 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setup_ui()
+        self.initialize_services()
+        self.initialize_commands()
+        self.initialize_keyboard()
+        self.initialize_command_palette()
         self.restore_state()
         
     def setup_ui(self):
@@ -68,6 +72,206 @@ class MainWindow(QMainWindow):
         # Create global shortcuts that work even when menu bar is hidden
         self.menu_toggle_shortcut = QShortcut(QKeySequence("Ctrl+Shift+M"), self)
         self.menu_toggle_shortcut.activated.connect(self.toggle_menu_bar)
+    
+    def initialize_services(self):
+        """Initialize and register all services."""
+        from services import initialize_services
+        
+        # Initialize services with application components
+        self.service_locator = initialize_services(
+            main_window=self,
+            workspace=self.workspace,
+            sidebar=self.sidebar,
+            activity_bar=self.activity_bar
+        )
+        
+        # Log service initialization
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Services initialized successfully")
+    
+    def initialize_commands(self):
+        """Initialize all built-in commands."""
+        from core.commands.builtin import register_all_builtin_commands
+        
+        # Register all built-in commands
+        register_all_builtin_commands()
+        
+        # Log command initialization
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Commands initialized successfully")
+    
+    def initialize_keyboard(self):
+        """Initialize keyboard service and shortcuts."""
+        from core.keyboard import KeyboardService
+        from core.keyboard.keymaps import KeymapManager
+        
+        # Create keyboard service
+        self.keyboard_service = KeyboardService()
+        self.keyboard_service.initialize({})
+        
+        # Create keymap manager
+        self.keymap_manager = KeymapManager(self.keyboard_service._registry)
+        
+        # Set default keymap (VSCode style)
+        self.keymap_manager.set_keymap("vscode")
+        
+        # Connect keyboard service signals
+        self.keyboard_service.shortcut_triggered.connect(self._on_shortcut_triggered)
+        self.keyboard_service.chord_sequence_started.connect(self._on_chord_sequence_started)
+        self.keyboard_service.chord_sequence_cancelled.connect(self._on_chord_sequence_cancelled)
+        
+        # Add context providers
+        self.keyboard_service.add_context_provider(self._get_ui_context)
+        
+        # Register with service locator
+        self.service_locator.register(KeyboardService, self.keyboard_service)
+        
+        # Register any pending shortcuts from commands
+        from core.commands.decorators import register_pending_shortcuts
+        register_pending_shortcuts()
+        
+        # Log keyboard initialization
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Keyboard service initialized successfully")
+    
+    def initialize_command_palette(self):
+        """Initialize the command palette controller."""
+        from ui.command_palette import CommandPaletteController
+        from core.context.keys import ContextKey
+        from core.context.manager import context_manager
+        
+        # Create command palette controller
+        self.command_palette_controller = CommandPaletteController(parent=self, main_window=self)
+        
+        # Connect palette signals to context updates
+        self.command_palette_controller.palette_shown.connect(
+            lambda: context_manager.set(ContextKey.COMMAND_PALETTE_VISIBLE, True)
+        )
+        self.command_palette_controller.palette_hidden.connect(
+            lambda: context_manager.set(ContextKey.COMMAND_PALETTE_VISIBLE, False)
+        )
+        
+        # Set initial context state
+        context_manager.set(ContextKey.COMMAND_PALETTE_VISIBLE, False)
+        
+        # Log initialization
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Command palette initialized successfully")
+    
+    def create_command_context(self):
+        """Create command context for execution."""
+        from core.commands.base import CommandContext
+        
+        return CommandContext(
+            main_window=self,
+            workspace=self.workspace,
+            active_widget=self.workspace.get_current_split_widget() if self.workspace else None
+        )
+    
+    def execute_command(self, command_id: str, **kwargs):
+        """
+        Execute a command by ID.
+        
+        Args:
+            command_id: Command identifier
+            **kwargs: Additional arguments for the command
+            
+        Returns:
+            CommandResult from the executed command
+        """
+        from core.commands.executor import CommandExecutor
+        
+        # Get or create executor
+        if not hasattr(self, '_command_executor'):
+            self._command_executor = CommandExecutor()
+        
+        # Create context and execute
+        context = self.create_command_context()
+        result = self._command_executor.execute(command_id, context, kwargs)
+        
+        # Log result if failed
+        if not result.success:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Command {command_id} failed: {result.error}")
+        
+        return result
+    
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """Handle key press events for keyboard shortcuts."""
+        # Let keyboard service handle the event first
+        if hasattr(self, 'keyboard_service') and self.keyboard_service.handle_key_event(event):
+            # Event was handled by keyboard service
+            return
+        
+        # If not handled, pass to parent
+        super().keyPressEvent(event)
+    
+    def _on_shortcut_triggered(self, command_id: str, context: dict) -> None:
+        """Handle shortcut triggered by keyboard service."""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Shortcut triggered: {command_id}")
+        
+        # Execute the command
+        self.execute_command(command_id)
+    
+    def _on_chord_sequence_started(self, sequence_str: str) -> None:
+        """Handle chord sequence started."""
+        # Could show status in status bar
+        if hasattr(self, 'status_bar'):
+            self.status_bar.showMessage(f"Chord sequence: {sequence_str}...", 2000)
+    
+    def _on_chord_sequence_cancelled(self) -> None:
+        """Handle chord sequence cancelled."""
+        # Clear status message
+        if hasattr(self, 'status_bar'):
+            self.status_bar.clearMessage()
+    
+    def _get_ui_context(self) -> dict:
+        """Get current UI context for keyboard shortcuts."""
+        context = {}
+        
+        # Add basic UI state
+        context['sidebarVisible'] = not self.sidebar.is_collapsed if hasattr(self, 'sidebar') else False
+        context['editorFocus'] = self._has_editor_focus()
+        context['terminalFocus'] = self._has_terminal_focus()
+        context['menuBarVisible'] = self.menuBar().isVisible()
+        
+        # Add workspace context
+        if hasattr(self, 'workspace'):
+            try:
+                context['paneCount'] = self.workspace.get_split_count()
+                context['activeTabIndex'] = self.workspace.get_current_tab_index()
+                context['hasActiveEditor'] = self.workspace.has_active_editor()
+            except:
+                pass  # Ignore errors getting workspace context
+        
+        return context
+    
+    def _has_editor_focus(self) -> bool:
+        """Check if an editor has focus."""
+        # Simple implementation - could be enhanced
+        focused_widget = self.focusWidget()
+        if not focused_widget:
+            return False
+        
+        # Check if focused widget is in workspace
+        return hasattr(focused_widget, 'toPlainText')  # Text editor check
+    
+    def _has_terminal_focus(self) -> bool:
+        """Check if a terminal has focus."""
+        # Simple implementation - could be enhanced
+        focused_widget = self.focusWidget()
+        if not focused_widget:
+            return False
+        
+        # Check if focused widget is a terminal
+        return 'terminal' in focused_widget.__class__.__name__.lower()
         
     def create_menu_bar(self):
         """Create the menu bar."""
@@ -76,17 +280,17 @@ class MainWindow(QMainWindow):
         # File menu
         file_menu = menubar.addMenu("File")
         
-        # New tab actions
+        # New tab actions (now using commands)
         new_editor_tab_action = QAction("New Editor Tab", self)
         new_editor_tab_action.setShortcut(QKeySequence("Ctrl+N"))
         new_editor_tab_action.setToolTip("Create a new editor tab (Ctrl+N)")
-        new_editor_tab_action.triggered.connect(lambda: self.workspace.add_editor_tab("New Editor"))
+        new_editor_tab_action.triggered.connect(lambda: self.execute_command("file.newEditorTab"))
         file_menu.addAction(new_editor_tab_action)
         
         new_terminal_tab_action = QAction("New Terminal Tab", self)
         new_terminal_tab_action.setShortcut(QKeySequence("Ctrl+`"))
         new_terminal_tab_action.setToolTip("Create a new terminal tab (Ctrl+`)")
-        new_terminal_tab_action.triggered.connect(lambda: self.workspace.add_terminal_tab("Terminal"))
+        new_terminal_tab_action.triggered.connect(lambda: self.execute_command("file.newTerminalTab"))
         file_menu.addAction(new_terminal_tab_action)
         
         file_menu.addSeparator()
@@ -94,40 +298,39 @@ class MainWindow(QMainWindow):
         # View menu
         view_menu = menubar.addMenu("View")
         
-        # Theme toggle action
-        icon_manager = get_icon_manager()
+        # Theme toggle action (now using commands)
         theme_action = QAction("Toggle Theme", self)
         theme_action.setShortcut(QKeySequence("Ctrl+T"))
         theme_action.setToolTip("Toggle between light and dark theme (Ctrl+T)")
-        theme_action.triggered.connect(self.toggle_theme)
+        theme_action.triggered.connect(lambda: self.execute_command("view.toggleTheme"))
         view_menu.addAction(theme_action)
         
-        # Sidebar toggle action
+        # Sidebar toggle action (now using commands)
         sidebar_action = QAction("Toggle Sidebar", self)
         sidebar_action.setShortcut(QKeySequence("Ctrl+B"))
         sidebar_action.setToolTip("Toggle sidebar visibility (Ctrl+B)")
-        sidebar_action.triggered.connect(self.toggle_sidebar)
+        sidebar_action.triggered.connect(lambda: self.execute_command("view.toggleSidebar"))
         view_menu.addAction(sidebar_action)
         
         view_menu.addSeparator()
         
-        # Split actions
+        # Split actions (now using commands)
         split_horizontal_action = QAction("Split Pane Right", self)
         split_horizontal_action.setShortcut(QKeySequence("Ctrl+\\"))
         split_horizontal_action.setToolTip("Split the active pane horizontally (Ctrl+\\)")
-        split_horizontal_action.triggered.connect(self.workspace.split_active_pane_horizontal)
+        split_horizontal_action.triggered.connect(lambda: self.execute_command("workbench.action.splitRight"))
         view_menu.addAction(split_horizontal_action)
         
         split_vertical_action = QAction("Split Pane Down", self)
         split_vertical_action.setShortcut(QKeySequence("Ctrl+Shift+\\"))
         split_vertical_action.setToolTip("Split the active pane vertically (Ctrl+Shift+\\)")
-        split_vertical_action.triggered.connect(self.workspace.split_active_pane_vertical)
+        split_vertical_action.triggered.connect(lambda: self.execute_command("workbench.action.splitDown"))
         view_menu.addAction(split_vertical_action)
         
         close_pane_action = QAction("Close Pane", self)
         close_pane_action.setShortcut(QKeySequence("Ctrl+W"))
         close_pane_action.setToolTip("Close the active pane (Ctrl+W)")
-        close_pane_action.triggered.connect(self.workspace.close_active_pane)
+        close_pane_action.triggered.connect(lambda: self.execute_command("workbench.action.closeActivePane"))
         view_menu.addAction(close_pane_action)
         
         view_menu.addSeparator()
@@ -135,37 +338,26 @@ class MainWindow(QMainWindow):
         # Menu bar toggle action (shortcut handled by global QShortcut)
         self.menubar_action = QAction("Toggle Menu Bar", self)
         self.menubar_action.setToolTip("Toggle menu bar visibility (Ctrl+Shift+M)")
-        self.menubar_action.triggered.connect(self.toggle_menu_bar)
+        self.menubar_action.triggered.connect(lambda: self.execute_command("view.toggleMenuBar"))
         view_menu.addAction(self.menubar_action)
         
         # Debug menu
         debug_menu = menubar.addMenu("Debug")
         
-        # Reset app state action
+        # Reset app state action (now using commands)
         reset_state_action = QAction("Reset App State", self)
         reset_state_action.setShortcut(QKeySequence("Ctrl+Shift+R"))
         reset_state_action.setToolTip("Reset application to default state, clearing all saved settings (Ctrl+Shift+R)")
-        reset_state_action.triggered.connect(self.reset_app_state)
+        reset_state_action.triggered.connect(lambda: self.execute_command("debug.resetAppState"))
         debug_menu.addAction(reset_state_action)
         
     def toggle_theme(self):
-        """Toggle application theme."""
-        icon_manager = get_icon_manager()
-        icon_manager.toggle_theme()
-        
-        # Update status bar
-        current_theme = icon_manager.theme.capitalize()
-        self.status_bar.set_message(f"Switched to {current_theme} theme", 2000)
+        """Toggle application theme - now routes through command system."""
+        return self.execute_command("view.toggleTheme")
         
     def toggle_menu_bar(self):
-        """Toggle menu bar visibility."""
-        menubar = self.menuBar()
-        if menubar.isVisible():
-            menubar.hide()
-            self.status_bar.set_message("Menu bar hidden. Press Ctrl+Shift+M to show", 3000)
-        else:
-            menubar.show()
-            self.status_bar.set_message("Menu bar shown", 2000)
+        """Toggle menu bar visibility - now routes through command system."""
+        return self.execute_command("view.toggleMenuBar")
         
     def on_activity_view_changed(self, view_name: str):
         """Handle activity bar view selection."""
@@ -178,7 +370,9 @@ class MainWindow(QMainWindow):
             self.activity_bar.set_sidebar_visible(True)
             
     def toggle_sidebar(self):
-        """Toggle sidebar visibility."""
+        """Toggle sidebar visibility - now routes through command system for consistency."""
+        # Still handle the UI updates directly for now to maintain compatibility
+        # This can be refactored later to be fully handled by the UIService
         self.sidebar.toggle()
         
         # Update splitter sizes when sidebar toggles
@@ -194,7 +388,11 @@ class MainWindow(QMainWindow):
             self.activity_bar.set_sidebar_visible(True)
         
     def reset_app_state(self):
-        """Reset application to default state, clearing all saved settings."""
+        """Reset application to default state - now routes through command system."""
+        return self.execute_command("debug.resetAppState")
+        
+    def reset_app_state_legacy(self):
+        """Legacy reset method - kept for reference."""
         reply = QMessageBox.question(
             self,
             "Reset Application State",

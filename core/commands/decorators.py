@@ -108,6 +108,38 @@ def command(
         if register:
             command_registry.register(cmd)
             logger.debug(f"Auto-registered command: {id}")
+            
+            # Auto-register shortcut if provided
+            if shortcut:
+                try:
+                    from services.service_locator import ServiceLocator
+                    from core.keyboard import KeyboardService
+                    
+                    locator = ServiceLocator.get_instance()
+                    keyboard_service = locator.get(KeyboardService)
+                    
+                    if keyboard_service and keyboard_service.is_initialized:
+                        success = keyboard_service.register_shortcut_from_string(
+                            shortcut_id=f"command.{id}",
+                            sequence_str=shortcut,
+                            command_id=id,
+                            description=description or title,
+                            source="command",
+                            priority=75  # Default priority for command shortcuts
+                        )
+                        if success:
+                            logger.debug(f"Auto-registered shortcut for {id}: {shortcut}")
+                        else:
+                            logger.warning(f"Failed to register shortcut for {id}: {shortcut}")
+                    else:
+                        # Store for later registration when keyboard service is available
+                        if not hasattr(command_registry, '_pending_shortcuts'):
+                            command_registry._pending_shortcuts = []
+                        command_registry._pending_shortcuts.append((id, shortcut, description or title))
+                        logger.debug(f"Queued shortcut for {id}: {shortcut}")
+                        
+                except Exception as e:
+                    logger.warning(f"Could not register shortcut for {id}: {e}")
         
         # Return the command (not the function) so it can be used directly
         return cmd
@@ -274,3 +306,55 @@ def create_command_group(
         command_registry.register(cmd)
     
     return created_commands
+
+
+def register_pending_shortcuts():
+    """
+    Register any pending shortcuts that were queued during command registration.
+    
+    This function should be called after the keyboard service is initialized
+    to register shortcuts for commands that were created before the service was ready.
+    """
+    if not hasattr(command_registry, '_pending_shortcuts'):
+        return
+    
+    try:
+        from services.service_locator import ServiceLocator
+        from core.keyboard import KeyboardService
+        
+        locator = ServiceLocator.get_instance()
+        keyboard_service = locator.get(KeyboardService)
+        
+        if not keyboard_service or not keyboard_service.is_initialized:
+            logger.warning("Keyboard service not available for pending shortcuts")
+            return
+        
+        pending = command_registry._pending_shortcuts
+        registered_count = 0
+        
+        for command_id, shortcut, description in pending:
+            try:
+                success = keyboard_service.register_shortcut_from_string(
+                    shortcut_id=f"command.{command_id}",
+                    sequence_str=shortcut,
+                    command_id=command_id,
+                    description=description,
+                    source="command",
+                    priority=75
+                )
+                if success:
+                    registered_count += 1
+                    logger.debug(f"Registered pending shortcut for {command_id}: {shortcut}")
+                else:
+                    logger.warning(f"Failed to register pending shortcut for {command_id}: {shortcut}")
+                    
+            except Exception as e:
+                logger.error(f"Error registering shortcut for {command_id}: {e}")
+        
+        # Clear pending shortcuts
+        command_registry._pending_shortcuts = []
+        
+        logger.info(f"Registered {registered_count}/{len(pending)} pending shortcuts")
+        
+    except Exception as e:
+        logger.error(f"Error registering pending shortcuts: {e}")

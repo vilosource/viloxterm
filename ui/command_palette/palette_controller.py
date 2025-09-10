@@ -1,0 +1,319 @@
+#!/usr/bin/env python3
+"""
+Command palette controller - coordinates between UI and command execution.
+
+This controller implements the MVC pattern by mediating between the 
+command palette widget (view) and the command system (model).
+"""
+
+from typing import List, Dict, Any, Optional, Callable
+from PySide6.QtCore import QObject, Signal
+import logging
+
+from core.commands.base import Command, CommandContext
+from core.commands.registry import command_registry
+from core.context.manager import context_manager  
+from core.settings.service import SettingsService
+from services.service_locator import ServiceLocator
+from .palette_widget import CommandPaletteWidget
+
+logger = logging.getLogger(__name__)
+
+
+class CommandPaletteController(QObject):
+    """
+    Controller for command palette MVC architecture.
+    
+    Integrates with existing systems:
+    - CommandRegistry for search and command management
+    - ContextManager for when-clause evaluation 
+    - SettingsService for configuration
+    - ServiceLocator for dependency injection
+    """
+    
+    # Signals
+    palette_shown = Signal()
+    palette_hidden = Signal()
+    command_executed = Signal(str, dict)  # command_id, result
+    
+    def __init__(self, parent=None, main_window=None):
+        super().__init__(parent)
+        
+        self.main_window = main_window
+        self.service_locator = ServiceLocator.get_instance()
+        
+        # Get services 
+        self.settings_service = self.service_locator.get(SettingsService)
+        
+        # Create palette widget
+        self.palette_widget = CommandPaletteWidget(main_window)
+        
+        # Connect signals
+        self.palette_widget.command_executed.connect(self.on_command_executed)
+        self.palette_widget.palette_closed.connect(self.on_palette_closed)
+        
+        # Command execution state
+        self.current_context: Optional[Dict[str, Any]] = None
+        
+        logger.info("CommandPaletteController initialized")
+    
+    def show_palette(self):
+        """Show the command palette with filtered commands."""
+        try:
+            # Get current context for filtering
+            self.current_context = context_manager.get_all()
+            logger.debug(f"Current context keys: {list(self.current_context.keys())}")
+            
+            # Get all available commands
+            all_commands = command_registry.get_all_commands()
+            
+            # Filter commands based on current context
+            available_commands = []
+            for command in all_commands:
+                if command.can_execute(self.current_context):
+                    available_commands.append(command)
+                else:
+                    logger.debug(f"Command {command.id} filtered out by when-clause: {command.when}")
+            
+            logger.info(f"Showing palette with {len(available_commands)} of {len(all_commands)} commands")
+            
+            # Show palette with filtered commands
+            self.palette_widget.show_palette(available_commands)
+            self.palette_shown.emit()
+            
+        except Exception as e:
+            logger.error(f"Failed to show command palette: {e}")
+    
+    def hide_palette(self):
+        """Hide the command palette."""
+        self.palette_widget.close_palette()
+    
+    def is_visible(self) -> bool:
+        """Check if the palette is currently visible."""
+        return self.palette_widget.isVisible()
+    
+    def search_commands(self, query: str) -> List[Command]:
+        """
+        Search commands using the registry's fuzzy search.
+        
+        Args:
+            query: Search query
+            
+        Returns:
+            List of matching commands, filtered by context
+        """
+        try:
+            # Use registry's search functionality
+            search_results = command_registry.search_commands(query)
+            
+            # Filter by current context
+            if self.current_context:
+                filtered_results = []
+                for command in search_results:
+                    if command.can_execute(self.current_context):
+                        filtered_results.append(command)
+                
+                logger.debug(f"Search '{query}': {len(filtered_results)} of {len(search_results)} results available")
+                return filtered_results
+            
+            return search_results
+            
+        except Exception as e:
+            logger.error(f"Command search failed: {e}")
+            return []
+    
+    def on_command_executed(self, command_id: str, kwargs: Dict[str, Any]):
+        """
+        Handle command execution from the palette.
+        
+        Args:
+            command_id: ID of command to execute
+            kwargs: Command arguments
+        """
+        try:
+            logger.info(f"Executing command from palette: {command_id}")
+            
+            # Create command context
+            context = CommandContext(
+                command_id=command_id,
+                args=kwargs,
+                main_window=self.main_window,
+                service_locator=self.service_locator
+            )
+            
+            # Execute command through registry
+            result = command_registry.execute_command(context)
+            
+            if result.success:
+                logger.info(f"Command {command_id} executed successfully")
+                
+                # Update command usage statistics (future enhancement)
+                self._track_command_usage(command_id, context)
+                
+                # Emit success signal
+                self.command_executed.emit(command_id, {
+                    'success': True,
+                    'message': result.message,
+                    'value': result.value
+                })
+                
+            else:
+                logger.warning(f"Command {command_id} failed: {result.error}")
+                
+                # Emit failure signal  
+                self.command_executed.emit(command_id, {
+                    'success': False,
+                    'error': result.error
+                })
+                
+                # Show error to user if main window available
+                if self.main_window and hasattr(self.main_window, 'status_bar'):
+                    self.main_window.status_bar.set_message(f"Command failed: {result.error}", 5000)
+            
+        except Exception as e:
+            logger.error(f"Failed to execute command {command_id}: {e}")
+            
+            # Emit failure signal
+            self.command_executed.emit(command_id, {
+                'success': False, 
+                'error': str(e)
+            })
+    
+    def on_palette_closed(self):
+        """Handle palette being closed."""
+        logger.debug("Command palette closed")
+        self.current_context = None
+        self.palette_hidden.emit()
+    
+    def _track_command_usage(self, command_id: str, context: CommandContext):
+        """
+        Track command usage for analytics and recommendations.
+        
+        Args:
+            command_id: ID of executed command
+            context: Command execution context
+        """
+        try:
+            # This will be implemented when we add command history/analytics
+            # For now, just log usage
+            logger.debug(f"Command usage: {command_id}")
+            
+            # Future: Update usage statistics in settings
+            # if self.settings_service:
+            #     self.settings_service.increment_command_usage(command_id)
+            
+        except Exception as e:
+            logger.error(f"Failed to track command usage: {e}")
+    
+    def get_palette_settings(self) -> Dict[str, Any]:
+        """
+        Get command palette configuration from settings.
+        
+        Returns:
+            Palette settings dictionary
+        """
+        if not self.settings_service:
+            return {}
+        
+        return self.settings_service.get_category("command_palette")
+    
+    def update_palette_settings(self, settings: Dict[str, Any]) -> bool:
+        """
+        Update command palette settings.
+        
+        Args:
+            settings: New palette settings
+            
+        Returns:
+            True if settings were updated successfully
+        """
+        if not self.settings_service:
+            return False
+        
+        return self.settings_service.set_category("command_palette", settings)
+    
+    def get_recent_commands(self) -> List[str]:
+        """
+        Get list of recently used command IDs.
+        
+        Returns:
+            List of command IDs in reverse chronological order
+        """
+        # Future enhancement: implement command history tracking
+        # For now, return empty list
+        return []
+    
+    def clear_recent_commands(self):
+        """Clear the recent commands history."""
+        # Future enhancement
+        pass
+    
+    def set_command_favorite(self, command_id: str, is_favorite: bool) -> bool:
+        """
+        Mark a command as favorite or remove from favorites.
+        
+        Args:
+            command_id: Command to mark/unmark as favorite
+            is_favorite: True to add to favorites, False to remove
+            
+        Returns:
+            True if favorite status was updated
+        """
+        # Future enhancement: implement favorites system
+        return False
+    
+    def get_favorite_commands(self) -> List[str]:
+        """
+        Get list of favorite command IDs.
+        
+        Returns:
+            List of favorite command IDs
+        """
+        # Future enhancement
+        return []
+    
+    def get_command_recommendations(self) -> List[Command]:
+        """
+        Get recommended commands based on context and usage history.
+        
+        Returns:
+            List of recommended commands
+        """
+        try:
+            # Simple implementation: return most common commands by category
+            current_context = context_manager.get_all()
+            all_commands = command_registry.get_all_commands()
+            
+            recommendations = []
+            
+            # Add commands from common categories
+            common_categories = ["File", "Edit", "View", "Workspace"]
+            for category in common_categories:
+                category_commands = [cmd for cmd in all_commands 
+                                   if cmd.category == category and cmd.can_execute(current_context)]
+                recommendations.extend(category_commands[:2])  # Top 2 per category
+            
+            return recommendations[:8]  # Limit to 8 recommendations
+            
+        except Exception as e:
+            logger.error(f"Failed to get command recommendations: {e}")
+            return []
+    
+    def refresh_commands(self):
+        """Refresh the command list in the palette (if visible)."""
+        if self.is_visible():
+            logger.debug("Refreshing command palette")
+            self.show_palette()  # Re-show with updated commands
+    
+    def cleanup(self):
+        """Cleanup controller resources."""
+        logger.debug("Cleaning up CommandPaletteController")
+        
+        if self.palette_widget:
+            self.palette_widget.close()
+            self.palette_widget = None
+        
+        self.current_context = None
+        self.main_window = None
+        self.service_locator = None
+        self.settings_service = None

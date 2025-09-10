@@ -56,18 +56,21 @@ class CommandContext:
             main_window: Main application window
             workspace: Current workspace
             active_widget: Currently focused widget
-            services: Available services
+            services: Available services (deprecated - use ServiceLocator)
             args: Command arguments
         """
         self.main_window = main_window
         self.workspace = workspace
         self.active_widget = active_widget
-        self.services = services or {}
+        self.services = services or {}  # Kept for backward compatibility
         self.args = args or {}
+        self._service_locator = None
         
     def get_service(self, service_type: type) -> Any:
         """
         Get a service by type.
+        
+        This method now integrates with ServiceLocator for better service management.
         
         Args:
             service_type: Type of service to retrieve
@@ -75,6 +78,21 @@ class CommandContext:
         Returns:
             Service instance or None if not found
         """
+        # First try ServiceLocator if available
+        if self._service_locator is None:
+            try:
+                from services.service_locator import ServiceLocator
+                self._service_locator = ServiceLocator.get_instance()
+            except ImportError:
+                logger.debug("ServiceLocator not available, falling back to legacy services")
+                self._service_locator = False  # Mark as tried but not available
+        
+        if self._service_locator:
+            service = self._service_locator.get(service_type)
+            if service:
+                return service
+        
+        # Fall back to legacy services dict
         # Try by type name first
         service_name = service_type.__name__
         if service_name in self.services:
@@ -86,6 +104,24 @@ class CommandContext:
                 return service
                 
         return None
+    
+    def get_required_service(self, service_type: type) -> Any:
+        """
+        Get a required service by type.
+        
+        Args:
+            service_type: Type of service to retrieve
+            
+        Returns:
+            Service instance
+            
+        Raises:
+            RuntimeError: If service is not found
+        """
+        service = self.get_service(service_type)
+        if service is None:
+            raise RuntimeError(f"Required service not found: {service_type.__name__}")
+        return service
     
     def update_args(self, **kwargs):
         """Update command arguments."""
