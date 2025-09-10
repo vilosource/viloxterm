@@ -486,7 +486,7 @@ class SplitPaneWidget(QWidget):
                     # Remove old wrapper from parent splitter
                     old_wrapper.setParent(None)
                     old_wrapper.deleteLater()
-                    del self.pane_wrappers[original_pane_id]
+                    # Don't delete from pane_wrappers - render_node will update it
                     
                     # Insert new splitter at the same position
                     parent_widget.insertWidget(index, new_splitter)
@@ -503,7 +503,7 @@ class SplitPaneWidget(QWidget):
                 self.layout.removeWidget(old_wrapper)
                 old_wrapper.setParent(None)
                 old_wrapper.deleteLater()
-                del self.pane_wrappers[original_pane_id]
+                # Don't delete from pane_wrappers - render_node will update it
                 
                 # Add new splitter to layout
                 self.layout.addWidget(new_splitter)
@@ -668,12 +668,8 @@ class SplitPaneWidget(QWidget):
         
         new_id = self.model.split_pane(pane_id, "horizontal")
         if new_id:
-            # Try incremental update first
-            try:
-                self.incremental_update_for_split(pane_id, new_id)
-            except Exception as e:
-                logger.warning(f"Incremental update failed: {e}, falling back to full refresh")
-                self.refresh_view()
+            # Full refresh is more reliable for now
+            self.refresh_view()
             self.pane_added.emit(new_id)
         
         # End transition with fade
@@ -687,12 +683,8 @@ class SplitPaneWidget(QWidget):
         
         new_id = self.model.split_pane(pane_id, "vertical")
         if new_id:
-            # Try incremental update first
-            try:
-                self.incremental_update_for_split(pane_id, new_id)
-            except Exception as e:
-                logger.warning(f"Incremental update failed: {e}, falling back to full refresh")
-                self.refresh_view()
+            # Full refresh is more reliable for now
+            self.refresh_view()
             self.pane_added.emit(new_id)
         
         # End transition with fade
