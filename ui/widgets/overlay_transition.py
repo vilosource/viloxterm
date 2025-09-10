@@ -39,8 +39,7 @@ class OverlayWidget(QLabel):
         """
         super().__init__(parent)
         
-        # Configure overlay appearance
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        # Configure overlay appearance - no window flags, just a child widget
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
         
@@ -201,7 +200,7 @@ class TransitionManager:
         logger.debug("Transition begun")
         return True
     
-    def end_transition(self, delay: int = 50):
+    def end_transition(self, delay: int = 10):
         """
         End a transition by fading out the overlay.
         
@@ -219,7 +218,7 @@ class TransitionManager:
     
     def _complete_transition(self):
         """Complete the transition by fading out overlay."""
-        self.overlay.hide_overlay(duration=150)
+        self.overlay.hide_overlay(duration=100)  # Faster fade
         self.transition_active = False
         logger.debug("Transition completed")
     
@@ -230,7 +229,7 @@ class TransitionManager:
         self.transition_active = False
         logger.debug("Transition aborted")
     
-    def with_transition(self, operation, delay: int = 50):
+    def with_transition(self, operation, delay: int = 10):
         """
         Execute an operation with transition overlay.
         
