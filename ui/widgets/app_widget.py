@@ -114,6 +114,16 @@ class AppWidget(QWidget):
         self.focus_requested.emit()
         logger.debug(f"focus_requested signal emitted for widget {self.widget_id}")
         
+    def focus_widget(self):
+        """
+        Set keyboard focus on the actual content widget.
+        
+        Subclasses should override this to focus their specific widget
+        (e.g., text editor, terminal view, etc.)
+        """
+        # Default implementation - focus the AppWidget itself
+        self.setFocus()
+        
     def get_title(self) -> str:
         """
         Get title/label for this widget.

@@ -12,7 +12,7 @@ from typing import Dict, Optional, Union, List
 from PySide6.QtWidgets import (
     QWidget, QSplitter, QVBoxLayout, QHBoxLayout, QMenu, QSizePolicy
 )
-from PySide6.QtCore import Qt, Signal, QEvent
+from PySide6.QtCore import Qt, Signal, QEvent, QTimer
 from PySide6.QtGui import QAction
 
 from ui.widgets.split_pane_model import SplitPaneModel, LeafNode, SplitNode
@@ -673,6 +673,8 @@ class SplitPaneWidget(QWidget):
             # Full refresh is more reliable for now
             self.refresh_view()
             self.pane_added.emit(new_id)
+            # Restore focus to active pane after refresh
+            self.restore_active_pane_focus()
         
         # End transition with fade
         # if self.transition_manager:
@@ -689,6 +691,8 @@ class SplitPaneWidget(QWidget):
             # Full refresh is more reliable for now
             self.refresh_view()
             self.pane_added.emit(new_id)
+            # Restore focus to active pane after refresh
+            self.restore_active_pane_focus()
         
         # End transition with fade
         # if self.transition_manager:
@@ -706,6 +710,8 @@ class SplitPaneWidget(QWidget):
             # if self.transition_manager:
             #     self.transition_manager.end_transition(delay=10)
             self.pane_removed.emit(pane_id)
+            # Restore focus to the new active pane
+            self.restore_active_pane_focus()
             
     def set_active_pane(self, pane_id: str):
         """Set the active pane."""
@@ -722,6 +728,32 @@ class SplitPaneWidget(QWidget):
         else:
             logger.debug(f"Failed to set active pane to: {pane_id}")
             logger.warning(f"❌ Failed to set active pane to: {pane_id}")
+            
+    def restore_active_pane_focus(self):
+        """
+        Restore keyboard focus to the active pane's widget after a refresh.
+        
+        Uses QTimer to ensure the widget tree is fully rendered before setting focus.
+        """
+        active_id = self.model.get_active_pane_id()
+        if not active_id:
+            return
+            
+        # Find the active pane's leaf node
+        leaf = self.model.find_leaf(active_id)
+        if not leaf or not leaf.app_widget:
+            return
+            
+        # Use a minimal timer delay to ensure widgets are ready
+        def set_focus():
+            try:
+                # Call the focus_widget method on the AppWidget
+                leaf.app_widget.focus_widget()
+                logger.debug(f"Focus restored to pane {active_id} after split")
+            except Exception as e:
+                logger.warning(f"Failed to restore focus to pane {active_id}: {e}")
+                
+        QTimer.singleShot(10, set_focus)
             
     def get_current_split_widget(self):
         """Compatibility method - returns self."""

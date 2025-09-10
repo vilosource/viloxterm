@@ -81,6 +81,11 @@ class TerminalAppWidget(AppWidget):
         self.request_focus()
         logger.debug(f"request_focus() called for terminal {self.widget_id}")
         super().mousePressEvent(event)
+        
+    def focus_widget(self):
+        """Set keyboard focus on the terminal web view."""
+        if self.web_view:
+            self.web_view.setFocus()
     
     def on_web_view_focus_in(self, event):
         """Handle web view focus in event - this should fire when user clicks on terminal."""

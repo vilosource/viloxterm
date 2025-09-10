@@ -54,6 +54,11 @@ class EditorAppWidget(AppWidget):
         self.request_focus()
         super().mousePressEvent(event)
         
+    def focus_widget(self):
+        """Set keyboard focus on the text editor."""
+        if self.editor:
+            self.editor.setFocus()
+        
     def setup_editor_style(self):
         """Configure editor appearance."""
         # Set font
