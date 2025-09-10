@@ -698,6 +698,8 @@ class SplitPaneWidget(QWidget):
         # End transition with fade
         # if self.transition_manager:
         #     self.transition_manager.end_transition(delay=10)
+        
+        return new_id
             
     def split_vertical(self, pane_id: str):
         """Split pane vertically."""
@@ -716,6 +718,8 @@ class SplitPaneWidget(QWidget):
         # End transition with fade
         # if self.transition_manager:
         #     self.transition_manager.end_transition(delay=10)
+        
+        return new_id
             
     def close_pane(self, pane_id: str):
         """Close a pane."""
