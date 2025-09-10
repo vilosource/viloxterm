@@ -197,7 +197,10 @@ class TerminalAssetBundler:
                 // Create terminal with current theme
                 term = new Terminal({{
                     ...window.terminalConfig,
-                    theme: currentTheme
+                    theme: currentTheme,
+                    // Performance optimization for Canvas2D
+                    rendererType: 'canvas',
+                    allowTransparency: false
                 }});
                 
                 // Load addons

@@ -19,6 +19,7 @@ from ui.terminal.terminal_server import terminal_server
 from ui.terminal.terminal_config import TerminalConfig
 from ui.terminal.terminal_themes import get_terminal_theme
 from ui.terminal.terminal_assets import terminal_asset_bundler
+from ui.terminal.terminal_bridge import TerminalBridge
 from ui.icon_manager import get_icon_manager
 
 logger = logging.getLogger(__name__)
@@ -31,9 +32,6 @@ class TerminalAppWidget(AppWidget):
     Manages its own terminal session and WebEngine view.
     """
     
-    # Signal for theme changes from Qt to JavaScript
-    themeChanged = Signal(dict)
-    
     def __init__(self, widget_id: str, parent=None):
         """Initialize the terminal widget."""
         super().__init__(widget_id, WidgetType.TERMINAL, parent)
@@ -41,6 +39,7 @@ class TerminalAppWidget(AppWidget):
         self.web_view = None
         self.config = TerminalConfig()
         self.current_theme = "dark"
+        self.bridge = None  # Will be created in setup_terminal
         
         # Connect to theme changes from IconManager
         icon_manager = get_icon_manager()
@@ -83,10 +82,21 @@ class TerminalAppWidget(AppWidget):
         # Don't hide the web view - let it show with dark background
         # self.web_view.hide()  # REMOVED - causes white flash on re-render
         
-        # Set up JavaScript communication channel
+        # Create bridge object for clean QWebChannel communication
+        self.bridge = TerminalBridge(self)
+        
+        # Connect bridge signals to our methods
+        self.bridge.terminalClicked.connect(lambda: self.request_focus())
+        self.bridge.terminalFocused.connect(lambda: self.request_focus())
+        
+        # Set initial theme in bridge
+        theme_data = get_terminal_theme(self.current_theme)
+        self.bridge.set_theme(theme_data)
+        
+        # Set up JavaScript communication channel with bridge
         from PySide6.QtWebChannel import QWebChannel
         self.channel = QWebChannel()
-        self.channel.registerObject("terminal", self)
+        self.channel.registerObject("terminal", self.bridge)  # Register bridge, not self
         self.web_view.page().setWebChannel(self.channel)
         
         # Connect to log when terminal loads (no longer need to show/hide)
@@ -133,17 +143,6 @@ class TerminalAppWidget(AppWidget):
         # Call the original focusInEvent
         QWebEngineView.focusInEvent(self.web_view, event)
     
-    @Slot()
-    def js_terminal_clicked(self):
-        """Called from JavaScript when the terminal area is clicked."""
-        logger.debug(f"JavaScript terminal click detected for widget {self.widget_id}")
-        self.request_focus()
-        
-    @Slot()
-    def js_terminal_focused(self):
-        """Called from JavaScript when the terminal gains focus."""
-        logger.debug(f"JavaScript terminal focus detected for widget {self.widget_id}")
-        self.request_focus()
         
     def on_terminal_loaded(self, success: bool):
         """Called when the web view finishes loading terminal content."""
@@ -266,31 +265,22 @@ class TerminalAppWidget(AppWidget):
         # For now, this is a placeholder
         pass
     
-    @Slot(result=dict)
-    def getCurrentTheme(self):
-        """
-        Provide current theme to JavaScript via QWebChannel.
-        Called from JavaScript when terminal initializes.
-        """
-        theme_data = get_terminal_theme(self.current_theme)
-        logger.debug(f"Providing theme data to terminal: {self.current_theme}")
-        return theme_data
-    
-    @Slot(str)
     def on_app_theme_changed(self, theme_name: str):
         """
         Handle theme change from IconManager.
-        Push new theme to terminal via signal.
+        Push new theme to terminal via bridge.
         """
         logger.info(f"Terminal theme changing to: {theme_name}")
         self.current_theme = theme_name
         theme_data = get_terminal_theme(theme_name)
         
-        # Emit signal for QWebChannel
-        self.themeChanged.emit(theme_data)
+        # Update bridge with new theme
+        if self.bridge:
+            self.bridge.set_theme(theme_data)
         
         # Also try direct JavaScript injection as fallback
         if self.web_view:
-            theme_json = str(theme_data).replace("'", '"')
+            import json
+            theme_json = json.dumps(theme_data)
             js_code = f"if (window.applyTerminalTheme) {{ window.applyTerminalTheme({theme_json}); }}"
             self.web_view.page().runJavaScript(js_code)
