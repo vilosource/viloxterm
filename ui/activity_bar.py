@@ -109,20 +109,42 @@ class ActivityBar(QToolBar):
         
     def on_view_selected(self, view_name: str):
         """Handle view selection."""
+        # Find the action that was clicked
+        clicked_action = None
+        for action in self.view_actions:
+            if action.text().lower() == view_name:
+                clicked_action = action
+                break
+        
         if view_name == self.current_view:
-            # Toggle sidebar if same view is clicked
+            # Same view clicked - toggle sidebar
+            # Important: Keep the action checked when sidebar is visible,
+            # unchecked when hidden. This prevents the triple-click bug.
             self.toggle_sidebar.emit()
+            # Don't change current_view, but we need to track sidebar state
+            # The action's checked state will be managed by the main window
         else:
-            # Switch to new view
+            # Different view clicked - switch to new view
             self.current_view = view_name
             
-            # Update checked states
+            # Update checked states - ensure only the clicked action is checked
             for action in self.view_actions:
-                action.setChecked(action.text().lower() == view_name)
+                action.setChecked(action == clicked_action)
                 
-            # Emit signal
+            # Emit signal to change view
             self.view_changed.emit(view_name)
             
+    def set_sidebar_visible(self, visible: bool):
+        """Update the current action's checked state based on sidebar visibility."""
+        # Find the action for the current view
+        for action in self.view_actions:
+            if action.text().lower() == self.current_view:
+                # Block signals to prevent triggering on_view_selected
+                action.blockSignals(True)
+                action.setChecked(visible)
+                action.blockSignals(False)
+                break
+    
     def update_icons(self):
         """Update icons when theme changes."""
         icon_manager = get_icon_manager()

@@ -181,9 +181,13 @@ class MainWindow(QMainWindow):
         if self.sidebar.is_collapsed:
             # Sidebar is now collapsed
             self.main_splitter.setSizes([0, self.main_splitter.width()])
+            # Update activity bar to show current view as unchecked
+            self.activity_bar.set_sidebar_visible(False)
         else:
             # Sidebar is now expanded
             self.main_splitter.setSizes([250, self.main_splitter.width() - 250])
+            # Update activity bar to show current view as checked
+            self.activity_bar.set_sidebar_visible(True)
         
     def reset_app_state(self):
         """Reset application to default state, clearing all saved settings."""
