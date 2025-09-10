@@ -19,7 +19,7 @@ from ui.widgets.split_pane_model import SplitPaneModel, LeafNode, SplitNode
 from ui.widgets.widget_registry import WidgetType, widget_registry
 from ui.widgets.pane_header import PaneHeaderBar
 from ui.widgets.widget_pool import get_widget_pool, cleanup_widget_pool
-from ui.widgets.overlay_transition import TransitionManager
+# from ui.widgets.overlay_transition import TransitionManager  # Disabled - causing UI freeze
 from ui.vscode_theme import get_splitter_stylesheet, EDITOR_BACKGROUND
 
 logger = logging.getLogger(__name__)
@@ -312,8 +312,9 @@ class SplitPaneWidget(QWidget):
         # Initial render
         self.refresh_view()
         
-        # Initialize transition manager after UI is set up
-        self.transition_manager = TransitionManager(self)
+        # Transition manager disabled - was causing UI to freeze
+        # self.transition_manager = TransitionManager(self)
+        self.transition_manager = None
         
     def connect_model_signals(self):
         """Connect signals from all AppWidgets in the model to our handlers."""
@@ -663,8 +664,9 @@ class SplitPaneWidget(QWidget):
     
     def split_horizontal(self, pane_id: str):
         """Split pane horizontally."""
-        if self.transition_manager:
-            self.transition_manager.begin_transition()
+        # Overlay transitions disabled - causing UI to freeze
+        # if self.transition_manager:
+        #     self.transition_manager.begin_transition()
         
         new_id = self.model.split_pane(pane_id, "horizontal")
         if new_id:
@@ -673,13 +675,14 @@ class SplitPaneWidget(QWidget):
             self.pane_added.emit(new_id)
         
         # End transition with fade
-        if self.transition_manager:
-            self.transition_manager.end_transition(delay=10)
+        # if self.transition_manager:
+        #     self.transition_manager.end_transition(delay=10)
             
     def split_vertical(self, pane_id: str):
         """Split pane vertically."""
-        if self.transition_manager:
-            self.transition_manager.begin_transition()
+        # Overlay transitions disabled - causing UI to freeze
+        # if self.transition_manager:
+        #     self.transition_manager.begin_transition()
         
         new_id = self.model.split_pane(pane_id, "vertical")
         if new_id:
@@ -688,19 +691,20 @@ class SplitPaneWidget(QWidget):
             self.pane_added.emit(new_id)
         
         # End transition with fade
-        if self.transition_manager:
-            self.transition_manager.end_transition(delay=10)
+        # if self.transition_manager:
+        #     self.transition_manager.end_transition(delay=10)
             
     def close_pane(self, pane_id: str):
         """Close a pane."""
-        if self.transition_manager:
-            self.transition_manager.begin_transition()
+        # Overlay transitions disabled - causing UI to freeze
+        # if self.transition_manager:
+        #     self.transition_manager.begin_transition()
         
         if self.model.close_pane(pane_id):
             self.refresh_view()
             # End transition with fade
-            if self.transition_manager:
-                self.transition_manager.end_transition(delay=10)
+            # if self.transition_manager:
+            #     self.transition_manager.end_transition(delay=10)
             self.pane_removed.emit(pane_id)
             
     def set_active_pane(self, pane_id: str):
