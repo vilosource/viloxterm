@@ -19,6 +19,7 @@ from ui.widgets.split_pane_model import SplitPaneModel, LeafNode, SplitNode
 from ui.widgets.widget_registry import WidgetType, widget_registry
 from ui.widgets.pane_header import PaneHeaderBar
 from ui.widgets.widget_pool import get_widget_pool, cleanup_widget_pool
+from ui.widgets.overlay_transition import TransitionManager
 from ui.vscode_theme import get_splitter_stylesheet, EDITOR_BACKGROUND
 
 logger = logging.getLogger(__name__)
@@ -281,6 +282,9 @@ class SplitPaneWidget(QWidget):
         # Initialize widget pool for reusing widgets
         self.widget_pool = get_widget_pool()
         
+        # Initialize transition manager for overlay effects
+        self.transition_manager = None  # Will be initialized after UI setup
+        
         # Set up UI
         self.setup_ui()
         
@@ -307,6 +311,9 @@ class SplitPaneWidget(QWidget):
         
         # Initial render
         self.refresh_view()
+        
+        # Initialize transition manager after UI is set up
+        self.transition_manager = TransitionManager(self)
         
     def connect_model_signals(self):
         """Connect signals from all AppWidgets in the model to our handlers."""
@@ -656,6 +663,10 @@ class SplitPaneWidget(QWidget):
     
     def split_horizontal(self, pane_id: str):
         """Split pane horizontally."""
+        # Begin transition overlay
+        if self.transition_manager:
+            self.transition_manager.begin_transition()
+        
         new_id = self.model.split_pane(pane_id, "horizontal")
         if new_id:
             # Try incremental update first
@@ -665,9 +676,17 @@ class SplitPaneWidget(QWidget):
                 logger.warning(f"Incremental update failed: {e}, falling back to full refresh")
                 self.refresh_view()
             self.pane_added.emit(new_id)
+        
+        # End transition with fade
+        if self.transition_manager:
+            self.transition_manager.end_transition(delay=100)
             
     def split_vertical(self, pane_id: str):
         """Split pane vertically."""
+        # Begin transition overlay
+        if self.transition_manager:
+            self.transition_manager.begin_transition()
+        
         new_id = self.model.split_pane(pane_id, "vertical")
         if new_id:
             # Try incremental update first
@@ -677,11 +696,23 @@ class SplitPaneWidget(QWidget):
                 logger.warning(f"Incremental update failed: {e}, falling back to full refresh")
                 self.refresh_view()
             self.pane_added.emit(new_id)
+        
+        # End transition with fade
+        if self.transition_manager:
+            self.transition_manager.end_transition(delay=100)
             
     def close_pane(self, pane_id: str):
         """Close a pane."""
+        # Begin transition overlay
+        if self.transition_manager:
+            self.transition_manager.begin_transition()
+        
         if self.model.close_pane(pane_id):
             self.refresh_view()
+        
+        # End transition with fade
+        if self.transition_manager:
+            self.transition_manager.end_transition(delay=100)
             self.pane_removed.emit(pane_id)
             
     def set_active_pane(self, pane_id: str):
