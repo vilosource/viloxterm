@@ -11,25 +11,12 @@ import logging
 
 from core.commands.base import Command, CommandContext, CommandResult
 from core.commands.registry import command_registry
-from core.services.locator import ServiceLocator
+from services.service_locator import ServiceLocator
 
 logger = logging.getLogger(__name__)
 
 
-class ClearTerminalCommand(Command):
-    """Clear the active terminal."""
-    
-    def __init__(self):
-        super().__init__(
-            id="terminal.clear",
-            title="Clear Terminal",
-            category="Terminal",
-            description="Clear the terminal screen",
-            shortcut="Ctrl+L",
-            keywords=["clear", "cls", "reset"]
-        )
-    
-    def execute(self, context: CommandContext) -> CommandResult:
+def clear_terminal_handler(context: CommandContext) -> CommandResult:
         """Clear the active terminal."""
         try:
             main_window = ServiceLocator.get_service("main_window")
@@ -65,20 +52,7 @@ class ClearTerminalCommand(Command):
             )
 
 
-class NewTerminalCommand(Command):
-    """Create a new terminal tab."""
-    
-    def __init__(self):
-        super().__init__(
-            id="terminal.new",
-            title="New Terminal",
-            category="Terminal",
-            description="Open a new terminal tab",
-            shortcut="Ctrl+Shift+`",
-            keywords=["new", "terminal", "console", "shell"]
-        )
-    
-    def execute(self, context: CommandContext) -> CommandResult:
+def new_terminal_handler(context: CommandContext) -> CommandResult:
         """Create a new terminal tab."""
         try:
             main_window = ServiceLocator.get_service("main_window")
@@ -109,20 +83,7 @@ class NewTerminalCommand(Command):
             )
 
 
-class CopyTerminalCommand(Command):
-    """Copy selected text from terminal."""
-    
-    def __init__(self):
-        super().__init__(
-            id="terminal.copy",
-            title="Copy from Terminal",
-            category="Terminal",
-            description="Copy selected text from the terminal",
-            shortcut="Ctrl+Shift+C",
-            keywords=["copy", "clipboard"]
-        )
-    
-    def execute(self, context: CommandContext) -> CommandResult:
+def copy_terminal_handler(context: CommandContext) -> CommandResult:
         """Copy from terminal."""
         try:
             main_window = ServiceLocator.get_service("main_window")
@@ -157,20 +118,7 @@ class CopyTerminalCommand(Command):
             )
 
 
-class PasteTerminalCommand(Command):
-    """Paste text to terminal."""
-    
-    def __init__(self):
-        super().__init__(
-            id="terminal.paste",
-            title="Paste to Terminal",
-            category="Terminal",
-            description="Paste text from clipboard to the terminal",
-            shortcut="Ctrl+Shift+V",
-            keywords=["paste", "clipboard"]
-        )
-    
-    def execute(self, context: CommandContext) -> CommandResult:
+def paste_terminal_handler(context: CommandContext) -> CommandResult:
         """Paste to terminal."""
         try:
             from PySide6.QtWidgets import QApplication
@@ -215,19 +163,7 @@ class PasteTerminalCommand(Command):
             )
 
 
-class KillTerminalCommand(Command):
-    """Kill the current terminal session."""
-    
-    def __init__(self):
-        super().__init__(
-            id="terminal.kill",
-            title="Kill Terminal",
-            category="Terminal",
-            description="Terminate the current terminal session",
-            keywords=["kill", "terminate", "close", "exit"]
-        )
-    
-    def execute(self, context: CommandContext) -> CommandResult:
+def kill_terminal_handler(context: CommandContext) -> CommandResult:
         """Kill the current terminal."""
         try:
             main_window = ServiceLocator.get_service("main_window")
@@ -261,19 +197,7 @@ class KillTerminalCommand(Command):
             )
 
 
-class RestartTerminalCommand(Command):
-    """Restart the current terminal session."""
-    
-    def __init__(self):
-        super().__init__(
-            id="terminal.restart",
-            title="Restart Terminal",
-            category="Terminal",
-            description="Restart the current terminal session",
-            keywords=["restart", "reset", "reload"]
-        )
-    
-    def execute(self, context: CommandContext) -> CommandResult:
+def restart_terminal_handler(context: CommandContext) -> CommandResult:
         """Restart the current terminal."""
         try:
             main_window = ServiceLocator.get_service("main_window")
@@ -311,12 +235,58 @@ class RestartTerminalCommand(Command):
 def register_terminal_commands():
     """Register all terminal commands."""
     commands = [
-        ClearTerminalCommand(),
-        NewTerminalCommand(),
-        CopyTerminalCommand(),
-        PasteTerminalCommand(),
-        KillTerminalCommand(),
-        RestartTerminalCommand(),
+        Command(
+            id="terminal.clear",
+            title="Clear Terminal",
+            category="Terminal",
+            handler=clear_terminal_handler,
+            description="Clear the terminal screen",
+            shortcut="Ctrl+L",
+            keywords=["clear", "cls", "reset"]
+        ),
+        Command(
+            id="terminal.new",
+            title="New Terminal",
+            category="Terminal",
+            handler=new_terminal_handler,
+            description="Open a new terminal tab",
+            shortcut="Ctrl+Shift+`",
+            keywords=["new", "terminal", "console", "shell"]
+        ),
+        Command(
+            id="terminal.copy",
+            title="Copy from Terminal",
+            category="Terminal",
+            handler=copy_terminal_handler,
+            description="Copy selected text from the terminal",
+            shortcut="Ctrl+Shift+C",
+            keywords=["copy", "clipboard"]
+        ),
+        Command(
+            id="terminal.paste",
+            title="Paste to Terminal",
+            category="Terminal",
+            handler=paste_terminal_handler,
+            description="Paste text from clipboard to the terminal",
+            shortcut="Ctrl+Shift+V",
+            keywords=["paste", "clipboard"]
+        ),
+        Command(
+            id="terminal.kill",
+            title="Kill Terminal",
+            category="Terminal",
+            handler=kill_terminal_handler,
+            description="Terminate the current terminal session",
+            keywords=["kill", "terminate", "close", "exit"]
+        ),
+        Command(
+            id="terminal.restart",
+            title="Restart Terminal",
+            category="Terminal",
+            handler=restart_terminal_handler,
+            description="Restart the current terminal session",
+            keywords=["restart", "reset", "reload"]
+        ),
     ]
     
     for command in commands:
