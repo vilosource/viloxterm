@@ -4,13 +4,13 @@ This directory contains all AI agent configurations, protocols, and designs for 
 
 ## Agent Configurations
 
-### Claude Code Agents
-- **[claude-code-agent-config.md](claude-code-agent-config.md)** - Safe Implementation Coder agent for Claude Code
+### Primary Implementation Agent
+- **[code-monkey.md](code-monkey.md)** 🐵 - The Code Monkey: careful, methodical implementation agent
 - **[design-compliance.md](design-compliance.md)** - Agent for verifying design compliance
 - **[design-compliance-instructions.md](design-compliance-instructions.md)** - Detailed instructions for design compliance verification
 
-### Implementation Agents
-- **[implementation-coder.md](implementation-coder.md)** - Comprehensive implementation agent design
+### Design Documents
+- **[code-monkey-design.md](code-monkey-design.md)** - Design document for the Code Monkey agent
 - **[design-compliance-analyzer.md](design-compliance-analyzer.md)** - Advanced design analysis agent
 
 ## Protocols and Strategies

@@ -1,12 +1,12 @@
-# Safe Implementation Coder Agent
+# Code Monkey Agent 🐵
 
 This agent configuration has been moved to maintain better organization.
 
-**New Location:** `docs/agents/claude-code-agent-config.md`
+**New Location:** `docs/agents/code-monkey.md`
 
 ## Available Agents in docs/agents/
 
-1. **claude-code-agent-config.md** - Safe Implementation Coder for Claude Code
+1. **code-monkey.md** - The Code Monkey implementation agent
 2. **design-compliance.md** - Design compliance verification agent
 3. **design-compliance-analyzer.md** - Advanced design analysis agent
 4. **anti-drift-protocol.md** - Protocol for preventing context drift

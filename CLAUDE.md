@@ -114,6 +114,24 @@ make l  # Lint
 
 ## Claude Code Agents
 
+### Code Monkey 🐵
+When the user says:
+- "Code monkey, implement [feature]"
+- "Use code monkey for [task]"  
+- "Let the code monkey handle this"
+- "Implement [feature] safely"
+
+**Automatically use the Code Monkey agent** which will:
+1. Read existing code before writing any new code
+2. Make incremental changes (max 10 lines at a time)
+3. Test after every single change
+4. Never break existing functionality
+5. Follow existing patterns meticulously
+
+Agent location: `docs/agents/code-monkey.md`
+
+Example: If user says "Code monkey, implement the tab naming feature", invoke the Code Monkey to implement it incrementally and safely.
+
 ### Design Compliance Analyzer
 When the user asks about:
 - "design compliance" or "implementation vs design"
