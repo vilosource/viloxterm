@@ -92,10 +92,10 @@ def test_service_locator() -> Tuple[bool, str]:
                 self.name = "DummyService"
         
         dummy = DummyService()
-        locator.register("dummy_test", dummy)
+        locator.register(DummyService, dummy)
         
         # Try to retrieve it
-        retrieved = locator.get("dummy_test")
+        retrieved = locator.get(DummyService)
         if retrieved != dummy:
             return False, "❌ ServiceLocator retrieval failed"
         
@@ -131,8 +131,8 @@ def test_command_registry() -> Tuple[bool, str]:
         from core.commands.registry import command_registry
         from core.commands.base import Command, CommandResult, CommandContext
         
-        # Clear registry (for testing)
-        command_registry.clear()
+        # Store existing commands
+        existing_commands = command_registry.get_all_commands().copy()
         
         # Create and register a test command
         def test_handler(ctx: CommandContext) -> CommandResult:
@@ -171,9 +171,8 @@ def test_builtin_commands() -> Tuple[bool, str]:
         from core.commands.builtin import register_all_builtin_commands
         from core.commands.registry import command_registry
         
-        # Don't clear - just ensure they're registered
-        if len(command_registry.get_all_commands()) == 0:
-            register_all_builtin_commands()
+        # Always register built-in commands for this test
+        register_all_builtin_commands()
         
         # Check some known commands exist
         essential_commands = [
