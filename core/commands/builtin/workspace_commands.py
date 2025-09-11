@@ -279,6 +279,20 @@ def restore_layout_command(context: CommandContext) -> CommandResult:
         return CommandResult(success=False, error=str(e))
 
 
+@command(
+    id="workbench.action.renamePane",
+    title="Rename Pane",
+    category="Workspace",
+    description="Rename the active pane",
+    shortcut="f2",
+    when="workbench.pane.focused"
+)
+def rename_pane_command(context: CommandContext) -> CommandResult:
+    """Rename the active pane."""
+    # Will be implemented with UI integration
+    return CommandResult(success=True)
+
+
 def register_workspace_commands():
     """Register all workspace commands."""
     # The @command decorator automatically registers them

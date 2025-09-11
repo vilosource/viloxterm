@@ -465,3 +465,7 @@ class StateService(Service):
         self._pane_names[pane_id] = name
         self._settings.setValue(f"pane_names/{pane_id}", name)
         self._settings.sync()
+    
+    def get_pane_name(self, pane_id: str) -> Optional[str]:
+        """Get custom name for a pane, or None if not set."""
+        return self._pane_names.get(pane_id)
