@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QToolButton, QMenu, QSizePolicy
 )
 from PySide6.QtCore import Qt, Signal, QSize
-from PySide6.QtGui import QAction, QFont
+from PySide6.QtGui import QAction, QFont, QPalette, QColor, QPainter, QBrush
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -32,26 +32,23 @@ class PaneHeaderBar(QWidget):
         super().__init__(parent)
         self.pane_id = pane_id
         self.show_type_menu = show_type_menu
+        self.is_active = False
+        self.background_color = QColor(PANE_HEADER_BACKGROUND)
         self.setup_ui()
     
     def setup_ui(self):
         """Initialize the header UI."""
         # Set fixed height for minimal footprint
-        self.setFixedHeight(24)
+        self.setFixedHeight(18)  # Ultra-minimal height to save screen space
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         
-        # Style the header with VSCode theme
-        self.setStyleSheet(f"""
-            PaneHeaderBar {{
-                background-color: {PANE_HEADER_BACKGROUND};
-                border-bottom: 1px solid {PANE_HEADER_BORDER};
-            }}
-        """)
+        # Don't use palette or stylesheet for background - we'll paint it ourselves
+        self.setAttribute(Qt.WA_StyledBackground, False)
         
         # Create layout
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(4, 0, 4, 0)
-        layout.setSpacing(2)
+        layout.setContentsMargins(2, 0, 2, 0)  # Minimal margins
+        layout.setSpacing(1)  # Minimal spacing
         
         # Pane number label (shows 1-9 when enabled)
         self.number_label = QLabel()
@@ -59,12 +56,12 @@ class PaneHeaderBar(QWidget):
             QLabel {{
                 background-color: {ACCENT_COLOR};
                 color: white;
-                border-radius: 3px;
-                padding: 2px 6px;
+                border-radius: 2px;
+                padding: 0px 4px;
                 font-weight: bold;
-                font-size: 12px;
-                min-width: 14px;
-                max-width: 14px;
+                font-size: 10px;
+                min-width: 12px;
+                max-width: 12px;
             }}
         """)
         self.number_label.setAlignment(Qt.AlignCenter)
@@ -76,8 +73,8 @@ class PaneHeaderBar(QWidget):
         self.id_label.setStyleSheet(f"""
             QLabel {{
                 color: {TAB_INACTIVE_FOREGROUND};
-                font-size: 11px;
-                padding: 0 4px;
+                font-size: 10px;
+                padding: 0 2px;
             }}
         """)
         layout.addWidget(self.id_label)
@@ -109,8 +106,8 @@ class PaneHeaderBar(QWidget):
                 background-color: transparent;
                 color: {PANE_HEADER_FOREGROUND};
                 border: none;
-                padding: 2px 4px;
-                font-size: 14px;
+                padding: 0px 2px;
+                font-size: 12px;
                 font-weight: bold;
             }}
             QToolButton:hover {{
@@ -126,7 +123,7 @@ class PaneHeaderBar(QWidget):
         button = QToolButton()
         button.setText(text)
         button.setToolTip(tooltip)
-        button.setFixedSize(20, 20)
+        button.setFixedSize(16, 16)  # Smaller buttons
         
         # Style the button with VSCode theme
         button.setStyleSheet(f"""
@@ -134,8 +131,8 @@ class PaneHeaderBar(QWidget):
                 background-color: transparent;
                 color: {PANE_HEADER_FOREGROUND};
                 border: none;
-                padding: 2px;
-                font-size: 14px;
+                padding: 0px;
+                font-size: 12px;
                 font-weight: bold;
             }}
             QToolButton:hover {{
@@ -167,20 +164,26 @@ class PaneHeaderBar(QWidget):
             self.number_label.setText(str(number))
         self.number_label.setVisible(visible and number is not None)
     
+    def paintEvent(self, event):
+        """Custom paint event to draw the background."""
+        painter = QPainter(self)
+        painter.fillRect(self.rect(), QBrush(self.background_color))
+        super().paintEvent(event)
+    
     def set_active(self, active: bool):
         """Update visual state for active pane."""
+        self.is_active = active
+        
         if active:
-            self.setStyleSheet(f"""
-                PaneHeaderBar {{
-                    background-color: {PANE_HEADER_ACTIVE_BACKGROUND};
-                    border-bottom: 1px solid {PANE_HEADER_ACTIVE_BACKGROUND};
-                }}
-            """)
+            # Set active background color
+            self.background_color = QColor(PANE_HEADER_ACTIVE_BACKGROUND)
+            self.update()  # Force repaint
+            
             self.id_label.setStyleSheet(f"""
                 QLabel {{
                     color: {PANE_HEADER_ACTIVE_FOREGROUND};
-                    font-size: 11px;
-                    padding: 0 4px;
+                    font-size: 10px;
+                    padding: 0 2px;
                     font-weight: bold;
                 }}
             """)
@@ -190,27 +193,25 @@ class PaneHeaderBar(QWidget):
                     QLabel {{
                         background-color: {ACCENT_COLOR};
                         color: white;
-                        border-radius: 3px;
-                        padding: 2px 6px;
+                        border-radius: 2px;
+                        padding: 0px 4px;
                         font-weight: bold;
-                        font-size: 12px;
-                        min-width: 14px;
-                        max-width: 14px;
+                        font-size: 10px;
+                        min-width: 12px;
+                        max-width: 12px;
                         border: 1px solid white;
                     }}
                 """)
         else:
-            self.setStyleSheet(f"""
-                PaneHeaderBar {{
-                    background-color: {PANE_HEADER_BACKGROUND};
-                    border-bottom: 1px solid {PANE_HEADER_BORDER};
-                }}
-            """)
+            # Set inactive background color
+            self.background_color = QColor(PANE_HEADER_BACKGROUND)
+            self.update()  # Force repaint
+            
             self.id_label.setStyleSheet(f"""
                 QLabel {{
                     color: {TAB_INACTIVE_FOREGROUND};
-                    font-size: 11px;
-                    padding: 0 4px;
+                    font-size: 10px;
+                    padding: 0 2px;
                 }}
             """)
             # Normal number label for inactive pane
@@ -219,12 +220,12 @@ class PaneHeaderBar(QWidget):
                     QLabel {{
                         background-color: {PANE_HEADER_BUTTON_HOVER};
                         color: {TAB_INACTIVE_FOREGROUND};
-                        border-radius: 3px;
-                        padding: 2px 6px;
+                        border-radius: 2px;
+                        padding: 0px 4px;
                         font-weight: bold;
-                        font-size: 12px;
-                        min-width: 14px;
-                        max-width: 14px;
+                        font-size: 10px;
+                        min-width: 12px;
+                        max-width: 12px;
                     }}
                 """)
 

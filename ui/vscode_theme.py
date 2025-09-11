@@ -132,11 +132,11 @@ INFO_COLOR = "#75beff"  # Info blue
 SUCCESS_COLOR = "#4ec9b0"  # Success green
 
 # Pane Header Bar (custom for our implementation)
-PANE_HEADER_BACKGROUND = "#383838"  # Lighter gray for better contrast
-PANE_HEADER_ACTIVE_BACKGROUND = "#d67e00"  # Orange for active pane
-PANE_HEADER_FOREGROUND = "#cccccc"
-PANE_HEADER_ACTIVE_FOREGROUND = "#ffffff"
-PANE_HEADER_BORDER = "#464647"
+PANE_HEADER_BACKGROUND = "#2d2d30"  # Subtle dark gray, slightly lighter than editor
+PANE_HEADER_ACTIVE_BACKGROUND = "#3c3c3c"  # Subtle lighter gray for active pane
+PANE_HEADER_FOREGROUND = "#969696"  # Muted text for inactive
+PANE_HEADER_ACTIVE_FOREGROUND = "#e7e7e7"  # Brighter text for active
+PANE_HEADER_BORDER = "#464647"  # Subtle border
 PANE_HEADER_BUTTON_HOVER = "#505050"
 PANE_HEADER_CLOSE_HOVER = "#e81123"
 

@@ -599,6 +599,11 @@ class SplitPaneWidget(QWidget):
             wrapper = PaneContent(node)
             self.pane_wrappers[node.id] = wrapper
             
+            # Set initial active state if this is the active pane
+            active_id = self.model.get_active_pane_id()
+            if node.id == active_id:
+                wrapper.set_active(True)
+            
             # Install event filter to detect focus changes
             self.install_focus_event_filters(wrapper)
             
