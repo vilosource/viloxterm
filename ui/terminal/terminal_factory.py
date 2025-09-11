@@ -74,7 +74,7 @@ def register_terminal_widget():
         config.min_height = 300
         config.preserve_context_menu = False  # Terminal handles its own context menu
         config.show_header = True
-        config.allow_type_change = False
+        config.allow_type_change = True  # Allow changing terminal to other widget types
         config.can_be_closed = True
         config.can_be_split = True
 

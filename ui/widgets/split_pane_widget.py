@@ -66,12 +66,17 @@ class PaneContent(QWidget):
         
         # Check if we should show header for this widget type
         config = widget_registry.get_config(self.leaf_node.widget_type)
+        logger.debug(f"PaneContent setup for {self.leaf_node.id}: widget_type={self.leaf_node.widget_type}, config={config}")
+        if config:
+            logger.debug(f"  show_header={config.show_header}, allow_type_change={config.allow_type_change}")
+        
         if config and config.show_header:
             # Create header bar
             self.header_bar = PaneHeaderBar(
                 self.leaf_node.id,
                 show_type_menu=config.allow_type_change if config else False
             )
+            logger.debug(f"Created header bar with show_type_menu={config.allow_type_change}")
             
             # Connect header signals to request actions through AppWidget
             self.header_bar.split_horizontal_requested.connect(
