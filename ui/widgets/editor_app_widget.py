@@ -4,12 +4,13 @@ Text editor implementation as an AppWidget.
 """
 
 from typing import Dict, Any, Optional
-from PySide6.QtWidgets import QVBoxLayout, QPlainTextEdit
+from PySide6.QtWidgets import QVBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QTextOption
 
 from ui.widgets.app_widget import AppWidget
 from ui.widgets.widget_registry import WidgetType
+from PySide6.QtWidgets import QPlainTextEdit
 
 
 class EditorAppWidget(AppWidget):
@@ -34,8 +35,9 @@ class EditorAppWidget(AppWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
-        # Create editor
+        # Create standard text editor
         self.editor = QPlainTextEdit()
+        
         self.setup_editor_style()
         
         # Connect signals

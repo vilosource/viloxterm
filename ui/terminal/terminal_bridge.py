@@ -21,6 +21,7 @@ class TerminalBridge(QObject):
     themeChanged = Signal(dict)
     terminalClicked = Signal()
     terminalFocused = Signal()
+    shortcutPressed = Signal(str)  # Emits shortcut string like "Alt+P"
     
     def __init__(self, parent=None):
         """Initialize the terminal bridge."""
@@ -62,3 +63,22 @@ class TerminalBridge(QObject):
     def js_error(self, message: str):
         """Log error from JavaScript."""
         logger.error(f"JS Error: {message}")
+    
+    @Slot(str)
+    def js_shortcut_pressed(self, shortcut: str):
+        """
+        Called from JavaScript when a reserved shortcut is pressed.
+        This allows JS to notify Qt about shortcuts that should be handled
+        at the application level, not by the terminal.
+        """
+        logger.debug(f"Shortcut pressed in terminal (from JavaScript): {shortcut}")
+        self.shortcutPressed.emit(shortcut)
+    
+    def focus_terminal_element(self, web_view):
+        """
+        Focus the terminal element inside the web page.
+        This is called after Qt sets focus to the QWebEngineView.
+        """
+        if web_view and web_view.page():
+            web_view.page().runJavaScript("if (window.focusTerminal) window.focusTerminal();")
+            logger.debug("Requested terminal element focus via JavaScript")

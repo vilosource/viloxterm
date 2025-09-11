@@ -9,6 +9,7 @@ from ui.workspace_simple import Workspace  # Using new tab-based workspace
 from ui.status_bar import AppStatusBar
 from ui.icon_manager import get_icon_manager
 from ui.vscode_theme import *
+from ui.widgets.focus_sink import FocusSinkWidget
 
 
 class MainWindow(QMainWindow):
@@ -21,6 +22,7 @@ class MainWindow(QMainWindow):
         self.initialize_commands()
         self.initialize_keyboard()
         self.initialize_command_palette()
+        self.initialize_focus_sink()  # Add focus sink initialization
         self.restore_state()
         
     def setup_ui(self):
@@ -104,6 +106,7 @@ class MainWindow(QMainWindow):
     def initialize_keyboard(self):
         """Initialize keyboard service and shortcuts."""
         from PySide6.QtWidgets import QApplication
+        from PySide6.QtGui import QAction
         from core.keyboard import KeyboardService
         from core.keyboard.keymaps import KeymapManager
         
@@ -116,6 +119,10 @@ class MainWindow(QMainWindow):
         
         # Set default keymap (VSCode style)
         self.keymap_manager.set_keymap("vscode")
+        
+        # Add critical shortcuts as QActions with ApplicationShortcut context
+        # This ensures they work even when WebEngine has focus
+        self._create_application_shortcuts()
         
         # Connect keyboard service signals
         self.keyboard_service.shortcut_triggered.connect(self._on_shortcut_triggered)
@@ -191,6 +198,64 @@ class MainWindow(QMainWindow):
         import logging
         logger = logging.getLogger(__name__)
         logger.info("Command palette initialized successfully")
+    
+    def initialize_focus_sink(self):
+        """Initialize the focus sink widget for command mode."""
+        # Create focus sink widget (invisible, 0x0 size)
+        self.focus_sink = FocusSinkWidget(self)
+        
+        # Connect signals to handle pane navigation
+        self.focus_sink.digitPressed.connect(self._on_pane_number_pressed)
+        self.focus_sink.cancelled.connect(self._on_command_mode_cancelled)
+        self.focus_sink.commandModeExited.connect(self._on_command_mode_exited)
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Focus sink initialized successfully")
+    
+    def _on_pane_number_pressed(self, number: int):
+        """Handle pane number selection in command mode."""
+        # Get workspace service to switch panes
+        from services.workspace_service import WorkspaceService
+        workspace_service = self.service_locator.get(WorkspaceService)
+        
+        if workspace_service:
+            # First hide pane numbers (before switching)
+            workspace_service.hide_pane_numbers()
+            
+            # Then switch to the pane with the given number
+            # This ensures focus is set after UI updates
+            success = workspace_service.switch_to_pane_by_number(number)
+            
+            # Note: FocusSink automatically exits command mode after digit press
+            # No need to call exit_command_mode here
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Pane {number} selected in command mode")
+    
+    def _on_command_mode_cancelled(self):
+        """Handle command mode cancellation."""
+        # Hide pane numbers
+        from services.workspace_service import WorkspaceService
+        workspace_service = self.service_locator.get(WorkspaceService)
+        
+        if workspace_service:
+            workspace_service.hide_pane_numbers()
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Command mode cancelled")
+    
+    def _on_command_mode_exited(self):
+        """Handle command mode exit."""
+        # Note: Pane numbers are already hidden in _on_pane_number_pressed
+        # or _on_command_mode_cancelled, so we don't need to hide them here
+        # This prevents double-hiding which can interfere with focus
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Command mode exited")
     
     def create_command_context(self):
         """Create command context for execution."""
@@ -374,6 +439,32 @@ class MainWindow(QMainWindow):
         
         # Check if focused widget is a terminal
         return 'terminal' in focused_widget.__class__.__name__.lower()
+    
+    def _create_application_shortcuts(self):
+        """
+        Create QActions with ApplicationShortcut context for critical shortcuts.
+        
+        This ensures these shortcuts work even when QWebEngineView has focus,
+        as Qt's action system takes precedence over widget key handling when
+        combined with our WebShortcutGuard event filter.
+        """
+        from PySide6.QtGui import QAction, QKeySequence
+        
+        # Alt+P - Toggle pane numbers
+        # CRITICAL: We add this action to the MAIN WINDOW, not to a child widget
+        # This ensures it's always active regardless of focus
+        toggle_panes_action = QAction("Toggle Pane Numbers", self)
+        toggle_panes_action.setShortcut(QKeySequence("Alt+P"))
+        toggle_panes_action.setShortcutContext(Qt.ApplicationShortcut)
+        toggle_panes_action.triggered.connect(lambda: self.execute_command("workbench.action.togglePaneNumbers"))
+        self.addAction(toggle_panes_action)
+        
+        # Also ensure the action is enabled
+        toggle_panes_action.setEnabled(True)
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Created QAction for Alt+P with ApplicationShortcut context")
         
     def create_menu_bar(self):
         """Create the menu bar."""

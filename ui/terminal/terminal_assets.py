@@ -258,6 +258,20 @@ class TerminalAssetBundler:
                 term.attachCustomKeyEventHandler((e) => {{
                     if (e.type !== "keydown") return true;
                     
+                    // CRITICAL: Intercept Alt+P for pane navigation
+                    // This must be handled at JS level to prevent xterm.js from consuming it
+                    if (e.altKey && !e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "p") {{
+                        console.log("Alt+P detected in terminal, notifying Qt");
+                        // Notify Qt that Alt+P was pressed
+                        if (window.qtTerminal && window.qtTerminal.js_shortcut_pressed) {{
+                            window.qtTerminal.js_shortcut_pressed("Alt+P");
+                        }}
+                        // Prevent xterm.js from seeing this key at all
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;  // Critical: Don't let terminal process Alt+P
+                    }}
+                    
                     // Let Qt handle these global shortcuts - return false to prevent terminal from consuming them
                     if (e.ctrlKey && !e.shiftKey && !e.altKey) {{
                         const key = e.key.toLowerCase();
@@ -308,6 +322,14 @@ class TerminalAssetBundler:
                     '<div style="color: red; padding: 20px;">Failed to initialize terminal: ' + error.message + '</div>';
             }}
         }}
+        
+        // Function to focus the terminal (callable from Qt)
+        window.focusTerminal = function() {{
+            if (term) {{
+                term.focus();
+                console.log("Terminal focused via Qt request");
+            }}
+        }};
         
         // QWebChannel setup for Qt communication
         function setupQtBridge() {{
