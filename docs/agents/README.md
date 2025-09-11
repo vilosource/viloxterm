@@ -51,12 +51,29 @@ We've created a multi-layered system that provides persistent external memory an
 
 ## Agent Configurations
 
+### IMPORTANT: Claude Code Agent Setup
+**Claude Code requires agent files to be DIRECTLY in `.claude/agents/` directory:**
+- ✅ **CORRECT**: Full agent content copied to `.claude/agents/agent-name.md`
+- ❌ **WRONG**: Pointer/redirect files that reference other locations
+- ❌ **WRONG**: Symlinks to files in docs/agents/
+
+**To set up agents for Claude Code:**
+```bash
+# Copy agent to Claude Code's expected location
+cp docs/agents/code-monkey.md .claude/agents/code-monkey.md
+cp docs/agents/design-compliance.md .claude/agents/design-compliance.md
+```
+
+The files in `docs/agents/` serve as reference documentation, while `.claude/agents/` contains the active configurations that Claude Code actually uses.
+
 ### Primary Implementation Agent
 - **[code-monkey.md](code-monkey.md)** 🐵 - The Code Monkey: careful, methodical implementation agent
   - Maximum 10 lines per change
   - Test after every change
   - Never assumes, always verifies
   - "Small steps, no breaks, always test!"
+  - **Active location**: `.claude/agents/code-monkey.md` (for Claude Code)
+  - **Reference location**: `docs/agents/code-monkey.md` (for documentation)
 
 ### Design Verification Agents
 - **[design-compliance.md](design-compliance.md)** - Verifies implementation matches design

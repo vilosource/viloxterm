@@ -149,6 +149,41 @@ make l  # Lint
 
 ## Claude Code Agents
 
+### ⚠️ CRITICAL DISTINCTION: Real Agents vs Documentation ⚠️
+
+**BEFORE EDITING ANY AGENT FILE, READ THIS:**
+
+| What You Want | Where to Edit | Format Required |
+|--------------|---------------|-----------------|
+| **Change agent behavior** | `.claude/agents/agent-name.md` | YAML frontmatter + markdown |
+| **Document/explain agents** | `docs/agents/*` | Any markdown format |
+
+**THE GOLDEN RULE:**
+- `.claude/agents/` = **REAL AGENTS** (Claude Code executes these)
+- `docs/agents/` = **DOCUMENTATION** (Just docs, NOT executable)
+
+### Real Agent Format (`.claude/agents/*.md`)
+```markdown
+---
+name: agent-name
+description: "What the agent does"
+tools: Read, Write, Edit, Bash, Grep
+---
+
+# Agent Name
+System prompt content here...
+```
+
+### Common Mistake to AVOID
+❌ **WRONG:** Editing `docs/agents/code-monkey.md` to change agent behavior  
+✅ **CORRECT:** Editing `.claude/agents/code-monkey.md` to change agent behavior
+
+**Quick Check:** If you're about to edit an agent file, look at the path:
+- Starts with `.claude/agents/`? → You're editing the REAL agent
+- Starts with `docs/`? → You're editing documentation only
+
+For detailed guidelines, see `AGENT_FILES_IMPORTANT.md`
+
 ### Code Monkey 🐵 - Safe Implementation Agent
 
 **Launch with:** `/code-monkey` or when user says:
@@ -166,7 +201,9 @@ make l  # Lint
 
 **Key Rule:** If the app doesn't start after a change, the Code Monkey immediately reverts and tries a different approach.
 
-Agent configuration: `docs/agents/code-monkey.md`
+**Agent locations:**
+- Active configuration: `.claude/agents/code-monkey.md` (REQUIRED for Claude Code)
+- Reference documentation: `docs/agents/code-monkey.md` (for human reference)
 
 Example: "Code monkey, implement the tab naming feature" → Launches Code Monkey with design lock and incremental implementation.
 

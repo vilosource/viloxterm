@@ -78,6 +78,35 @@ fi
 - Verify exact import paths
 - Look for existing usage patterns
 
+## Pattern Discovery (CRITICAL: Do This First!)
+
+### Component Discovery Checklist
+
+Before implementing ANY UI feature, search for existing components:
+
+```bash
+# Search for existing editor/dialog components
+grep -r "class.*Editor" ui/ --include="*.py"
+grep -r "class.*Dialog" ui/ --include="*.py"
+grep -r "class.*Widget" ui/ --include="*.py"
+
+# Search for inline editing patterns
+grep -r "QLineEdit\|inline.*edit\|rename" ui/ --include="*.py"
+
+# Find overlay/popup patterns
+grep -r "setParent\|move\|show\|hide" ui/ --include="*.py"
+```
+
+**IMPORTANT**: If you find an existing component that does 80% of what you need, USE IT! Don't create a duplicate.
+
+### Common Reusable Components to Check For
+
+- `RenameEditor` - Inline text editing overlay
+- `ContextMenu` - Right-click menu builders
+- `Dialog` classes - Modal interactions
+- `Validator` classes - Input validation
+- `Animation` helpers - Smooth transitions
+
 ## Pattern Recognition (Adapt to ANY Codebase)
 
 ### Common Patterns to Look For

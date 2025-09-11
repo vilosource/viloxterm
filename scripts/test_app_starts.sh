@@ -7,13 +7,24 @@
 APP_PID=$!
 
 # Give it time to start
-sleep 3
+sleep 5
 
 # Check if process is still running
 if ps -p $APP_PID > /dev/null 2>&1; then
     echo "✅ App started successfully (PID: $APP_PID)"
-    # Clean up
+    # Clean up - try graceful kill first, then force kill
     kill $APP_PID 2>/dev/null
+    sleep 1
+    
+    # If still running, force kill
+    if ps -p $APP_PID > /dev/null 2>&1; then
+        echo "Process didn't terminate gracefully, force killing..."
+        kill -9 $APP_PID 2>/dev/null
+    fi
+    
+    # Also kill any child processes
+    pkill -P $APP_PID 2>/dev/null
+    
     wait $APP_PID 2>/dev/null
     exit 0
 else

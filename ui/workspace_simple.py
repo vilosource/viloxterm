@@ -14,6 +14,7 @@ from PySide6.QtGui import QAction
 
 from ui.widgets.split_pane_widget import SplitPaneWidget
 from ui.widgets.widget_registry import WidgetType
+from ui.widgets.rename_editor import RenameEditor
 from ui.vscode_theme import *
 
 logger = logging.getLogger(__name__)
@@ -240,8 +241,57 @@ class Workspace(QWidget):
     
     def on_tab_double_clicked(self, index: int):
         """Handle tab double-click (could be used for renaming)."""
-        pass  # TODO: Implement tab renaming
+        # Basic implementation: create rename editor
+        current_text = self.tab_widget.tabText(index)
+        self.start_tab_rename(index, current_text)
     
+    def start_tab_rename(self, index: int, current_text: str):
+        """Start renaming a tab with inline editor."""
+        if index < 0 or index >= self.tab_widget.count():
+            return
+        
+        # Create rename editor
+        self.rename_editor = RenameEditor(current_text, self)
+        
+        # Connect signals
+        self.rename_editor.rename_completed.connect(
+            lambda name: self.complete_tab_rename(index, name)
+        )
+        self.rename_editor.rename_cancelled.connect(self.cancel_tab_rename)
+        
+        # Position the editor over the tab
+        tab_bar = self.tab_widget.tabBar()
+        tab_rect = tab_bar.tabRect(index)
+        self.rename_editor.setGeometry(tab_rect)
+        self.rename_editor.show()
+        self.rename_editor.setFocus()
+        
+    def complete_tab_rename(self, index: int, new_name: str):
+        """Complete tab rename with validation."""
+        if not hasattr(self, 'rename_editor'):
+            return
+            
+        # Clean up the rename editor
+        self.rename_editor.hide()
+        self.rename_editor.deleteLater()
+        delattr(self, 'rename_editor')
+        
+        # Validate and apply new name
+        new_name = new_name.strip()
+        if new_name and index in self.tabs:
+            self.tab_widget.setTabText(index, new_name)
+            self.tabs[index].name = new_name
+            
+    def cancel_tab_rename(self):
+        """Cancel tab rename."""
+        if not hasattr(self, 'rename_editor'):
+            return
+            
+        # Clean up the rename editor
+        self.rename_editor.hide()
+        self.rename_editor.deleteLater()
+        delattr(self, 'rename_editor')
+        
     def on_pane_added(self, tab_name: str, pane_id: str):
         """Handle pane added in a tab."""
         # Could update status or emit combined signal
@@ -278,6 +328,15 @@ class Workspace(QWidget):
             close_right_action = QAction("Close Tabs to the Right", self)
             close_right_action.triggered.connect(lambda: self.close_tabs_to_right(index))
             menu.addAction(close_right_action)
+        
+        menu.addSeparator()
+        
+        # Rename tab
+        rename_action = QAction("Rename Tab", self)
+        rename_action.triggered.connect(
+            lambda: self.start_tab_rename(index, self.tab_widget.tabText(index))
+        )
+        menu.addAction(rename_action)
         
         menu.addSeparator()
         
