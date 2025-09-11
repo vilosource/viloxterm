@@ -111,3 +111,24 @@ make l  # Lint
 - Implementation Guide: `IMPLEMENTATION_GUIDE.md`
 - Project Specification: `PROJECT.md`
 - Testing Strategy: `TESTING_STRATEGY.md`
+
+## Claude Code Agents
+
+### Design Compliance Analyzer
+When the user asks about:
+- "design compliance" or "implementation vs design"
+- "what's missing from the design" or "design verification"
+- "find duplicates" or "duplicate definitions"
+- "code smells" or "architectural issues"
+- "code review against spec/design"
+
+**Automatically use the design-compliance agent** which will:
+1. Perform exhaustive three-pass searches before claiming anything is "not found"
+2. Provide file:line evidence for every claim
+3. Check for duplicate definitions
+4. Document all searches performed
+5. Never make assumptions - only report verified findings
+
+Agent location: `.claude/agents/design-compliance.md`
+
+Example: If user says "Check if our command system matches the design", invoke the design-compliance agent to perform systematic verification with evidence.
