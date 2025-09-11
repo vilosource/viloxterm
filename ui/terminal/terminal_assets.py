@@ -263,7 +263,7 @@ class TerminalAssetBundler:
                         const key = e.key.toLowerCase();
                         // Global app shortcuts that should bubble up to Qt
                         if (key === "b" ||     // Toggle sidebar
-                            key === "\\" ||    // Split horizontal
+                            key === "\\\\" ||    // Split horizontal
                             key === "t" ||     // Toggle theme
                             key === "n" ||     // New tab
                             key === "w" ||     // Close tab
@@ -275,8 +275,8 @@ class TerminalAssetBundler:
                         }}
                     }}
                     
-                    // Let Qt handle Ctrl+Shift+\ for vertical split
-                    if (e.ctrlKey && e.shiftKey && (e.key === "\\" || e.key === "|")) {{
+                    // Let Qt handle Ctrl+Shift+\\ for vertical split
+                    if (e.ctrlKey && e.shiftKey && (e.key === "\\\\" || e.key === "|")) {{
                         return false;  // Don't let terminal consume this
                     }}
                     
