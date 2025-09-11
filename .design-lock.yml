@@ -1,0 +1,71 @@
+# Design Lock File - Tab & Pane Naming Feature
+# This file is IMMUTABLE during implementation
+# Created: 2025-09-11T12:05:00
+# Feature: Tab & Pane Naming
+# Design Document: docs/features/TAB_PANE_NAMING_DESIGN.md
+
+feature: Tab & Pane Naming System
+locked_at: 2025-09-11T12:05:00
+design_document: docs/features/TAB_PANE_NAMING_DESIGN.md
+
+requirements:
+  REQ001:
+    description: "User can rename tabs via double-click"
+    test: "Double-clicking tab triggers rename mode"
+    location: "ui/widgets/tab_widget.py"
+    
+  REQ002:
+    description: "User can rename tabs via F2 key"
+    test: "F2 key on focused tab triggers rename"
+    location: "core/commands/builtin/workspace_commands.py"
+    
+  REQ003:
+    description: "User can rename panes via right-click menu"
+    test: "Right-click shows 'Rename Pane' option"
+    location: "ui/widgets/split_pane_widget.py"
+    
+  REQ004:
+    description: "Custom names persist across sessions"
+    test: "Names saved in QSettings and restored"
+    location: "services/state_service.py"
+    
+  REQ005:
+    description: "Visual distinction for custom named items"
+    test: "Custom names shown in bold or different color"
+    location: "ui/widgets/tab_widget.py"
+    
+  REQ006:
+    description: "Escape cancels rename, Enter confirms"
+    test: "Keyboard handling in rename mode"
+    location: "ui/widgets/rename_editor.py"
+
+invariants:
+  - "Must not break existing tab functionality"
+  - "Must not break existing pane splitting"
+  - "Names stored in StateService, not in model"
+  - "Default names still generated for unnamed items"
+  - "No changes to core split_pane_model structure"
+
+success_criteria:
+  - "User can rename any tab with custom name"
+  - "User can rename any pane with custom name"
+  - "Names persist when app restarts"
+  - "Clear visual feedback during rename"
+  - "Intuitive UX matching VSCode/terminal apps"
+
+patterns_to_follow:
+  - "Use QLineEdit for inline rename (like file explorer)"
+  - "Use StateService for persistence"
+  - "Use commands for rename actions"
+  - "Follow existing tab/pane widget patterns"
+
+red_flags:
+  - "Modifying core model classes directly"
+  - "Creating new inheritance hierarchies"
+  - "Breaking existing keyboard shortcuts"
+  - "Not using command pattern for actions"
+
+validation_command: |
+  python tests/test_smoke.py && \
+  python tests/test_tab_naming.py && \
+  python main.py --check
