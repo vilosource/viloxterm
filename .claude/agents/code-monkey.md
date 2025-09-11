@@ -12,11 +12,21 @@ This agent configuration has been moved to maintain better organization.
 4. **anti-drift-protocol.md** - Protocol for preventing context drift
 5. **implementation-coder.md** - Comprehensive implementation agent design
 
-## Usage
+## How to Launch Code Monkey
 
-When you need to use an agent, reference the appropriate file in `docs/agents/`.
+### Quick Command (Recommended)
+```
+/code-monkey
+```
 
-For Claude Code specifically, the agent can be invoked when the user says:
-- "Implement [feature] from [design] safely"
-- "Use safe-coder agent"
-- "Implement without breaking"
+### Natural Language Triggers
+The Code Monkey agent can also be invoked when the user says:
+- "Code monkey, implement [feature]"
+- "Use code monkey for [task]"
+- "Let the code monkey handle this"
+- "Implement [feature] safely"
+
+**Important:** Code Monkey uses Claude 3.5 Sonnet model for optimal performance.
+
+## Other Available Agents
+Reference the appropriate file in `docs/agents/` for other agents.

@@ -112,25 +112,63 @@ make l  # Lint
 - Project Specification: `PROJECT.md`
 - Testing Strategy: `TESTING_STRATEGY.md`
 
+## IMPORTANT: Before You Code - Agent Checklist
+
+**STOP! Before implementing anything, check:**
+- [ ] Is this a new feature? → **USE CODE MONKEY**
+- [ ] Will you modify more than 10 lines? → **USE CODE MONKEY**
+- [ ] Are you implementing from a design doc? → **USE CODE MONKEY**
+- [ ] Could this break existing functionality? → **USE CODE MONKEY**
+- [ ] Are you fixing multiple related bugs? → **USE CODE MONKEY**
+- [ ] Are you refactoring existing code? → **USE CODE MONKEY**
+
+**If ANY checkbox is true, launch the Code Monkey agent!**
+
+## Agent Launch Commands
+
+### Quick Launch Commands
+- `/code-monkey` - Launch Code Monkey for safe implementation
+- `/design-check` - Check if implementation matches design
+- `/drift-check` - Verify no context drift has occurred
+
+## When to Use Each Agent
+
+### Use Code Monkey 🐵 When:
+- **Implementing new features** from design documents
+- **Making changes** that could break existing code
+- **Refactoring** existing functionality
+- **Fixing bugs** that require multiple file changes
+- **Working incrementally** on complex tasks
+- **Following a design lock file** (.design-lock.yml exists)
+
+### Use Design Compliance When:
+- **Verifying implementation** matches original design
+- **Finding duplicates** or inconsistencies
+- **Reviewing code** against specifications
+- **Checking for drift** from original intent
+
 ## Claude Code Agents
 
-### Code Monkey 🐵
-When the user says:
+### Code Monkey 🐵 - Safe Implementation Agent
+
+**Launch with:** `/code-monkey` or when user says:
 - "Code monkey, implement [feature]"
 - "Use code monkey for [task]"  
 - "Let the code monkey handle this"
 - "Implement [feature] safely"
 
-**Automatically use the Code Monkey agent** which will:
-1. Read existing code before writing any new code
-2. Make incremental changes (max 10 lines at a time)
-3. Test after every single change
-4. Never break existing functionality
-5. Follow existing patterns meticulously
+**The Code Monkey Protocol:**
+1. Reads existing code before writing (no assumptions)
+2. Makes incremental changes (max 10 lines at a time)
+3. Tests after EVERY change (app must start)
+4. Never breaks existing functionality
+5. Follows existing patterns exactly
 
-Agent location: `docs/agents/code-monkey.md`
+**Key Rule:** If the app doesn't start after a change, the Code Monkey immediately reverts and tries a different approach.
 
-Example: If user says "Code monkey, implement the tab naming feature", invoke the Code Monkey to implement it incrementally and safely.
+Agent configuration: `docs/agents/code-monkey.md`
+
+Example: "Code monkey, implement the tab naming feature" → Launches Code Monkey with design lock and incremental implementation.
 
 ### Design Compliance Analyzer
 When the user asks about:
