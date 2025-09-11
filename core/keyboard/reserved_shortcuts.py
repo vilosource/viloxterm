@@ -17,6 +17,12 @@ WEBENGINE_RESERVED_SHORTCUTS = [
     "Ctrl+Shift+M",    # Toggle menu bar
     "F11",             # Toggle fullscreen
     
+    # Directional pane navigation
+    "Alt+Left",        # Navigate to pane on the left
+    "Alt+Right",       # Navigate to pane on the right
+    "Alt+Up",          # Navigate to pane above
+    "Alt+Down",        # Navigate to pane below
+    
     # Workspace/pane commands
     "Ctrl+\\",         # Split horizontal
     "Ctrl+Shift+\\",   # Split vertical

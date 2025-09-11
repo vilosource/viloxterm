@@ -8,7 +8,7 @@ No view concerns, no Qt widgets except the AppWidgets themselves (which are cont
 
 import uuid
 import logging
-from typing import Optional, Dict, Union, Any, List, Callable
+from typing import Optional, Dict, Union, Any, List, Callable, Tuple
 from dataclasses import dataclass, field
 
 from ui.widgets.widget_registry import WidgetType
@@ -610,3 +610,166 @@ class SplitPaneModel:
         # Restore pane numbering state
         self.show_pane_numbers = data.get("show_pane_numbers", False)
         self.update_pane_indices()
+    
+    def calculate_pane_bounds(self, pane_id: str, 
+                            node: Optional[Union[LeafNode, SplitNode]] = None,
+                            bounds: Tuple[float, float, float, float] = (0.0, 0.0, 1.0, 1.0)) -> Optional[Tuple[float, float, float, float]]:
+        """
+        Calculate the normalized bounds [x1, y1, x2, y2] of a pane.
+        
+        Args:
+            pane_id: ID of the pane to find bounds for
+            node: Current node in traversal (defaults to root)
+            bounds: Current bounds during traversal
+            
+        Returns:
+            Tuple of (x1, y1, x2, y2) in range [0.0, 1.0], or None if not found
+        """
+        if node is None:
+            node = self.root
+            
+        x1, y1, x2, y2 = bounds
+        
+        if isinstance(node, LeafNode):
+            if node.id == pane_id:
+                return bounds
+            return None
+            
+        elif isinstance(node, SplitNode):
+            if node.orientation == "horizontal":
+                # Split horizontally: first is left, second is right
+                split_x = x1 + (x2 - x1) * node.ratio
+                
+                # Check first (left) child
+                result = self.calculate_pane_bounds(
+                    pane_id, node.first, (x1, y1, split_x, y2)
+                )
+                if result:
+                    return result
+                    
+                # Check second (right) child
+                return self.calculate_pane_bounds(
+                    pane_id, node.second, (split_x, y1, x2, y2)
+                )
+                
+            else:  # vertical split
+                # Split vertically: first is top, second is bottom
+                split_y = y1 + (y2 - y1) * node.ratio
+                
+                # Check first (top) child
+                result = self.calculate_pane_bounds(
+                    pane_id, node.first, (x1, y1, x2, split_y)
+                )
+                if result:
+                    return result
+                    
+                # Check second (bottom) child
+                return self.calculate_pane_bounds(
+                    pane_id, node.second, (x1, split_y, x2, y2)
+                )
+                
+        return None
+    
+    def find_pane_in_direction(self, from_pane_id: str, direction: str) -> Optional[str]:
+        """
+        Find the best pane to navigate to in the given direction.
+        
+        Uses tree structure and position overlap to find the most intuitive target.
+        
+        Args:
+            from_pane_id: ID of the source pane
+            direction: One of "left", "right", "up", "down"
+            
+        Returns:
+            ID of the target pane, or None if no valid target
+        """
+        # Get bounds of source pane
+        source_bounds = self.calculate_pane_bounds(from_pane_id)
+        if not source_bounds:
+            logger.warning(f"Could not calculate bounds for pane {from_pane_id}")
+            return None
+            
+        sx1, sy1, sx2, sy2 = source_bounds
+        source_center_x = (sx1 + sx2) / 2
+        source_center_y = (sy1 + sy2) / 2
+        
+        # Find all candidate panes
+        candidates = []
+        
+        for leaf_id, leaf in self.leaves.items():
+            if leaf_id == from_pane_id:
+                continue
+                
+            target_bounds = self.calculate_pane_bounds(leaf_id)
+            if not target_bounds:
+                continue
+                
+            tx1, ty1, tx2, ty2 = target_bounds
+            target_center_x = (tx1 + tx2) / 2
+            target_center_y = (ty1 + ty2) / 2
+            
+            # Check if pane is in the target direction
+            is_candidate = False
+            
+            if direction == "left" and target_center_x < source_center_x:
+                is_candidate = True
+            elif direction == "right" and target_center_x > source_center_x:
+                is_candidate = True
+            elif direction == "up" and target_center_y < source_center_y:
+                is_candidate = True
+            elif direction == "down" and target_center_y > source_center_y:
+                is_candidate = True
+                
+            if is_candidate:
+                # Calculate overlap for scoring
+                if direction in ["left", "right"]:
+                    # For horizontal movement, check Y-axis overlap
+                    overlap = max(0, min(sy2, ty2) - max(sy1, ty1))
+                    # Distance in the movement direction
+                    distance = abs(target_center_x - source_center_x)
+                else:  # up/down
+                    # For vertical movement, check X-axis overlap
+                    overlap = max(0, min(sx2, tx2) - max(sx1, tx1))
+                    # Distance in the movement direction
+                    distance = abs(target_center_y - source_center_y)
+                    
+                candidates.append({
+                    'id': leaf_id,
+                    'overlap': overlap,
+                    'distance': distance,
+                    'center_x': target_center_x,
+                    'center_y': target_center_y
+                })
+        
+        if not candidates:
+            return None
+            
+        # Sort candidates by overlap (descending) then distance (ascending)
+        # Prefer maximum overlap, then minimum distance
+        candidates.sort(key=lambda c: (-c['overlap'], c['distance']))
+        
+        # If there's a tie in overlap and distance, use position as tiebreaker
+        if len(candidates) > 1:
+            first = candidates[0]
+            tied = [c for c in candidates 
+                   if c['overlap'] == first['overlap'] and 
+                      abs(c['distance'] - first['distance']) < 0.001]
+            
+            if len(tied) > 1:
+                # Apply directional tiebreaker
+                if direction == "left":
+                    # Prefer rightmost of tied candidates
+                    tied.sort(key=lambda c: -c['center_x'])
+                elif direction == "right":
+                    # Prefer leftmost of tied candidates
+                    tied.sort(key=lambda c: c['center_x'])
+                elif direction == "up":
+                    # Prefer bottommost of tied candidates
+                    tied.sort(key=lambda c: -c['center_y'])
+                elif direction == "down":
+                    # Prefer topmost of tied candidates
+                    tied.sort(key=lambda c: c['center_y'])
+                    
+                return tied[0]['id']
+        
+        return candidates[0]['id']

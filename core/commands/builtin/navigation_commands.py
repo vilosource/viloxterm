@@ -156,22 +156,17 @@ def close_all_tabs_command(context: CommandContext) -> CommandResult:
     title="Focus Left Pane",
     category="Navigation",
     description="Focus the pane to the left",
-    shortcut="ctrl+k left",
+    shortcut="alt+left",
     when="workbench.pane.count > 1"
 )
 def focus_left_pane_command(context: CommandContext) -> CommandResult:
     """Focus the pane to the left."""
     try:
-        # This is a placeholder for directional navigation
-        # In a full implementation, this would analyze the split tree
-        # and find the pane to the left of the current active pane
-        
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
-        # For now, use the simple previous pane navigation
-        success = workspace_service.navigate_to_previous_pane()
+        success = workspace_service.navigate_in_direction("left")
         
         if success:
             return CommandResult(success=True)
@@ -188,7 +183,7 @@ def focus_left_pane_command(context: CommandContext) -> CommandResult:
     title="Focus Right Pane", 
     category="Navigation",
     description="Focus the pane to the right",
-    shortcut="ctrl+k right",
+    shortcut="alt+right",
     when="workbench.pane.count > 1"
 )
 def focus_right_pane_command(context: CommandContext) -> CommandResult:
@@ -198,8 +193,7 @@ def focus_right_pane_command(context: CommandContext) -> CommandResult:
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
-        # For now, use the simple next pane navigation
-        success = workspace_service.navigate_to_next_pane()
+        success = workspace_service.navigate_in_direction("right")
         
         if success:
             return CommandResult(success=True)
@@ -216,7 +210,7 @@ def focus_right_pane_command(context: CommandContext) -> CommandResult:
     title="Focus Above Pane",
     category="Navigation",
     description="Focus the pane above",
-    shortcut="ctrl+k up",
+    shortcut="alt+up",
     when="workbench.pane.count > 1"
 )
 def focus_above_pane_command(context: CommandContext) -> CommandResult:
@@ -226,8 +220,7 @@ def focus_above_pane_command(context: CommandContext) -> CommandResult:
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
-        # For now, use the simple previous pane navigation
-        success = workspace_service.navigate_to_previous_pane()
+        success = workspace_service.navigate_in_direction("up")
         
         if success:
             return CommandResult(success=True)
@@ -244,7 +237,7 @@ def focus_above_pane_command(context: CommandContext) -> CommandResult:
     title="Focus Below Pane",
     category="Navigation",
     description="Focus the pane below",
-    shortcut="ctrl+k down",
+    shortcut="alt+down",
     when="workbench.pane.count > 1"
 )
 def focus_below_pane_command(context: CommandContext) -> CommandResult:
@@ -254,8 +247,7 @@ def focus_below_pane_command(context: CommandContext) -> CommandResult:
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
-        # For now, use the simple next pane navigation
-        success = workspace_service.navigate_to_next_pane()
+        success = workspace_service.navigate_in_direction("down")
         
         if success:
             return CommandResult(success=True)

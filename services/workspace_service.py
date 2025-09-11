@@ -510,6 +510,48 @@ class WorkspaceService(Service):
         widget = self._workspace.get_current_split_widget()
         return widget.active_pane_id if widget else None
     
+    def navigate_in_direction(self, direction: str) -> bool:
+        """
+        Navigate to a pane in the specified direction.
+        
+        Uses tree structure and position overlap to find the most intuitive target.
+        
+        Args:
+            direction: One of "left", "right", "up", "down"
+            
+        Returns:
+            True if successfully navigated to a pane
+        """
+        self.validate_initialized()
+        
+        if not self._workspace:
+            return False
+        
+        widget = self._workspace.get_current_split_widget()
+        if not widget or not widget.active_pane_id:
+            logger.warning("No active pane to navigate from")
+            return False
+        
+        # Use the model's directional navigation
+        target_id = widget.model.find_pane_in_direction(
+            widget.active_pane_id, direction
+        )
+        
+        if target_id:
+            widget.focus_specific_pane(target_id)
+            success = True  # focus_specific_pane doesn't return a value
+            if success:
+                logger.info(f"Navigated {direction} from {widget.active_pane_id} to {target_id}")
+                self.notify('pane_navigated', {
+                    'from': widget.active_pane_id,
+                    'to': target_id,
+                    'direction': direction
+                })
+            return success
+        else:
+            logger.debug(f"No pane found in direction: {direction}")
+            return False
+    
     # ============= Layout Operations =============
     
     def save_layout(self) -> Dict[str, Any]:

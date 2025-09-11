@@ -272,6 +272,17 @@ class TerminalAssetBundler:
                         return false;  // Critical: Don't let terminal process Alt+P
                     }}
                     
+                    // Intercept Alt+Arrow keys for directional pane navigation
+                    if (e.altKey && !e.ctrlKey && !e.shiftKey) {{
+                        const key = e.key.toLowerCase();
+                        if (key === "arrowleft" || key === "arrowright" || 
+                            key === "arrowup" || key === "arrowdown") {{
+                            console.log("Alt+Arrow detected in terminal, bubbling to Qt");
+                            // Let Qt handle directional navigation
+                            return false;  // Don't let terminal consume Alt+Arrow
+                        }}
+                    }}
+                    
                     // Let Qt handle these global shortcuts - return false to prevent terminal from consuming them
                     if (e.ctrlKey && !e.shiftKey && !e.altKey) {{
                         const key = e.key.toLowerCase();
