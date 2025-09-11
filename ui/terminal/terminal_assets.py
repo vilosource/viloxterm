@@ -284,7 +284,9 @@ class TerminalAssetBundler:
                             key === "o" ||     // Open file
                             key === "s" ||     // Save file
                             key === "`" ||     // New terminal
-                            key === "p") {{    // Command palette
+                            key === "p" ||     // Command palette
+                            key === "pageup" ||   // Previous tab
+                            key === "pagedown") {{ // Next tab
                             return false;  // Don't let terminal consume these
                         }}
                     }}
