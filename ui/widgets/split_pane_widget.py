@@ -434,6 +434,9 @@ class SplitPaneWidget(QWidget):
             # Update active pane visual
             self.update_active_pane_visual()
             
+            # Update pane numbers display
+            self.update_pane_numbers_display()
+            
         finally:
             # Re-enable updates once the entire refresh is complete
             self.setUpdatesEnabled(True)
@@ -679,6 +682,31 @@ class SplitPaneWidget(QWidget):
         for pane_id, wrapper in self.pane_wrappers.items():
             wrapper.set_active(pane_id == active_id)
             
+    def toggle_pane_numbers(self) -> bool:
+        """
+        Toggle pane number visibility.
+        
+        Returns:
+            New visibility state
+        """
+        visible = self.model.toggle_pane_numbers()
+        self.update_pane_numbers_display()
+        return visible
+        
+    def update_pane_numbers_display(self):
+        """Update all pane headers with current numbers."""
+        # Ensure model indices are up to date
+        self.model.update_pane_indices()
+        
+        # Update each pane's header
+        for pane_id, wrapper in self.pane_wrappers.items():
+            if wrapper.header_bar:
+                number = self.model.get_pane_index(pane_id)
+                wrapper.header_bar.set_pane_number(
+                    number, 
+                    self.model.show_pane_numbers
+                )
+            
     # Public API methods that delegate to model
     
     def split_horizontal(self, pane_id: str):
@@ -738,8 +766,14 @@ class SplitPaneWidget(QWidget):
             # Restore focus to the new active pane
             self.restore_active_pane_focus()
             
-    def set_active_pane(self, pane_id: str):
-        """Set the active pane."""
+    def set_active_pane(self, pane_id: str, focus: bool = False):
+        """
+        Set the active pane.
+        
+        Args:
+            pane_id: ID of the pane to activate
+            focus: If True, also set keyboard focus to the pane's widget
+        """
         old_active = self.model.get_active_pane_id()
         logger.debug(f"set_active_pane called: {old_active} → {pane_id}")
         logger.debug(f"🎯 set_active_pane called with: {pane_id}")
@@ -750,10 +784,42 @@ class SplitPaneWidget(QWidget):
             logger.debug(f"✅ Active pane successfully changed to: {pane_id}")
             self.update_active_pane_visual()
             self.active_pane_changed.emit(pane_id)
+            
+            # If requested, also set keyboard focus to the specific pane
+            if focus:
+                # Focus the specific pane, not just the active one
+                self.focus_specific_pane(pane_id)
         else:
             logger.debug(f"Failed to set active pane to: {pane_id}")
             logger.warning(f"❌ Failed to set active pane to: {pane_id}")
             
+    def focus_specific_pane(self, pane_id: str):
+        """
+        Set keyboard focus to a specific pane's widget.
+        
+        Args:
+            pane_id: ID of the pane to focus
+        """
+        # Find the pane's leaf node
+        leaf = self.model.find_leaf(pane_id)
+        if not leaf or not leaf.app_widget:
+            logger.warning(f"Cannot focus pane {pane_id}: not found or no widget")
+            return
+            
+        # Use a timer to ensure widget is ready, like restore_active_pane_focus does
+        def set_focus():
+            try:
+                # Call the focus_widget method on the AppWidget
+                if leaf.app_widget and hasattr(leaf.app_widget, 'focus_widget'):
+                    logger.debug(f"Calling focus_widget on {leaf.app_widget.__class__.__name__} for pane {pane_id}")
+                    leaf.app_widget.focus_widget()
+                    logger.info(f"Keyboard focus set to pane {pane_id} widget")
+            except Exception as e:
+                logger.warning(f"Failed to set focus to pane {pane_id}: {e}")
+                
+        # Use slightly longer delay to ensure widget is fully ready
+        QTimer.singleShot(50, set_focus)
+    
     def restore_active_pane_focus(self):
         """
         Restore keyboard focus to the active pane's widget after a refresh.

@@ -76,9 +76,16 @@ class SplitPaneModel:
         self.leaves: Dict[str, LeafNode] = {self.root.id: self.root}
         self.active_pane_id: str = self.root.id
         
+        # Pane numbering state
+        self.show_pane_numbers = False
+        self.pane_indices: Dict[str, int] = {}
+        
         # Create initial AppWidget
         self.root.app_widget = self.create_app_widget(initial_widget_type, self.root.id)
         self.root.app_widget.leaf_node = self.root  # Set back-reference
+        
+        # Initialize pane indices
+        self.update_pane_indices()
         
         logger.info(f"SplitPaneModel initialized with root leaf {self.root.id}")
         
@@ -217,6 +224,9 @@ class SplitPaneModel:
         # Update tracking
         self.leaves[new_leaf.id] = new_leaf
         
+        # Update pane indices after structural change
+        self.update_pane_indices()
+        
         logger.info(f"Split complete: created new pane {new_leaf.id}")
         return new_leaf.id
         
@@ -280,6 +290,9 @@ class SplitPaneModel:
             if self.leaves:
                 self.active_pane_id = next(iter(self.leaves.keys()))
                 logger.info(f"Active pane changed to {self.active_pane_id}")
+        
+        # Update pane indices after structural change
+        self.update_pane_indices()
                 
         logger.info(f"Pane {pane_id} closed successfully")
         return True
@@ -307,6 +320,54 @@ class SplitPaneModel:
     def get_active_leaf(self) -> Optional[LeafNode]:
         """Get the currently active leaf node."""
         return self.find_leaf(self.active_pane_id)
+        
+    def toggle_pane_numbers(self) -> bool:
+        """
+        Toggle pane number visibility.
+        
+        Returns:
+            New visibility state
+        """
+        self.show_pane_numbers = not self.show_pane_numbers
+        self.update_pane_indices()
+        logger.info(f"Pane numbers {'shown' if self.show_pane_numbers else 'hidden'}")
+        return self.show_pane_numbers
+        
+    def update_pane_indices(self):
+        """
+        Update pane numbering using reading order (left-to-right, top-to-bottom).
+        Numbers are assigned 1-9 based on tree traversal order.
+        """
+        numbers = {}
+        counter = [1]  # Use list to maintain reference in nested function
+        
+        def traverse(node):
+            if isinstance(node, LeafNode):
+                if counter[0] <= 9:  # Max 9 for future keyboard shortcuts
+                    numbers[node.id] = counter[0]
+                    counter[0] += 1
+            elif isinstance(node, SplitNode):
+                # First child is left/top, second is right/bottom
+                if node.first:
+                    traverse(node.first)
+                if node.second:
+                    traverse(node.second)
+        
+        traverse(self.root)
+        self.pane_indices = numbers
+        logger.debug(f"Updated pane indices: {self.pane_indices}")
+        
+    def get_pane_index(self, pane_id: str) -> Optional[int]:
+        """
+        Get the display index for a pane.
+        
+        Args:
+            pane_id: ID of the pane
+            
+        Returns:
+            Pane number (1-9) or None if not numbered
+        """
+        return self.pane_indices.get(pane_id)
         
     def change_pane_type(self, pane_id: str, new_type: WidgetType) -> bool:
         """
@@ -433,7 +494,8 @@ class SplitPaneModel:
             
         return {
             "root": node_to_dict(self.root),
-            "active_pane_id": self.active_pane_id
+            "active_pane_id": self.active_pane_id,
+            "show_pane_numbers": self.show_pane_numbers
         }
         
     def from_dict(self, data: dict):
@@ -544,3 +606,7 @@ class SplitPaneModel:
         if self.active_pane_id not in self.leaves and self.leaves:
             self.active_pane_id = next(iter(self.leaves.keys()))
             logger.warning(f"Active pane {self.active_pane_id} not found, using {self.active_pane_id}")
+        
+        # Restore pane numbering state
+        self.show_pane_numbers = data.get("show_pane_numbers", False)
+        self.update_pane_indices()

@@ -102,6 +102,42 @@ def close_active_pane_command(context: CommandContext) -> CommandResult:
 
 
 @command(
+    id="workbench.action.togglePaneNumbers",
+    title="Toggle Pane Numbers",
+    category="View",
+    description="Show or hide pane identification numbers",
+    # Shortcut is handled by QAction in MainWindow to work with WebEngine
+    # shortcut="alt+p",
+    icon="hash",
+    when=None  # Always available
+)
+def toggle_pane_numbers_command(context: CommandContext) -> CommandResult:
+    """Enter command mode for pane navigation with visible numbers."""
+    try:
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
+        
+        # Enter command mode which shows pane numbers and activates focus sink
+        success = workspace_service.enter_pane_command_mode()
+        
+        if success:
+            return CommandResult(
+                success=True,
+                value={'command_mode': True}
+            )
+        else:
+            return CommandResult(
+                success=False,
+                error="Could not enter pane command mode (no panes available)"
+            )
+        
+    except Exception as e:
+        logger.error(f"Failed to enter pane command mode: {e}")
+        return CommandResult(success=False, error=str(e))
+
+
+@command(
     id="workbench.action.focusNextPane",
     title="Focus Next Pane",
     category="Workspace",

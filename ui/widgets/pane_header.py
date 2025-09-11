@@ -53,6 +53,24 @@ class PaneHeaderBar(QWidget):
         layout.setContentsMargins(4, 0, 4, 0)
         layout.setSpacing(2)
         
+        # Pane number label (shows 1-9 when enabled)
+        self.number_label = QLabel()
+        self.number_label.setStyleSheet(f"""
+            QLabel {{
+                background-color: {ACCENT_COLOR};
+                color: white;
+                border-radius: 3px;
+                padding: 2px 6px;
+                font-weight: bold;
+                font-size: 12px;
+                min-width: 14px;
+                max-width: 14px;
+            }}
+        """)
+        self.number_label.setAlignment(Qt.AlignCenter)
+        self.number_label.hide()  # Hidden by default
+        layout.addWidget(self.number_label)
+        
         # Pane ID label (optional, for debugging)
         self.id_label = QLabel(self.pane_id)
         self.id_label.setStyleSheet(f"""
@@ -137,6 +155,18 @@ class PaneHeaderBar(QWidget):
         self.pane_id = pane_id
         self.id_label.setText(pane_id)
     
+    def set_pane_number(self, number: int = None, visible: bool = False):
+        """
+        Set the pane number display.
+        
+        Args:
+            number: Pane number (1-9) or None
+            visible: Whether to show the number
+        """
+        if number is not None:
+            self.number_label.setText(str(number))
+        self.number_label.setVisible(visible and number is not None)
+    
     def set_active(self, active: bool):
         """Update visual state for active pane."""
         if active:
@@ -154,6 +184,21 @@ class PaneHeaderBar(QWidget):
                     font-weight: bold;
                 }}
             """)
+            # Highlight number label for active pane
+            if self.number_label.isVisible():
+                self.number_label.setStyleSheet(f"""
+                    QLabel {{
+                        background-color: {ACCENT_COLOR};
+                        color: white;
+                        border-radius: 3px;
+                        padding: 2px 6px;
+                        font-weight: bold;
+                        font-size: 12px;
+                        min-width: 14px;
+                        max-width: 14px;
+                        border: 1px solid white;
+                    }}
+                """)
         else:
             self.setStyleSheet(f"""
                 PaneHeaderBar {{
@@ -168,6 +213,20 @@ class PaneHeaderBar(QWidget):
                     padding: 0 4px;
                 }}
             """)
+            # Normal number label for inactive pane
+            if self.number_label.isVisible():
+                self.number_label.setStyleSheet(f"""
+                    QLabel {{
+                        background-color: {PANE_HEADER_BUTTON_HOVER};
+                        color: {TAB_INACTIVE_FOREGROUND};
+                        border-radius: 3px;
+                        padding: 2px 6px;
+                        font-weight: bold;
+                        font-size: 12px;
+                        min-width: 14px;
+                        max-width: 14px;
+                    }}
+                """)
 
 
 class CompactPaneHeader(QWidget):

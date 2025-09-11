@@ -9,18 +9,20 @@ import os
 import logging
 from typing import Dict, Any, Optional
 from PySide6.QtWidgets import QVBoxLayout
-from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import Slot, QUrl, Signal
 from PySide6.QtGui import QColor
 
 from ui.widgets.app_widget import AppWidget
 from ui.widgets.widget_registry import WidgetType
+from PySide6.QtWebEngineWidgets import QWebEngineView
 from ui.terminal.terminal_server import terminal_server
 from ui.terminal.terminal_config import TerminalConfig
 from ui.terminal.terminal_themes import get_terminal_theme
 from ui.terminal.terminal_assets import terminal_asset_bundler
 from ui.terminal.terminal_bridge import TerminalBridge
 from ui.icon_manager import get_icon_manager
+from core.keyboard.web_shortcut_guard import WebShortcutGuard
+from core.keyboard.reserved_shortcuts import get_reserved_shortcuts
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +57,18 @@ class TerminalAppWidget(AppWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
-        # Create web view with optimized initialization
+        # Create standard web view
         self.web_view = QWebEngineView()
+        
+        # Install event filter to guard application shortcuts from being consumed by xterm.js
+        self._shortcut_guard = WebShortcutGuard(self)
+        self._shortcut_guard.set_reserved_shortcuts(get_reserved_shortcuts())
+        self.web_view.installEventFilter(self._shortcut_guard)
+        
+        # Also install on focus proxy if it exists (WebEngine uses a focus proxy widget)
+        focus_proxy = self.web_view.focusProxy()
+        if focus_proxy:
+            focus_proxy.installEventFilter(self._shortcut_guard)
         
         # Set background color to match dark theme immediately
         self.web_view.setStyleSheet("""
@@ -88,6 +100,7 @@ class TerminalAppWidget(AppWidget):
         # Connect bridge signals to our methods
         self.bridge.terminalClicked.connect(lambda: self.request_focus())
         self.bridge.terminalFocused.connect(lambda: self.request_focus())
+        self.bridge.shortcutPressed.connect(self.on_shortcut_from_js)
         
         # Set initial theme in bridge
         theme_data = get_terminal_theme(self.current_theme)
@@ -121,9 +134,12 @@ class TerminalAppWidget(AppWidget):
         super().mousePressEvent(event)
         
     def focus_widget(self):
-        """Set keyboard focus on the terminal web view."""
+        """Set keyboard focus on the terminal web view and terminal element."""
         if self.web_view:
             self.web_view.setFocus()
+            # Also focus the terminal element inside the web page
+            if self.bridge:
+                self.bridge.focus_terminal_element(self.web_view)
     
     def handle_console_message(self, level, msg, line, source):
         """Handle JavaScript console messages for debugging."""
@@ -277,10 +293,16 @@ class TerminalAppWidget(AppWidget):
         # Update bridge with new theme
         if self.bridge:
             self.bridge.set_theme(theme_data)
-        
-        # Also try direct JavaScript injection as fallback
-        if self.web_view:
-            import json
-            theme_json = json.dumps(theme_data)
-            js_code = f"if (window.applyTerminalTheme) {{ window.applyTerminalTheme({theme_json}); }}"
-            self.web_view.page().runJavaScript(js_code)
+    
+    def on_shortcut_from_js(self, shortcut: str):
+        """
+        Handle shortcut notification from JavaScript.
+        When the terminal detects Alt+P, it notifies us here.
+        """
+        logger.info(f"Terminal detected shortcut: {shortcut}")
+        if shortcut == "Alt+P":
+            # Execute the toggle pane numbers command
+            from ui.main_window import MainWindow
+            main_window = self.window()
+            if isinstance(main_window, MainWindow):
+                main_window.execute_command("workbench.action.togglePaneNumbers")
