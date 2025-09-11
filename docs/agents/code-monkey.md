@@ -56,7 +56,20 @@ grep -r "ServiceLocator" services/  # For services
 ```bash
 # After EVERY change, no matter how small:
 python -m py_compile changed_file.py  # Syntax OK?
-timeout 3 .direnv/python-3.12.3/bin/python main.py  # App starts?
+
+# Test if app starts (use the script):
+./scripts/test_app_starts.sh
+
+# Or manually:
+.direnv/python-3.12.3/bin/python main.py &  # Launch in background
+APP_PID=$!
+sleep 3  # Give it time to start
+if ps -p $APP_PID > /dev/null; then
+    echo "✅ App started successfully"
+    kill $APP_PID  # Clean up
+else
+    echo "❌ App failed to start"
+fi
 ```
 
 #### The No-Assumptions Rule
@@ -163,7 +176,10 @@ If the codebase uses:
 
 ```bash
 # Quick test (after EVERY change):
-timeout 3 .direnv/python-3.12.3/bin/python main.py
+.direnv/python-3.12.3/bin/python main.py &
+APP_PID=$!
+sleep 3
+ps -p $APP_PID > /dev/null && (echo "✅ App starts" && kill $APP_PID) || echo "❌ App failed"
 
 # Smoke test (every few changes):
 .direnv/python-3.12.3/bin/python tests/test_smoke.py

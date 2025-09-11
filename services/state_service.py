@@ -33,6 +33,8 @@ class StateService(Service):
         self._workspace = None
         self._autosave_enabled = True
         self._autosave_interval = 60000  # 1 minute in ms
+        # Tab & Pane naming storage
+        self._pane_names: Dict[str, str] = {}  # pane_id -> custom_name
         
     def initialize(self, context: Dict[str, Any]) -> None:
         """Initialize the service with application context."""
@@ -455,3 +457,11 @@ class StateService(Service):
         
         # Notify observers
         self.notify('autosave_changed', {'enabled': enabled})
+    
+    # ============= Tab & Pane Naming =============
+    
+    def set_pane_name(self, pane_id: str, name: str) -> None:
+        """Set custom name for a pane."""
+        self._pane_names[pane_id] = name
+        self._settings.setValue(f"pane_names/{pane_id}", name)
+        self._settings.sync()
