@@ -7,6 +7,7 @@ all keymap providers, avoiding duplication and ensuring consistency.
 """
 
 from typing import Dict, Any, List
+from core.commands.constants import CommandID
 
 
 class BaseKeymapShortcuts:
@@ -22,25 +23,25 @@ class BaseKeymapShortcuts:
         """
         return [
             # ========== File Operations ==========
-            {"id": "file.new", "sequence": "ctrl+n", "command_id": "file.newEditorTab"},
-            {"id": "file.open", "sequence": "ctrl+o", "command_id": "file.open"},
-            {"id": "file.save", "sequence": "ctrl+s", "command_id": "file.save"},
-            {"id": "file.save_as", "sequence": "ctrl+shift+s", "command_id": "file.saveAs"},
-            {"id": "file.close", "sequence": "ctrl+w", "command_id": "file.closeActiveTab"},
+            {"id": "file.new", "sequence": "ctrl+n", "command_id": CommandID.File.NEW_EDITOR_TAB},
+            {"id": "file.open", "sequence": "ctrl+o", "command_id": CommandID.File.OPEN},
+            {"id": "file.save", "sequence": "ctrl+s", "command_id": CommandID.File.SAVE},
+            {"id": "file.save_as", "sequence": "ctrl+shift+s", "command_id": CommandID.File.SAVE_AS},
+            {"id": "file.close", "sequence": "ctrl+w", "command_id": CommandID.File.CLOSE_ACTIVE_TAB},
             
             # ========== Edit Operations ==========
-            {"id": "edit.cut", "sequence": "ctrl+x", "command_id": "editor.cut"},
-            {"id": "edit.copy", "sequence": "ctrl+c", "command_id": "editor.copy"},
-            {"id": "edit.paste", "sequence": "ctrl+v", "command_id": "editor.paste"},
-            {"id": "edit.undo", "sequence": "ctrl+z", "command_id": "editor.undo"},
-            {"id": "edit.select_all", "sequence": "ctrl+a", "command_id": "editor.selectAll"},
+            {"id": "edit.cut", "sequence": "ctrl+x", "command_id": CommandID.Edit.CUT},
+            {"id": "edit.copy", "sequence": "ctrl+c", "command_id": CommandID.Edit.COPY},
+            {"id": "edit.paste", "sequence": "ctrl+v", "command_id": CommandID.Edit.PASTE},
+            {"id": "edit.undo", "sequence": "ctrl+z", "command_id": CommandID.Edit.UNDO},
+            {"id": "edit.select_all", "sequence": "ctrl+a", "command_id": CommandID.Edit.SELECT_ALL},
             
             # ========== View Operations ==========
-            {"id": "view.sidebar", "sequence": "ctrl+b", "command_id": "view.toggleSidebar"},
-            {"id": "view.terminal", "sequence": "ctrl+`", "command_id": "view.toggleTerminal"},
-            {"id": "view.fullscreen", "sequence": "f11", "command_id": "view.toggleFullscreen"},
-            {"id": "view.theme", "sequence": "ctrl+t", "command_id": "view.toggleTheme"},
-            {"id": "view.command_palette", "sequence": "ctrl+shift+p", "command_id": "commandPalette.show"},
+            {"id": "view.sidebar", "sequence": "ctrl+b", "command_id": CommandID.View.TOGGLE_SIDEBAR},
+            {"id": "view.terminal", "sequence": "ctrl+`", "command_id": CommandID.View.TOGGLE_TERMINAL},
+            {"id": "view.fullscreen", "sequence": "f11", "command_id": CommandID.View.TOGGLE_FULLSCREEN},
+            {"id": "view.theme", "sequence": "ctrl+t", "command_id": CommandID.View.TOGGLE_THEME},
+            {"id": "view.command_palette", "sequence": "ctrl+shift+p", "command_id": CommandID.CommandPalette.SHOW},
             
             # ========== Workspace Operations ==========
             {"id": "workspace.split_horizontal", "sequence": "ctrl+\\", "command_id": "workbench.action.splitRight"},
@@ -53,6 +54,10 @@ class BaseKeymapShortcuts:
             # ========== Navigation ==========
             {"id": "nav.next_tab", "sequence": "ctrl+tab", "command_id": "workbench.action.nextTab"},
             {"id": "nav.prev_tab", "sequence": "ctrl+shift+tab", "command_id": "workbench.action.previousTab"},
+            
+            # ========== Focus Navigation ==========
+            {"id": "focus.next_group", "sequence": "f6", "command_id": "workbench.action.focusNextGroup"},
+            {"id": "focus.prev_group", "sequence": "shift+f6", "command_id": "workbench.action.focusPreviousGroup"},
             
             # ========== Help ==========
             {"id": "help.about", "sequence": "f1", "command_id": "help.about"},

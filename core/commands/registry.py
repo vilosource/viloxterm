@@ -205,46 +205,28 @@ class CommandRegistry:
         command_ids = self._shortcuts.get(shortcut, [])
         return [self._commands[cmd_id] for cmd_id in command_ids if cmd_id in self._commands]
     
-    def search_commands(self, query: str) -> List[Command]:
+    def search_commands(self, query: str, use_fuzzy: bool = True) -> List[Command]:
         """
         Search for commands by title, description, or keywords.
         
         Args:
             query: Search query
+            use_fuzzy: Whether to use fuzzy matching (default: True)
             
         Returns:
             List of matching commands sorted by relevance
         """
+        if not query:
+            return list(self._commands.values())
+        
         query_lower = query.lower()
         results = []
         
         for command in self._commands.values():
-            score = 0
-            
-            # Check title (highest priority)
-            if query_lower in command.title.lower():
-                score += 10
-                if command.title.lower().startswith(query_lower):
-                    score += 5
-            
-            # Check category
-            if query_lower in command.category.lower():
-                score += 5
-            
-            # Check description
-            if command.description and query_lower in command.description.lower():
-                score += 3
-            
-            # Check keywords
-            for keyword in command.keywords:
-                if query_lower in keyword.lower():
-                    score += 2
-                    if keyword.lower() == query_lower:
-                        score += 3
-            
-            # Check command ID
-            if query_lower in command.id.lower():
-                score += 1
+            if use_fuzzy:
+                score = self._fuzzy_score(query_lower, command)
+            else:
+                score = self._substring_score(query_lower, command)
             
             if score > 0:
                 results.append((score, command))
@@ -253,6 +235,138 @@ class CommandRegistry:
         results.sort(key=lambda x: (-x[0], x[1].title))
         
         return [cmd for _, cmd in results]
+    
+    def _substring_score(self, query: str, command: Command) -> float:
+        """Calculate score using substring matching (original implementation)."""
+        score = 0
+        
+        # Check title (highest priority)
+        if query in command.title.lower():
+            score += 10
+            if command.title.lower().startswith(query):
+                score += 5
+        
+        # Check category
+        if query in command.category.lower():
+            score += 5
+        
+        # Check description
+        if command.description and query in command.description.lower():
+            score += 3
+        
+        # Check keywords
+        for keyword in command.keywords:
+            if query in keyword.lower():
+                score += 2
+                if keyword.lower() == query:
+                    score += 3
+        
+        # Check command ID
+        if query in command.id.lower():
+            score += 1
+        
+        return score
+    
+    def _fuzzy_score(self, query: str, command: Command) -> float:
+        """
+        Calculate fuzzy matching score for a command.
+        
+        Uses a simple fuzzy matching algorithm that:
+        - Rewards consecutive character matches
+        - Rewards matches at word boundaries
+        - Penalizes gaps between matches
+        """
+        best_score = 0
+        
+        # Fields to search with their weights
+        search_fields = [
+            (command.title, 10),  # Title has highest weight
+            (command.category, 5),
+            (command.description or "", 3),
+            (command.id, 2),
+        ]
+        
+        # Add keywords
+        for keyword in command.keywords:
+            search_fields.append((keyword, 2))
+        
+        for text, base_weight in search_fields:
+            text_lower = text.lower()
+            field_score = self._fuzzy_match(query, text_lower)
+            
+            if field_score > 0:
+                # Apply weight and bonus for exact matches
+                weighted_score = field_score * base_weight
+                
+                # Bonus for exact match
+                if query == text_lower:
+                    weighted_score *= 2
+                # Bonus for prefix match
+                elif text_lower.startswith(query):
+                    weighted_score *= 1.5
+                
+                best_score = max(best_score, weighted_score)
+        
+        return best_score
+    
+    def _fuzzy_match(self, pattern: str, text: str) -> float:
+        """
+        Fuzzy match a pattern against text.
+        
+        Returns a score from 0 to 1 indicating match quality.
+        """
+        if not pattern or not text:
+            return 0
+        
+        pattern_len = len(pattern)
+        text_len = len(text)
+        
+        if pattern_len > text_len:
+            return 0
+        
+        # Track the position of matches
+        pattern_idx = 0
+        text_idx = 0
+        matches = []
+        
+        while pattern_idx < pattern_len and text_idx < text_len:
+            if pattern[pattern_idx] == text[text_idx]:
+                matches.append(text_idx)
+                pattern_idx += 1
+            text_idx += 1
+        
+        # All characters must match
+        if pattern_idx != pattern_len:
+            return 0
+        
+        # Calculate score based on match quality
+        if not matches:
+            return 0
+        
+        # Base score for having all characters
+        score = 0.5
+        
+        # Bonus for consecutive matches
+        consecutive_bonus = 0
+        for i in range(1, len(matches)):
+            if matches[i] == matches[i-1] + 1:
+                consecutive_bonus += 0.1
+        score += min(consecutive_bonus, 0.3)
+        
+        # Bonus for early matches
+        first_match_pos = matches[0]
+        if first_match_pos == 0:
+            score += 0.2
+        elif first_match_pos < 3:
+            score += 0.1
+        
+        # Penalty for spread (gaps between matches)
+        if len(matches) > 1:
+            spread = matches[-1] - matches[0] + 1
+            density = len(matches) / spread
+            score *= (0.5 + 0.5 * density)
+        
+        return min(score, 1.0)
     
     def get_executable_commands(self, context: Dict[str, Any]) -> List[Command]:
         """

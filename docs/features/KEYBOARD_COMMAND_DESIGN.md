@@ -89,10 +89,15 @@ class Command:
 4. **Navigation** - Moving between elements
 5. **Terminal** - Terminal operations
 6. **Debug** - Debugging commands
-7. **Window** - Window management
-8. **Help** - Documentation and help
+7. **Settings** - Application settings
+8. **Navigation** - Tab and focus navigation
 
-### Command Registry
+### Command Architecture
+
+**Note: The implementation follows a separation of concerns pattern with two distinct classes:**
+
+#### CommandRegistry
+Handles command storage, indexing, and retrieval:
 
 ```python
 class CommandRegistry:
@@ -101,8 +106,23 @@ class CommandRegistry:
     def get_command(self, command_id: str) -> Optional[Command]
     def get_all_commands(self) -> List[Command]
     def get_commands_for_category(self, category: str) -> List[Command]
-    def execute_command(self, command_id: str, **kwargs) -> Any
+    def search_commands(self, query: str, use_fuzzy: bool = True) -> List[Command]
 ```
+
+#### CommandExecutor
+Handles command execution, undo/redo, and history:
+
+```python
+class CommandExecutor:
+    def execute(self, command: Command, context: CommandContext) -> CommandResult
+    def execute_by_id(self, command_id: str, context: Dict) -> CommandResult
+    def can_undo(self) -> bool
+    def can_redo(self) -> bool
+    def undo(self) -> CommandResult
+    def redo(self) -> CommandResult
+```
+
+This separation provides better testability, single responsibility, and flexibility for future enhancements. See ADR-001 for detailed rationale.
 
 ## Keyboard Shortcut System
 
@@ -582,6 +602,55 @@ class FocusGroup(Enum):
    - Import VSCode keybindings
    - Use familiar keymap schemes
    - Gradual learning with palette
+
+## Implementation Status
+
+### Completed Features (as of 2025-09-11)
+
+1. **Core Command System** ✅
+   - CommandRegistry with full indexing and search
+   - CommandExecutor with undo/redo support
+   - Command categories and organization
+   - Command ID constants for type safety
+
+2. **Keyboard Shortcut System** ✅
+   - Full shortcut parsing and registration
+   - Context-aware shortcut activation
+   - Keymap system with multiple schemes
+   - Conflict detection and resolution
+
+3. **Command Palette** ✅
+   - Fuzzy search algorithm
+   - Recent commands tracking with persistence
+   - Category filtering
+   - Keyboard navigation
+
+4. **Focus Navigation** ✅
+   - F6/Shift+F6 focus group navigation
+   - Tab navigation shortcuts
+   - Pane focus commands
+
+5. **Terminal Integration** ✅
+   - Full terminal command set
+   - Terminal-specific shortcuts
+   - WebEngine keyboard handling
+
+### Architectural Improvements
+
+1. **Registry/Executor Separation**
+   - Better separation of concerns
+   - Improved testability
+   - See ADR-001 for details
+
+2. **Fuzzy Search Implementation**
+   - Character-based matching
+   - Weighted scoring by field
+   - Consecutive match bonuses
+
+3. **Command ID Constants**
+   - Type-safe command references
+   - Centralized command IDs
+   - Easier refactoring
 
 ## Future Enhancements
 

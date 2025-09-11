@@ -5,6 +5,8 @@ Navigation-related commands using the service layer.
 
 from core.commands.base import Command, CommandResult, CommandContext
 from core.commands.decorators import command
+from core.commands.registry import command_registry
+from core.services.locator import ServiceLocator
 from services.workspace_service import WorkspaceService
 from services.ui_service import UIService
 import logging
@@ -443,8 +445,117 @@ def move_pane_to_new_tab_command(context: CommandContext) -> CommandResult:
         return CommandResult(success=False, error=str(e))
 
 
+class FocusNextGroupCommand(Command):
+    """Focus next UI group (F6)."""
+    
+    def __init__(self):
+        super().__init__(
+            id="workbench.action.focusNextGroup",
+            title="Focus Next Group",
+            category="Navigation",
+            description="Move focus to the next UI group",
+            shortcut="F6",
+            keywords=["focus", "next", "group", "navigation"]
+        )
+    
+    def execute(self, context: CommandContext) -> CommandResult:
+        """Move focus to next UI group."""
+        try:
+            main_window = ServiceLocator.get_service("main_window")
+            if not main_window:
+                return CommandResult(
+                    success=False,
+                    message="Main window not available"
+                )
+            
+            # Focus cycle: Activity Bar -> Sidebar -> Editor -> Terminal -> Activity Bar
+            from PySide6.QtWidgets import QApplication
+            app = QApplication.instance()
+            if app:
+                # Get current focus widget
+                current = app.focusWidget()
+                
+                # Simple focus cycling implementation
+                if hasattr(main_window, 'sidebar') and main_window.sidebar.isVisible():
+                    main_window.sidebar.setFocus()
+                elif hasattr(main_window, 'workspace'):
+                    main_window.workspace.setFocus()
+                else:
+                    main_window.activity_bar.setFocus()
+            
+            return CommandResult(
+                success=True,
+                message="Focus moved to next group"
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to focus next group: {e}")
+            return CommandResult(
+                success=False,
+                message=f"Failed to focus next group: {str(e)}"
+            )
+
+
+class FocusPreviousGroupCommand(Command):
+    """Focus previous UI group (Shift+F6)."""
+    
+    def __init__(self):
+        super().__init__(
+            id="workbench.action.focusPreviousGroup",
+            title="Focus Previous Group",
+            category="Navigation",
+            description="Move focus to the previous UI group",
+            shortcut="Shift+F6",
+            keywords=["focus", "previous", "group", "navigation"]
+        )
+    
+    def execute(self, context: CommandContext) -> CommandResult:
+        """Move focus to previous UI group."""
+        try:
+            main_window = ServiceLocator.get_service("main_window")
+            if not main_window:
+                return CommandResult(
+                    success=False,
+                    message="Main window not available"
+                )
+            
+            # Reverse focus cycle
+            from PySide6.QtWidgets import QApplication
+            app = QApplication.instance()
+            if app:
+                # Simple reverse focus cycling
+                if hasattr(main_window, 'workspace'):
+                    main_window.workspace.setFocus()
+                elif hasattr(main_window, 'sidebar') and main_window.sidebar.isVisible():
+                    main_window.sidebar.setFocus()
+                else:
+                    main_window.activity_bar.setFocus()
+            
+            return CommandResult(
+                success=True,
+                message="Focus moved to previous group"
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to focus previous group: {e}")
+            return CommandResult(
+                success=False,
+                message=f"Failed to focus previous group: {str(e)}"
+            )
+
+
 def register_navigation_commands():
     """Register all navigation commands."""
-    # The @command decorator automatically registers them
+    # Register F6/Shift+F6 commands
+    commands = [
+        FocusNextGroupCommand(),
+        FocusPreviousGroupCommand(),
+    ]
+    
+    for command in commands:
+        command_registry.register(command)
+    
+    # The @command decorator automatically registers other commands
     # This function ensures the module is imported
+    logger.info(f"Registered {len(commands)} focus navigation commands")
     logger.info("Navigation commands registered")

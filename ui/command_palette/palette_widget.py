@@ -16,6 +16,7 @@ from PySide6.QtGui import QKeyEvent, QFont, QPalette, QIcon
 import logging
 
 from core.commands.base import Command
+from core.commands.registry import command_registry
 from ui.vscode_theme import *
 from ui.icon_manager import get_icon_manager
 
@@ -406,19 +407,24 @@ class CommandPaletteWidget(QDialog):
             query: Search query
         """
         if not query.strip():
-            # Show all commands
-            filtered_commands = self.all_commands
+            # Show all commands (with recent at top if available)
+            if hasattr(self, 'recent_commands') and self.recent_commands:
+                # Combine recent and all commands, removing duplicates
+                recent_ids = {cmd.id for cmd in self.recent_commands}
+                other_commands = [cmd for cmd in self.all_commands if cmd.id not in recent_ids]
+                filtered_commands = self.recent_commands + other_commands
+            else:
+                filtered_commands = self.all_commands
         else:
-            # Filter commands (will be replaced with fuzzy search from registry)
-            filtered_commands = []
-            query_lower = query.lower()
+            # Use fuzzy search from registry
+            # First, get all command IDs that match
+            all_command_ids = {cmd.id for cmd in self.all_commands}
             
-            for command in self.all_commands:
-                # Simple substring matching for now
-                if (query_lower in command.title.lower() or
-                    query_lower in command.category.lower() or
-                    (command.description and query_lower in command.description.lower())):
-                    filtered_commands.append(command)
+            # Search using the registry's fuzzy search
+            search_results = command_registry.search_commands(query, use_fuzzy=True)
+            
+            # Filter to only commands that were in our original list
+            filtered_commands = [cmd for cmd in search_results if cmd.id in all_command_ids]
         
         self.update_command_list(filtered_commands)
     
