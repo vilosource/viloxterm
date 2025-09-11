@@ -7,8 +7,9 @@ command palette widget (view) and the command system (model).
 """
 
 from typing import List, Dict, Any, Optional, Callable
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, QSettings
 import logging
+import json
 
 from core.commands.base import Command, CommandContext
 from core.commands.registry import command_registry
@@ -56,6 +57,11 @@ class CommandPaletteController(QObject):
         # Command execution state
         self.current_context: Optional[Dict[str, Any]] = None
         
+        # Recent commands tracking
+        self._recent_commands: List[str] = []
+        self._max_recent = 20
+        self._load_recent_commands()
+        
         logger.info("CommandPaletteController initialized")
     
     def show_palette(self):
@@ -83,8 +89,15 @@ class CommandPaletteController(QObject):
             
             logger.info(f"Showing palette with {len(available_commands)} of {len(all_commands)} commands")
             
-            # Show palette with filtered commands
-            self.palette_widget.show_palette(available_commands)
+            # Get recent commands (if any)
+            recent_command_objects = []
+            for cmd_id in self._recent_commands[:5]:  # Show top 5 recent
+                cmd = command_registry.get_command(cmd_id)
+                if cmd and cmd.can_execute(self.current_context):
+                    recent_command_objects.append(cmd)
+            
+            # Show palette with filtered commands and recent section
+            self.palette_widget.show_palette(available_commands, recent_command_objects)
             self.palette_shown.emit()
             
         except Exception as e:
@@ -149,6 +162,7 @@ class CommandPaletteController(QObject):
             result = command_executor.execute(command_id, context)
             
             if result.success:
+                self._add_recent_command(command_id)
                 logger.info(f"Command {command_id} executed successfully")
                 
                 # Update command usage statistics (future enhancement)
@@ -248,14 +262,52 @@ class CommandPaletteController(QObject):
         Returns:
             List of command IDs in reverse chronological order
         """
-        # Future enhancement: implement command history tracking
-        # For now, return empty list
-        return []
+        return self._recent_commands.copy()
     
     def clear_recent_commands(self):
         """Clear the recent commands history."""
-        # Future enhancement
-        pass
+        self._recent_commands.clear()
+        self._save_recent_commands()
+    
+    def _add_recent_command(self, command_id: str):
+        """Add a command to recent history."""
+        # Remove if already in list
+        if command_id in self._recent_commands:
+            self._recent_commands.remove(command_id)
+        
+        # Add to front
+        self._recent_commands.insert(0, command_id)
+        
+        # Trim to max size
+        if len(self._recent_commands) > self._max_recent:
+            self._recent_commands = self._recent_commands[:self._max_recent]
+        
+        # Save to settings
+        self._save_recent_commands()
+    
+    def _load_recent_commands(self):
+        """Load recent commands from settings."""
+        try:
+            settings = QSettings("ViloApp", "CommandPalette")
+            recent_json = settings.value("recent_commands", "[]")
+            if recent_json:
+                self._recent_commands = json.loads(recent_json)
+                # Validate that all commands still exist
+                self._recent_commands = [
+                    cmd_id for cmd_id in self._recent_commands 
+                    if command_registry.get_command(cmd_id)
+                ]
+        except Exception as e:
+            logger.error(f"Failed to load recent commands: {e}")
+            self._recent_commands = []
+    
+    def _save_recent_commands(self):
+        """Save recent commands to settings."""
+        try:
+            settings = QSettings("ViloApp", "CommandPalette")
+            settings.setValue("recent_commands", json.dumps(self._recent_commands))
+        except Exception as e:
+            logger.error(f"Failed to save recent commands: {e}")
     
     def set_command_favorite(self, command_id: str, is_favorite: bool) -> bool:
         """

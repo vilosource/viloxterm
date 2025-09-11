@@ -343,22 +343,31 @@ class CommandPaletteWidget(QDialog):
         
         return super().eventFilter(obj, event)
     
-    def show_palette(self, commands: List[Command]):
+    def show_palette(self, commands: List[Command], recent_commands: List[Command] = None):
         """
         Show the command palette with the given commands.
         
         Args:
             commands: List of available commands
+            recent_commands: Optional list of recently used commands to show at top
         """
         self.all_commands = commands
+        self.recent_commands = recent_commands or []
         self.current_query = ""
         
         # Reset UI state
         self.search_input.clear()
         self.search_input.setFocus()
         
-        # Show all commands initially
-        self.update_command_list(commands)
+        # Show all commands initially (with recent at top)
+        if self.recent_commands:
+            # Combine recent and all commands, removing duplicates
+            recent_ids = {cmd.id for cmd in self.recent_commands}
+            other_commands = [cmd for cmd in commands if cmd.id not in recent_ids]
+            combined_commands = self.recent_commands + other_commands
+            self.update_command_list(combined_commands)
+        else:
+            self.update_command_list(commands)
         
         # Center on parent
         if self.parent():
