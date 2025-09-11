@@ -13,6 +13,7 @@ import json
 import logging
 
 from core.keyboard.shortcuts import Shortcut, ShortcutRegistry
+from core.keyboard.keymap_base import BaseKeymapShortcuts
 
 logger = logging.getLogger(__name__)
 
@@ -60,41 +61,10 @@ class DefaultKeymapProvider(KeymapProvider):
     
     def get_shortcuts(self) -> List[Dict[str, Any]]:
         """Get default shortcuts."""
-        return [
-            # File operations
-            {"id": "file.new", "sequence": "ctrl+n", "command_id": "file.newEditorTab"},
-            {"id": "file.open", "sequence": "ctrl+o", "command_id": "file.open"},
-            {"id": "file.save", "sequence": "ctrl+s", "command_id": "file.save"},
-            {"id": "file.save_as", "sequence": "ctrl+shift+s", "command_id": "file.saveAs"},
-            {"id": "file.close", "sequence": "ctrl+w", "command_id": "file.closeActiveTab"},
-            
-            # Edit operations
-            {"id": "edit.cut", "sequence": "ctrl+x", "command_id": "editor.cut"},
-            {"id": "edit.copy", "sequence": "ctrl+c", "command_id": "editor.copy"},
-            {"id": "edit.paste", "sequence": "ctrl+v", "command_id": "editor.paste"},
-            {"id": "edit.undo", "sequence": "ctrl+z", "command_id": "editor.undo"},
-            {"id": "edit.redo", "sequence": "ctrl+y", "command_id": "editor.redo"},
-            {"id": "edit.select_all", "sequence": "ctrl+a", "command_id": "editor.selectAll"},
-            
-            # View operations
-            {"id": "view.sidebar", "sequence": "ctrl+b", "command_id": "view.toggleSidebar"},
-            {"id": "view.terminal", "sequence": "ctrl+`", "command_id": "view.toggleTerminal"},
-            {"id": "view.fullscreen", "sequence": "f11", "command_id": "view.toggleFullscreen"},
-            {"id": "view.theme", "sequence": "ctrl+t", "command_id": "view.toggleTheme"},
-            
-            # Workspace operations
-            {"id": "workspace.split_horizontal", "sequence": "ctrl+\\", "command_id": "workbench.action.splitRight"},
-            {"id": "workspace.split_vertical", "sequence": "ctrl+shift+\\", "command_id": "workbench.action.splitDown"},
-            {"id": "workspace.next_pane", "sequence": "ctrl+k ctrl+right", "command_id": "workbench.action.focusNextPane"},
-            {"id": "workspace.prev_pane", "sequence": "ctrl+k ctrl+left", "command_id": "workbench.action.focusPreviousPane"},
-            
-            # Terminal operations
-            {"id": "terminal.new", "sequence": "ctrl+shift+`", "command_id": "file.newTerminalTab"},
-            {"id": "terminal.kill", "sequence": "ctrl+shift+k", "command_id": "file.closeTab"},
-            
-            # Help
-            {"id": "help.about", "sequence": "f1", "command_id": "help.about"},
-        ]
+        # Start with base shortcuts and add default-specific extensions
+        shortcuts = BaseKeymapShortcuts.get_common_shortcuts()
+        shortcuts.extend(BaseKeymapShortcuts.get_default_extensions())
+        return shortcuts
 
 
 class VSCodeKeymapProvider(KeymapProvider):
@@ -111,47 +81,10 @@ class VSCodeKeymapProvider(KeymapProvider):
     
     def get_shortcuts(self) -> List[Dict[str, Any]]:
         """Get VSCode shortcuts."""
-        return [
-            # File operations
-            {"id": "file.new", "sequence": "ctrl+n", "command_id": "file.newEditorTab"},
-            {"id": "file.open", "sequence": "ctrl+o", "command_id": "file.open"},
-            {"id": "file.save", "sequence": "ctrl+s", "command_id": "file.save"},
-            {"id": "file.save_as", "sequence": "ctrl+shift+s", "command_id": "file.saveAs"},
-            {"id": "file.close", "sequence": "ctrl+w", "command_id": "file.closeActiveTab"},
-            {"id": "file.close_all", "sequence": "ctrl+k ctrl+w", "command_id": "file.closeAllTabs"},
-            {"id": "file.reopen", "sequence": "ctrl+shift+t", "command_id": "file.reopenClosedTab"},
-            
-            # Edit operations
-            {"id": "edit.cut", "sequence": "ctrl+x", "command_id": "editor.cut"},
-            {"id": "edit.copy", "sequence": "ctrl+c", "command_id": "editor.copy"},
-            {"id": "edit.paste", "sequence": "ctrl+v", "command_id": "editor.paste"},
-            {"id": "edit.undo", "sequence": "ctrl+z", "command_id": "editor.undo"},
-            {"id": "edit.redo", "sequence": "ctrl+shift+z", "command_id": "editor.redo"},
-            {"id": "edit.select_all", "sequence": "ctrl+a", "command_id": "editor.selectAll"},
-            
-            # View operations
-            {"id": "view.sidebar", "sequence": "ctrl+b", "command_id": "view.toggleSidebar"},
-            {"id": "view.terminal", "sequence": "ctrl+`", "command_id": "view.toggleTerminal"},
-            {"id": "view.fullscreen", "sequence": "f11", "command_id": "view.toggleFullscreen"},
-            {"id": "view.command_palette", "sequence": "ctrl+shift+p", "command_id": "commandPalette.show"},
-            
-            # Workspace operations
-            {"id": "workspace.split_editor", "sequence": "ctrl+\\", "command_id": "workbench.action.splitRight"},
-            {"id": "workspace.focus_left", "sequence": "ctrl+k ctrl+left", "command_id": "workbench.action.focusPreviousPane"},
-            {"id": "workspace.focus_right", "sequence": "ctrl+k ctrl+right", "command_id": "workbench.action.focusNextPane"},
-            {"id": "workspace.close_group", "sequence": "ctrl+k w", "command_id": "workbench.action.closeActivePane"},
-            
-            # Navigation
-            {"id": "nav.next_tab", "sequence": "ctrl+tab", "command_id": "workbench.action.nextTab"},
-            {"id": "nav.prev_tab", "sequence": "ctrl+shift+tab", "command_id": "workbench.action.previousTab"},
-            {"id": "nav.tab_1", "sequence": "ctrl+1", "command_id": "workbench.action.firstTab"},
-            {"id": "nav.tab_2", "sequence": "ctrl+2", "command_id": "workbench.action.firstTab"},
-            {"id": "nav.tab_3", "sequence": "ctrl+3", "command_id": "workbench.action.firstTab"},
-            
-            # Terminal operations
-            {"id": "terminal.new", "sequence": "ctrl+shift+`", "command_id": "file.newTerminalTab"},
-            {"id": "terminal.kill", "sequence": "ctrl+shift+k", "command_id": "file.closeTab"},
-        ]
+        # Start with base shortcuts and add VSCode-specific extensions
+        shortcuts = BaseKeymapShortcuts.get_common_shortcuts()
+        shortcuts.extend(BaseKeymapShortcuts.get_vscode_extensions())
+        return shortcuts
 
 
 class VimKeymapProvider(KeymapProvider):
@@ -168,35 +101,10 @@ class VimKeymapProvider(KeymapProvider):
     
     def get_shortcuts(self) -> List[Dict[str, Any]]:
         """Get Vim shortcuts."""
-        return [
-            # File operations (using leader key approach)
-            {"id": "file.new", "sequence": "ctrl+n", "command_id": "file.newEditorTab"},
-            {"id": "file.open", "sequence": "ctrl+o", "command_id": "file.open"},
-            {"id": "file.save", "sequence": "ctrl+s", "command_id": "file.save", "when": "!vimMode"},
-            {"id": "file.save_vim", "sequence": "space w", "command_id": "file.save", "when": "vimMode"},
-            {"id": "file.quit", "sequence": "space q", "command_id": "file.closeActiveTab", "when": "vimMode"},
-            
-            # Edit operations
-            {"id": "edit.cut", "sequence": "ctrl+x", "command_id": "editor.cut", "when": "!vimMode"},
-            {"id": "edit.copy", "sequence": "ctrl+c", "command_id": "editor.copy", "when": "!vimMode"},
-            {"id": "edit.paste", "sequence": "ctrl+v", "command_id": "editor.paste", "when": "!vimMode"},
-            {"id": "edit.undo", "sequence": "u", "command_id": "editor.undo", "when": "vimMode && vimNormalMode"},
-            {"id": "edit.redo", "sequence": "ctrl+r", "command_id": "editor.redo", "when": "vimMode && vimNormalMode"},
-            
-            # View operations
-            {"id": "view.sidebar", "sequence": "space e", "command_id": "view.toggleSidebar", "when": "vimMode"},
-            {"id": "view.terminal", "sequence": "space t", "command_id": "view.toggleTerminal", "when": "vimMode"},
-            
-            # Workspace operations with vim-style navigation
-            {"id": "workspace.split_horizontal", "sequence": "space s", "command_id": "workbench.action.splitRight", "when": "vimMode"},
-            {"id": "workspace.split_vertical", "sequence": "space v", "command_id": "workbench.action.splitDown", "when": "vimMode"},
-            {"id": "workspace.focus_left", "sequence": "space h", "command_id": "workbench.action.focusPreviousPane", "when": "vimMode"},
-            {"id": "workspace.focus_right", "sequence": "space l", "command_id": "workbench.action.focusNextPane", "when": "vimMode"},
-            
-            # Buffer/tab navigation
-            {"id": "nav.next_buffer", "sequence": "space b n", "command_id": "workbench.action.nextTab", "when": "vimMode"},
-            {"id": "nav.prev_buffer", "sequence": "space b p", "command_id": "workbench.action.previousTab", "when": "vimMode"},
-        ]
+        # Start with base shortcuts (for non-vim mode) and add vim-specific bindings
+        shortcuts = BaseKeymapShortcuts.get_common_shortcuts()
+        shortcuts.extend(BaseKeymapShortcuts.get_vim_conditional_shortcuts())
+        return shortcuts
 
 
 class KeymapManager:

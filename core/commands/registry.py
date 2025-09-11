@@ -156,7 +156,7 @@ class CommandRegistry:
         """
         return list(self._commands.values())
     
-    def get_commands_by_category(self, category: str) -> List[Command]:
+    def get_commands_for_category(self, category: str) -> List[Command]:
         """
         Get all commands in a category.
         
@@ -167,6 +167,20 @@ class CommandRegistry:
             List of commands in the category
         """
         return self._categories.get(category, []).copy()
+    
+    def get_commands_by_category(self, category: str) -> List[Command]:
+        """
+        DEPRECATED: Use get_commands_for_category instead.
+        
+        Alias for backward compatibility.
+        """
+        import warnings
+        warnings.warn(
+            "get_commands_by_category is deprecated, use get_commands_for_category",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return self.get_commands_for_category(category)
     
     def get_categories(self) -> List[str]:
         """
