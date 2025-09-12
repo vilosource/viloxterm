@@ -11,7 +11,6 @@ from typing import Optional
 
 from core.commands.base import CommandContext, CommandResult
 from core.commands.decorators import command
-from core.services.service_locator import get_service
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +32,7 @@ def show_explorer_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        main_window_service = get_service('MainWindowService')
-        if not main_window_service:
-            return CommandResult(success=False, error="MainWindowService not available")
-        
-        main_window = main_window_service.get_main_window()
+        main_window = context.main_window
         if not main_window:
             return CommandResult(success=False, error="No main window available")
         
@@ -70,11 +65,7 @@ def show_search_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        main_window_service = get_service('MainWindowService')
-        if not main_window_service:
-            return CommandResult(success=False, error="MainWindowService not available")
-        
-        main_window = main_window_service.get_main_window()
+        main_window = context.main_window
         if not main_window:
             return CommandResult(success=False, error="No main window available")
         
@@ -107,11 +98,7 @@ def show_git_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        main_window_service = get_service('MainWindowService')
-        if not main_window_service:
-            return CommandResult(success=False, error="MainWindowService not available")
-        
-        main_window = main_window_service.get_main_window()
+        main_window = context.main_window
         if not main_window:
             return CommandResult(success=False, error="No main window available")
         
@@ -144,11 +131,7 @@ def show_settings_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        main_window_service = get_service('MainWindowService')
-        if not main_window_service:
-            return CommandResult(success=False, error="MainWindowService not available")
-        
-        main_window = main_window_service.get_main_window()
+        main_window = context.main_window
         if not main_window:
             return CommandResult(success=False, error="No main window available")
         
@@ -162,3 +145,10 @@ def show_settings_command(context: CommandContext) -> CommandResult:
     except Exception as e:
         logger.error(f"Error showing settings: {e}", exc_info=True)
         return CommandResult(success=False, error=str(e))
+
+
+def register_sidebar_commands():
+    """Register all sidebar commands."""
+    # The @command decorator automatically registers them
+    # This function ensures the module is imported
+    logger.info("Sidebar commands registered")

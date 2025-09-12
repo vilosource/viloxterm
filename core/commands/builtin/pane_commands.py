@@ -11,7 +11,7 @@ from typing import Optional
 
 from core.commands.base import CommandContext, CommandResult
 from core.commands.decorators import command
-from core.services.service_locator import get_service
+from services.workspace_service import WorkspaceService
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ def split_pane_horizontal_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        workspace_service = get_service('WorkspaceService')
+        workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
@@ -77,7 +77,7 @@ def split_pane_vertical_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        workspace_service = get_service('WorkspaceService')
+        workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
@@ -121,7 +121,7 @@ def close_pane_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        workspace_service = get_service('WorkspaceService')
+        workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
@@ -165,7 +165,7 @@ def maximize_pane_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        workspace_service = get_service('WorkspaceService')
+        workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
@@ -209,7 +209,7 @@ def change_pane_type_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        workspace_service = get_service('WorkspaceService')
+        workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
@@ -239,3 +239,10 @@ def change_pane_type_command(context: CommandContext) -> CommandResult:
     except Exception as e:
         logger.error(f"Error changing pane type: {e}", exc_info=True)
         return CommandResult(success=False, error=str(e))
+
+
+def register_pane_commands():
+    """Register all pane commands."""
+    # The @command decorator automatically registers them
+    # This function ensures the module is imported
+    logger.info("Pane commands registered")

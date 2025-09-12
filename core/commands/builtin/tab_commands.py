@@ -11,7 +11,7 @@ from typing import Optional
 
 from core.commands.base import CommandContext, CommandResult
 from core.commands.decorators import command
-from core.services.service_locator import get_service
+from services.workspace_service import WorkspaceService
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ def duplicate_tab_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        workspace_service = get_service('WorkspaceService')
+        workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
@@ -85,7 +85,7 @@ def close_tabs_to_right_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        workspace_service = get_service('WorkspaceService')
+        workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
@@ -130,7 +130,7 @@ def rename_tab_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        workspace_service = get_service('WorkspaceService')
+        workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
@@ -184,7 +184,7 @@ def close_other_tabs_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        workspace_service = get_service('WorkspaceService')
+        workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
@@ -210,3 +210,10 @@ def close_other_tabs_command(context: CommandContext) -> CommandResult:
     except Exception as e:
         logger.error(f"Error closing other tabs: {e}", exc_info=True)
         return CommandResult(success=False, error=str(e))
+
+
+def register_tab_commands():
+    """Register all tab commands."""
+    # The @command decorator automatically registers them
+    # This function ensures the module is imported
+    logger.info("Tab commands registered")
