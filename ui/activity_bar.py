@@ -6,6 +6,7 @@ from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QAction, QIcon
 from ui.icon_manager import get_icon_manager
 from ui.vscode_theme import *
+from core.commands.executor import execute_command
 
 logger = logging.getLogger(__name__)
 
@@ -151,8 +152,8 @@ class ActivityBar(QToolBar):
                 self.is_sidebar_collapsed = not checked
                 logger.debug(f"Sidebar collapsed: {self.is_sidebar_collapsed}")
                 
-                # Emit toggle signal
-                self.toggle_sidebar.emit()
+                # Execute toggle sidebar command
+                execute_command("workbench.action.toggleSidebar")
                 
             else:
                 # Different view selected
@@ -171,8 +172,15 @@ class ActivityBar(QToolBar):
                     self.is_sidebar_collapsed = False  # Sidebar will be shown
                     logger.debug(f"Switched from {old_view} to {view_name}")
                     
-                    # Emit view change signal
-                    self.view_changed.emit(view_name)
+                    # Execute appropriate view command
+                    view_commands = {
+                        "explorer": "workbench.view.explorer",
+                        "search": "workbench.view.search",
+                        "git": "workbench.view.git",
+                        "settings": "workbench.view.settings"
+                    }
+                    if view_name in view_commands:
+                        execute_command(view_commands[view_name])
                 else:
                     # A different view was unchecked - this shouldn't happen normally
                     # but if it does, just ignore it
@@ -222,3 +230,20 @@ class ActivityBar(QToolBar):
         self.search_action.setIcon(icon_manager.get_icon("search"))
         self.git_action.setIcon(icon_manager.get_icon("git"))
         self.settings_action.setIcon(icon_manager.get_icon("settings"))
+    
+    def show_view(self, view_name: str):
+        """Programmatically show a specific view. Called by commands."""
+        logger.debug(f"show_view called for: {view_name}")
+        
+        # Find the action for this view
+        action_map = {
+            "explorer": self.explorer_action,
+            "search": self.search_action,
+            "git": self.git_action,
+            "settings": self.settings_action
+        }
+        
+        if view_name in action_map:
+            action = action_map[view_name]
+            if not action.isChecked():
+                action.setChecked(True)  # This will trigger on_action_toggled

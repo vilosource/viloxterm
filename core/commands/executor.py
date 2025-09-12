@@ -334,3 +334,24 @@ class CommandExecutor:
 
 # Global singleton instance
 command_executor = CommandExecutor()
+
+
+def execute_command(command_id: str, **kwargs) -> CommandResult:
+    """
+    Execute a command through the global executor.
+    
+    This is a convenience function that allows any widget to execute
+    commands without needing to import or reference the executor.
+    
+    Args:
+        command_id: The ID of the command to execute
+        **kwargs: Additional arguments for the command
+        
+    Returns:
+        CommandResult from the executed command
+        
+    Example:
+        from core.commands.executor import execute_command
+        result = execute_command("file.newEditorTab", name="untitled.py")
+    """
+    return command_executor.execute(command_id, **kwargs)
