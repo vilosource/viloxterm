@@ -213,11 +213,10 @@ class ChromeMainWindow(MainWindow):
         execute_command("workbench.action.selectTab", tab_index=index)
     
     def on_chrome_tab_close(self, index: int):
-        """Handle tab close request from Chrome title bar."""
-        if hasattr(self, 'workspace') and self.workspace:
-            # Don't close the last tab
-            if self.workspace.tab_widget.count() > 1:
-                self.workspace.close_tab(index)
+        """Handle tab close request from Chrome title bar using command."""
+        from core.commands.executor import execute_command
+        # Use the file.closeTab command with the specific index
+        execute_command("file.closeTab", index=index)
     
     def get_resize_direction(self, pos: QPoint) -> ResizeDirection:
         """Determine resize direction based on mouse position."""
