@@ -10,6 +10,7 @@ This document provides a comprehensive guide to the command system, keyboard nav
 4. [Command Palette Integration](#command-palette-integration)
 5. [Context Evaluation System](#context-evaluation-system)
 6. [Command Lifecycle](#command-lifecycle)
+7. [Available Commands and Shortcuts](#available-commands-and-shortcuts)
 
 ## Command System Architecture
 
@@ -98,353 +99,298 @@ The decorator pattern (`core/commands/decorators.py`) simplifies command creatio
 
 ```python
 @command(
-    id="workbench.action.splitRight",
-    title="Split Pane Right",
-    category="Workspace",
-    description="Split the active pane horizontally",
-    shortcut="ctrl+\\",
-    icon="split-horizontal",
-    when="workbench.pane.canSplit"
+    id="workbench.action.splitPaneHorizontal",
+    title="Split Pane Horizontally",
+    category="Pane",
+    description="Split the current pane horizontally"
 )
-def split_pane_right_command(context: CommandContext) -> CommandResult:
-    """Split active pane horizontally using WorkspaceService."""
-    workspace_service = context.get_service(WorkspaceService)
-    new_pane_id = workspace_service.split_active_pane("horizontal")
-    return CommandResult(success=True, value={'new_pane_id': new_pane_id})
-```
-
-**How the Decorator Works:**
-
-1. **Function Wrapping**: The decorated function becomes the command handler
-2. **Auto-Registration**: Command is automatically registered with CommandRegistry
-3. **Error Handling**: Wrapped in try-catch to always return CommandResult
-4. **Shortcut Registration**: If shortcut provided, attempts to register with KeyboardService
-
-**Implementation Details (`core/commands/decorators.py`, lines 68-146):**
-```python
-def decorator(func: Callable) -> Command:
-    @wraps(func)
-    def handler(context: CommandContext) -> CommandResult:
-        try:
-            result = func(context)
-            # Ensure we return a CommandResult
-            if not isinstance(result, CommandResult):
-                return CommandResult(success=True, value=result)
-            return result
-        except Exception as e:
-            logger.error(f"Error in command {id}: {e}", exc_info=True)
-            return CommandResult(success=False, error=str(e))
-    
-    # Create the command
-    cmd = Command(id=id, title=title, handler=handler, ...)
-    
-    # Auto-register if requested
-    if register:
-        command_registry.register(cmd)
+def split_pane_horizontal_command(context: CommandContext) -> CommandResult:
+    """Split the current or specified pane horizontally."""
+    try:
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
         
-        # Auto-register shortcut if provided
-        if shortcut:
-            # ... shortcut registration logic
-```
-
-### CommandRegistry Singleton
-
-The `CommandRegistry` (`core/commands/registry.py`) is a singleton managing all commands:
-
-```python
-class CommandRegistry:
-    def __init__(self):
-        self._commands: Dict[str, Command] = {}
-        self._categories: Dict[str, List[Command]] = {}
-        self._shortcuts: Dict[str, List[str]] = {}  # shortcut -> [command_ids]
-        self._keywords_index: Dict[str, Set[str]] = {}  # keyword -> {command_ids}
-```
-
-**Key Features:**
-- **Singleton Pattern**: Ensures single source of truth for all commands
-- **Multiple Indexes**: Commands indexed by ID, category, shortcut, and keywords
-- **Conflict Detection**: Warns about duplicate shortcuts
-- **Observer Pattern**: Notifies listeners when commands are registered/unregistered
-
-### Command Categories
-
-Standard categories (`core/commands/base.py`, lines 253-267):
-- **FILE**: File operations
-- **EDIT**: Editing operations
-- **VIEW**: View/UI operations
-- **NAVIGATION**: Navigation between panes/tabs
-- **TERMINAL**: Terminal operations
-- **WORKSPACE**: Workspace management
-- **INTERNAL**: Hidden from UI
-- **EXPERIMENTAL**: Experimental features
-
-## Multi-key Shortcuts (Chord Sequences)
-
-The system supports multi-key shortcuts like "Ctrl+K W" (close pane). This is implemented through the KeyboardService's chord detection mechanism.
-
-### How Chord Detection Works
-
-1. **First Key Detection**: When a potential chord starter (e.g., Ctrl+K) is pressed, the system enters "chord mode"
-2. **Timeout Window**: A 2-second window opens for the next key
-3. **Second Key**: If pressed within timeout, completes the chord
-4. **Cancellation**: Any non-matching key or timeout cancels chord mode
-
-### Implementation Example
-
-The close pane command uses a chord:
-
-```python
-@command(
-    id="workbench.action.closeActivePane",
-    title="Close Active Pane",
-    category="Workspace",
-    shortcut="ctrl+k w",  # Note the space indicating a chord
-    when="workbench.pane.count > 1"
-)
-def close_active_pane_command(context: CommandContext) -> CommandResult:
-    # Implementation
-```
-
-### Chord Registration
-
-When a shortcut contains a space, it's registered as a chord:
-- "ctrl+k w" → First: Ctrl+K, Second: W
-- "ctrl+k ctrl+w" → First: Ctrl+K, Second: Ctrl+W
-
-## Service Layer Pattern
-
-The service layer pattern separates business logic from UI components and commands.
-
-### Architecture Overview
-
-```
-┌─────────────┐
-│   Command   │  (User action)
-└─────┬───────┘
-      │ uses
-      ▼
-┌─────────────┐
-│   Service   │  (Business logic)
-└─────┬───────┘
-      │ modifies
-      ▼
-┌─────────────┐
-│  UI/Model   │  (State & presentation)
-└─────────────┘
-```
-
-### Example: WorkspaceService
-
-The `WorkspaceService` (`services/workspace_service.py`) manages workspace operations:
-
-```python
-class WorkspaceService:
-    def __init__(self, workspace):
-        self._workspace = workspace
-        self._panes = {}
-        self._focus_sink = FocusSinkWidget()
-        # ... initialization
-    
-    def split_active_pane(self, orientation: str) -> Optional[str]:
-        """Split the active pane in the specified orientation."""
-        # Business logic for splitting panes
-        widget = self._workspace.get_current_split_widget()
-        if widget:
-            new_pane_id = widget.split_active_pane(orientation)
-            # Track new pane, update state
-            return new_pane_id
-        return None
-```
-
-### Service Discovery Pattern
-
-Services are discovered through the CommandContext:
-
-```python
-def my_command(context: CommandContext) -> CommandResult:
-    # Get service through context
-    workspace_service = context.get_service(WorkspaceService)
-    
-    # Use service
-    result = workspace_service.some_operation()
-    
-    return CommandResult(success=True, value=result)
+        # Get pane from context or use active
+        pane = context.args.get('pane')
+        
+        # Get workspace
+        workspace = workspace_service.get_workspace()
+        if not workspace:
+            return CommandResult(success=False, error="No workspace available")
+        
+        # Split the pane
+        workspace.split_pane(pane, "horizontal")
+        return CommandResult(success=True)
+        
+    except Exception as e:
+        logger.error(f"Error splitting pane: {e}", exc_info=True)
+        return CommandResult(success=False, error=str(e))
 ```
 
 **Benefits:**
-1. **Decoupling**: Commands don't directly depend on service implementations
-2. **Testability**: Services can be mocked in tests
-3. **Reusability**: Services can be used by multiple commands
-4. **Separation of Concerns**: UI logic separate from business logic
+- **Auto-Registration**: Commands are automatically registered when the module loads
+- **Clear Metadata**: Command metadata is visible at the definition site
+- **Type Safety**: The decorator ensures correct function signature
 
-### ServiceLocator Integration
+### Command Registry
 
-The modern approach uses ServiceLocator (`services/service_locator.py`):
+The `CommandRegistry` (`core/commands/registry.py`) is a singleton that manages all commands:
 
 ```python
-# In CommandContext.get_service() (lines 69-106)
-def get_service(self, service_type: type) -> Any:
-    # First try ServiceLocator if available
-    if self._service_locator is None:
-        from services.service_locator import ServiceLocator
-        self._service_locator = ServiceLocator.get_instance()
+class CommandRegistry:
+    def register(self, command: Command) -> None:
+        """Register a command."""
+        
+    def get_command(self, command_id: str) -> Optional[Command]:
+        """Get a command by ID."""
+        
+    def search_commands(self, query: str) -> List[Command]:
+        """Search for commands by title, description, or keywords."""
+```
+
+**Features:**
+- **Singleton Pattern**: Ensures a single source of truth for commands
+- **Search Capabilities**: Supports fuzzy searching across command metadata
+- **Category Management**: Groups commands by category for organization
+
+### Command Execution
+
+The `execute_command` function (`core/commands/executor.py`) is the primary interface:
+
+```python
+def execute_command(command_id: str, **kwargs) -> CommandResult:
+    """
+    Execute a command by ID with optional arguments.
     
-    if self._service_locator:
-        service = self._service_locator.get(service_type)
-        if service:
-            return service
+    Args:
+        command_id: The command identifier
+        **kwargs: Arguments to pass to the command
+        
+    Returns:
+        CommandResult with success status and optional value/error
+    """
+```
+
+**Execution Flow:**
+1. Look up command in registry
+2. Create CommandContext with current state
+3. Merge provided kwargs into context.args
+4. Call command handler
+5. Return standardized CommandResult
+
+## Multi-key Shortcuts (Chord Sequences)
+
+The system supports VSCode-style chord sequences:
+
+### Implementation
+
+```python
+class ChordTracker:
+    """Tracks multi-key chord sequences."""
     
-    # Fall back to legacy services dict
-    # ... fallback logic
+    def __init__(self):
+        self.pending_chord = None
+        self.chord_timer = QTimer()
+        self.chord_timer.timeout.connect(self.clear_chord)
+        
+    def process_shortcut(self, shortcut: str) -> Optional[str]:
+        """Process a shortcut, potentially as part of a chord."""
+        if self.pending_chord:
+            # Complete the chord
+            full_chord = f"{self.pending_chord} {shortcut}"
+            self.clear_chord()
+            return full_chord
+        elif self.is_chord_prefix(shortcut):
+            # Start a chord sequence
+            self.pending_chord = shortcut
+            self.chord_timer.start(2000)  # 2 second timeout
+            return None
+        else:
+            # Single shortcut
+            return shortcut
+```
+
+### Common Chord Sequences
+
+- **Ctrl+K Ctrl+C**: Comment selection
+- **Ctrl+K Ctrl+U**: Uncomment selection
+- **Ctrl+K W**: Close all editors
+- **Ctrl+K Ctrl+S**: Save all
+
+## Service Layer Pattern
+
+Services provide business logic separated from UI components:
+
+### Service Access Pattern
+
+The correct pattern for accessing services in commands:
+
+```python
+@command(
+    id="workbench.action.splitPaneHorizontal",
+    title="Split Pane Horizontally",
+    category="Pane"
+)
+def split_pane_horizontal_command(context: CommandContext) -> CommandResult:
+    # CORRECT: Use context.get_service() with the service class
+    workspace_service = context.get_service(WorkspaceService)
+    if not workspace_service:
+        return CommandResult(success=False, error="WorkspaceService not available")
+    
+    # Use the service
+    workspace = workspace_service.get_workspace()
+    # ...
+```
+
+**Important:** Always use `context.get_service(ServiceClass)` not string names.
+
+### Common Services
+
+#### WorkspaceService
+```python
+class WorkspaceService:
+    def get_workspace(self) -> Optional[WorkspaceSimple]:
+        """Get the current workspace."""
+        
+    def split_active_pane(self, direction: str) -> bool:
+        """Split the currently active pane."""
+        
+    def close_active_pane(self) -> bool:
+        """Close the currently active pane."""
+```
+
+#### TerminalService
+```python
+class TerminalService:
+    def get_active_terminal(self) -> Optional[TerminalWidget]:
+        """Get the currently active terminal."""
+        
+    def create_terminal(self) -> TerminalWidget:
+        """Create a new terminal instance."""
 ```
 
 ## Command Palette Integration
 
-The command palette provides a searchable interface for all commands.
+The command palette provides a searchable interface for all commands:
 
-### How Commands Appear in the Palette
+### Implementation
 
-Commands are shown if:
-1. `visible` property is True
-2. `when` clause evaluates to True (if present)
-3. User has appropriate permissions
+```python
+class CommandPalette(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.search_input = QLineEdit()
+        self.results_list = QListWidget()
+        
+        # Get all commands from registry
+        self.commands = command_registry.get_all_commands()
+        
+        # Connect search
+        self.search_input.textChanged.connect(self.update_results)
+        
+    def update_results(self, query: str):
+        """Update results based on search query."""
+        matching_commands = command_registry.search_commands(query)
+        self.display_commands(matching_commands)
+```
 
-### Search and Filtering
+### Features
 
-The palette uses fuzzy search across:
-- Command title
-- Command description
-- Keywords array
-- Category name
-
-### Execution from Palette
-
-When a command is selected:
-1. Palette closes
-2. CommandContext is created with current state
-3. Command handler is executed
-4. Result is logged/displayed
+- **Fuzzy Search**: Searches across command titles, descriptions, and keywords
+- **Category Grouping**: Commands grouped by category for better organization
+- **Keyboard Navigation**: Full keyboard support for navigation and execution
+- **Recent Commands**: Shows frequently used commands at the top
 
 ## Context Evaluation System
 
-The `when` clause enables conditional command availability based on application state.
+The context system determines when commands are available:
 
-### When Clause Examples
+### When Clauses
 
-```python
-# Only available when multiple panes exist
-when="workbench.pane.count > 1"
-
-# Only in editor context
-when="editorFocus"
-
-# Complex conditions
-when="editorFocus && !editorReadonly && editorLangId == 'python'"
-```
-
-### Evaluation Process
-
-The `WhenClauseEvaluator` (`core/context/evaluator.py`) parses and evaluates expressions:
+Commands can specify conditions for availability:
 
 ```python
-def can_execute(self, context: Dict[str, Any]) -> bool:
-    if not self.enabled:
-        return False
-    
-    if self.when:
-        from core.context.evaluator import WhenClauseEvaluator
-        return WhenClauseEvaluator.evaluate(self.when, context)
-    
-    return True
+@command(
+    id="editor.action.commentLine",
+    title="Comment Line",
+    when="editorTextFocus && !editorReadonly"
+)
 ```
 
-### Context Variables
+### Context Keys
 
-Common context variables:
-- `workbench.pane.count`: Number of open panes
-- `workbench.pane.focused`: Whether a pane is focused
-- `editorFocus`: Editor has focus
+Common context keys:
+- `editorTextFocus`: Editor has focus
 - `terminalFocus`: Terminal has focus
 - `sidebarVisible`: Sidebar is visible
+- `panelFocus`: A panel has focus
+- `multipleEditors`: Multiple editors are open
+
+### Evaluation
+
+```python
+class WhenClauseEvaluator:
+    @staticmethod
+    def evaluate(when_clause: str, context: Dict[str, Any]) -> bool:
+        """Evaluate a when clause against the current context."""
+        # Parse and evaluate the expression
+        # Supports &&, ||, !, and parentheses
+```
 
 ## Command Lifecycle
 
-### 1. Registration Phase
+### Registration Phase
+
+1. **Module Import**: Command modules are imported at startup
+2. **Decorator Execution**: @command decorators register commands
+3. **Registry Storage**: Commands stored in CommandRegistry
+
+### Execution Phase
+
+1. **Trigger**: User action (keyboard, menu, palette)
+2. **Lookup**: Find command in registry
+3. **Context Creation**: Build CommandContext with current state
+4. **Handler Execution**: Call command handler function
+5. **Result Processing**: Handle success/failure
+
+### Example Flow
 
 ```python
-# Command defined with decorator
-@command(id="my.command", ...)
-def my_command(context): ...
-
-# Decorator flow:
-1. Create Command instance
-2. Register with CommandRegistry
-3. Register shortcut with KeyboardService
-4. Index by category, keywords
+# 1. User presses Ctrl+N
+# 2. Keyboard manager maps to "file.newEditorTab"
+# 3. execute_command("file.newEditorTab") called
+# 4. Registry returns Command object
+# 5. CommandContext created with main_window, workspace, etc.
+# 6. Command handler executed
+# 7. New tab created, CommandResult returned
 ```
 
-### 2. Discovery Phase
-
-Commands can be discovered through:
-- CommandRegistry.get_command(id)
-- CommandRegistry.get_commands_by_category(category)
-- CommandRegistry.search(query)
-- Command palette UI
-
-### 3. Execution Phase
-
-```python
-# Execution flow:
-1. Trigger (shortcut/palette/menu)
-   ↓
-2. Create CommandContext
-   ↓
-3. Check can_execute() with when clause
-   ↓
-4. Call command.execute(context)
-   ↓
-5. Handler function runs
-   ↓
-6. Return CommandResult
-   ↓
-7. Handle result (log/display/state update)
-```
-
-### 4. Error Handling
-
-All command execution is wrapped in error handling:
-
-```python
-try:
-    result = self.handler(context)
-    if not isinstance(result, CommandResult):
-        result = CommandResult(success=True, value=result)
-    return result
-except Exception as e:
-    logger.error(f"Error executing command {self.id}: {e}", exc_info=True)
-    return CommandResult(success=False, error=str(e))
-```
-
-## Best Practices
+## Implementation Best Practices
 
 ### 1. Command Design
 
-- **Single Responsibility**: Each command should do one thing
-- **Idempotent**: Commands should be safe to run multiple times
-- **Context-Free**: Don't store state in command objects
-- **Service Layer**: Use services for business logic
-
-### 2. Naming Conventions
-
 ```python
-# Command IDs: category.action.target
-"file.new.editorTab"
-"workspace.split.right"
-"terminal.clear.buffer"
+@command(
+    id="category.action.verbNoun",  # Consistent naming
+    title="Human Readable Title",
+    category="Category",
+    description="Detailed description for tooltips"
+)
+def command_name(context: CommandContext) -> CommandResult:
+    """Docstring explains the implementation."""
+    pass
+```
 
-# Handler functions: action_target_command
-def new_editor_tab_command(context): ...
-def split_right_command(context): ...
+### 2. Service Access
+
+Always use the type-based service access:
+```python
+# CORRECT
+service = context.get_service(WorkspaceService)
+
+# INCORRECT - Don't use string names
+service = context.get_service('WorkspaceService')
 ```
 
 ### 3. Error Handling
@@ -467,66 +413,190 @@ def test_split_pane_command():
     # Create mock context
     context = CommandContext()
     mock_service = Mock(spec=WorkspaceService)
-    context.services['WorkspaceService'] = mock_service
     
-    # Execute command
-    result = split_pane_right_command(context)
-    
-    # Verify
-    assert result.success
-    mock_service.split_active_pane.assert_called_once_with("horizontal")
+    # Mock ServiceLocator if using new pattern
+    with patch('services.service_locator.ServiceLocator.get_instance') as mock_locator:
+        mock_locator.return_value.get.return_value = mock_service
+        
+        # Execute command
+        result = split_pane_horizontal_command(context)
+        
+        # Verify
+        assert result.success
+        mock_service.get_workspace.assert_called_once()
 ```
 
 ## Summary
 
 The command system provides a robust, extensible architecture for handling user actions:
 
-1. **Partially Centralized**: While the command system is the preferred architecture, not all actions go through it:
-   - **Commands**: Primary keyboard shortcuts, command palette actions, some menu items
-   - **Direct Connections**: UI button clicks, activity bar toggles, tab context menus, pane controls
+1. **Mostly Centralized**: The command system is the primary architecture for almost all user actions:
+   - **Commands**: All keyboard shortcuts, command palette actions, menu items
+   - **Direct Connections**: Only Activity Bar toggles remain non-centralized
 2. **Discoverable**: Commands are searchable and browsable in the palette
 3. **Context-Aware**: Commands can be conditionally available based on application state
 4. **Service-Oriented**: Business logic separated from UI through service layer
 5. **Error-Resilient**: Comprehensive error handling throughout the system
 6. **Testable**: Clear separation of concerns enables easy unit and integration testing
 
-### Exceptions to Command System
+### Current Architecture Status
 
-Several UI components bypass the command system for performance and simplicity:
+As of the Phase 2 implementation, the command system has been successfully centralized for:
 
-#### Activity Bar (ui/activity_bar.py:80,87,94,104)
-- View toggles use direct signal connections
-- Example: `self.explorer_action.toggled.connect(lambda checked: self.on_action_toggled("explorer", checked))`
-- Emits `view_changed` and `toggle_sidebar` signals directly
+#### Fully Centralized Components
+- **Tab Management** (`ui/workspace_simple.py:317-345`)
+  - All tab context menu actions use `execute_command()`
+  - Examples: duplicate, close, rename, close others, close to right
+  
+- **Pane Controls** (`ui/widgets/pane_header.py:88-103`)
+  - Header buttons use `execute_command()` for all actions
+  - Split horizontal/vertical, close, maximize
+  
+- **Split Pane Context Menu** (`ui/widgets/split_pane_widget.py:172-221`)
+  - All menu actions use `execute_command()`
+  - Split, close, change type operations
+  
+- **Main Window Menus** (`ui/main_window.py:459-544`)
+  - All menu items use `execute_command()`
 
-#### Tab Management (ui/workspace_simple.py:317-345)
-- Context menu actions connect directly to methods
-- Examples:
-  - `duplicate_action.triggered.connect(lambda: self.duplicate_tab(index))`
-  - `close_action.triggered.connect(lambda: self.close_tab(index))`
-  - `rename_action.triggered.connect(lambda: self.start_tab_rename(...))`
+#### Exception: Activity Bar
 
-#### Pane Controls (ui/widgets/pane_header.py:88-103)
-- Header buttons emit signals directly
-- Examples:
-  - `self.split_h_button.clicked.connect(self.split_horizontal_requested.emit)`
-  - `self.close_button.clicked.connect(self.close_requested.emit)`
+The Activity Bar (`ui/activity_bar.py:80-105`) remains the only component using direct signal connections:
 
-#### Split Pane Context Menu (ui/widgets/split_pane_widget.py:172-194)
-- Menu actions connect to local methods
-- Example: `split_h.triggered.connect(lambda: self.request_split("horizontal"))`
+```python
+# Activity Bar still uses direct connections for performance/complexity reasons
+self.explorer_action.toggled.connect(lambda checked: self.on_action_toggled("explorer", checked))
+```
+
+This executes `execute_command()` internally but manages complex toggle state directly.
 
 ### Design Rationale
 
-This hybrid approach balances several concerns:
+This mostly-centralized approach balances several concerns:
 
-1. **Performance**: Direct connections avoid command system overhead for frequent UI operations
-2. **Simplicity**: Simple UI interactions don't need command abstraction
-3. **Discoverability**: Important actions are still exposed through commands
-4. **Consistency**: Keyboard shortcuts uniformly use the command system
-5. **Testability**: Both patterns are testable, just with different approaches
+1. **Consistency**: All major user actions go through the command system
+2. **Performance**: Activity Bar's complex toggle logic remains optimized
+3. **Discoverability**: All important actions exposed through commands
+4. **Maintainability**: Single pattern for 99% of actions
+5. **Testability**: Both command execution and Activity Bar behavior are testable
 
-This architecture ensures consistency where it matters most (keyboard shortcuts and major actions) while maintaining simplicity for basic UI interactions.
+## Available Commands and Shortcuts
+
+The application currently implements 80+ commands across 11 categories:
+
+### File Commands
+- `file.newEditorTab` - **Ctrl+N** - New editor tab
+- `file.newTerminalTab` - **Ctrl+`** - New terminal tab
+- `file.closeTab` - **Ctrl+W** - Close current tab
+- `file.saveState` - **Ctrl+S** - Save application state
+- `file.restoreState` - Restore application state
+
+### View Commands
+- `view.toggleTheme` - **Ctrl+T** - Toggle light/dark theme
+- `view.toggleSidebar` - **Ctrl+B** - Show/hide sidebar
+- `view.toggleMenuBar` - **Ctrl+Shift+M** - Show/hide menu bar
+- `view.toggleFullScreen` - **F11** - Toggle fullscreen mode
+- `view.showExplorer` - Show Explorer in sidebar
+- `view.showSearch` - Show Search in sidebar
+- `view.showGit` - Show Git in sidebar
+- `view.showSettings` - Show Settings in sidebar
+- `view.resetLayout` - Reset window layout to default
+
+### Workspace Commands
+- `workbench.action.splitRight` - **Ctrl+\\** - Split pane horizontally
+- `workbench.action.splitDown` - **Ctrl+Shift+\\** - Split pane vertically
+- `workbench.action.closeActivePane` - **Ctrl+K W** - Close active pane
+- `workbench.action.togglePaneNumbers` - **Alt+P** - Toggle pane numbers
+- `workbench.action.nextTab` - **Ctrl+PageDown** - Next tab
+- `workbench.action.previousTab` - **Ctrl+PageUp** - Previous tab
+- `workbench.action.saveLayout` - Save current layout
+- `workbench.action.restoreLayout` - Restore saved layout
+- `workbench.action.renamePane` - Rename current pane
+
+### Navigation Commands
+- `workbench.action.focusNextPane` - **Tab** - Focus next pane
+- `workbench.action.focusPreviousPane` - **Shift+Tab** - Focus previous pane
+- `workbench.action.focusLeftPane` - **Alt+Left** - Focus pane to the left
+- `workbench.action.focusRightPane` - **Alt+Right** - Focus pane to the right
+- `workbench.action.focusAbovePane` - **Alt+Up** - Focus pane above
+- `workbench.action.focusBelowPane` - **Alt+Down** - Focus pane below
+- `workbench.action.focusSidebar` - Focus sidebar
+- `workbench.action.focusActivePane` - Focus active editor pane
+- `workbench.action.firstTab` - Go to first tab
+- `workbench.action.lastTab` - Go to last tab
+- `workbench.action.closeAllTabs` - Close all tabs
+- `workbench.action.maximizePane` - Maximize current pane
+- `workbench.action.evenPaneSizes` - Make all panes equal size
+- `workbench.action.movePaneToNewTab` - Move pane to new tab
+- `workbench.action.focusNextGroup` - Focus next pane group
+- `workbench.action.focusPreviousGroup` - Focus previous pane group
+
+### Tab Commands
+- `workbench.action.duplicateTab` - Duplicate current tab
+- `workbench.action.closeTabsToRight` - Close tabs to the right
+- `workbench.action.renameTab` - Rename current tab
+- `workbench.action.closeOtherTabs` - Close all other tabs
+
+### Pane Commands
+- `workbench.action.splitPaneHorizontal` - Split pane horizontally
+- `workbench.action.splitPaneVertical` - Split pane vertically
+- `workbench.action.closePane` - Close current pane
+- `workbench.action.maximizePane` - Maximize/restore pane
+- `workbench.action.changePaneType` - Change pane type
+
+### Sidebar Commands
+- `workbench.view.explorer` - Show Explorer view
+- `workbench.view.search` - Show Search view
+- `workbench.view.git` - Show Git/Source Control view
+- `workbench.view.settings` - Show Settings view
+- `workbench.action.toggleSidebar` - Toggle sidebar visibility
+
+### Editor Commands
+- `editor.action.cut` - **Ctrl+X** - Cut text
+- `editor.action.copy` - **Ctrl+C** - Copy text
+- `editor.action.paste` - **Ctrl+V** - Paste text
+- `editor.action.selectAll` - **Ctrl+A** - Select all text
+- `editor.action.undo` - **Ctrl+Z** - Undo
+- `editor.action.redo` - **Ctrl+Shift+Z** - Redo
+- `editor.action.find` - **Ctrl+F** - Find in editor
+- `editor.action.replace` - **Ctrl+H** - Find and replace
+
+### Terminal Commands
+- `terminal.clear` - Clear terminal output
+- `terminal.new` - Create new terminal
+- `terminal.copy` - Copy selected text
+- `terminal.paste` - Paste text
+- `terminal.kill` - Kill terminal process
+- `terminal.restart` - Restart terminal
+
+### Command Palette Commands
+- `commandPalette.show` - **Ctrl+Shift+P** - Show command palette
+- `commandPalette.hide` - Hide command palette
+- `commandPalette.refresh` - Refresh command list
+
+### Settings Commands
+- `settings.openSettings` - Open settings dialog
+- `settings.resetSettings` - Reset all settings to defaults
+- `settings.showSettingsInfo` - Show settings information
+- `settings.toggleTheme` - Toggle application theme
+- `settings.changeFontSize` - Change editor font size
+- `settings.resetKeyboardShortcuts` - Reset keyboard shortcuts
+- `settings.showKeyboardShortcuts` - Show keyboard shortcuts
+
+### Debug Commands (Development)
+- `debug.resetAppState` - Reset application state
+- `debug.showServiceInfo` - Show service information
+- `debug.showCommandInfo` - Show command registry info
+- `debug.showWorkspaceInfo` - Show workspace information
+- `debug.testCommand` - Test command for development
+- `debug.reloadWindow` - Reload application window
+- `debug.toggleDevMode` - Toggle developer mode
+
+## Keyboard Shortcut Implementation
+
+### Terminal Shortcuts
+
+For terminal widgets that use WebEngine, special handling is required:
 
 ```javascript
 // In terminal HTML/JavaScript
@@ -549,231 +619,7 @@ document.addEventListener('keydown', function(e) {
             return false;  // Let Qt handle directional navigation
         }
     }
-}, true);  // Use capture phase
+});
 ```
 
-## Directional Pane Navigation (Alt+Arrow)
-
-### Overview
-The directional navigation system allows users to navigate between split panes using Alt+Arrow keys. The system uses the tree structure combined with position tracking to find the most intuitive target pane.
-
-### Algorithm
-The navigation algorithm (`SplitPaneModel.find_pane_in_direction()`) works by:
-
-1. **Calculate Position Bounds**: Each pane has normalized bounds [x1, y1, x2, y2] in range [0.0, 1.0], calculated by accumulating split ratios while traversing the tree.
-
-2. **Find Candidates**: Identify all panes in the target direction based on center positions:
-   - **Left**: Target center X < source center X
-   - **Right**: Target center X > source center X
-   - **Up**: Target center Y < source center Y
-   - **Down**: Target center Y > source center Y
-
-3. **Score Candidates**: Rank candidates by:
-   - **Primary**: Maximum overlap in perpendicular axis (Y-overlap for left/right, X-overlap for up/down)
-   - **Secondary**: Minimum distance in movement direction
-   - **Tiebreaker**: Prefer rightmost for left navigation, leftmost for right, etc.
-
-### Example Navigation
-```
-Layout:
-┌─────────┬─────────┐
-│    A    │    B    │
-├─────────┼─────────┤
-│    C    │    D    │
-└─────────┴─────────┘
-
-From A: Alt+Right → B, Alt+Down → C
-From B: Alt+Left → A, Alt+Down → D
-From C: Alt+Right → D, Alt+Up → A
-From D: Alt+Left → C, Alt+Up → B
-```
-
-### Implementation Files
-- **Algorithm**: `ui/widgets/split_pane_model.py` - `calculate_pane_bounds()`, `find_pane_in_direction()`
-- **Commands**: `core/commands/builtin/navigation_commands.py` - Alt+Arrow shortcuts
-- **Service**: `services/workspace_service.py` - `navigate_in_direction()`
-- **Documentation**: `docs/architecture/DIRECTIONAL_PANE_NAVIGATION.md` - Full algorithm details
-
-## Available Commands and Shortcuts
-
-### File Commands
-- `file.newEditorTab` - **Ctrl+N** - New editor tab
-- `file.newTerminalTab` - **Ctrl+`** - New terminal tab
-- `file.closeTab` - **Ctrl+W** - Close current tab
-- `file.saveState` - **Ctrl+S** - Save application state
-
-### View Commands
-- `view.toggleTheme` - **Ctrl+T** - Toggle light/dark theme
-- `view.toggleSidebar` - **Ctrl+B** - Show/hide sidebar
-- `view.toggleMenuBar` - **Ctrl+Shift+M** - Show/hide menu bar
-- `view.toggleFullScreen` - **F11** - Toggle fullscreen mode
-
-### Workspace Commands
-- `workbench.action.splitRight` - **Ctrl+\\** - Split pane horizontally
-- `workbench.action.splitDown` - **Ctrl+Shift+\\** - Split pane vertically
-- `workbench.action.closeActivePane` - **Ctrl+K W** - Close active pane
-- `workbench.action.togglePaneNumbers` - **Alt+P** - Toggle pane numbers
-
-### Navigation Commands
-- `workbench.action.focusNextPane` - **Tab** - Focus next pane
-- `workbench.action.focusPreviousPane` - **Shift+Tab** - Focus previous pane
-- `workbench.action.nextTab` - **Ctrl+PageDown** - Next tab
-- `workbench.action.previousTab` - **Ctrl+PageUp** - Previous tab
-
-### Directional Navigation
-- `workbench.action.focusLeftPane` - **Alt+Left** - Focus pane to the left
-- `workbench.action.focusRightPane` - **Alt+Right** - Focus pane to the right
-- `workbench.action.focusAbovePane` - **Alt+Up** - Focus pane above
-- `workbench.action.focusBelowPane` - **Alt+Down** - Focus pane below
-
-### Editor Commands
-- `editor.action.cut` - **Ctrl+X** - Cut text
-- `editor.action.copy` - **Ctrl+C** - Copy text
-- `editor.action.paste` - **Ctrl+V** - Paste text
-- `editor.action.selectAll` - **Ctrl+A** - Select all text
-- `editor.action.undo` - **Ctrl+Z** - Undo
-- `editor.action.redo` - **Ctrl+Shift+Z** - Redo
-
-### Command Palette
-- `commandPalette.show` - **Ctrl+Shift+P** - Show command palette
-
-## Implementation Details
-
-### MVC Architecture in Split Panes
-
-```
-SplitPaneModel (Model)
-├── Tree structure of nodes
-├── Pane numbering logic
-├── AppWidget lifecycle
-└── State management
-
-SplitPaneWidget (View)
-├── Renders tree as Qt widgets
-├── Handles visual updates
-├── Manages PaneContent wrappers
-└── Event delegation to model
-
-Implicit Controller
-├── Command handlers
-├── Service layer
-└── Event handlers
-```
-
-### Service Layer Architecture
-
-```python
-class WorkspaceService(Service):
-    def toggle_pane_numbers(self) -> bool:
-        widget = self._workspace.get_current_split_widget()
-        visible = widget.toggle_pane_numbers()
-        
-        # Update context for conditional commands
-        context_manager.set('workbench.panes.numbersVisible', visible)
-        
-        # Notify observers
-        self.notify('pane_numbers_toggled', {'visible': visible})
-        
-        return visible
-    
-    def switch_to_pane_by_number(self, number: int) -> bool:
-        # Find pane ID for number
-        # Focus the pane
-        # Return success status
-```
-
-### Focus Management
-
-The system maintains proper keyboard focus through:
-
-1. **AppWidget Base Class**
-   - `request_focus()` - Request focus for this widget
-   - `focus_widget()` - Actually set keyboard focus (overridden by subclasses)
-
-2. **Terminal Focus**
-   ```python
-   def focus_widget(self):
-       if self.web_view:
-           self.web_view.setFocus()
-           # Also focus terminal element in page
-           if self.bridge:
-               self.bridge.focus_terminal_element(self.web_view)
-   ```
-
-3. **Editor Focus**
-   ```python
-   def focus_widget(self):
-       if self.editor:
-           self.editor.setFocus()
-   ```
-
-## Design Patterns
-
-### 1. Command Pattern
-- Encapsulates actions as command objects
-- Enables undo/redo, queuing, logging
-- Decouples UI from business logic
-
-### 2. Observer Pattern
-- Services notify observers of state changes
-- Loose coupling between components
-- Used for theme changes, layout updates
-
-### 3. Singleton Pattern
-- CommandRegistry ensures single instance
-- ServiceLocator provides global access
-- IconManager maintains theme state
-
-### 4. Decorator Pattern
-- `@command` decorator for auto-registration
-- Adds metadata to function handlers
-- Simplifies command definition
-
-### 5. Strategy Pattern
-- Different focus strategies for widget types
-- Keyboard handling varies by widget
-- Pluggable shortcut providers (keymaps)
-
-### 6. Model-View Pattern
-- Split pane system separates data from presentation
-- Model owns business logic and state
-- View handles rendering and user interaction
-
-## Testing Considerations
-
-### Command System
-- Test command registration and discovery
-- Verify context validation
-- Test keyboard shortcut mapping
-
-### Pane Navigation
-- Test number assignment algorithm
-- Verify focus transfer
-- Test command mode entry/exit
-
-### Keyboard Handling
-- Test shortcuts in different widget types
-- Verify chord sequences work
-- Test platform-specific modifiers
-
-## Future Enhancements
-
-1. **Vim Mode Support**
-   - Modal editing shortcuts
-   - Custom command mode
-   - Motion commands
-
-2. **Custom Keymaps**
-   - User-defined shortcuts
-   - Import/export keymaps
-   - Conflict resolution UI
-
-3. **Advanced Navigation**
-   - Pane history (back/forward)
-   - Named pane bookmarks
-   - Pane groups/workspaces
-
-4. **Command Macros**
-   - Record command sequences
-   - Playback with single shortcut
-   - Parameterized macros
+This architecture ensures consistency across the application while maintaining flexibility for component-specific optimizations.
