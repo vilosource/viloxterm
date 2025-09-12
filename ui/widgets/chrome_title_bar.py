@@ -57,7 +57,7 @@ class ChromeTabBar(QTabBar):
                 border: none;
             }}
             QTabBar::tab {{
-                background: {vscode_theme.TITLE_BAR_ACTIVE_BACKGROUND};
+                background: {vscode_theme.CHROME_TAB_INACTIVE_BACKGROUND};
                 color: {vscode_theme.TAB_INACTIVE_FOREGROUND};
                 padding: 4px 10px 4px 10px;
                 margin: 0;
