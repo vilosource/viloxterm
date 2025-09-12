@@ -201,13 +201,10 @@ class ChromeMainWindow(MainWindow):
     # Note: move_window method removed - using native system move in ChromeTitleBarFixed
     
     def add_new_tab(self):
-        """Add a new tab through the workspace."""
-        if hasattr(self, 'workspace'):
-            # Use the existing workspace method to add a tab
-            index = self.workspace.add_editor_tab("New Tab")
-            # Sync to Chrome title bar
-            self.chrome_title_bar.add_tab("New Tab")
-            self.chrome_title_bar.set_current_tab(index)
+        """Add a new terminal tab using the command system."""
+        from core.commands.executor import execute_command
+        # Use the file.newTerminalTab command to create a new terminal tab
+        execute_command("file.newTerminalTab")
     
     def on_chrome_tab_changed(self, index: int):
         """Handle tab change from Chrome title bar using command."""
