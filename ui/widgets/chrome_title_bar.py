@@ -175,12 +175,6 @@ class ChromeTitleBar(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
-        # Left side: Optional app menu button (can be added later)
-        # For now, just add some padding
-        left_spacer = QWidget()
-        left_spacer.setFixedWidth(8)
-        main_layout.addWidget(left_spacer)
-        
         # Create a wrapper widget for tabs and button - NO LAYOUT
         self.tabs_wrapper = QWidget()
         self.tabs_wrapper.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
