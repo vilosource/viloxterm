@@ -132,8 +132,8 @@ INFO_COLOR = "#75beff"  # Info blue
 SUCCESS_COLOR = "#4ec9b0"  # Success green
 
 # Pane Header Bar (custom for our implementation)
-PANE_HEADER_BACKGROUND = "#2d2d30"  # Subtle dark gray, slightly lighter than editor
-PANE_HEADER_ACTIVE_BACKGROUND = "#3c3c3c"  # Subtle lighter gray for active pane
+PANE_HEADER_BACKGROUND = "#1e1e1e"  # Match active tab color
+PANE_HEADER_ACTIVE_BACKGROUND = "#1e1e1e"  # Match active tab color for consistency
 PANE_HEADER_FOREGROUND = "#969696"  # Muted text for inactive
 PANE_HEADER_ACTIVE_FOREGROUND = "#e7e7e7"  # Brighter text for active
 PANE_HEADER_BORDER = "#464647"  # Subtle border
