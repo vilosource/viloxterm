@@ -61,8 +61,60 @@ test-e2e: ## Run end-to-end tests only
 test-coverage: ## Run tests with coverage report
 	$(PYTEST) --cov=ui --cov=models --cov-report=html --cov-report=term
 
+.PHONY: test-gui
+test-gui: ## Run GUI tests only
+	$(PYTEST) tests/gui/ -v
+
+.PHONY: test-gui-clean
+test-gui-clean: ## Run GUI tests with minimal output
+	$(PYTEST) tests/gui/ -q --tb=line --disable-warnings
+
+.PHONY: test-gui-headless
+test-gui-headless: ## Run GUI tests in headless mode (Linux)
+	xvfb-run -a $(PYTEST) tests/gui/ -v
+
+.PHONY: test-gui-fast
+test-gui-fast: ## Run GUI tests excluding slow tests
+	$(PYTEST) tests/gui/ -v -m "gui and not slow"
+
+.PHONY: test-gui-slow
+test-gui-slow: ## Run only slow GUI tests
+	$(PYTEST) tests/gui/ -v -m "slow"
+
+.PHONY: test-gui-animation
+test-gui-animation: ## Run GUI animation tests
+	$(PYTEST) tests/gui/ -v -m "animation"
+
+.PHONY: test-gui-keyboard
+test-gui-keyboard: ## Run GUI keyboard interaction tests
+	$(PYTEST) tests/gui/ -v -m "keyboard"
+
+.PHONY: test-gui-mouse
+test-gui-mouse: ## Run GUI mouse interaction tests
+	$(PYTEST) tests/gui/ -v -m "mouse"
+
+.PHONY: test-gui-theme
+test-gui-theme: ## Run GUI theme tests
+	$(PYTEST) tests/gui/ -v -m "theme"
+
+.PHONY: test-gui-integration
+test-gui-integration: ## Run GUI integration tests
+	$(PYTEST) tests/gui/ -v -m "integration"
+
+.PHONY: test-gui-performance
+test-gui-performance: ## Run GUI performance tests
+	$(PYTEST) tests/gui/ -v -m "performance"
+
+.PHONY: test-gui-accessibility
+test-gui-accessibility: ## Run GUI accessibility tests
+	$(PYTEST) tests/gui/ -v -m "accessibility"
+
+.PHONY: test-gui-coverage
+test-gui-coverage: ## Run GUI tests with coverage report
+	$(PYTEST) tests/gui/ --cov=ui --cov-report=html --cov-report=term -v
+
 .PHONY: test-headless
-test-headless: ## Run tests in headless mode (Linux)
+test-headless: ## Run all tests in headless mode (Linux)
 	xvfb-run -a $(PYTEST)
 
 .PHONY: format
@@ -165,7 +217,7 @@ shell: ## Open Python shell with app context
 	$(PYTHON) -i -c "from main import *; from ui.main_window import *; from PySide6.QtWidgets import QApplication; import sys"
 
 .PHONY: validate
-validate: check test ## Run all checks and tests
+validate: check test test-gui-fast ## Run all checks and tests
 
 .PHONY: ci
 ci: ## Run CI pipeline locally
@@ -174,6 +226,16 @@ ci: ## Run CI pipeline locally
 	$(MAKE) install-dev
 	$(MAKE) check
 	$(MAKE) test-coverage
+	$(MAKE) test-gui-headless
+
+.PHONY: ci-full
+ci-full: ## Run full CI pipeline including slow GUI tests
+	$(MAKE) clean
+	$(MAKE) install
+	$(MAKE) install-dev
+	$(MAKE) check
+	$(MAKE) test-coverage
+	$(MAKE) test-gui-coverage
 
 # Quick aliases
 .PHONY: r
@@ -181,6 +243,12 @@ r: run ## Alias for 'run'
 
 .PHONY: t
 t: test ## Alias for 'test'
+
+.PHONY: tg
+tg: test-gui ## Alias for 'test-gui'
+
+.PHONY: tgh
+tgh: test-gui-headless ## Alias for 'test-gui-headless'
 
 .PHONY: c
 c: clean ## Alias for 'clean'
