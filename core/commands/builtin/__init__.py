@@ -15,6 +15,9 @@ from core.commands.builtin.debug_commands import register_debug_commands
 from core.commands.builtin.settings_commands import register_settings_commands
 from core.commands.builtin.palette_commands import register_palette_commands
 from core.commands.builtin.terminal_commands import register_terminal_commands
+from core.commands.builtin.tab_commands import register_tab_commands
+from core.commands.builtin.pane_commands import register_pane_commands
+from core.commands.builtin.sidebar_commands import register_sidebar_commands
 
 def register_all_builtin_commands():
     """Register all built-in commands with the command registry."""
@@ -27,6 +30,9 @@ def register_all_builtin_commands():
     register_settings_commands()
     register_palette_commands()
     register_terminal_commands()
+    register_tab_commands()
+    register_pane_commands()
+    register_sidebar_commands()
 
 __all__ = [
     'register_all_builtin_commands',
@@ -39,4 +45,7 @@ __all__ = [
     'register_settings_commands',
     'register_palette_commands',
     'register_terminal_commands',
+    'register_tab_commands',
+    'register_pane_commands',
+    'register_sidebar_commands',
 ]
