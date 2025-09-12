@@ -16,6 +16,7 @@ from ui.widgets.split_pane_widget import SplitPaneWidget
 from ui.widgets.widget_registry import WidgetType
 from ui.widgets.rename_editor import RenameEditor
 from ui.vscode_theme import *
+from core.commands.executor import execute_command
 
 logger = logging.getLogger(__name__)
 
@@ -314,19 +315,19 @@ class Workspace(QWidget):
         
         # Duplicate tab action
         duplicate_action = QAction("Duplicate Tab", self)
-        duplicate_action.triggered.connect(lambda: self.duplicate_tab(index))
+        duplicate_action.triggered.connect(lambda: execute_command("workbench.action.duplicateTab", tab_index=index))
         menu.addAction(duplicate_action)
         
         # Close other tabs
         if self.tab_widget.count() > 1:
             close_others_action = QAction("Close Other Tabs", self)
-            close_others_action.triggered.connect(lambda: self.close_other_tabs(index))
+            close_others_action.triggered.connect(lambda: execute_command("workbench.action.closeOtherTabs", tab_index=index))
             menu.addAction(close_others_action)
         
         # Close tabs to the right
         if index < self.tab_widget.count() - 1:
             close_right_action = QAction("Close Tabs to the Right", self)
-            close_right_action.triggered.connect(lambda: self.close_tabs_to_right(index))
+            close_right_action.triggered.connect(lambda: execute_command("workbench.action.closeTabsToRight", tab_index=index))
             menu.addAction(close_right_action)
         
         menu.addSeparator()
@@ -334,7 +335,7 @@ class Workspace(QWidget):
         # Rename tab
         rename_action = QAction("Rename Tab", self)
         rename_action.triggered.connect(
-            lambda: self.start_tab_rename(index, self.tab_widget.tabText(index))
+            lambda: execute_command("workbench.action.renameTab", tab_index=index)
         )
         menu.addAction(rename_action)
         
@@ -342,7 +343,7 @@ class Workspace(QWidget):
         
         # Close tab
         close_action = QAction("Close Tab", self)
-        close_action.triggered.connect(lambda: self.close_tab(index))
+        close_action.triggered.connect(lambda: execute_command("file.closeTab", tab_index=index))
         menu.addAction(close_action)
         
         menu.exec(self.tab_widget.tabBar().mapToGlobal(pos))

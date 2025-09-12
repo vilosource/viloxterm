@@ -14,6 +14,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from ui.vscode_theme import *
+from core.commands.executor import execute_command
 
 
 class PaneHeaderBar(QWidget):
@@ -85,22 +86,22 @@ class PaneHeaderBar(QWidget):
         # Type menu button (optional)
         if self.show_type_menu:
             self.type_button = self.create_tool_button("≡", "Change widget type")
-            self.type_button.clicked.connect(self.type_menu_requested.emit)
+            self.type_button.clicked.connect(lambda: execute_command("workbench.action.changePaneType", pane=self.parent()))
             layout.addWidget(self.type_button)
         
         # Split horizontal button
         self.split_h_button = self.create_tool_button("↔", "Split horizontal (new pane on right)")
-        self.split_h_button.clicked.connect(self.split_horizontal_requested.emit)
+        self.split_h_button.clicked.connect(lambda: execute_command("workbench.action.splitPaneHorizontal", pane=self.parent()))
         layout.addWidget(self.split_h_button)
         
         # Split vertical button
         self.split_v_button = self.create_tool_button("↕", "Split vertical (new pane below)")
-        self.split_v_button.clicked.connect(self.split_vertical_requested.emit)
+        self.split_v_button.clicked.connect(lambda: execute_command("workbench.action.splitPaneVertical", pane=self.parent()))
         layout.addWidget(self.split_v_button)
         
         # Close button
         self.close_button = self.create_tool_button("×", "Close this pane")
-        self.close_button.clicked.connect(self.close_requested.emit)
+        self.close_button.clicked.connect(lambda: execute_command("workbench.action.closePane", pane=self.parent()))
         self.close_button.setStyleSheet(f"""
             QToolButton {{
                 background-color: transparent;
