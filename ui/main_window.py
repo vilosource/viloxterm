@@ -555,6 +555,17 @@ class MainWindow(QMainWindow):
         self.auto_hide_menubar_action.toggled.connect(self.on_auto_hide_menubar_toggled)
         view_menu.addAction(self.auto_hide_menubar_action)
         
+        view_menu.addSeparator()
+        
+        # Chrome mode toggle
+        chrome_mode_action = QAction("Enable Chrome-Style Tabs", self)
+        chrome_mode_action.setCheckable(True)
+        chrome_mode_action.setToolTip("Use Chrome-style tabs in title bar (requires restart)")
+        settings = QSettings()
+        chrome_mode_action.setChecked(settings.value("UI/ChromeMode", False, type=bool))
+        chrome_mode_action.triggered.connect(lambda: self.execute_command("ui.toggleChromeMode"))
+        view_menu.addAction(chrome_mode_action)
+        
         # Debug menu
         debug_menu = menubar.addMenu("Debug")
         

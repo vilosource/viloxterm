@@ -59,6 +59,22 @@ class UIService(Service):
         self._main_window = None
         super().cleanup()
     
+    def get_main_window(self):
+        """Get the main window instance."""
+        return self._main_window
+    
+    def is_chrome_mode_enabled(self) -> bool:
+        """Check if Chrome mode is enabled."""
+        if self._main_window and hasattr(self._main_window, 'chrome_mode_enabled'):
+            return self._main_window.chrome_mode_enabled
+        return False
+    
+    def get_chrome_title_bar(self):
+        """Get the Chrome title bar if available."""
+        if self.is_chrome_mode_enabled() and hasattr(self._main_window, 'chrome_title_bar'):
+            return self._main_window.chrome_title_bar
+        return None
+    
     # ============= Theme Management =============
     
     def toggle_theme(self) -> str:

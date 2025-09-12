@@ -30,8 +30,9 @@ except Exception as e:
 
 # NOW import Qt modules after environment is configured
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt, QCoreApplication
+from PySide6.QtCore import Qt, QCoreApplication, QSettings
 from ui.main_window import MainWindow
+from ui.chrome_main_window import ChromeMainWindow
 
 # Start terminal server early to ensure it's ready before any widgets are created
 from ui.terminal.terminal_server import terminal_server
@@ -70,8 +71,16 @@ def main():
     # Create application
     app = QApplication(sys.argv)
     
-    # Create and show main window
-    window = MainWindow()
+    # Check if Chrome mode is enabled
+    settings = QSettings("ViloApp", "ViloApp")
+    chrome_mode = settings.value("UI/ChromeMode", False, type=bool)
+    
+    # Create appropriate main window based on preference
+    if chrome_mode:
+        window = ChromeMainWindow()
+    else:
+        window = MainWindow()
+    
     window.show()
     
     # Run application

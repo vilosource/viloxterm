@@ -214,12 +214,59 @@ def next_tab_command(context: CommandContext) -> CommandResult:
             success = workspace_service.switch_to_tab(next_index)
             
             if success:
+                # Update Chrome title bar if Chrome mode is enabled
+                from services.ui_service import UIService
+                ui_service = context.get_service(UIService)
+                if ui_service:
+                    chrome_title_bar = ui_service.get_chrome_title_bar()
+                    if chrome_title_bar:
+                        chrome_title_bar.set_current_tab(next_index)
+                
                 return CommandResult(success=True, value={'tab_index': next_index})
         
         return CommandResult(success=False, error="No other tabs to switch to")
         
     except Exception as e:
         logger.error(f"Failed to switch to next tab: {e}")
+        return CommandResult(success=False, error=str(e))
+
+
+@command(
+    id="workbench.action.selectTab",
+    title="Select Tab",
+    category="Workspace",
+    description="Switch to a specific tab by index"
+)
+def select_tab_command(context: CommandContext) -> CommandResult:
+    """Switch to a specific tab by index."""
+    try:
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
+        
+        tab_index = context.args.get('tab_index')
+        if tab_index is None:
+            return CommandResult(success=False, error="No tab index provided")
+        
+        count = workspace_service.get_tab_count()
+        if 0 <= tab_index < count:
+            success = workspace_service.switch_to_tab(tab_index)
+            
+            if success:
+                # Update Chrome title bar if Chrome mode is enabled
+                from services.ui_service import UIService
+                ui_service = context.get_service(UIService)
+                if ui_service:
+                    chrome_title_bar = ui_service.get_chrome_title_bar()
+                    if chrome_title_bar:
+                        chrome_title_bar.set_current_tab(tab_index)
+                
+                return CommandResult(success=True, value={'tab_index': tab_index})
+        
+        return CommandResult(success=False, error=f"Invalid tab index: {tab_index}")
+        
+    except Exception as e:
+        logger.error(f"Failed to select tab: {e}")
         return CommandResult(success=False, error=str(e))
 
 
@@ -246,6 +293,14 @@ def previous_tab_command(context: CommandContext) -> CommandResult:
             success = workspace_service.switch_to_tab(prev_index)
             
             if success:
+                # Update Chrome title bar if Chrome mode is enabled
+                from services.ui_service import UIService
+                ui_service = context.get_service(UIService)
+                if ui_service:
+                    chrome_title_bar = ui_service.get_chrome_title_bar()
+                    if chrome_title_bar:
+                        chrome_title_bar.set_current_tab(prev_index)
+                
                 return CommandResult(success=True, value={'tab_index': prev_index})
         
         return CommandResult(success=False, error="No other tabs to switch to")
