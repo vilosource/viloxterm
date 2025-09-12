@@ -58,10 +58,9 @@ class ChromeTabBar(QTabBar):
             QTabBar::tab {
                 background: #323232;
                 color: #cccccc;
-                padding: 8px 12px 0px 12px;
+                padding: 10px 12px 8px 12px;
                 margin: 0;
                 margin-right: 2px;
-                margin-top: 3px;
                 border-top-left-radius: 8px;
                 border-top-right-radius: 8px;
                 border-left: 1px solid rgba(255, 255, 255, 0.15);
@@ -70,17 +69,19 @@ class ChromeTabBar(QTabBar):
                 border-bottom: none;
                 min-width: 50px;
                 max-width: 240px;
+                height: 35px;
             }
             QTabBar::tab:selected {
                 background: #1e1e1e;
                 color: #ffffff;
                 margin: 0;
                 margin-right: 2px;
-                padding: 10px 12px 0px 12px;
+                padding: 10px 12px 8px 12px;
                 border-left: 1px solid rgba(255, 255, 255, 0.2);
                 border-top: 1px solid rgba(255, 255, 255, 0.2);
                 border-right: 1px solid rgba(255, 255, 255, 0.2);
                 border-bottom: none;
+                height: 35px;
             }
             QTabBar::tab:hover:!selected {
                 background: #3a3a3a;
@@ -150,11 +151,13 @@ class ChromeTitleBar(QWidget):
         palette.setColor(QPalette.Window, QColor(50, 50, 50))  # Dark gray like Chrome
         self.setPalette(palette)
         
-        # Remove any focus outline/border
+        # Remove any focus outline/border and ensure no margins
         self.setStyleSheet("""
             ChromeTitleBar {
                 outline: none;
                 border: none;
+                margin: 0;
+                padding: 0;
             }
             ChromeTitleBar:focus {
                 outline: none;
