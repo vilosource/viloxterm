@@ -58,7 +58,7 @@ class ChromeTabBar(QTabBar):
             QTabBar::tab {
                 background: #323232;
                 color: #cccccc;
-                padding: 8px 12px 6px 12px;
+                padding: 7px 12px 7px 12px;
                 margin: 0;
                 margin-right: 2px;
                 margin-top: 5px;
@@ -71,6 +71,7 @@ class ChromeTabBar(QTabBar):
                 min-width: 50px;
                 max-width: 240px;
                 height: 30px;
+                line-height: 16px;
             }
             QTabBar::tab:selected {
                 background: #1e1e1e;
@@ -78,12 +79,13 @@ class ChromeTabBar(QTabBar):
                 margin: 0;
                 margin-right: 2px;
                 margin-top: 2px;
-                padding: 10px 12px 7px 12px;
+                padding: 9px 12px 9px 12px;
                 border-left: 1px solid rgba(255, 255, 255, 0.2);
                 border-top: 1px solid rgba(255, 255, 255, 0.2);
                 border-right: 1px solid rgba(255, 255, 255, 0.2);
                 border-bottom: none;
                 height: 33px;
+                line-height: 15px;
             }
             QTabBar::tab:hover:!selected {
                 background: #3a3a3a;
