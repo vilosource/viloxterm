@@ -74,7 +74,7 @@ class ChromeTabBar(QTabBar):
                 line-height: 14px;
             }
             QTabBar::tab:selected {
-                background: #1e1e1e;
+                background: #2d2d30;
                 color: #ffffff;
                 margin: 0;
                 margin-right: 2px;
