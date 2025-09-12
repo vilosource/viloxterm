@@ -64,6 +64,32 @@ def toggle_sidebar_command(context: CommandContext) -> CommandResult:
 
 
 @command(
+    id="view.toggleActivityBar",
+    title="Toggle Activity Bar",
+    category="View",
+    description="Show or hide the activity bar",
+    shortcut="ctrl+shift+b",
+    icon="menu"
+)
+def toggle_activity_bar_command(context: CommandContext) -> CommandResult:
+    """Toggle activity bar visibility."""
+    try:
+        ui_service = context.get_service(UIService)
+        if not ui_service:
+            return CommandResult(success=False, error="UIService not available")
+        
+        visible = ui_service.toggle_activity_bar()
+        
+        return CommandResult(
+            success=True,
+            value={'visible': visible}
+        )
+    except Exception as e:
+        logger.error(f"Failed to toggle activity bar: {e}")
+        return CommandResult(success=False, error=str(e))
+
+
+@command(
     id="view.toggleMenuBar",
     title="Toggle Menu Bar",
     category="View",

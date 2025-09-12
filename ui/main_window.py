@@ -64,8 +64,8 @@ class MainWindow(QMainWindow):
         # Set initial splitter sizes (sidebar: 250px, workspace: rest)
         self.main_splitter.setSizes([250, 950])
         
-        # Prevent complete collapse of sidebar using compatibility function
-        safe_splitter_collapse_setting(self.main_splitter, False)
+        # Allow sidebar to be completely collapsed
+        safe_splitter_collapse_setting(self.main_splitter, True)
         
         # Create status bar
         self.status_bar = AppStatusBar()
@@ -582,13 +582,10 @@ class MainWindow(QMainWindow):
         # This can be refactored later to be fully handled by the UIService
         self.sidebar.toggle()
         
-        # Define minimum sidebar width to prevent complete collapse
-        MIN_SIDEBAR_WIDTH = 50  # Minimum width to keep sidebar accessible
-        
         # Update splitter sizes when sidebar toggles
         if self.sidebar.is_collapsed:
-            # Sidebar is now collapsed to minimum width
-            self.main_splitter.setSizes([MIN_SIDEBAR_WIDTH, self.main_splitter.width() - MIN_SIDEBAR_WIDTH])
+            # Sidebar is now completely hidden (0 width)
+            self.main_splitter.setSizes([0, self.main_splitter.width()])
             # Update activity bar to show current view as unchecked
             self.activity_bar.set_sidebar_visible(False)
         else:
@@ -596,6 +593,29 @@ class MainWindow(QMainWindow):
             self.main_splitter.setSizes([250, self.main_splitter.width() - 250])
             # Update activity bar to show current view as checked
             self.activity_bar.set_sidebar_visible(True)
+    
+    def toggle_activity_bar(self) -> bool:
+        """Toggle activity bar visibility and adjust layout."""
+        # Toggle visibility
+        is_visible = not self.activity_bar.isVisible()
+        self.activity_bar.setVisible(is_visible)
+        
+        # Adjust the main layout
+        if is_visible:
+            # Activity bar is now visible - restore normal layout
+            self.activity_bar.show()
+            # If sidebar was visible before, ensure it's properly sized
+            if not self.sidebar.is_collapsed:
+                self.main_splitter.setSizes([250, self.main_splitter.width() - 250])
+        else:
+            # Activity bar is now hidden - expand main content
+            self.activity_bar.hide()
+            # Optionally hide sidebar too when activity bar is hidden
+            if not self.sidebar.is_collapsed:
+                self.sidebar.collapse()
+                self.main_splitter.setSizes([0, self.main_splitter.width()])
+        
+        return is_visible
         
     def reset_app_state(self):
         """Reset application to default state - now routes through command system."""
@@ -693,6 +713,7 @@ class MainWindow(QMainWindow):
         settings.setValue("windowState", self.saveState())
         settings.setValue("splitterSizes", self.main_splitter.saveState())
         settings.setValue("menuBarVisible", self.menuBar().isVisible())
+        settings.setValue("activityBarVisible", self.activity_bar.isVisible())
         settings.endGroup()
         
         # Save workspace state (new tab-based workspace)
@@ -719,12 +740,17 @@ class MainWindow(QMainWindow):
         if splitter_state:
             self.main_splitter.restoreState(splitter_state)
             
-        # Ensure splitter doesn't allow complete collapse after restoration
-        safe_splitter_collapse_setting(self.main_splitter, False)
+        # Allow sidebar to be completely collapsed after restoration
+        safe_splitter_collapse_setting(self.main_splitter, True)
             
         # Restore menu bar visibility
         menu_visible = settings.value("menuBarVisible", True, type=bool)
         self.menuBar().setVisible(menu_visible)
+        
+        # Restore activity bar visibility
+        activity_bar_visible = settings.value("activityBarVisible", True, type=bool)
+        if not activity_bar_visible:
+            self.activity_bar.hide()
             
         settings.endGroup()
         

@@ -231,15 +231,18 @@ def get_tab_widget_stylesheet():
             color: #cccccc;
         }}
         QTabBar::close-button {{
-            image: none;
-            width: 14px;
-            height: 14px;
+            width: 16px;
+            height: 16px;
             background-color: transparent;
             border: none;
-            border-radius: 2px;
+            border-radius: 3px;
+            margin: 2px;
         }}
         QTabBar::close-button:hover {{
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: rgba(90, 93, 94, 0.8);
+        }}
+        QTabBar::close-button:pressed {{
+            background-color: rgba(90, 93, 94, 1.0);
         }}
     """
 

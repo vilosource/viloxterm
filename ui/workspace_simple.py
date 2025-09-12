@@ -47,6 +47,7 @@ class Workspace(QWidget):
         self.tabs: Dict[int, WorkspaceTab] = {}  # index -> WorkspaceTab
         self.setup_ui()
         self.create_default_tab()
+        self._setup_theme_observer()
     
     def setup_ui(self):
         """Initialize the workspace UI."""
@@ -91,6 +92,111 @@ class Workspace(QWidget):
         """Create the initial default tab."""
         self.add_editor_tab("Welcome")
     
+    def _setup_theme_observer(self):
+        """Set up observer for theme changes."""
+        try:
+            from services.service_locator import ServiceLocator
+            from services.ui_service import UIService
+            
+            service_locator = ServiceLocator()
+            ui_service = service_locator.get(UIService)
+            if ui_service:
+                # Subscribe to theme changes
+                ui_service.subscribe('theme_changed', self._on_theme_changed)
+        except Exception as e:
+            # If services aren't available yet, that's okay
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Could not set up theme observer: {e}")
+    
+    def _on_theme_changed(self, data):
+        """Handle theme change notifications."""
+        self.update_close_button_styles()
+    
+    def _get_close_button_style(self):
+        """Get the style for close buttons based on current theme."""
+        from ui.icon_manager import get_icon_manager
+        icon_manager = get_icon_manager()
+        is_dark = icon_manager.theme == "dark"
+        
+        if is_dark:
+            # Dark theme colors
+            return """
+                QToolButton {
+                    background: transparent;
+                    border: none;
+                    color: #888888;
+                    font-size: 16px;
+                    font-weight: bold;
+                    padding: 0px;
+                    margin: 0px;
+                }
+                QToolButton:hover {
+                    background-color: rgba(90, 93, 94, 0.8);
+                    border-radius: 3px;
+                    color: #cccccc;
+                }
+                QToolButton:pressed {
+                    background-color: rgba(90, 93, 94, 1.0);
+                    color: #ffffff;
+                }
+            """
+        else:
+            # Light theme colors
+            return """
+                QToolButton {
+                    background: transparent;
+                    border: none;
+                    color: #666666;
+                    font-size: 16px;
+                    font-weight: bold;
+                    padding: 0px;
+                    margin: 0px;
+                }
+                QToolButton:hover {
+                    background-color: rgba(200, 200, 200, 0.8);
+                    border-radius: 3px;
+                    color: #333333;
+                }
+                QToolButton:pressed {
+                    background-color: rgba(180, 180, 180, 1.0);
+                    color: #000000;
+                }
+            """
+    
+    def _setup_tab_close_button(self, index: int):
+        """Set up a custom close button for a tab with visible × icon."""
+        from PySide6.QtWidgets import QToolButton, QTabBar
+        from PySide6.QtCore import Qt
+        
+        # Create close button with × text
+        close_button = QToolButton()
+        close_button.setText("×")
+        close_button.setAutoRaise(True)
+        close_button.setFixedSize(16, 16)
+        
+        # Apply theme-appropriate style
+        close_button.setStyleSheet(self._get_close_button_style())
+        
+        # Connect to close action
+        close_button.clicked.connect(lambda: self.close_tab(index, show_message=True))
+        
+        # Set as tab button
+        self.tab_widget.tabBar().setTabButton(index, 
+                                              QTabBar.RightSide, 
+                                              close_button)
+    
+    def update_close_button_styles(self):
+        """Update all tab close button styles for current theme."""
+        from PySide6.QtWidgets import QToolButton, QTabBar
+        style = self._get_close_button_style()
+        
+        # Update all existing close buttons
+        for i in range(self.tab_widget.count()):
+            button = self.tab_widget.tabBar().tabButton(i, QTabBar.RightSide)
+            if button and isinstance(button, QToolButton):
+                button.setStyleSheet(style)
+    
     def add_editor_tab(self, name: str = "Editor") -> int:
         """Add a new editor tab with split pane widget."""
         split_widget = SplitPaneWidget(
@@ -111,6 +217,9 @@ class Workspace(QWidget):
         
         # Add to tab widget
         index = self.tab_widget.addTab(split_widget, name)
+        
+        # Set up custom close button
+        self._setup_tab_close_button(index)
         
         # Store tab data
         self.tabs[index] = WorkspaceTab(name, split_widget)
@@ -143,6 +252,9 @@ class Workspace(QWidget):
         # Add to tab widget
         index = self.tab_widget.addTab(split_widget, name)
         
+        # Set up custom close button
+        self._setup_tab_close_button(index)
+        
         # Store tab data
         self.tabs[index] = WorkspaceTab(name, split_widget)
         
@@ -174,6 +286,9 @@ class Workspace(QWidget):
         # Add to tab widget
         index = self.tab_widget.addTab(split_widget, name)
         
+        # Set up custom close button
+        self._setup_tab_close_button(index)
+        
         # Store tab data
         self.tabs[index] = WorkspaceTab(name, split_widget)
         
@@ -185,15 +300,16 @@ class Workspace(QWidget):
         
         return index
     
-    def close_tab(self, index: int):
+    def close_tab(self, index: int, show_message=True):
         """Close a tab."""
         # Don't close the last tab
         if self.tab_widget.count() <= 1:
-            QMessageBox.information(
-                self,
-                "Cannot Close Tab",
-                "Cannot close the last remaining tab."
-            )
+            if show_message:
+                QMessageBox.information(
+                    self,
+                    "Cannot Close Tab",
+                    "Cannot close the last remaining tab."
+                )
             return
         
         # Get tab data
@@ -382,18 +498,23 @@ class Workspace(QWidget):
         if widget and widget.active_pane_id:
             widget.split_vertical(widget.active_pane_id)
     
-    def close_active_pane(self):
+    def close_active_pane(self, show_message=True):
         """Close the active pane in the current tab."""
         widget = self.get_current_split_widget()
         if widget and widget.active_pane_id:
             if widget.get_pane_count() > 1:
                 widget.close_pane(widget.active_pane_id)
+                return True
             else:
-                QMessageBox.information(
-                    self,
-                    "Cannot Close Pane",
-                    "Cannot close the last remaining pane in a tab."
-                )
+                # Only show message if requested (not during tests)
+                if show_message:
+                    QMessageBox.information(
+                        self,
+                        "Cannot Close Pane",
+                        "Cannot close the last remaining pane in a tab."
+                    )
+                return False
+        return False
     
     def get_current_tab_info(self) -> Optional[Dict]:
         """Get information about the current tab."""

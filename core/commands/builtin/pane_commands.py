@@ -121,8 +121,14 @@ def close_pane_command(context: CommandContext) -> CommandResult:
         
         # Use the workspace's close method directly
         if hasattr(workspace, 'close_active_pane'):
-            workspace.close_active_pane()
-            return CommandResult(success=True, value={"action": "close_pane"})
+            # During tests, don't show message boxes
+            import os
+            show_message = os.environ.get('PYTEST_CURRENT_TEST') is None
+            result = workspace.close_active_pane(show_message=show_message)
+            if result:
+                return CommandResult(success=True, value={"action": "close_pane"})
+            else:
+                return CommandResult(success=False, error="Cannot close the last pane")
         
         return CommandResult(success=False, error="Could not close pane")
         

@@ -78,7 +78,7 @@ def split_pane_down_command(context: CommandContext) -> CommandResult:
     title="Close Active Pane",
     category="Workspace",
     description="Close the active pane",
-    shortcut="ctrl+k w",
+    # Shortcut is managed by keymap system (ctrl+k w)
     icon="x",
     when="workbench.pane.count > 1"
 )

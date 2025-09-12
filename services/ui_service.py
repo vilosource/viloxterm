@@ -216,6 +216,31 @@ class UIService(Service):
         logger.info(f"Sidebar view set to: {view_name}")
         return True
     
+    def toggle_activity_bar(self) -> bool:
+        """
+        Toggle the activity bar visibility.
+        
+        Returns:
+            True if activity bar is now visible, False if hidden
+        """
+        self.validate_initialized()
+        
+        if not self._main_window or not hasattr(self._main_window, 'toggle_activity_bar'):
+            logger.error("Main window doesn't support activity bar toggle")
+            return False
+        
+        # Toggle and get new state
+        visible = self._main_window.toggle_activity_bar()
+        
+        # Save preference
+        self._settings.setValue("activity_bar_visible", visible)
+        
+        # Notify observers
+        self.notify('activity_bar_toggled', {'visible': visible})
+        
+        logger.info(f"Activity bar toggled to: {'visible' if visible else 'hidden'}")
+        return visible
+    
     def get_current_sidebar_view(self) -> str:
         """
         Get the current sidebar view.

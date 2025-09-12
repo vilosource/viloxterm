@@ -33,6 +33,13 @@ class CommandListItem(QWidget):
     
     def setup_ui(self):
         """Initialize the command item UI."""
+        # Set background for the entire widget
+        self.setStyleSheet(f"""
+            CommandListItem {{
+                background-color: transparent;
+            }}
+        """)
+        
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 8, 12, 8)
         layout.setSpacing(8)
@@ -58,6 +65,7 @@ class CommandListItem(QWidget):
                 color: {EDITOR_FOREGROUND};
                 font-weight: bold;
                 font-size: 13px;
+                background-color: transparent;
             }}
         """)
         details_layout.addWidget(title_label)
@@ -69,6 +77,7 @@ class CommandListItem(QWidget):
                 QLabel {{
                     color: {TAB_INACTIVE_FOREGROUND};
                     font-size: 11px;
+                    background-color: transparent;
                 }}
             """)
             desc_label.setWordWrap(True)
@@ -84,8 +93,8 @@ class CommandListItem(QWidget):
                     color: {TAB_INACTIVE_FOREGROUND};
                     font-size: 10px;
                     font-family: 'Consolas', 'Monaco', monospace;
-                    background-color: {PANE_HEADER_BACKGROUND};
-                    border: 1px solid {SPLITTER_BACKGROUND};
+                    background-color: rgba(128, 128, 128, 0.2);
+                    border: 1px solid rgba(128, 128, 128, 0.3);
                     border-radius: 3px;
                     padding: 2px 6px;
                 }}
@@ -96,9 +105,9 @@ class CommandListItem(QWidget):
         category_label = QLabel(self.command.category)
         category_label.setStyleSheet(f"""
             QLabel {{
-                color: {ACTIVITY_BAR_FOREGROUND};
+                color: {EDITOR_FOREGROUND};
                 font-size: 10px;
-                background-color: {ACTIVITY_BAR_ACTIVE_BORDER};
+                background-color: rgba(0, 122, 204, 0.3);
                 border-radius: 8px;
                 padding: 2px 8px;
             }}
