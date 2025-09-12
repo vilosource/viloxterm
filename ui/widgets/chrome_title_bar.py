@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal, QPoint, QRect, QTimer, QSize
 from PySide6.QtGui import QMouseEvent, QPalette, QColor
 from ui.widgets.window_controls import WindowControls
+from ui import vscode_theme
 import logging
 
 logger = logging.getLogger(__name__)
@@ -50,12 +51,12 @@ class ChromeTabBar(QTabBar):
     def setup_style(self):
         """Apply Chrome-like styling to the tab bar."""
         logger.debug("Applying Chrome tab bar styles")
-        self.setStyleSheet("""
-            QTabBar {
+        self.setStyleSheet(f"""
+            QTabBar {{
                 background: transparent;
                 border: none;
-            }
-            QTabBar::tab {
+            }}
+            QTabBar::tab {{
                 background: #323232;
                 color: #cccccc;
                 padding: 4px 10px 4px 10px;
@@ -72,9 +73,9 @@ class ChromeTabBar(QTabBar):
                 max-width: 240px;
                 height: 22px;
                 line-height: 14px;
-            }
-            QTabBar::tab:selected {
-                background: #2d2d30;
+            }}
+            QTabBar::tab:selected {{
+                background: {vscode_theme.PANE_HEADER_BACKGROUND};
                 color: #ffffff;
                 margin: 0;
                 margin-right: 2px;
@@ -86,24 +87,24 @@ class ChromeTabBar(QTabBar):
                 border-bottom: none;
                 height: 24px;
                 line-height: 14px;
-            }
-            QTabBar::tab:hover:!selected {
+            }}
+            QTabBar::tab:hover:!selected {{
                 background: #3a3a3a;
                 border-left: 1px solid rgba(255, 255, 255, 0.18);
                 border-top: 1px solid rgba(255, 255, 255, 0.18);
                 border-right: 1px solid rgba(0, 0, 0, 0.3);
                 border-bottom: none;
-            }
-            QTabBar::close-button {
+            }}
+            QTabBar::close-button {{
                 image: none;
                 width: 16px;
                 height: 16px;
                 background: transparent;
                 border-radius: 8px;
-            }
-            QTabBar::close-button:hover {
+            }}
+            QTabBar::close-button:hover {{
                 background: rgba(255, 255, 255, 0.2);
-            }
+            }}
         """)
     
     
