@@ -53,7 +53,7 @@ class ChromeTabBar(QTabBar):
         logger.debug("Applying Chrome tab bar styles")
         self.setStyleSheet(f"""
             QTabBar {{
-                background: transparent;
+                background: {vscode_theme.CHROME_TITLE_BAR_BACKGROUND};
                 border: none;
             }}
             QTabBar::tab {{
@@ -150,24 +150,26 @@ class ChromeTitleBar(QWidget):
         self.setFixedHeight(28)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         
-        # Set background color
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(QPalette.Window, QColor(vscode_theme.CHROME_TITLE_BAR_BACKGROUND))
-        self.setPalette(palette)
-        
-        # Remove any focus outline/border and ensure no margins
-        self.setStyleSheet("""
-            ChromeTitleBar {
+        # Set background color using stylesheet for the entire widget and all children
+        self.setStyleSheet(f"""
+            ChromeTitleBar {{
+                background-color: {vscode_theme.CHROME_TITLE_BAR_BACKGROUND};
                 outline: none;
                 border: none;
                 margin: 0;
                 padding: 0;
-            }
-            ChromeTitleBar:focus {
+            }}
+            ChromeTitleBar:focus {{
                 outline: none;
                 border: none;
-            }
+            }}
+            /* Ensure child widgets inherit the background */
+            QWidget#tabsWrapper {{
+                background-color: transparent;
+            }}
+            QWidget#dragSpacer {{
+                background-color: {vscode_theme.CHROME_TITLE_BAR_BACKGROUND};
+            }}
         """)
         
         # Main horizontal layout
@@ -180,6 +182,8 @@ class ChromeTitleBar(QWidget):
         self.tabs_wrapper.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.tabs_wrapper.setFixedHeight(28)
         self.tabs_wrapper.setObjectName("tabsWrapper")  # For identification
+        # Make wrapper same color as title bar background
+        self.tabs_wrapper.setStyleSheet(f"background-color: {vscode_theme.CHROME_TITLE_BAR_BACKGROUND};")
         
         # Tab bar as child of wrapper (no layout - manual positioning)
         self.tab_bar = ChromeTabBar(self.tabs_wrapper)
@@ -193,18 +197,20 @@ class ChromeTitleBar(QWidget):
         self.new_tab_btn.setText("+")
         self.new_tab_btn.setFixedSize(22, 22)
         self.new_tab_btn.clicked.connect(self.new_tab_requested.emit)
-        self.new_tab_btn.setStyleSheet("""
-            QToolButton {
-                background: transparent;
+        self.new_tab_btn.setStyleSheet(f"""
+            QToolButton {{
+                background: {vscode_theme.CHROME_TITLE_BAR_BACKGROUND};
                 border: none;
-                color: #888888;
-                font-size: 14px;
-                border-radius: 11px;
-            }
-            QToolButton:hover {
-                background: rgba(255, 255, 255, 0.1);
-                color: #cccccc;
-            }
+                color: #444444;
+                font-size: 16px;
+                font-weight: bold;
+                border-radius: 2px;
+            }}
+            QToolButton:hover {{
+                background: rgba(0, 0, 0, 0.1);
+                color: #222222;
+                border-radius: 2px;
+            }}
         """)
         # Position will be set in update_container_size
         
@@ -217,6 +223,8 @@ class ChromeTitleBar(QWidget):
         spacer.setMinimumWidth(80)  # Minimum space for dragging
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         spacer.setObjectName("dragSpacer")  # For identification
+        # Ensure spacer shows the parent background color
+        spacer.setStyleSheet(f"background-color: {vscode_theme.CHROME_TITLE_BAR_BACKGROUND};")
         main_layout.addWidget(spacer, 1)  # Stretch factor 1 to take remaining space
         
         # Right side: Window controls

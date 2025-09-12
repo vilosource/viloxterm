@@ -7,6 +7,7 @@ Provides minimize, maximize/restore, and close buttons.
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QToolButton
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QPainter, QPen, QColor, QIcon, QPainterPath
+from ui import vscode_theme
 import sys
 
 
@@ -25,13 +26,13 @@ class WindowControlButton(QToolButton):
         self.setCursor(Qt.PointingHandCursor)
         self.setAutoRaise(True)
         
-        # Base style for all buttons
-        base_style = """
-            QToolButton {
-                background-color: transparent;
+        # Base style for all buttons with papaya orange background
+        base_style = f"""
+            QToolButton {{
+                background-color: {vscode_theme.CHROME_TITLE_BAR_BACKGROUND};
                 border: none;
                 border-radius: 0px;
-            }
+            }}
         """
         
         if self.button_type == 'close':
@@ -67,9 +68,9 @@ class WindowControlButton(QToolButton):
             if self.button_type == 'close':
                 pen_color = QColor(255, 255, 255)
             else:
-                pen_color = QColor(255, 255, 255)
+                pen_color = QColor(0, 0, 0)  # Black on hover for minimize/maximize
         else:
-            pen_color = QColor(200, 200, 200)
+            pen_color = QColor(40, 40, 40)  # Darker gray for normal state
         
         pen = QPen(pen_color, 1.5)
         painter.setPen(pen)
@@ -123,6 +124,9 @@ class WindowControls(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
+        
+        # Make the window controls container transparent
+        self.setStyleSheet("background-color: transparent;")
         
         # Create buttons
         self.minimize_btn = WindowControlButton('minimize', self)
