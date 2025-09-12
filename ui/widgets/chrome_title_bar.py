@@ -57,8 +57,8 @@ class ChromeTabBar(QTabBar):
                 border: none;
             }}
             QTabBar::tab {{
-                background: #323232;
-                color: #cccccc;
+                background: {vscode_theme.TITLE_BAR_ACTIVE_BACKGROUND};
+                color: {vscode_theme.TAB_INACTIVE_FOREGROUND};
                 padding: 4px 10px 4px 10px;
                 margin: 0;
                 margin-right: 2px;
@@ -89,7 +89,7 @@ class ChromeTabBar(QTabBar):
                 line-height: 14px;
             }}
             QTabBar::tab:hover:!selected {{
-                background: #3a3a3a;
+                background: {vscode_theme.LIST_HOVER_BACKGROUND};
                 border-left: 1px solid rgba(255, 255, 255, 0.18);
                 border-top: 1px solid rgba(255, 255, 255, 0.18);
                 border-right: 1px solid rgba(0, 0, 0, 0.3);
