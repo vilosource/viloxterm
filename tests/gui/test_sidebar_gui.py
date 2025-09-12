@@ -66,7 +66,8 @@ class TestSidebarGUI(SidebarGUITestBase):
     def test_sidebar_properties(self, gui_sidebar, qtbot):
         """Test sidebar widget properties."""
         assert gui_sidebar.objectName() == "sidebar"
-        assert gui_sidebar.minimumWidth() == 0
+        # Sidebar now has a minimum width to prevent complete collapse (Qt compat enhancement)
+        assert gui_sidebar.minimumWidth() == 50  # Minimum width to keep sidebar accessible
         assert gui_sidebar.maximumWidth() == 250
 
 

@@ -10,6 +10,7 @@ from ui.status_bar import AppStatusBar
 from ui.icon_manager import get_icon_manager
 from ui.vscode_theme import *
 from ui.widgets.focus_sink import FocusSinkWidget
+from ui.qt_compat import safe_splitter_collapse_setting, log_qt_versions
 
 
 class MainWindow(QMainWindow):
@@ -17,6 +18,8 @@ class MainWindow(QMainWindow):
     
     def __init__(self):
         super().__init__()
+        # Log Qt version information for debugging
+        log_qt_versions()
         self.setup_ui()
         self.initialize_services()
         self.initialize_commands()
@@ -61,6 +64,9 @@ class MainWindow(QMainWindow):
         # Set initial splitter sizes (sidebar: 250px, workspace: rest)
         self.main_splitter.setSizes([250, 950])
         
+        # Prevent complete collapse of sidebar using compatibility function
+        safe_splitter_collapse_setting(self.main_splitter, False)
+        
         # Create status bar
         self.status_bar = AppStatusBar()
         self.setStatusBar(self.status_bar)
@@ -85,6 +91,10 @@ class MainWindow(QMainWindow):
             sidebar=self.sidebar,
             activity_bar=self.activity_bar
         )
+        
+        # Auto-detect and apply system theme on startup
+        icon_manager = get_icon_manager()
+        icon_manager.detect_system_theme()
         
         # Log service initialization
         import logging
@@ -470,6 +480,10 @@ class MainWindow(QMainWindow):
         """Create the menu bar."""
         menubar = self.menuBar()
         
+        # Ensure menu bar is visible by default on first run
+        # (restore_state will override this if there are saved settings)
+        menubar.setVisible(True)
+        
         # File menu
         file_menu = menubar.addMenu("File")
         
@@ -568,10 +582,13 @@ class MainWindow(QMainWindow):
         # This can be refactored later to be fully handled by the UIService
         self.sidebar.toggle()
         
+        # Define minimum sidebar width to prevent complete collapse
+        MIN_SIDEBAR_WIDTH = 50  # Minimum width to keep sidebar accessible
+        
         # Update splitter sizes when sidebar toggles
         if self.sidebar.is_collapsed:
-            # Sidebar is now collapsed
-            self.main_splitter.setSizes([0, self.main_splitter.width()])
+            # Sidebar is now collapsed to minimum width
+            self.main_splitter.setSizes([MIN_SIDEBAR_WIDTH, self.main_splitter.width() - MIN_SIDEBAR_WIDTH])
             # Update activity bar to show current view as unchecked
             self.activity_bar.set_sidebar_visible(False)
         else:
@@ -701,6 +718,9 @@ class MainWindow(QMainWindow):
         splitter_state = settings.value("splitterSizes")
         if splitter_state:
             self.main_splitter.restoreState(splitter_state)
+            
+        # Ensure splitter doesn't allow complete collapse after restoration
+        safe_splitter_collapse_setting(self.main_splitter, False)
             
         # Restore menu bar visibility
         menu_visible = settings.value("menuBarVisible", True, type=bool)

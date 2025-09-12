@@ -30,9 +30,9 @@ class TestMainWindowGUI(MainWindowGUITestBase):
         assert len(initial_sizes) == 2
         assert sum(initial_sizes) > 0
         
-        # Test that splitter is interactive
-        # By default, Qt splitters allow collapsing children
-        assert splitter.childrenCollapsible()  # Qt default behavior allows collapse
+        # Test that splitter prevents complete collapse of sidebar
+        # This is a deliberate design choice to ensure sidebar is always accessible
+        assert not splitter.childrenCollapsible()  # Sidebar cannot be completely collapsed
         
     def test_main_window_menu_bar_visibility(self, gui_main_window, qtbot):
         """Test menu bar visibility can be toggled."""
@@ -149,12 +149,15 @@ class TestMainWindowThemeGUI(ThemeGUITestBase):
         # This test verifies that theme state is saved/restored
         # The actual persistence is handled by QSettings in the app
         
-        # NOTE: Currently the app does not auto-detect system theme on startup
-        # This would be a good enhancement - calling detect_system_theme() during init
-        # For now, verify that the icon manager is available for theme operations
+        # Verify that the app now auto-detects system theme on startup
+        # The mock_icon_manager should have been called during initialization
         assert mock_icon_manager is not None
         assert hasattr(mock_icon_manager, 'detect_system_theme')
         assert callable(mock_icon_manager.detect_system_theme)
+        
+        # Since we're using a mock, we can verify it was called during init
+        # Note: This happens in initialize_services() after UI setup
+        mock_icon_manager.detect_system_theme.assert_called()
 
 
 @pytest.mark.gui

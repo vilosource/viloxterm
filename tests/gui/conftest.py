@@ -95,39 +95,14 @@ def simulate_key_sequence(qtbot, widget, key_sequence):
         widget: Target widget
         key_sequence: Key sequence string (e.g., "Ctrl+T")
     """
-    from PySide6.QtCore import Qt
+    # Use the compatibility function for safe key sequence conversion
+    from ui.qt_compat import safe_key_sequence_to_key
     
-    # Parse key sequence manually to avoid overflow issues
-    parts = key_sequence.split('+')
-    if not parts:
-        pytest.fail(f"Invalid key sequence: {key_sequence}")
-    
-    # Build modifier flags
-    modifiers = Qt.KeyboardModifier.NoModifier
-    key = None
-    
-    for part in parts:
-        part = part.strip().lower()
-        if part == 'ctrl':
-            modifiers |= Qt.KeyboardModifier.ControlModifier
-        elif part == 'alt':
-            modifiers |= Qt.KeyboardModifier.AltModifier
-        elif part == 'shift':
-            modifiers |= Qt.KeyboardModifier.ShiftModifier
-        elif part == 'meta':
-            modifiers |= Qt.KeyboardModifier.MetaModifier
-        else:
-            # This should be the actual key
-            key_name = f"Key_{part.upper()}"
-            if hasattr(Qt.Key, key_name):
-                key = getattr(Qt.Key, key_name)
-            else:
-                pytest.fail(f"Unknown key: {part}")
-    
-    if key is None:
-        pytest.fail(f"No key found in sequence: {key_sequence}")
-    
-    qtbot.keyClick(widget, key, modifiers)
+    try:
+        key, modifiers = safe_key_sequence_to_key(key_sequence)
+        qtbot.keyClick(widget, key, modifiers)
+    except ValueError as e:
+        pytest.fail(f"Failed to simulate key sequence '{key_sequence}': {e}")
 
 
 def get_widget_center(widget):
