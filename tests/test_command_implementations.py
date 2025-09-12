@@ -31,11 +31,19 @@ class TestPaneCommands:
         self.main_window = main_window
         self.workspace = main_window.workspace
         
-        # Ensure service locator is set up
-        ServiceLocator.clear()
-        workspace_service = WorkspaceService()
-        workspace_service.set_workspace(self.workspace)
-        ServiceLocator.register(WorkspaceService, workspace_service)
+        # Get the ServiceLocator instance
+        service_locator = ServiceLocator()
+        
+        # Check if WorkspaceService is already registered from main_window init
+        try:
+            workspace_service = service_locator.get(WorkspaceService)
+            if not workspace_service.get_workspace():
+                workspace_service.set_workspace(self.workspace)
+        except Exception:
+            # If not registered, create and register it
+            workspace_service = WorkspaceService()
+            workspace_service.set_workspace(self.workspace)
+            service_locator.register(WorkspaceService, workspace_service)
     
     def test_split_pane_horizontal_command(self):
         """Test horizontal pane splitting through command."""

@@ -42,15 +42,9 @@ def split_pane_horizontal_command(context: CommandContext) -> CommandResult:
         if not workspace:
             return CommandResult(success=False, error="No workspace available")
         
-        # Get current pane from context or focused pane
-        pane = context.args.get('pane')
-        if not pane:
-            # Get currently focused pane
-            if hasattr(workspace, 'get_focused_pane'):
-                pane = workspace.get_focused_pane()
-        
-        if pane and hasattr(pane, 'split_horizontal'):
-            pane.split_horizontal()
+        # Use the workspace's split method directly
+        if hasattr(workspace, 'split_active_pane_horizontal'):
+            workspace.split_active_pane_horizontal()
             return CommandResult(success=True, value={"action": "split_horizontal"})
         
         return CommandResult(success=False, error="Could not split pane")
@@ -86,15 +80,9 @@ def split_pane_vertical_command(context: CommandContext) -> CommandResult:
         if not workspace:
             return CommandResult(success=False, error="No workspace available")
         
-        # Get current pane from context or focused pane
-        pane = context.args.get('pane')
-        if not pane:
-            # Get currently focused pane
-            if hasattr(workspace, 'get_focused_pane'):
-                pane = workspace.get_focused_pane()
-        
-        if pane and hasattr(pane, 'split_vertical'):
-            pane.split_vertical()
+        # Use the workspace's split method directly
+        if hasattr(workspace, 'split_active_pane_vertical'):
+            workspace.split_active_pane_vertical()
             return CommandResult(success=True, value={"action": "split_vertical"})
         
         return CommandResult(success=False, error="Could not split pane")
@@ -130,15 +118,9 @@ def close_pane_command(context: CommandContext) -> CommandResult:
         if not workspace:
             return CommandResult(success=False, error="No workspace available")
         
-        # Get current pane from context or focused pane
-        pane = context.args.get('pane')
-        if not pane:
-            # Get currently focused pane
-            if hasattr(workspace, 'get_focused_pane'):
-                pane = workspace.get_focused_pane()
-        
-        if pane and hasattr(pane, 'close'):
-            pane.close()
+        # Use the workspace's close method directly
+        if hasattr(workspace, 'close_active_pane'):
+            workspace.close_active_pane()
             return CommandResult(success=True, value={"action": "close_pane"})
         
         return CommandResult(success=False, error="Could not close pane")

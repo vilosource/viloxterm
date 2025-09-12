@@ -33,6 +33,14 @@ class WorkspaceService(Service):
         self._workspace = workspace
         self._tab_counter = 0
         self._pane_counter = 0
+    
+    def get_workspace(self):
+        """Get the workspace instance."""
+        return self._workspace
+    
+    def set_workspace(self, workspace):
+        """Set the workspace instance."""
+        self._workspace = workspace
         
     def initialize(self, context: Dict[str, Any]) -> None:
         """Initialize the service with application context."""
