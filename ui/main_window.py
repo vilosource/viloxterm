@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QAction, QKeySequence, QKeyEvent
 from ui.activity_bar import ActivityBar
 from ui.sidebar import Sidebar
-from ui.workspace_simple import Workspace  # Using new tab-based workspace
+from ui.workspace import Workspace
 from ui.status_bar import AppStatusBar
 from ui.icon_manager import get_icon_manager
 from ui.vscode_theme import *
