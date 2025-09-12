@@ -152,6 +152,9 @@ class ActivityBar(QToolBar):
                 self.is_sidebar_collapsed = not checked
                 logger.debug(f"Sidebar collapsed: {self.is_sidebar_collapsed}")
                 
+                # Emit toggle sidebar signal
+                self.toggle_sidebar.emit()
+                
                 # Execute toggle sidebar command
                 execute_command("workbench.action.toggleSidebar")
                 
@@ -171,6 +174,9 @@ class ActivityBar(QToolBar):
                     self.current_view = view_name
                     self.is_sidebar_collapsed = False  # Sidebar will be shown
                     logger.debug(f"Switched from {old_view} to {view_name}")
+                    
+                    # Emit view changed signal
+                    self.view_changed.emit(view_name)
                     
                     # Execute appropriate view command
                     view_commands = {
@@ -247,3 +253,8 @@ class ActivityBar(QToolBar):
             action = action_map[view_name]
             if not action.isChecked():
                 action.setChecked(True)  # This will trigger on_action_toggled
+            else:
+                # Action is already checked - this means we're toggling the same view
+                # Force trigger the toggle by unchecking and checking again
+                action.setChecked(False)  # This will trigger on_action_toggled with False
+                action.setChecked(True)   # This will trigger on_action_toggled with True

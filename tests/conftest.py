@@ -1,8 +1,17 @@
 """Pytest configuration and fixtures."""
 
+import warnings
 import pytest
 from PySide6.QtWidgets import QApplication
 from ui.main_window import MainWindow
+
+
+def pytest_configure(config):
+    """Configure pytest with warning filters."""
+    # Suppress specific warnings that occur during testing
+    warnings.filterwarnings("ignore", message=".*is multi-threaded, use of forkpty.*", category=DeprecationWarning)
+    warnings.filterwarnings("ignore", message=".*Release of profile requested.*", category=UserWarning)
+    # Note: RuntimeError cannot be filtered as it's not a Warning subclass
 
 
 @pytest.fixture(scope="session")

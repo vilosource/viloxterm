@@ -71,7 +71,8 @@ class TestActivityBar:
 
     def test_on_view_selected_new_view(self, qtbot):
         """Test selecting a new view."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager, \
+             patch('ui.activity_bar.execute_command') as mock_execute:
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon
@@ -82,7 +83,7 @@ class TestActivityBar:
             
             # Connect signal for testing
             with qtbot.waitSignal(activity_bar.view_changed, timeout=1000) as blocker:
-                activity_bar.on_view_selected("search")
+                activity_bar.show_view("search")
                 
             # Check signal was emitted with correct value
             assert blocker.args == ["search"]
@@ -95,10 +96,14 @@ class TestActivityBar:
             assert activity_bar.search_action.isChecked()
             assert not activity_bar.git_action.isChecked()
             assert not activity_bar.settings_action.isChecked()
+            
+            # Verify command was executed
+            mock_execute.assert_called_with("workbench.view.search")
 
     def test_on_view_selected_same_view(self, qtbot):
         """Test selecting the same view toggles sidebar."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager, \
+             patch('ui.activity_bar.execute_command') as mock_execute:
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon
@@ -109,7 +114,7 @@ class TestActivityBar:
             
             # Connect signal for testing
             with qtbot.waitSignal(activity_bar.toggle_sidebar, timeout=1000):
-                activity_bar.on_view_selected("explorer")  # Same as current_view
+                activity_bar.show_view("explorer")  # Same as current_view
 
     def test_update_icons_on_theme_change(self, qtbot):
         """Test icons are updated when theme changes."""

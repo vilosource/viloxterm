@@ -2,6 +2,7 @@
 
 import pytest
 from pytestqt.qt_compat import qt_api
+from PySide6.QtCore import QPropertyAnimation
 from ui.sidebar import Sidebar
 
 
@@ -24,8 +25,9 @@ def test_sidebar_collapse(qtbot):
     sidebar.collapse()
     
     # Wait for animation to complete
-    qtbot.waitUntil(lambda: sidebar.width() == 0, timeout=1000)
+    qtbot.waitUntil(lambda: sidebar.animation.state() == QPropertyAnimation.State.Stopped, timeout=1000)
     assert sidebar.is_collapsed == True
+    assert sidebar.maximumWidth() == 0
 
 
 def test_sidebar_expand(qtbot):
@@ -33,14 +35,23 @@ def test_sidebar_expand(qtbot):
     sidebar = Sidebar()
     qtbot.addWidget(sidebar)
     
+    # Sidebar starts expanded, so verify initial state
+    assert sidebar.is_collapsed == False
+    assert sidebar.width() > 0
+    
     # First collapse it
     sidebar.collapse()
-    qtbot.waitUntil(lambda: sidebar.width() == 0, timeout=1000)
+    # Wait for animation to finish
+    qtbot.waitUntil(lambda: sidebar.animation.state() == QPropertyAnimation.State.Stopped, timeout=1000)
+    assert sidebar.is_collapsed == True
+    assert sidebar.maximumWidth() == 0
     
     # Then expand it
     sidebar.expand()
-    qtbot.waitUntil(lambda: sidebar.width() == sidebar.expanded_width, timeout=1000)
+    # Wait for animation to finish
+    qtbot.waitUntil(lambda: sidebar.animation.state() == QPropertyAnimation.State.Stopped, timeout=1000)
     assert sidebar.is_collapsed == False
+    assert sidebar.maximumWidth() == sidebar.expanded_width
 
 
 def test_sidebar_toggle(qtbot):

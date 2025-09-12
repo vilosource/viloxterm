@@ -340,15 +340,30 @@ class SplitPaneWidget(QWidget):
         """Connect signals from all AppWidgets in the model to our handlers."""
         def connect_widget(leaf: LeafNode):
             if leaf.app_widget:
-                # Clean slate - disconnect all existing connections
+                # Clean slate - disconnect all existing connections silently
                 try:
-                    leaf.app_widget.action_requested.disconnect()
-                except (RuntimeError, TypeError):
-                    pass  # No connections to disconnect
+                    # Disconnect action_requested signal if it exists
+                    if hasattr(leaf.app_widget, 'action_requested'):
+                        signal = leaf.app_widget.action_requested
+                        # Check if the signal actually has receivers before disconnecting
+                        import warnings
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", RuntimeWarning)
+                            signal.disconnect()
+                except (RuntimeError, TypeError, AttributeError):
+                    pass  # No connections to disconnect or signal doesn't exist
+                
                 try:
-                    leaf.app_widget.focus_requested.disconnect()
-                except (RuntimeError, TypeError):
-                    pass  # No connections to disconnect
+                    # Disconnect focus_requested signal if it exists
+                    if hasattr(leaf.app_widget, 'focus_requested'):
+                        signal = leaf.app_widget.focus_requested
+                        # Check if the signal actually has receivers before disconnecting
+                        import warnings
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", RuntimeWarning)
+                            signal.disconnect()
+                except (RuntimeError, TypeError, AttributeError):
+                    pass  # No connections to disconnect or signal doesn't exist
                     
                 # Connect to our handlers - use default arguments to capture current values
                 leaf.app_widget.action_requested.connect(

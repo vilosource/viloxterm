@@ -43,7 +43,11 @@ test: ## Run all tests
 
 .PHONY: test-unit
 test-unit: ## Run unit tests only
-	$(PYTEST) -m unit
+	$(PYTEST) tests/unit/ -v
+
+.PHONY: test-unit-clean
+test-unit-clean: ## Run unit tests with minimal output
+	$(PYTEST) tests/unit/ -q --tb=line --disable-warnings
 
 .PHONY: test-integration
 test-integration: ## Run integration tests only

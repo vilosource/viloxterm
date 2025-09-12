@@ -319,7 +319,18 @@ class TerminalServerManager:
         
         # Stop server
         if self.socketio:
-            self.socketio.stop()
+            try:
+                # Try graceful shutdown first
+                if hasattr(self.socketio, 'stop'):
+                    self.socketio.stop()
+            except (RuntimeError, AttributeError) as e:
+                # If graceful shutdown fails, force cleanup
+                logger.warning(f"Graceful shutdown failed: {e}. Forcing cleanup.")
+                try:
+                    if hasattr(self.socketio, 'server') and self.socketio.server:
+                        self.socketio.server.shutdown()
+                except Exception:
+                    pass  # Best effort cleanup
         
         logger.info("Terminal server shutdown complete")
     
