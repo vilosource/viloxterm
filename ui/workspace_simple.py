@@ -242,9 +242,8 @@ class Workspace(QWidget):
     
     def on_tab_double_clicked(self, index: int):
         """Handle tab double-click (could be used for renaming)."""
-        # Basic implementation: create rename editor
-        current_text = self.tab_widget.tabText(index)
-        self.start_tab_rename(index, current_text)
+        # Use command for rename
+        execute_command("workbench.action.renameTab", tab_index=index)
     
     def start_tab_rename(self, index: int, current_text: str):
         """Start renaming a tab with inline editor."""

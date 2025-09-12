@@ -21,6 +21,7 @@ from ui.widgets.pane_header import PaneHeaderBar
 from ui.widgets.widget_pool import get_widget_pool, cleanup_widget_pool
 # from ui.widgets.overlay_transition import TransitionManager  # Disabled - causing UI freeze
 from ui.vscode_theme import get_splitter_stylesheet, EDITOR_BACKGROUND
+from core.commands.executor import execute_command
 
 logger = logging.getLogger(__name__)
 
@@ -169,17 +170,17 @@ class PaneContent(QWidget):
         # If no header bar, add split/close actions to context menu
         if not self.header_bar:
             split_h = QAction("Split Horizontal →", self)
-            split_h.triggered.connect(lambda: self.request_split("horizontal"))
+            split_h.triggered.connect(lambda: execute_command("workbench.action.splitPaneHorizontal", pane=self))
             menu.addAction(split_h)
             
             split_v = QAction("Split Vertical ↓", self)
-            split_v.triggered.connect(lambda: self.request_split("vertical"))
+            split_v.triggered.connect(lambda: execute_command("workbench.action.splitPaneVertical", pane=self))
             menu.addAction(split_v)
             
             menu.addSeparator()
             
             close = QAction("Close Pane", self)
-            close.triggered.connect(lambda: self.request_close())
+            close.triggered.connect(lambda: execute_command("workbench.action.closePane", pane=self))
             menu.addAction(close)
             
         # Always allow type change from context menu if configured
