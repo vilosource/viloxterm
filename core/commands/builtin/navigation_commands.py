@@ -118,7 +118,7 @@ def close_other_tabs_command(context: CommandContext) -> CommandResult:
     title="Close All Tabs",
     category="Navigation",
     description="Close all tabs",
-    shortcut="ctrl+shift+w",
+    shortcut="ctrl+alt+w",
     when="workbench.tabs.count > 0"
 )
 def close_all_tabs_command(context: CommandContext) -> CommandResult:

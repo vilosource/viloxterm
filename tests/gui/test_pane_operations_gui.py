@@ -66,6 +66,28 @@ class TestPaneOperationsGUI:
         final_count = self.get_current_pane_count()
         assert final_count == initial_count + 1, "Pane should have been split"
         
+    def test_close_pane_via_keyboard_shortcut(self):
+        """Test closing a pane using Ctrl+Shift+W keyboard shortcut."""
+        # First split to have multiple panes
+        result = execute_command("workbench.action.splitPaneHorizontal")
+        assert result.success, "Failed to split pane"
+        QTest.qWait(100)
+        
+        initial_count = self.get_current_pane_count()
+        assert initial_count > 1, "Need multiple panes for test"
+        
+        # Use Ctrl+Shift+W to close pane
+        self.qtbot.keyClick(
+            self.workspace, 
+            Qt.Key.Key_W, 
+            Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier
+        )
+        QTest.qWait(100)
+        
+        # Verify pane was closed
+        final_count = self.get_current_pane_count()
+        assert final_count == initial_count - 1, "Pane should have been closed by Ctrl+Shift+W"
+    
     def test_close_pane_via_command(self):
         """Test closing a pane through the command system."""
         # First split to have multiple panes

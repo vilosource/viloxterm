@@ -96,7 +96,8 @@ def split_pane_vertical_command(context: CommandContext) -> CommandResult:
     id="workbench.action.closePane",
     title="Close Pane",
     category="Panes",
-    description="Close the current pane"
+    description="Close the current pane",
+    shortcut="ctrl+shift+w"
 )
 def close_pane_command(context: CommandContext) -> CommandResult:
     """
