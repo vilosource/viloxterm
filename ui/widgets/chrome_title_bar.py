@@ -153,7 +153,7 @@ class ChromeTitleBar(QWidget):
         # Set background color
         self.setAutoFillBackground(True)
         palette = self.palette()
-        palette.setColor(QPalette.Window, QColor(50, 50, 50))  # Dark gray like Chrome
+        palette.setColor(QPalette.Window, QColor(vscode_theme.CHROME_TITLE_BAR_BACKGROUND))
         self.setPalette(palette)
         
         # Remove any focus outline/border and ensure no margins

@@ -41,6 +41,7 @@ TAB_CONTAINER_BACKGROUND = "#252526"  # Container background different from tabs
 
 # Chrome Tab colors
 CHROME_TAB_INACTIVE_BACKGROUND = "#4d4d4d"  # 25% lighter than #3c3c3c
+CHROME_TITLE_BAR_BACKGROUND = "#4a2c2a"  # Dark orange/brown background
 
 # Status Bar
 STATUS_BAR_BACKGROUND = "#16825d"  # Darker blue-green like VSCode
