@@ -121,6 +121,17 @@ class ChromeMainWindow(MainWindow):
         # Hide the original tab bar
         self.workspace.tab_widget.tabBar().setVisible(False)
         
+        # Remove any borders from the tab widget in Chrome mode
+        self.workspace.tab_widget.setStyleSheet("""
+            QTabWidget::pane {
+                border: none;
+                border-top: none;
+            }
+            QTabBar {
+                border: none;
+            }
+        """)
+        
         # Sync existing tabs to Chrome title bar
         for i in range(self.workspace.tab_widget.count()):
             tab_text = self.workspace.tab_widget.tabText(i)
