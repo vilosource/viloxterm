@@ -164,8 +164,8 @@ class WorkspaceService(Service):
         if index < 0:
             return False
         
-        # Get tab info before closing
-        tab_info = self._workspace.get_tab_info(index)
+        # Get tab name before closing
+        tab_name = self._workspace.tab_widget.tabText(index) if self._workspace.tab_widget else None
         
         # Close the tab
         self._workspace.close_tab(index)
@@ -173,7 +173,7 @@ class WorkspaceService(Service):
         # Notify observers
         self.notify('tab_closed', {
             'index': index,
-            'name': tab_info.get('name') if tab_info else None
+            'name': tab_name
         })
         
         # Update context

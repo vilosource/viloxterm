@@ -58,6 +58,18 @@ except ImportError as e:
 
 def main():
     """Initialize and run the application."""
+    # Initialize configurable settings system FIRST
+    from core.settings.config import initialize_settings_from_cli, get_settings, get_settings_info
+    settings_config = initialize_settings_from_cli()
+    
+    # Log settings information
+    settings_info = get_settings_info()
+    logger.info(f"Settings location: {settings_info['location']}")
+    if settings_info['is_portable']:
+        logger.info("Running in portable mode")
+    elif settings_info['is_temporary']:
+        logger.info("Using temporary settings (will not persist)")
+    
     # Set application metadata
     QCoreApplication.setApplicationName("ViloApp")
     QCoreApplication.setOrganizationName("ViloApp")
@@ -71,8 +83,8 @@ def main():
     # Create application
     app = QApplication(sys.argv)
     
-    # Check if Chrome mode is enabled
-    settings = QSettings("ViloApp", "ViloApp")
+    # Check if Chrome mode is enabled using the new settings system
+    settings = get_settings("ViloApp", "ViloApp")
     chrome_mode = settings.value("UI/ChromeMode", False, type=bool)
     
     # Create appropriate main window based on preference

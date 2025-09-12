@@ -80,6 +80,9 @@ class SplitPaneModel:
         self.show_pane_numbers = False
         self.pane_indices: Dict[str, int] = {}
         
+        # Callback for when a terminal requests pane closure
+        self.terminal_close_callback: Optional[Callable[[str], None]] = None
+        
         # Create initial AppWidget
         self.root.app_widget = self.create_app_widget(initial_widget_type, self.root.id)
         self.root.app_widget.leaf_node = self.root  # Set back-reference
@@ -103,7 +106,12 @@ class SplitPaneModel:
         logger.info(f"Creating AppWidget: type={widget_type}, id={widget_id}")
         
         if widget_type == WidgetType.TERMINAL:
-            return TerminalAppWidget(widget_id)
+            terminal_widget = TerminalAppWidget(widget_id)
+            # Connect the terminal's pane close request signal to our handler
+            terminal_widget.pane_close_requested.connect(
+                lambda: self.on_terminal_close_requested(widget_id)
+            )
+            return terminal_widget
         elif widget_type == WidgetType.TEXT_EDITOR:
             return EditorAppWidget(widget_id)
         elif widget_type == WidgetType.PLACEHOLDER:
@@ -111,6 +119,28 @@ class SplitPaneModel:
         else:
             # Fallback for any other type
             return PlaceholderAppWidget(widget_id, widget_type)
+            
+    def set_terminal_close_callback(self, callback: Callable[[str], None]):
+        """
+        Set the callback to be called when a terminal requests pane closure.
+        
+        Args:
+            callback: Function to call with pane_id when terminal exits
+        """
+        self.terminal_close_callback = callback
+        
+    def on_terminal_close_requested(self, pane_id: str):
+        """
+        Handle terminal close request.
+        
+        Args:
+            pane_id: ID of the pane containing the terminal that exited
+        """
+        logger.info(f"Terminal in pane {pane_id} requested closure")
+        if self.terminal_close_callback:
+            self.terminal_close_callback(pane_id)
+        else:
+            logger.warning(f"No terminal close callback set - cannot close pane {pane_id}")
             
     def traverse_tree(self, node: Optional[Union[LeafNode, SplitNode]] = None, 
                       callback: Optional[Callable[[LeafNode], None]] = None) -> List[LeafNode]:

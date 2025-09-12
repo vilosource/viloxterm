@@ -237,6 +237,67 @@ ci-full: ## Run full CI pipeline including slow GUI tests
 	$(MAKE) test-coverage
 	$(MAKE) test-gui-coverage
 
+# Settings development targets
+.PHONY: run-dev
+run-dev: resources ## Run with development settings directory
+	VILOAPP_SETTINGS_DIR=~/.viloapp-dev $(PYTHON) main.py
+
+.PHONY: run-test
+run-test: resources ## Run with temporary settings (no persistence)
+	$(PYTHON) main.py --temp-settings
+
+.PHONY: run-clean
+run-clean: resources ## Run with reset defaults and temp settings
+	$(PYTHON) main.py --reset-settings --temp-settings
+
+.PHONY: run-portable
+run-portable: resources ## Run in portable mode (settings in app directory)
+	$(PYTHON) main.py --portable
+
+.PHONY: run-custom
+run-custom: resources ## Run with custom settings file (specify with SETTINGS_FILE=path)
+	$(PYTHON) main.py --settings-file $(or $(SETTINGS_FILE),/tmp/viloapp-custom.ini)
+
+.PHONY: settings-info
+settings-info: ## Show current settings location
+	@echo "Settings configuration for ViloApp:"
+	@echo "===================================="
+	@echo "Default: System locations (Registry/~/.config/macOS ~/Library)"
+	@echo ""
+	@echo "Command line options:"
+	@echo "  --settings-dir <path>    Custom directory for settings files"
+	@echo "  --settings-file <path>   Specific settings file (INI format)" 
+	@echo "  --portable               Store in ./settings/ (app directory)"
+	@echo "  --temp-settings          Temporary (deleted on exit)"
+	@echo "  --reset-settings         Reset to defaults"
+	@echo ""
+	@echo "Environment variables:"
+	@echo "  VILOAPP_SETTINGS_DIR     Custom settings directory"
+	@echo "  VILOAPP_SETTINGS_FILE    Specific settings file"
+	@echo "  VILOAPP_PORTABLE=1       Enable portable mode"
+	@echo "  VILOAPP_TEMP_SETTINGS=1  Enable temporary settings"
+	@echo ""
+	@echo "Development targets:"
+	@echo "  make run-dev            Run with dev settings (~/.viloapp-dev)"
+	@echo "  make run-test           Run with temporary settings"
+	@echo "  make run-clean          Run with defaults + temp settings"
+	@echo "  make run-portable       Run in portable mode"
+	@echo "  make run-custom         Run with custom file (set SETTINGS_FILE)"
+
+.PHONY: clean-dev-settings
+clean-dev-settings: ## Remove development settings directory
+	rm -rf ~/.viloapp-dev
+	@echo "Development settings directory removed"
+
+.PHONY: backup-settings
+backup-settings: ## Backup current settings to ~/viloapp-settings-backup
+	@echo "Creating settings backup..."
+	@mkdir -p ~/viloapp-settings-backup
+	@if [ -d ~/.config/ViloApp ]; then cp -r ~/.config/ViloApp ~/viloapp-settings-backup/system-config-$(shell date +%Y%m%d-%H%M%S); fi
+	@if [ -d ~/.viloapp-dev ]; then cp -r ~/.viloapp-dev ~/viloapp-settings-backup/dev-settings-$(shell date +%Y%m%d-%H%M%S); fi
+	@if [ -d ./settings ]; then cp -r ./settings ~/viloapp-settings-backup/portable-settings-$(shell date +%Y%m%d-%H%M%S); fi
+	@echo "Settings backed up to ~/viloapp-settings-backup/"
+
 # Quick aliases
 .PHONY: r
 r: run ## Alias for 'run'
@@ -258,3 +319,12 @@ f: format ## Alias for 'format'
 
 .PHONY: l
 l: lint ## Alias for 'lint'
+
+.PHONY: rd
+rd: run-dev ## Alias for 'run-dev'
+
+.PHONY: rt
+rt: run-test ## Alias for 'run-test'
+
+.PHONY: rc
+rc: run-clean ## Alias for 'run-clean'

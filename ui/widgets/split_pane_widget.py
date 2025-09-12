@@ -295,6 +295,9 @@ class SplitPaneWidget(QWidget):
         # Create the model - it owns all AppWidgets
         self.model = SplitPaneModel(initial_widget_type)
         
+        # Set up terminal auto-close callback
+        self.model.set_terminal_close_callback(self.on_terminal_close_requested)
+        
         # View tracking
         self.pane_wrappers: Dict[str, PaneContent] = {}
         self.splitters: Dict[str, QSplitter] = {}
@@ -394,6 +397,9 @@ class SplitPaneWidget(QWidget):
             if new_id:
                 self.refresh_view()
                 self.pane_added.emit(new_id)
+                # Set the new pane as active and focus it
+                if self.isVisible():
+                    self.set_active_pane(new_id, focus=True)
                 
         elif action == 'close':
             target_id = params.get('leaf_id', leaf_id)
@@ -746,9 +752,9 @@ class SplitPaneWidget(QWidget):
             # Full refresh is more reliable for now
             self.refresh_view()
             self.pane_added.emit(new_id)
-            # Only restore focus if this widget is visible (i.e., in the active tab)
+            # Set the new pane as active and focus it
             if self.isVisible():
-                self.restore_active_pane_focus()
+                self.set_active_pane(new_id, focus=True)
         
         # End transition with fade
         # if self.transition_manager:
@@ -767,9 +773,9 @@ class SplitPaneWidget(QWidget):
             # Full refresh is more reliable for now
             self.refresh_view()
             self.pane_added.emit(new_id)
-            # Only restore focus if this widget is visible (i.e., in the active tab)
+            # Set the new pane as active and focus it
             if self.isVisible():
-                self.restore_active_pane_focus()
+                self.set_active_pane(new_id, focus=True)
         
         # End transition with fade
         # if self.transition_manager:
@@ -791,6 +797,29 @@ class SplitPaneWidget(QWidget):
             self.pane_removed.emit(pane_id)
             # Restore focus to the new active pane
             self.restore_active_pane_focus()
+            
+    def on_terminal_close_requested(self, pane_id: str):
+        """
+        Handle terminal close request from model.
+        
+        This is called when a terminal process exits and the pane should be closed.
+        
+        Args:
+            pane_id: ID of the pane containing the terminal that exited
+        """
+        logger.info(f"Terminal in pane {pane_id} exited - closing pane automatically")
+        
+        # Check if this is the last pane - if so, close the tab instead
+        # The root is a LeafNode when there's only one pane
+        from ui.widgets.split_pane_model import LeafNode
+        if isinstance(self.model.root, LeafNode):
+            logger.info("Last pane in tab - requesting tab close")
+            # Use command to close the tab
+            from core.commands.executor import execute_command
+            execute_command("file.closeTab")
+        else:
+            # Close the pane normally
+            self.close_pane(pane_id)
             
     def set_active_pane(self, pane_id: str, focus: bool = False):
         """

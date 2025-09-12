@@ -69,6 +69,72 @@ Run the application:
 python main.py
 ```
 
+### Command Line Options
+
+ViloApp supports several command line options for configuring where settings are stored:
+
+#### Settings Configuration
+```bash
+# Use custom settings directory
+python main.py --settings-dir ~/.viloapp-dev
+
+# Use specific settings file (INI format)
+python main.py --settings-file /path/to/custom-settings.ini
+
+# Use portable mode (settings in app directory)
+python main.py --portable
+
+# Use temporary settings (don't persist after app closes)
+python main.py --temp-settings
+
+# Reset all settings to defaults
+python main.py --reset-settings
+```
+
+#### Development Scenarios
+```bash
+# Development with isolated settings
+python main.py --settings-dir ~/.viloapp-dev
+
+# Testing without affecting main settings
+python main.py --temp-settings
+
+# Clean start with defaults
+python main.py --reset-settings --temp-settings
+
+# Portable deployment
+python main.py --portable
+```
+
+#### Environment Variables
+
+You can also configure settings using environment variables (command line options take precedence):
+
+```bash
+# Set custom settings directory
+export VILOAPP_SETTINGS_DIR=~/.viloapp-dev
+python main.py
+
+# Set specific settings file
+export VILOAPP_SETTINGS_FILE=/path/to/settings.ini
+python main.py
+
+# Enable portable mode
+export VILOAPP_PORTABLE=1
+python main.py
+
+# Enable temporary settings
+export VILOAPP_TEMP_SETTINGS=1
+python main.py
+```
+
+#### Settings Storage Locations
+- **Default**: System-specific locations (Windows Registry, Linux ~/.config, macOS ~/Library)
+- **Custom Directory**: Multiple INI files in specified directory
+- **Custom File**: Single INI file at specified path  
+- **Portable**: Settings stored in `./settings/` within app directory
+- **Temporary**: Settings stored in system temp directory, deleted on exit
+
 ## Development
 
 ### Running Tests

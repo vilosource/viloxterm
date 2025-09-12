@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QTabBar, 
     QToolButton, QLabel, QSizePolicy
 )
-from PySide6.QtCore import Qt, Signal, QPoint, QRect, QTimer
+from PySide6.QtCore import Qt, Signal, QPoint, QRect, QTimer, QSize
 from PySide6.QtGui import QMouseEvent, QPalette, QColor
 from ui.widgets.window_controls import WindowControls
 import logging
@@ -27,17 +27,29 @@ class ChromeTabBar(QTabBar):
         self.setMovable(True)
         self.setTabsClosable(True)
         self.setElideMode(Qt.ElideRight)
-        self.setExpanding(False)
-        self.setDocumentMode(True)
+        # Allow tabs to expand to fill available space
+        self.setExpanding(True)
+        # Don't use document mode - it creates a full-width baseline
+        self.setDocumentMode(False)
         
         # Set shape for Chrome-like appearance
         self.setShape(QTabBar.RoundedNorth)
+        
+        # Allow tab bar to expand to fill available width
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        
+        # Disable scrolling - tabs will shrink instead
+        self.setUsesScrollButtons(False)
+        
+        # Override cursor to use default arrow instead of move cursor
+        self.setCursor(Qt.ArrowCursor)
         
         # Configure appearance
         self.setup_style()
     
     def setup_style(self):
         """Apply Chrome-like styling to the tab bar."""
+        logger.debug("Applying Chrome tab bar styles")
         self.setStyleSheet("""
             QTabBar {
                 background: transparent;
@@ -46,22 +58,34 @@ class ChromeTabBar(QTabBar):
             QTabBar::tab {
                 background: rgba(255, 255, 255, 0.05);
                 color: #cccccc;
-                padding: 8px 12px;
-                margin-right: 1px;
+                padding: 6px 12px 10px 12px;
+                margin-right: 2px;
                 margin-top: 5px;
                 border-top-left-radius: 8px;
                 border-top-right-radius: 8px;
-                min-width: 100px;
+                border-left: 1px solid rgba(255, 255, 255, 0.15);
+                border-top: 1px solid rgba(255, 255, 255, 0.15);
+                border-right: 1px solid rgba(0, 0, 0, 0.3);
+                border-bottom: none;
+                min-width: 50px;
                 max-width: 240px;
             }
             QTabBar::tab:selected {
                 background: #1e1e1e;
                 color: #ffffff;
                 margin-top: 2px;
-                padding-top: 11px;
+                padding: 9px 12px 10px 12px;
+                border-left: 1px solid rgba(255, 255, 255, 0.2);
+                border-top: 1px solid rgba(255, 255, 255, 0.2);
+                border-right: 1px solid rgba(255, 255, 255, 0.2);
+                border-bottom: none;
             }
             QTabBar::tab:hover:!selected {
                 background: rgba(255, 255, 255, 0.08);
+                border-left: 1px solid rgba(255, 255, 255, 0.18);
+                border-top: 1px solid rgba(255, 255, 255, 0.18);
+                border-right: 1px solid rgba(0, 0, 0, 0.3);
+                border-bottom: none;
             }
             QTabBar::close-button {
                 image: none;
@@ -74,6 +98,18 @@ class ChromeTabBar(QTabBar):
                 background: rgba(255, 255, 255, 0.2);
             }
         """)
+    
+    
+    def enterEvent(self, event):
+        """Override enter event to set arrow cursor."""
+        self.setCursor(Qt.ArrowCursor)
+        super().enterEvent(event)
+    
+    def mouseMoveEvent(self, event):
+        """Override mouse move to maintain arrow cursor."""
+        # Keep arrow cursor instead of move cursor
+        self.setCursor(Qt.ArrowCursor)
+        super().mouseMoveEvent(event)
     
     def mouseDoubleClickEvent(self, event):
         """Handle double-click on empty area to create new tab."""
@@ -94,13 +130,10 @@ class ChromeTitleBar(QWidget):
     new_tab_requested = Signal()
     tab_changed = Signal(int)
     tab_close_requested = Signal(int)
-    window_move_requested = Signal(QPoint)  # For window dragging
     
     def __init__(self, parent=None):
         super().__init__(parent)
         self.is_maximized = False
-        self.drag_start_position = None
-        self.window_start_position = None
         self.setup_ui()
         
     def setup_ui(self):
@@ -126,15 +159,21 @@ class ChromeTitleBar(QWidget):
         left_spacer.setFixedWidth(8)
         main_layout.addWidget(left_spacer)
         
-        # Center: Tab bar
-        self.tab_bar = ChromeTabBar(self)
+        # Create a wrapper widget for tabs and button - NO LAYOUT
+        self.tabs_wrapper = QWidget()
+        self.tabs_wrapper.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.tabs_wrapper.setFixedHeight(35)
+        self.tabs_wrapper.setObjectName("tabsWrapper")  # For identification
+        
+        # Tab bar as child of wrapper (no layout - manual positioning)
+        self.tab_bar = ChromeTabBar(self.tabs_wrapper)
         self.tab_bar.currentChanged.connect(self.tab_changed.emit)
         self.tab_bar.tabCloseRequested.connect(self.tab_close_requested.emit)
         self.tab_bar.new_tab_requested.connect(self.new_tab_requested.emit)
-        main_layout.addWidget(self.tab_bar, 1)  # Stretch factor 1
+        self.tab_bar.move(0, 0)  # Position at top-left of wrapper
         
-        # Add new tab button
-        self.new_tab_btn = QToolButton(self)
+        # Add new tab button as child of wrapper (no layout)
+        self.new_tab_btn = QToolButton(self.tabs_wrapper)
         self.new_tab_btn.setText("+")
         self.new_tab_btn.setFixedSize(28, 28)
         self.new_tab_btn.clicked.connect(self.new_tab_requested.emit)
@@ -151,14 +190,18 @@ class ChromeTitleBar(QWidget):
                 color: #cccccc;
             }
         """)
-        main_layout.addWidget(self.new_tab_btn)
+        # Position will be set in update_container_size
         
-        # Add draggable spacing before window controls
+        # Add wrapper to main layout
+        main_layout.addWidget(self.tabs_wrapper)
+        
+        # Add draggable spacing between tabs and window controls
+        # This will expand to fill all available space
         spacer = QWidget()
         spacer.setMinimumWidth(80)  # Minimum space for dragging
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)  # Allow it to expand
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         spacer.setObjectName("dragSpacer")  # For identification
-        main_layout.addWidget(spacer)
+        main_layout.addWidget(spacer, 1)  # Stretch factor 1 to take remaining space
         
         # Right side: Window controls
         self.window_controls = WindowControls(self)
@@ -169,36 +212,29 @@ class ChromeTitleBar(QWidget):
         
         # Enable mouse tracking for drag detection
         self.setMouseTracking(True)
+        
+        # Set initial container size
+        self.update_container_size()
+        
+        # Also update after a delay to handle initial layout
+        QTimer.singleShot(100, self.update_container_size)
     
     def mousePressEvent(self, event: QMouseEvent):
         """Handle mouse press for window dragging."""
-        logger.debug(f"ChromeTitleBar.mousePressEvent: button={event.button()}, pos={event.pos()}, globalPos={event.globalPos()}")
-        
-        # Check if we're clicking on a draggable area (not on tabs or buttons)
         if event.button() == Qt.LeftButton:
             # Get the widget at the click position
             child = self.childAt(event.pos())
             
-            widget_info = "None" if child is None else f"{child.__class__.__name__} (objectName={child.objectName() or 'unnamed'})"
-            logger.debug(f"  Widget at click position: {widget_info}")
-            
             # Check if we're clicking on a draggable widget
-            is_draggable = self._is_draggable_widget(child)
-            logger.debug(f"  Is draggable: {is_draggable}")
-            
-            if is_draggable:
-                # Store the initial click position relative to the window
-                self.drag_start_position = event.globalPos()
-                # Get the top-level window position
-                top_window = self.window()
-                self.window_start_position = top_window.pos()
-                logger.info(f"DRAG STARTED at global position: {self.drag_start_position}, window at: {self.window_start_position}")
-                logger.debug(f"  Window type: {top_window.__class__.__name__}, frameless: {bool(top_window.windowFlags() & Qt.FramelessWindowHint)}")
-                event.accept()  # Accept the event to prevent propagation
-            else:
-                self.drag_start_position = None
-                self.window_start_position = None
-                logger.debug("  Not draggable - drag not started")
+            if self._is_draggable_widget(child):
+                # Use Qt's native system move (cross-platform)
+                window = self.window()
+                if hasattr(window, 'windowHandle') and window.windowHandle():
+                    window.windowHandle().startSystemMove()
+                    logger.debug("Started native system move")
+                else:
+                    logger.warning("Window handle not available for system move")
+                event.accept()
         
         super().mousePressEvent(event)
     
@@ -210,10 +246,18 @@ class ChromeTitleBar(QWidget):
         # Check if it's the title bar itself
         if widget == self:
             return True
+        
+        # Check if it's our tabs wrapper - check if we're on empty space
+        if hasattr(self, 'tabs_wrapper') and widget == self.tabs_wrapper:
+            # The wrapper itself is draggable (empty areas between/around tabs)
+            return True
             
         # Check for spacer widgets (they have no specific type but are QWidget)
         if widget.__class__.__name__ == 'QWidget':
-            # Check if it's not one of our interactive widgets
+            # Check if it's the drag spacer specifically
+            if widget.objectName() == "dragSpacer":
+                return True
+            # Other generic QWidgets might not be draggable
             if not isinstance(widget, (WindowControls, QToolButton)):
                 return True
         
@@ -239,35 +283,6 @@ class ChromeTitleBar(QWidget):
         
         return True  # Default to draggable for unknown widgets
     
-    def mouseMoveEvent(self, event: QMouseEvent):
-        """Handle mouse move for window dragging and cursor updates."""
-        if hasattr(self, 'drag_start_position') and self.drag_start_position is not None and event.buttons() == Qt.LeftButton:
-            # Calculate the new window position based on mouse movement
-            mouse_delta = event.globalPos() - self.drag_start_position
-            new_window_pos = self.window_start_position + mouse_delta
-            
-            logger.debug(f"DRAGGING: Mouse moved by {mouse_delta}, moving window to {new_window_pos}")
-            
-            # Emit signal to move window to the new absolute position
-            self.window_move_requested.emit(new_window_pos)
-            logger.debug(f"  Emitted window_move_requested signal with new position: {new_window_pos}")
-        elif event.buttons() == Qt.NoButton:
-            # Not dragging - update cursor based on what we're hovering over
-            child = self.childAt(event.pos())
-            if self._is_draggable_widget(child):
-                self.setCursor(Qt.ArrowCursor)  # Normal cursor for draggable areas
-            else:
-                self.setCursor(Qt.ArrowCursor)  # Keep arrow for non-draggable too
-        
-        super().mouseMoveEvent(event)
-    
-    def mouseReleaseEvent(self, event: QMouseEvent):
-        """Handle mouse release to stop dragging."""
-        if hasattr(self, 'drag_start_position') and self.drag_start_position is not None:
-            logger.info(f"DRAG ENDED at position: {event.globalPos()}")
-        self.drag_start_position = None
-        self.window_start_position = None
-        super().mouseReleaseEvent(event)
     
     def mouseDoubleClickEvent(self, event: QMouseEvent):
         """Handle double-click to maximize/restore window."""
@@ -286,11 +301,14 @@ class ChromeTitleBar(QWidget):
     
     def add_tab(self, text: str) -> int:
         """Add a new tab to the tab bar."""
-        return self.tab_bar.addTab(text)
+        index = self.tab_bar.addTab(text)
+        self.update_container_size()
+        return index
     
     def remove_tab(self, index: int):
         """Remove a tab from the tab bar."""
         self.tab_bar.removeTab(index)
+        self.update_container_size()
     
     def set_current_tab(self, index: int):
         """Set the current tab."""
@@ -311,3 +329,59 @@ class ChromeTitleBar(QWidget):
     def tab_text(self, index: int) -> str:
         """Get the text of a tab."""
         return self.tab_bar.tabText(index)
+    
+    def showEvent(self, event):
+        """Handle show event to update layout after window is visible."""
+        super().showEvent(event)
+        # Update container size once window is shown and has valid geometry
+        QTimer.singleShot(50, self.update_container_size)
+    
+    def resizeEvent(self, event):
+        """Handle resize event to update tab layout."""
+        super().resizeEvent(event)
+        # Update container size when window is resized
+        self.update_container_size()
+    
+    def update_container_size(self):
+        """Update the wrapper widget and manually position children."""
+        if not hasattr(self, 'tabs_wrapper') or not hasattr(self, 'tab_bar'):
+            return
+            
+        # Ensure tab bar has valid geometry
+        if not self.tab_bar.isVisible():
+            return
+        
+        # Get the total width available in the title bar
+        title_bar_width = self.width()
+        
+        # Reserve space for:
+        # - Left spacer (8px)
+        # - Window controls (approximately 120px)
+        # - Minimum drag area (100px)
+        # - New tab button (30px including gap)
+        reserved_space = 8 + 120 + 100 + 30
+        
+        # Calculate maximum width available for tab bar
+        max_tab_bar_width = title_bar_width - reserved_space
+        
+        # Since setExpanding(True), tab bar will use all available width
+        # Just constrain it to the maximum
+        if max_tab_bar_width > 0:
+            tab_bar_width = max_tab_bar_width
+            tab_bar_height = 32
+            
+            # Size the tab bar to use full available width
+            self.tab_bar.resize(tab_bar_width, tab_bar_height)
+            
+            # Position the + button right after the tab bar
+            self.new_tab_btn.move(tab_bar_width + 2, 2)
+            
+            # Calculate total wrapper width
+            total_width = tab_bar_width + 2 + 28  # tab bar + gap + button
+            
+            # Update wrapper to use the calculated width
+            self.tabs_wrapper.setFixedWidth(total_width)
+            
+            # Debug output
+            logger.debug(f"Title bar width: {title_bar_width}, tab bar width: {tab_bar_width}")
+            logger.debug(f"Wrapper width: {total_width}, drag space: {title_bar_width - total_width - 120}")

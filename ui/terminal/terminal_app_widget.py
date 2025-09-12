@@ -34,6 +34,9 @@ class TerminalAppWidget(AppWidget):
     Manages its own terminal session and WebEngine view.
     """
     
+    # Signal emitted when terminal process exits and pane should be closed
+    pane_close_requested = Signal()
+    
     def __init__(self, widget_id: str, parent=None):
         """Initialize the terminal widget."""
         super().__init__(widget_id, WidgetType.TERMINAL, parent)
@@ -47,6 +50,9 @@ class TerminalAppWidget(AppWidget):
         icon_manager = get_icon_manager()
         self.current_theme = icon_manager.theme
         icon_manager.theme_changed.connect(self.on_app_theme_changed)
+        
+        # Connect to terminal server session ended signal
+        terminal_server.session_ended.connect(self.on_session_ended)
         
         self.setup_terminal()
         
@@ -306,3 +312,15 @@ class TerminalAppWidget(AppWidget):
             main_window = self.window()
             if isinstance(main_window, MainWindow):
                 main_window.execute_command("workbench.action.togglePaneNumbers")
+                
+    def on_session_ended(self, ended_session_id: str):
+        """
+        Handle terminal session ended signal from terminal server.
+        
+        Args:
+            ended_session_id: The session ID that ended
+        """
+        if ended_session_id == self.session_id:
+            logger.info(f"Terminal session {self.session_id} ended, requesting pane close")
+            # Emit signal to request pane closure
+            self.pane_close_requested.emit()

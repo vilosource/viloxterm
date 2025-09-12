@@ -23,6 +23,7 @@ from flask import Flask, render_template_string, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import sys
 from ui.terminal.terminal_assets import terminal_asset_bundler
+from PySide6.QtCore import QObject, Signal
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -44,11 +45,14 @@ class TerminalSession:
     active: bool = True
 
 
-class TerminalServerManager:
+class TerminalServerManager(QObject):
     """
     Singleton manager for terminal server.
     Handles multiple terminal sessions through a single Flask/SocketIO server.
     """
+    
+    # Signal emitted when a terminal session process exits
+    session_ended = Signal(str)  # session_id
     
     _instance = None
     _lock = threading.Lock()
@@ -65,6 +69,8 @@ class TerminalServerManager:
         """Initialize the terminal server manager (only once)."""
         if self._initialized:
             return
+            
+        super().__init__()
             
         self.port = 0  # Will be assigned when server starts
         self.host = '127.0.0.1'
@@ -197,6 +203,8 @@ class TerminalServerManager:
                 # Terminal process ended
                 logger.info(f"Terminal process ended for session {session_id}")
                 session.active = False
+                # Emit signal to notify UI that terminal session ended
+                self.session_ended.emit(session_id)
                 break
             
             self.socketio.sleep(0.01)

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QApplication
 from PySide6.QtCore import Qt, QPoint, QRect, Signal, QEvent, QSettings
 from PySide6.QtGui import QMouseEvent, QCursor, QScreen
 
-from ui.widgets.chrome_title_bar_fixed import ChromeTitleBarFixed as ChromeTitleBar
+from ui.widgets.chrome_title_bar import ChromeTitleBar
 from ui.main_window import MainWindow
 
 logger = logging.getLogger(__name__)
@@ -107,7 +107,7 @@ class ChromeMainWindow(MainWindow):
         self.chrome_title_bar.minimize_window.connect(self.showMinimized)
         self.chrome_title_bar.maximize_window.connect(self.toggle_maximize)
         self.chrome_title_bar.close_window.connect(self.close)
-        # Note: window_move_requested signal removed - using native system move instead
+        # Window dragging uses Qt's native startSystemMove() now
         logger.info("  ✓ Using native system move for window dragging")
         self.chrome_title_bar.new_tab_requested.connect(self.add_new_tab)
         self.chrome_title_bar.tab_changed.connect(self.on_chrome_tab_changed)
@@ -131,8 +131,55 @@ class ChromeMainWindow(MainWindow):
         if current_index >= 0:
             self.chrome_title_bar.set_current_tab(current_index)
         
-        # Note: Tab synchronization is now handled through commands
-        # The workspace commands (nextTab, previousTab, selectTab) will update Chrome tabs
+        # Force update of tab bar layout after transferring tabs
+        self.chrome_title_bar.update_container_size()
+        
+        # Re-apply styles after loading tabs to ensure they take effect
+        if hasattr(self.chrome_title_bar, 'tab_bar'):
+            self.chrome_title_bar.tab_bar.setup_style()
+        
+        # Set up ongoing tab synchronization
+        self._setup_tab_synchronization()
+    
+    def _setup_tab_synchronization(self):
+        """Set up synchronization between workspace tabs and Chrome title bar."""
+        if not hasattr(self.workspace, 'tab_added') or not hasattr(self.workspace, 'tab_removed'):
+            logger.warning("Workspace does not have required signals for tab synchronization")
+            return
+        
+        # Connect workspace signals to Chrome title bar updates
+        self.workspace.tab_added.connect(self.on_workspace_tab_added)
+        self.workspace.tab_removed.connect(self.on_workspace_tab_removed)
+        
+        logger.info("Tab synchronization set up for Chrome mode")
+    
+    def on_workspace_tab_added(self, name: str):
+        """Handle when a new tab is added to the workspace."""
+        logger.info(f"Workspace tab added: {name}")
+        
+        # Add the tab to Chrome title bar
+        index = self.chrome_title_bar.add_tab(name)
+        
+        # Set it as the current tab (workspace automatically switches to new tabs)
+        self.chrome_title_bar.set_current_tab(index)
+        
+        logger.info(f"Added Chrome tab '{name}' at index {index}")
+    
+    def on_workspace_tab_removed(self, name: str):
+        """Handle when a tab is removed from the workspace."""
+        logger.info(f"Workspace tab removed: {name}")
+        
+        # Find the index of the tab by name and remove it
+        if hasattr(self.chrome_title_bar, 'remove_tab_by_name'):
+            self.chrome_title_bar.remove_tab_by_name(name)
+        elif hasattr(self.chrome_title_bar, 'remove_tab'):
+            # Try to find index by iterating through tabs
+            for i in range(self.chrome_title_bar.tab_count() if hasattr(self.chrome_title_bar, 'tab_count') else 0):
+                if hasattr(self.chrome_title_bar, 'tab_text') and self.chrome_title_bar.tab_text(i) == name:
+                    self.chrome_title_bar.remove_tab(i)
+                    break
+        else:
+            logger.warning("Chrome title bar does not support tab removal")
     
     def _apply_window_border(self):
         """Apply a subtle border/shadow for window definition."""
@@ -174,7 +221,6 @@ class ChromeMainWindow(MainWindow):
             # Don't close the last tab
             if self.workspace.tab_widget.count() > 1:
                 self.workspace.close_tab(index)
-                self.chrome_title_bar.remove_tab(index)
     
     def get_resize_direction(self, pos: QPoint) -> ResizeDirection:
         """Determine resize direction based on mouse position."""
