@@ -548,6 +548,13 @@ class MainWindow(QMainWindow):
         self.menubar_action.triggered.connect(lambda: self.execute_command("view.toggleMenuBar"))
         view_menu.addAction(self.menubar_action)
         
+        # Auto-hide menu bar option
+        self.auto_hide_menubar_action = QAction("Use Activity Bar Menu", self)
+        self.auto_hide_menubar_action.setCheckable(True)
+        self.auto_hide_menubar_action.setToolTip("Hide menu bar and use activity bar menu icon instead")
+        self.auto_hide_menubar_action.toggled.connect(self.on_auto_hide_menubar_toggled)
+        view_menu.addAction(self.auto_hide_menubar_action)
+        
         # Debug menu
         debug_menu = menubar.addMenu("Debug")
         
@@ -616,6 +623,19 @@ class MainWindow(QMainWindow):
                 self.main_splitter.setSizes([0, self.main_splitter.width()])
         
         return is_visible
+    
+    def on_auto_hide_menubar_toggled(self, checked: bool):
+        """Handle the 'Use Activity Bar Menu' toggle."""
+        if checked:
+            # Hide menu bar when using activity bar menu
+            self.menuBar().setVisible(False)
+        else:
+            # Show menu bar when not using activity bar menu
+            self.menuBar().setVisible(True)
+        
+        # Save preference
+        settings = QSettings()
+        settings.setValue("MainWindow/useActivityBarMenu", checked)
         
     def reset_app_state(self):
         """Reset application to default state - now routes through command system."""
@@ -743,9 +763,19 @@ class MainWindow(QMainWindow):
         # Allow sidebar to be completely collapsed after restoration
         safe_splitter_collapse_setting(self.main_splitter, True)
             
-        # Restore menu bar visibility
-        menu_visible = settings.value("menuBarVisible", True, type=bool)
-        self.menuBar().setVisible(menu_visible)
+        # Restore menu bar visibility and activity bar menu preference
+        # Fix the path - it should be under MainWindow group
+        use_activity_bar_menu = settings.value("MainWindow/useActivityBarMenu", False, type=bool)
+        if hasattr(self, 'auto_hide_menubar_action'):
+            if use_activity_bar_menu:
+                self.auto_hide_menubar_action.setChecked(True)
+                self.menuBar().setVisible(False)
+            else:
+                menu_visible = settings.value("menuBarVisible", True, type=bool)
+                self.menuBar().setVisible(menu_visible)
+        else:
+            menu_visible = settings.value("menuBarVisible", True, type=bool)
+            self.menuBar().setVisible(menu_visible)
         
         # Restore activity bar visibility
         activity_bar_visible = settings.value("activityBarVisible", True, type=bool)

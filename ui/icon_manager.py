@@ -20,7 +20,8 @@ class IconManager(QObject):
             "explorer": "⊞",   # Squared plus (file manager)
             "search": "⌕",     # Search symbol
             "git": "⌘",        # Command symbol (version control)
-            "settings": "⚙"    # Gear symbol (settings)
+            "settings": "⚙",   # Gear symbol (settings)
+            "menu": "☰"        # Hamburger menu symbol
         }
         
     @property

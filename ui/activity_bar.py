@@ -105,7 +105,21 @@ class ActivityBar(QToolBar):
         self.settings_action.toggled.connect(lambda checked: self.on_action_toggled("settings", checked))
         self.addAction(self.settings_action)
         
-        # Group actions for easy access
+        # Add spacer widget to push menu to bottom
+        from PySide6.QtWidgets import QWidget, QSizePolicy
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        spacer.setStyleSheet("background-color: transparent;")
+        self.addWidget(spacer)
+        
+        # Menu action at the bottom
+        self.menu_action = QAction(icon_manager.get_icon("menu"), "Menu", self)
+        self.menu_action.setCheckable(False)  # Not checkable - it's a menu trigger
+        self.menu_action.setToolTip("Application Menu")
+        self.menu_action.triggered.connect(self.on_menu_clicked)
+        self.addAction(self.menu_action)
+        
+        # Group actions for easy access (excluding menu action)
         self.view_actions = [
             self.explorer_action,
             self.search_action,
@@ -236,6 +250,7 @@ class ActivityBar(QToolBar):
         self.search_action.setIcon(icon_manager.get_icon("search"))
         self.git_action.setIcon(icon_manager.get_icon("git"))
         self.settings_action.setIcon(icon_manager.get_icon("settings"))
+        self.menu_action.setIcon(icon_manager.get_icon("menu"))
     
     def show_view(self, view_name: str):
         """Programmatically show a specific view. Called by commands."""
@@ -258,3 +273,59 @@ class ActivityBar(QToolBar):
                 # Force trigger the toggle by unchecking and checking again
                 action.setChecked(False)  # This will trigger on_action_toggled with False
                 action.setChecked(True)   # This will trigger on_action_toggled with True
+    
+    def on_menu_clicked(self):
+        """Handle menu button click - show application menu."""
+        from PySide6.QtWidgets import QMenu
+        from PySide6.QtCore import QPoint
+        
+        # Get the main window to access its menu bar
+        main_window = self.window()
+        if not main_window or not hasattr(main_window, 'menuBar'):
+            logger.warning("Could not access main window menu bar")
+            return
+        
+        # Create a popup menu that mirrors the menu bar
+        menu = QMenu(self)
+        menu.setStyleSheet(f"""
+            QMenu {{
+                background-color: {MENU_BACKGROUND};
+                color: {MENU_FOREGROUND};
+                border: 1px solid {SPLITTER_BACKGROUND};
+                padding: 4px;
+            }}
+            QMenu::item {{
+                padding: 6px 20px 6px 10px;
+                border-radius: 2px;
+            }}
+            QMenu::item:selected {{
+                background-color: {MENU_SELECTION_BACKGROUND};
+            }}
+            QMenu::separator {{
+                height: 1px;
+                background: {SPLITTER_BACKGROUND};
+                margin: 4px 10px;
+            }}
+        """)
+        
+        # Copy all menus from the menu bar
+        menubar = main_window.menuBar()
+        for action in menubar.actions():
+            if action.menu():
+                # Add submenu
+                submenu = menu.addMenu(action.text())
+                # Copy all actions from the original menu
+                for sub_action in action.menu().actions():
+                    if sub_action.isSeparator():
+                        submenu.addSeparator()
+                    else:
+                        submenu.addAction(sub_action)
+            else:
+                # Add regular action
+                menu.addAction(action)
+        
+        # Show the menu at the button position
+        button_rect = self.actionGeometry(self.menu_action)
+        # Position to the right of the activity bar
+        pos = self.mapToGlobal(button_rect.topRight())
+        menu.exec(pos)

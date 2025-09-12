@@ -60,6 +60,7 @@ class TestActivityBar:
             assert hasattr(activity_bar, 'search_action')
             assert hasattr(activity_bar, 'git_action')
             assert hasattr(activity_bar, 'settings_action')
+            assert hasattr(activity_bar, 'menu_action')  # Check menu action exists
             
             # Check actions are added to toolbar
             actions = activity_bar.actions()
@@ -68,6 +69,7 @@ class TestActivityBar:
             assert "Search" in action_texts
             assert "Git" in action_texts
             assert "Settings" in action_texts
+            assert "Menu" in action_texts  # Check menu action is added
 
     def test_on_view_selected_new_view(self, qtbot):
         """Test selecting a new view."""
@@ -133,7 +135,7 @@ class TestActivityBar:
             # Call update_icons
             activity_bar.update_icons()
             
-            # Verify get_icon was called for each icon
-            expected_calls = ["explorer", "search", "git", "settings"]
+            # Verify get_icon was called for each icon including menu
+            expected_calls = ["explorer", "search", "git", "settings", "menu"]
             actual_calls = [call[0][0] for call in mock_manager.get_icon.call_args_list]
             assert set(expected_calls) == set(actual_calls)
