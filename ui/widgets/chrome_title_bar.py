@@ -58,34 +58,34 @@ class ChromeTabBar(QTabBar):
             QTabBar::tab {
                 background: #323232;
                 color: #cccccc;
-                padding: 7px 12px 7px 12px;
+                padding: 4px 10px 4px 10px;
                 margin: 0;
                 margin-right: 2px;
-                margin-top: 5px;
-                border-top-left-radius: 8px;
-                border-top-right-radius: 8px;
+                margin-top: 3px;
+                border-top-left-radius: 6px;
+                border-top-right-radius: 6px;
                 border-left: 1px solid rgba(255, 255, 255, 0.15);
                 border-top: 1px solid rgba(255, 255, 255, 0.15);
                 border-right: 1px solid rgba(0, 0, 0, 0.3);
                 border-bottom: none;
                 min-width: 50px;
                 max-width: 240px;
-                height: 30px;
-                line-height: 16px;
+                height: 22px;
+                line-height: 14px;
             }
             QTabBar::tab:selected {
                 background: #1e1e1e;
                 color: #ffffff;
                 margin: 0;
                 margin-right: 2px;
-                margin-top: 2px;
-                padding: 9px 12px 9px 12px;
+                margin-top: 1px;
+                padding: 5px 10px 5px 10px;
                 border-left: 1px solid rgba(255, 255, 255, 0.2);
                 border-top: 1px solid rgba(255, 255, 255, 0.2);
                 border-right: 1px solid rgba(255, 255, 255, 0.2);
                 border-bottom: none;
-                height: 33px;
-                line-height: 15px;
+                height: 24px;
+                line-height: 14px;
             }
             QTabBar::tab:hover:!selected {
                 background: #3a3a3a;
@@ -146,7 +146,7 @@ class ChromeTitleBar(QWidget):
     def setup_ui(self):
         """Set up the title bar UI."""
         # Set fixed height like Chrome
-        self.setFixedHeight(35)
+        self.setFixedHeight(28)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         
         # Set background color
@@ -183,7 +183,7 @@ class ChromeTitleBar(QWidget):
         # Create a wrapper widget for tabs and button - NO LAYOUT
         self.tabs_wrapper = QWidget()
         self.tabs_wrapper.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.tabs_wrapper.setFixedHeight(35)
+        self.tabs_wrapper.setFixedHeight(28)
         self.tabs_wrapper.setObjectName("tabsWrapper")  # For identification
         
         # Tab bar as child of wrapper (no layout - manual positioning)
@@ -196,15 +196,15 @@ class ChromeTitleBar(QWidget):
         # Add new tab button as child of wrapper (no layout)
         self.new_tab_btn = QToolButton(self.tabs_wrapper)
         self.new_tab_btn.setText("+")
-        self.new_tab_btn.setFixedSize(28, 28)
+        self.new_tab_btn.setFixedSize(22, 22)
         self.new_tab_btn.clicked.connect(self.new_tab_requested.emit)
         self.new_tab_btn.setStyleSheet("""
             QToolButton {
                 background: transparent;
                 border: none;
                 color: #888888;
-                font-size: 18px;
-                border-radius: 14px;
+                font-size: 14px;
+                border-radius: 11px;
             }
             QToolButton:hover {
                 background: rgba(255, 255, 255, 0.1);
@@ -389,16 +389,16 @@ class ChromeTitleBar(QWidget):
         # Just constrain it to the maximum
         if max_tab_bar_width > 0:
             tab_bar_width = max_tab_bar_width
-            tab_bar_height = 35  # Full height of the container
+            tab_bar_height = 28  # Full height of the container
             
             # Size the tab bar to use full available width and height
             self.tab_bar.resize(tab_bar_width, tab_bar_height)
             
             # Position the + button right after the tab bar
-            self.new_tab_btn.move(tab_bar_width + 2, 3)
+            self.new_tab_btn.move(tab_bar_width + 2, 2)
             
             # Calculate total wrapper width
-            total_width = tab_bar_width + 2 + 28  # tab bar + gap + button
+            total_width = tab_bar_width + 2 + 22  # tab bar + gap + button
             
             # Update wrapper to use the calculated width
             self.tabs_wrapper.setFixedWidth(total_width)
