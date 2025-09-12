@@ -58,9 +58,10 @@ class ChromeTabBar(QTabBar):
             QTabBar::tab {
                 background: #323232;
                 color: #cccccc;
-                padding: 6px 12px 10px 12px;
+                padding: 8px 12px 0px 12px;
+                margin: 0;
                 margin-right: 2px;
-                margin-top: 5px;
+                margin-top: 3px;
                 border-top-left-radius: 8px;
                 border-top-right-radius: 8px;
                 border-left: 1px solid rgba(255, 255, 255, 0.15);
@@ -73,8 +74,9 @@ class ChromeTabBar(QTabBar):
             QTabBar::tab:selected {
                 background: #1e1e1e;
                 color: #ffffff;
-                margin-top: 2px;
-                padding: 9px 12px 10px 12px;
+                margin: 0;
+                margin-right: 2px;
+                padding: 10px 12px 0px 12px;
                 border-left: 1px solid rgba(255, 255, 255, 0.2);
                 border-top: 1px solid rgba(255, 255, 255, 0.2);
                 border-right: 1px solid rgba(255, 255, 255, 0.2);
@@ -380,13 +382,13 @@ class ChromeTitleBar(QWidget):
         # Just constrain it to the maximum
         if max_tab_bar_width > 0:
             tab_bar_width = max_tab_bar_width
-            tab_bar_height = 32
+            tab_bar_height = 35  # Full height of the container
             
-            # Size the tab bar to use full available width
+            # Size the tab bar to use full available width and height
             self.tab_bar.resize(tab_bar_width, tab_bar_height)
             
             # Position the + button right after the tab bar
-            self.new_tab_btn.move(tab_bar_width + 2, 2)
+            self.new_tab_btn.move(tab_bar_width + 2, 3)
             
             # Calculate total wrapper width
             total_width = tab_bar_width + 2 + 28  # tab bar + gap + button
