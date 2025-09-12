@@ -148,6 +148,18 @@ class ChromeTitleBar(QWidget):
         palette.setColor(QPalette.Window, QColor(50, 50, 50))  # Dark gray like Chrome
         self.setPalette(palette)
         
+        # Remove any focus outline/border
+        self.setStyleSheet("""
+            ChromeTitleBar {
+                outline: none;
+                border: none;
+            }
+            ChromeTitleBar:focus {
+                outline: none;
+                border: none;
+            }
+        """)
+        
         # Main horizontal layout
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)

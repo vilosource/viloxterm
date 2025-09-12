@@ -63,6 +63,14 @@ class ChromeMainWindow(MainWindow):
         # Enable mouse tracking for resize detection
         self.setMouseTracking(True)
         
+        # Disable focus rect globally for Chrome mode to prevent yellow lines
+        from PySide6.QtWidgets import QApplication
+        QApplication.instance().setStyleSheet("""
+            *:focus {
+                outline: none;
+            }
+        """)
+        
         # Resize handling variables
         self.resize_margin = 8
         self.resize_direction = ResizeDirection.NONE
@@ -122,13 +130,27 @@ class ChromeMainWindow(MainWindow):
         self.workspace.tab_widget.tabBar().setVisible(False)
         
         # Remove any borders from the tab widget in Chrome mode
+        # Also remove any focus outlines that might appear as yellow lines
         self.workspace.tab_widget.setStyleSheet("""
             QTabWidget::pane {
                 border: none;
                 border-top: none;
+                outline: none;
+            }
+            QTabWidget:focus {
+                border: none;
+                outline: none;
             }
             QTabBar {
                 border: none;
+                outline: none;
+            }
+            QTabBar:focus {
+                border: none;
+                outline: none;
+            }
+            QWidget:focus {
+                outline: none;
             }
         """)
         
