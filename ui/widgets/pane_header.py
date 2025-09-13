@@ -50,9 +50,9 @@ class PaneHeaderBar(QWidget):
         
         # Pane number label (shows 1-9 when enabled)
         self.number_label = QLabel()
-        self.number_label.setStyleSheet(f"""
-            QLabel {{
-                background-color: {ACCENT_COLOR};
+        self.number_label.setStyleSheet("""
+            QLabel {
+                background-color: #007ACC;
                 color: white;
                 border-radius: 2px;
                 padding: 0px 4px;
@@ -60,7 +60,7 @@ class PaneHeaderBar(QWidget):
                 font-size: 10px;
                 min-width: 12px;
                 max-width: 12px;
-            }}
+            }
         """)
         self.number_label.setAlignment(Qt.AlignCenter)
         self.number_label.hide()  # Hidden by default
@@ -68,12 +68,12 @@ class PaneHeaderBar(QWidget):
         
         # Pane ID label (optional, for debugging)
         self.id_label = QLabel(self.pane_id)
-        self.id_label.setStyleSheet(f"""
-            QLabel {{
-                color: {TAB_INACTIVE_FOREGROUND};
+        self.id_label.setStyleSheet("""
+            QLabel {
+                color: #969696;
                 font-size: 10px;
                 padding: 0 2px;
-            }}
+            }
         """)
         layout.addWidget(self.id_label)
         

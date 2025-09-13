@@ -270,25 +270,25 @@ class ActivityBar(QToolBar):
         
         # Create a popup menu that mirrors the menu bar
         menu = QMenu(self)
-        menu.setStyleSheet(f"""
-            QMenu {{
-                background-color: {MENU_BACKGROUND};
-                color: {MENU_FOREGROUND};
-                border: 1px solid {SPLITTER_BACKGROUND};
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: #252526;
+                color: #cccccc;
+                border: 1px solid #3e3e42;
                 padding: 4px;
-            }}
-            QMenu::item {{
+            }
+            QMenu::item {
                 padding: 6px 20px 6px 10px;
                 border-radius: 2px;
-            }}
-            QMenu::item:selected {{
-                background-color: {MENU_SELECTION_BACKGROUND};
-            }}
-            QMenu::separator {{
+            }
+            QMenu::item:selected {
+                background-color: #094771;
+            }
+            QMenu::separator {
                 height: 1px;
-                background: {SPLITTER_BACKGROUND};
+                background: #3e3e42;
                 margin: 4px 10px;
-            }}
+            }
         """)
         
         # Copy all menus from the menu bar

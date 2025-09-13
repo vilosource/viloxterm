@@ -319,60 +319,6 @@ SOFTWARE."""
         </p>
         """
 
-    def apply_theme(self):
-        """Apply VSCode theme to the dialog."""
-        self.setStyleSheet(f"""
-            QDialog {{
-                background-color: #252526;
-                color: #cccccc;
-            }}
-
-            QTabWidget::pane {{
-                background-color: {EDITOR_BACKGROUND};
-                border: 1px solid #2d2d30;
-            }}
-
-            QTabBar::tab {{
-                background-color: #2d2d30;
-                color: #cccccc;
-                padding: 8px 16px;
-                margin-right: 2px;
-            }}
-
-            QTabBar::tab:selected {{
-                background-color: #1e1e1e;
-                border-bottom: 2px solid #0e639c;
-            }}
-
-            QTextEdit {{
-                background-color: #252526;
-                color: #cccccc;
-                border: 1px solid #2d2d30;
-                padding: 10px;
-                font-family: 'Consolas', 'Monaco', monospace;
-            }}
-
-            QPushButton {{
-                background-color: #0e639c;
-                color: #ffffff;
-                border: none;
-                padding: 6px 16px;
-                font-weight: bold;
-            }}
-
-            QPushButton:hover {{
-                background-color: #0e639c;
-            }}
-
-            QPushButton:pressed {{
-                background-color: #1177bb;
-            }}
-
-            QLabel {{
-                color: #cccccc;
-            }}
-        """)
-
     def open_github(self):
         """Open the GitHub repository in browser."""
         QDesktopServices.openUrl(QUrl(APP_URL))
