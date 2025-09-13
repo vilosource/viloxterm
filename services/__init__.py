@@ -54,10 +54,6 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
     terminal_service = TerminalService()
     editor_service = EditorService()
 
-    # Create theme provider
-    from ui.themes.theme_provider import ThemeProvider
-    theme_provider = ThemeProvider(theme_service)
-
     # Register in dependency order
     locator.register(StateService, state_service)
     locator.register(ThemeService, theme_service)
@@ -66,7 +62,11 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
     locator.register(UIService, ui_service)
     locator.register(TerminalService, terminal_service)
     locator.register(EditorService, editor_service)
-    locator.register(ThemeProvider, theme_provider)
+
+    # Create theme provider after theme service is registered
+    from ui.themes.theme_provider import ThemeProvider
+    theme_provider = ThemeProvider(theme_service)
+    theme_service.set_theme_provider(theme_provider)
     
     # Initialize all services with context
     context = {

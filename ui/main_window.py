@@ -9,7 +9,7 @@ from ui.workspace import Workspace
 from ui.status_bar import AppStatusBar
 from ui.icon_manager import get_icon_manager
 from ui.widgets.focus_sink import FocusSinkWidget
-from ui.themes.theme_provider import ThemeProvider
+
 from services.theme_service import ThemeService
 from ui.qt_compat import safe_splitter_collapse_setting, log_qt_versions
 
@@ -781,7 +781,8 @@ class MainWindow(QMainWindow):
         """Setup theme system and apply initial theme."""
         try:
             # Get theme provider from service locator
-            self.theme_provider = self.service_locator.get(ThemeProvider)
+            theme_service = self.service_locator.get(ThemeService)
+            self.theme_provider = theme_service.get_theme_provider() if theme_service else None
             if not self.theme_provider:
                 print("Warning: ThemeProvider not available")
                 return

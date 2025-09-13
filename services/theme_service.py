@@ -5,7 +5,7 @@ Theme service for managing application themes.
 
 from typing import Dict, List, Optional
 from pathlib import Path
-from PySide6.QtCore import QObject, Signal, QFile, QTextStream
+from PySide6.QtCore import Signal, QFile, QTextStream
 import json
 import logging
 
@@ -16,7 +16,7 @@ from core.themes.schema import ThemeSchema
 logger = logging.getLogger(__name__)
 
 
-class ThemeService(Service, QObject):
+class ThemeService(Service):
     """
     Service for managing themes.
 
@@ -28,12 +28,12 @@ class ThemeService(Service, QObject):
 
     def __init__(self):
         """Initialize theme service."""
-        Service.__init__(self, "ThemeService")
-        QObject.__init__(self)
+        super().__init__("ThemeService")
 
         self._themes: Dict[str, Theme] = {}
         self._current_theme: Optional[Theme] = None
         self._user_themes_path = Path.home() / ".config/ViloxTerm/themes"
+        self._theme_provider = None  # Will be set after initialization
 
         # Ensure user themes directory exists
         self._user_themes_path.mkdir(parents=True, exist_ok=True)
@@ -401,6 +401,14 @@ class ThemeService(Service, QObject):
         except Exception as e:
             logger.error(f"Failed to load theme preference: {e}")
             return None
+
+    def set_theme_provider(self, theme_provider) -> None:
+        """Set the theme provider reference."""
+        self._theme_provider = theme_provider
+
+    def get_theme_provider(self):
+        """Get the theme provider."""
+        return self._theme_provider
 
     def cleanup(self) -> None:
         """Clean up service resources."""

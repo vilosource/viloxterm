@@ -198,12 +198,13 @@ class PaneHeaderBar(QWidget):
     def apply_theme(self):
         """Apply current theme to pane header."""
         from services.service_locator import ServiceLocator
-        from ui.themes.theme_provider import ThemeProvider
+        from services.theme_service import ThemeService
 
         locator = ServiceLocator.get_instance()
-        theme_provider = locator.get(ThemeProvider)
+        theme_service = locator.get(ThemeService)
+        theme_provider = theme_service.get_theme_provider() if theme_service else None
         if theme_provider:
-            colors = theme_provider.theme_service.get_current_colors()
+            colors = theme_provider._theme_service.get_colors()
 
             # Update background color
             self.background_color = QColor(colors.get("editor.background", "#252526"))

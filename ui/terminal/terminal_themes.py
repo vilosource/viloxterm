@@ -64,13 +64,14 @@ def get_light_theme() -> Dict[str, Any]:
 def get_terminal_theme_from_app_theme() -> Dict[str, Any]:
     """Get terminal theme based on current application theme."""
     from services.service_locator import ServiceLocator
-    from ui.themes.theme_provider import ThemeProvider
+    from services.theme_service import ThemeService
 
     locator = ServiceLocator.get_instance()
-    theme_provider = locator.get(ThemeProvider)
+    theme_service = locator.get(ThemeService)
+    theme_provider = theme_service.get_theme_provider() if theme_service else None
 
     if theme_provider:
-        colors = theme_provider.theme_service.get_current_colors()
+        colors = theme_provider._theme_service.get_colors()
 
         # Build terminal theme from application theme colors
         return {

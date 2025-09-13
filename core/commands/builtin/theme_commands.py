@@ -106,6 +106,17 @@ def select_monokai_command(context: CommandContext) -> CommandResult:
 
 
 @command(
+    id="theme.selectSolarizedDark",
+    title="Solarized Dark Theme",
+    category="Preferences: Color Theme",
+    description="Apply Solarized Dark theme"
+)
+def select_solarized_dark_command(context: CommandContext) -> CommandResult:
+    """Apply Solarized Dark theme."""
+    return select_theme_command(context, "solarized-dark")
+
+
+@command(
     id="theme.createCustomTheme",
     title="Create Custom Theme...",
     category="Preferences",
