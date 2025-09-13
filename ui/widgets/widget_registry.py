@@ -250,6 +250,14 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
         serializer=serialize_table_view,
         deserializer=deserialize_table_view
     ),
+
+    WidgetType.TREE_VIEW: WidgetConfig(
+        widget_class=QTreeWidget,
+        preserve_context_menu=True,  # Trees have node operations
+        show_header=True,
+        allow_type_change=True,
+        stylesheet="",  # Theme will be applied dynamically
+    ),
     
     WidgetType.IMAGE_VIEWER: WidgetConfig(
         widget_class=QLabel,

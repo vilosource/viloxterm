@@ -5,12 +5,13 @@ Provides a minimal, unobtrusive header with split/close controls.
 """
 
 from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QPushButton, QLabel, 
+    QWidget, QHBoxLayout, QPushButton, QLabel,
     QToolButton, QMenu, QSizePolicy
 )
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QAction, QFont, QPalette, QColor, QPainter, QBrush
 from core.commands.executor import execute_command
+from ui.widgets.widget_registry import WidgetType, widget_registry
 
 
 class PaneHeaderBar(QWidget):
@@ -83,7 +84,7 @@ class PaneHeaderBar(QWidget):
         # Type menu button (optional)
         if self.show_type_menu:
             self.type_button = self.create_tool_button("≡", "Change widget type")
-            self.type_button.clicked.connect(lambda: execute_command("workbench.action.changePaneType", pane=self.parent()))
+            self.type_button.clicked.connect(self.show_widget_type_menu)
             layout.addWidget(self.type_button)
         
         # Split horizontal button
@@ -108,10 +109,152 @@ class PaneHeaderBar(QWidget):
         button.setText(text)
         button.setToolTip(tooltip)
         button.setFixedSize(16, 16)  # Smaller buttons
-        
+
         # Style will be applied by theme
-        
+
         return button
+
+    def show_widget_type_menu(self):
+        """Show menu with available widget types."""
+        menu = QMenu(self)
+
+        # Apply theme to menu
+        from services.service_locator import ServiceLocator
+        from services.theme_service import ThemeService
+
+        locator = ServiceLocator.get_instance()
+        theme_service = locator.get(ThemeService)
+        theme_provider = theme_service.get_theme_provider() if theme_service else None
+
+        if theme_provider:
+            colors = theme_provider._theme_service.get_colors()
+            menu.setStyleSheet(f"""
+                QMenu {{
+                    background-color: {colors.get("menu.background", "#252526")};
+                    color: {colors.get("menu.foreground", "#cccccc")};
+                    border: 1px solid {colors.get("menu.border", "#454545")};
+                    padding: 4px;
+                }}
+                QMenu::item {{
+                    padding: 4px 20px;
+                    border-radius: 2px;
+                }}
+                QMenu::item:selected {{
+                    background-color: {colors.get("menu.selectionBackground", "#094771")};
+                    color: {colors.get("menu.selectionForeground", "#ffffff")};
+                }}
+                QMenu::separator {{
+                    height: 1px;
+                    background-color: {colors.get("menu.separatorBackground", "#454545")};
+                    margin: 4px 10px;
+                }}
+            """)
+
+        # Group widget types by category
+        editor_types = []
+        terminal_types = []
+        view_types = []
+        special_types = []
+
+        # Get available widget types from registry
+        for widget_type in WidgetType:
+            config = widget_registry.get_config(widget_type)
+            if not config or not config.allow_type_change:
+                continue
+
+            # Categorize widget types
+            if widget_type in [WidgetType.TEXT_EDITOR, WidgetType.OUTPUT]:
+                editor_types.append(widget_type)
+            elif widget_type == WidgetType.TERMINAL:
+                terminal_types.append(widget_type)
+            elif widget_type in [WidgetType.EXPLORER, WidgetType.TABLE_VIEW,
+                               WidgetType.TREE_VIEW, WidgetType.IMAGE_VIEWER]:
+                view_types.append(widget_type)
+            elif widget_type in [WidgetType.SETTINGS, WidgetType.CUSTOM]:
+                special_types.append(widget_type)
+
+        # Add editor types
+        if editor_types:
+            menu.addSection("Editors")
+            for widget_type in editor_types:
+                action = QAction(self._get_widget_type_display_name(widget_type), self)
+                action.triggered.connect(
+                    lambda checked, wt=widget_type: self._change_widget_type(wt)
+                )
+                menu.addAction(action)
+
+        # Add terminal
+        if terminal_types:
+            menu.addSection("Terminal")
+            for widget_type in terminal_types:
+                action = QAction(self._get_widget_type_display_name(widget_type), self)
+                action.triggered.connect(
+                    lambda checked, wt=widget_type: self._change_widget_type(wt)
+                )
+                menu.addAction(action)
+
+        # Add view types
+        if view_types:
+            menu.addSection("Views")
+            for widget_type in view_types:
+                action = QAction(self._get_widget_type_display_name(widget_type), self)
+                action.triggered.connect(
+                    lambda checked, wt=widget_type: self._change_widget_type(wt)
+                )
+                menu.addAction(action)
+
+        # Add special types
+        if special_types:
+            menu.addSection("Special")
+            for widget_type in special_types:
+                action = QAction(self._get_widget_type_display_name(widget_type), self)
+                action.triggered.connect(
+                    lambda checked, wt=widget_type: self._change_widget_type(wt)
+                )
+                menu.addAction(action)
+
+        # Add Theme Editor as a special app widget
+        menu.addSection("App Widgets")
+
+        # Theme Editor
+        theme_editor_action = QAction("🎨 Theme Editor", self)
+        theme_editor_action.triggered.connect(
+            lambda: execute_command("theme.openEditor")
+        )
+        menu.addAction(theme_editor_action)
+
+        # Keyboard Shortcuts Editor (if available)
+        shortcuts_action = QAction("⌨️ Keyboard Shortcuts", self)
+        shortcuts_action.triggered.connect(
+            lambda: execute_command("settings.openKeyboardShortcuts")
+        )
+        menu.addAction(shortcuts_action)
+
+        # Show the menu at the button position
+        menu.exec_(self.type_button.mapToGlobal(self.type_button.rect().bottomLeft()))
+
+    def _get_widget_type_display_name(self, widget_type: WidgetType) -> str:
+        """Get display name for widget type."""
+        display_names = {
+            WidgetType.TEXT_EDITOR: "📝 Text Editor",
+            WidgetType.TERMINAL: "💻 Terminal",
+            WidgetType.OUTPUT: "📤 Output",
+            WidgetType.EXPLORER: "📁 Explorer",
+            WidgetType.TABLE_VIEW: "📊 Table View",
+            WidgetType.TREE_VIEW: "🌳 Tree View",
+            WidgetType.IMAGE_VIEWER: "🖼️ Image Viewer",
+            WidgetType.SETTINGS: "⚙️ Settings",
+            WidgetType.CUSTOM: "🔧 Custom Widget",
+            WidgetType.PLACEHOLDER: "⬜ Empty Pane"
+        }
+        return display_names.get(widget_type, widget_type.value.replace('_', ' ').title())
+
+    def _change_widget_type(self, widget_type: WidgetType):
+        """Change the widget type of the current pane."""
+        execute_command("workbench.action.changePaneType",
+                       pane=self.parent(),
+                       widget_type=widget_type)
+
     
     def set_pane_id(self, pane_id: str):
         """Update the pane ID display."""
