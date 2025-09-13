@@ -12,6 +12,32 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Register theme editor widget factory when module is imported
+try:
+    from ui.widgets.theme_editor_widget import ThemeEditorAppWidget
+    from ui.widgets.widget_registry import widget_registry, WidgetType, WidgetConfig
+
+    def create_theme_editor_widget(widget_id: str) -> ThemeEditorAppWidget:
+        return ThemeEditorAppWidget(widget_id)
+
+    # Register the factory under CUSTOM type
+    widget_registry.register_factory(WidgetType.CUSTOM, create_theme_editor_widget)
+
+    # Also register a config for CUSTOM type if not already present
+    if not widget_registry.get_config(WidgetType.CUSTOM):
+        config = WidgetConfig(
+            widget_class=None,  # Will use factory
+            factory=create_theme_editor_widget,
+            show_header=True,
+            allow_type_change=False,
+            default_content=""
+        )
+        widget_registry.register_widget_type(WidgetType.CUSTOM, config)
+
+    logger.debug("Registered theme editor widget factory")
+except ImportError as e:
+    logger.error(f"Failed to register theme editor widget: {e}")
+
 
 @command(
     id="theme.selectTheme",
@@ -276,6 +302,131 @@ def reset_theme_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     return select_theme_command(context, "vscode-dark")
+
+
+@command(
+    id="theme.openEditor",
+    title="Open Theme Editor",
+    category="Preferences",
+    description="Open the theme editor to customize themes",
+    shortcut="ctrl+k ctrl+m"
+)
+def open_theme_editor_command(context: CommandContext) -> CommandResult:
+    """Open the theme editor in a new pane."""
+    try:
+        from services.workspace_service import WorkspaceService
+        from ui.widgets.widget_registry import WidgetType
+        import uuid
+
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(
+                success=False,
+                error="Workspace service not available"
+            )
+
+        # Create unique widget ID
+        widget_id = f"theme_editor_{uuid.uuid4().hex[:8]}"
+
+        # Add theme editor widget to workspace using the registered factory
+        success = workspace_service.add_app_widget(
+            widget_type=WidgetType.CUSTOM,
+            widget_id=widget_id,
+            name="Theme Editor"
+        )
+
+        if success:
+            logger.info("Opened theme editor")
+            return CommandResult(
+                success=True,
+                value={'widget_id': widget_id}
+            )
+        else:
+            return CommandResult(
+                success=False,
+                error="Failed to add theme editor to workspace"
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to open theme editor: {e}")
+        return CommandResult(
+            success=False,
+            error=f"Failed to open theme editor: {e}"
+        )
+
+
+@command(
+    id="theme.importVSCode",
+    title="Import VSCode Theme...",
+    category="Preferences",
+    description="Import a theme from VSCode JSON format"
+)
+def import_vscode_theme_command(context: CommandContext) -> CommandResult:
+    """Import a VSCode theme."""
+    try:
+        from PySide6.QtWidgets import QFileDialog, QMessageBox
+        from pathlib import Path
+        from core.themes.importers import VSCodeThemeImporter
+
+        theme_service = context.get_service(ThemeService)
+        if not theme_service:
+            return CommandResult(
+                success=False,
+                error="Theme service not available"
+            )
+
+        # Get main window for dialog parent
+        ui_service = context.get_service(UIService)
+        parent = ui_service.get_main_window() if ui_service else None
+
+        # Show file dialog
+        file_path, _ = QFileDialog.getOpenFileName(
+            parent,
+            "Import VSCode Theme",
+            "",
+            "JSON Files (*.json);;All Files (*)"
+        )
+
+        if not file_path:
+            return CommandResult(success=False, error="No file selected")
+
+        # Import theme
+        theme = VSCodeThemeImporter.import_from_file(Path(file_path))
+        if not theme:
+            if parent:
+                QMessageBox.critical(
+                    parent,
+                    "Import Failed",
+                    "Failed to import VSCode theme. Please check the file format."
+                )
+            return CommandResult(
+                success=False,
+                error="Failed to import theme"
+            )
+
+        # Add to theme service
+        theme_service._themes[theme.id] = theme
+        theme_service.save_custom_theme(theme)
+
+        # Apply imported theme
+        theme_service.apply_theme(theme.id)
+
+        if parent:
+            QMessageBox.information(
+                parent,
+                "Import Successful",
+                f"Successfully imported theme: {theme.name}"
+            )
+
+        logger.info(f"Imported VSCode theme: {theme.id}")
+        return CommandResult(success=True, value={'theme_id': theme.id})
+
+    except Exception as e:
+        logger.error(f"Failed to import VSCode theme: {e}")
+        return CommandResult(
+            success=False,
+            error=f"Failed to import theme: {e}"
+        )
 
 
 # Register commands with the theme category

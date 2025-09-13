@@ -405,19 +405,142 @@ The build system automatically sets production mode:
 - Docker builds: `export VILOAPP_PRODUCTION=1` in entrypoint.sh
 - AppImage wrapper: Sets environment variable before launching
 
+## Theme Editor Implementation
+
+### Overview
+ViloxTerm includes a visual theme editor that allows users to create and modify themes in real-time. The editor is implemented as an AppWidget that integrates with the workspace system.
+
+### Architecture
+The theme editor follows a modular design with three main components:
+
+1. **ThemeEditorAppWidget** (`ui/widgets/theme_editor_widget.py`)
+   - Main editor interface with property categorization
+   - Theme selection, creation, and deletion
+   - Import/export functionality
+   - Real-time preview updates
+   - Infinite loop prevention using `_updating` flag
+
+2. **ColorPickerWidget** (`ui/widgets/color_picker_widget.py`)
+   - Compact color selection interface
+   - Hex input validation
+   - Color dialog with theme color suggestions
+   - Live preview during selection
+
+3. **ThemePreviewWidget** (`ui/widgets/theme_preview_widget.py`)
+   - Miniature IDE interface preview
+   - Real-time color updates
+   - Simulates all major UI components
+
+### Styling Approach
+
+#### Color Picker Styling
+```python
+# Color button with dynamic border
+self._color_button.setStyleSheet(f"""
+    QPushButton {{
+        background-color: {color_str};
+        border: 1px solid {border_color};
+        border-radius: 4px;
+    }}
+    QPushButton:hover {{
+        border: 2px solid #007acc;
+    }}
+""")
+```
+
+#### Preview Widget Styling
+The preview widget uses a combination of stylesheets and layouts to simulate the IDE interface:
+
+```python
+def _generate_stylesheet(self, colors: Dict[str, str]) -> str:
+    return f"""
+        QFrame#titleBar {{
+            background-color: {colors.get('titleBar.activeBackground', '#2d2d30')};
+        }}
+        QFrame#activityBar {{
+            background-color: {colors.get('activityBar.background', '#333333')};
+        }}
+        /* ... other component styles ... */
+    """
+```
+
+### Infinite Loop Prevention
+The theme editor prevents recursive updates when theme changes trigger other theme changes:
+
+```python
+def _load_theme(self, theme: Theme):
+    if self._updating:
+        return  # Prevent recursive updates
+    self._updating = True
+    try:
+        # Load theme properties
+        self._update_fields(theme)
+    finally:
+        self._updating = False
+```
+
+### Property Categorization
+Theme properties are organized into logical groups for easier navigation:
+
+- **Editor**: Background, foreground, cursor, selection
+- **Terminal**: Background, foreground, ANSI colors
+- **Activity Bar**: Background, foreground, icons
+- **Sidebar**: Background, foreground, sections
+- **Status Bar**: Background, foreground, items
+- **Title Bar**: Active/inactive states
+- **Tabs**: Active/inactive, hover states
+
+### VSCode Theme Import
+The theme editor supports importing VSCode-compatible themes:
+
+```python
+# Color mapping from VSCode to ViloxTerm
+VSCODE_TO_VILOX_MAP = {
+    "editor.background": "editor.background",
+    "terminal.background": "terminal.background",
+    "activityBar.background": "activityBar.background",
+    # ... extensive mapping
+}
+
+# Automatic color derivation for missing values
+def _derive_missing_colors(theme: Theme):
+    if "terminal.foreground" not in theme.colors:
+        theme.colors["terminal.foreground"] = theme.colors.get(
+            "editor.foreground", "#ffffff"
+        )
+```
+
+### Testing Considerations
+
+#### Unit Tests
+- Theme property categorization
+- Color picker value validation
+- VSCode theme import mapping
+- Preview widget color application
+
+#### GUI Tests
+- Theme editor opening and interaction
+- Color picker dialog handling
+- Live preview updates
+- Button state management
+- Infinite loop prevention
+
 ## Future Improvements
 
-1. **Light Theme Support**
-   - Create `vscode_theme_light.py` with light color palette
-   - Add theme switching logic to stylesheet generators
+1. **Light Theme Support** ✓
+   - Implemented through theme service
+   - Multiple built-in themes available
+   - Theme editor supports creating light themes
 
-2. **Custom Theme Support**
-   - Allow loading theme from JSON/YAML file
-   - Create theme editor UI
+2. **Custom Theme Support** ✓
+   - Visual theme editor implemented
+   - Import/export functionality
+   - VSCode theme compatibility
 
 3. **Performance Optimization**
-   - Cache compiled stylesheets
+   - Cache compiled stylesheets ✓
    - Batch repaint operations
+   - Lazy loading of theme properties
 
 4. **Accessibility**
    - High contrast theme option
@@ -428,6 +551,12 @@ The build system automatically sets production mode:
    - Optional debug overlay showing performance metrics
    - Configurable dev mode colors via settings
    - Git branch name in title bar
+
+6. **Theme Editor Enhancements**
+   - Undo/redo support for color changes
+   - Theme diff viewer
+   - Export to multiple formats
+   - Theme sharing marketplace integration
 
 ## References
 

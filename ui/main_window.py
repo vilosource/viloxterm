@@ -524,13 +524,27 @@ class MainWindow(QMainWindow):
 
         # View menu
         view_menu = menubar.addMenu("View")
-        
+
         # Theme selection action (now using new theme system)
         theme_action = QAction("Select Theme", self)
         # Shortcut handled by command system, not QAction
         theme_action.setToolTip("Select a color theme (Ctrl+K, Ctrl+T)")
         theme_action.triggered.connect(lambda: self.execute_command("theme.selectTheme"))
         view_menu.addAction(theme_action)
+
+        # Theme Editor action
+        theme_editor_action = QAction("Theme Editor...", self)
+        theme_editor_action.setToolTip("Open the theme editor to customize themes (Ctrl+K, Ctrl+M)")
+        theme_editor_action.triggered.connect(lambda: self.execute_command("theme.openEditor"))
+        view_menu.addAction(theme_editor_action)
+
+        view_menu.addSeparator()
+
+        # Import VSCode Theme action
+        import_vscode_theme_action = QAction("Import VSCode Theme...", self)
+        import_vscode_theme_action.setToolTip("Import a theme from VSCode JSON format")
+        import_vscode_theme_action.triggered.connect(lambda: self.execute_command("theme.importVSCode"))
+        view_menu.addAction(import_vscode_theme_action)
         
         # Sidebar toggle action (now using commands)
         sidebar_action = QAction("Toggle Sidebar", self)

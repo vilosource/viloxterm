@@ -150,7 +150,9 @@ class Theme:
 ├── __init__.py              # Package initialization
 ├── theme.py                 # Theme data model and ThemeInfo
 ├── schema.py                # Theme validation schema
-└── constants.py             # Theme color key constants
+├── constants.py             # Theme color key constants
+├── property_categories.py   # Theme property categorization
+└── importers.py             # Theme import/export functionality
 
 /services/
 └── theme_service.py         # Theme business logic service
@@ -159,6 +161,11 @@ class Theme:
 ├── __init__.py              # Package initialization
 ├── theme_provider.py        # UI bridge for theme system
 └── stylesheet_generator.py  # Dynamic stylesheet generation
+
+/ui/widgets/
+├── theme_editor_widget.py   # Visual theme editor widget
+├── theme_preview_widget.py  # Live theme preview widget
+└── color_picker_widget.py   # Color picker for theme editing
 
 /resources/themes/builtin/
 ├── vscode-dark.json         # VSCode Dark+ theme
@@ -227,6 +234,91 @@ def apply_theme(self):
         self.setStyleSheet(stylesheet)
 ```
 
+## Theme Editor
+
+### Overview
+
+The Theme Editor provides a visual interface for creating, modifying, and testing themes in real-time. It's implemented as an AppWidget that integrates with the workspace system.
+
+### Components
+
+#### ThemeEditorAppWidget (`ui/widgets/theme_editor_widget.py`)
+
+**Purpose**: Main theme editor interface
+
+**Features**:
+- Visual color editing with live preview
+- Theme selection and switching
+- Import/export functionality
+- Property categorization and search
+- Save and apply changes
+- Infinite loop prevention for recursive updates
+
+**Key Methods**:
+```python
+def _load_theme(theme: Theme)  # Load theme with update protection
+def _apply_theme() -> bool      # Apply changes to application
+def _save_theme() -> bool        # Save theme to disk
+def _import_vscode_theme()      # Import VSCode theme
+```
+
+#### ThemePreviewWidget (`ui/widgets/theme_preview_widget.py`)
+
+**Purpose**: Live preview of theme changes
+
+**Features**:
+- Miniature IDE interface preview
+- Real-time color updates
+- Activity bar, sidebar, editor simulation
+- Terminal and status bar preview
+
+#### ColorPickerWidget (`ui/widgets/color_picker_widget.py`)
+
+**Purpose**: Color selection interface
+
+**Features**:
+- Color button with preview
+- Hex input validation
+- Color dialog integration
+- Live preview during selection
+- Theme color suggestions
+
+### Theme Property Categories
+
+The `ThemePropertyCategories` class organizes theme properties into logical groups:
+
+- **Editor**: Background, foreground, cursor, selection
+- **Terminal**: Background, foreground, ANSI colors
+- **Activity Bar**: Background, foreground, icons
+- **Sidebar**: Background, foreground, sections
+- **Status Bar**: Background, foreground, items
+- **Title Bar**: Active/inactive states
+- **Tabs**: Active/inactive, hover states
+- **Input**: Background, foreground, border
+- **Buttons**: Primary, secondary, hover states
+- **Scrollbar**: Track, thumb, hover states
+
+### Theme Importers
+
+#### VSCodeThemeImporter (`core/themes/importers.py`)
+
+**Purpose**: Import VSCode-compatible themes
+
+**Features**:
+- Color mapping from VSCode to ViloxTerm
+- Automatic color derivation for missing values
+- Brightness adjustment algorithms
+- Theme validation and sanitization
+
+**Mapping Strategy**:
+```python
+VSCODE_TO_VILOX_MAP = {
+    "editor.background": "editor.background",
+    "terminal.background": "terminal.background",
+    # ... extensive mapping dictionary
+}
+```
+
 ## Command System Integration
 
 ### Available Commands
@@ -239,6 +331,8 @@ def apply_theme(self):
 - `theme.exportTheme` - Export current theme to file
 - `theme.importTheme` - Import theme from file
 - `theme.resetToDefault` - Reset to default theme
+- `theme.openEditor` - Open visual theme editor
+- `theme.importVSCode` - Import VSCode theme file
 
 ### Command Pattern
 
@@ -291,18 +385,28 @@ def select_theme_command(context: CommandContext) -> CommandResult:
 - Color resolution and inheritance
 - Service functionality
 - Command execution
+- Theme property categorization
+- VSCode theme importing
+- Color picker functionality
+- Theme preview widget
 
 ### Integration Tests
 - Service interaction
 - Signal propagation
 - Settings persistence
 - Theme switching workflows
+- Theme editor workspace integration
+- Import/export functionality
 
 ### GUI Tests
 - Widget theme updates
 - Visual regression testing
 - Theme persistence across sessions
 - Command palette integration
+- Theme editor opening and interaction
+- Color picker dialog handling
+- Live preview updates
+- Infinite loop prevention
 
 ## Extension Points
 
