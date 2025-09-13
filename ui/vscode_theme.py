@@ -59,12 +59,14 @@ PANEL_BORDER = "#3c3c3c"
 PANEL_TITLE_ACTIVE_BORDER = "#007acc"
 PANEL_TITLE_ACTIVE_FOREGROUND = "#e7e7e7"
 PANEL_TITLE_INACTIVE_FOREGROUND = "#e7e7e799"  # 60% opacity
+PANEL_FOREGROUND = "#d4d4d4"  # Panel text color
 
 # Input controls
 INPUT_BACKGROUND = "#3c3c3c"
 INPUT_FOREGROUND = "#cccccc"
 INPUT_BORDER = "#3c3c3c"
 INPUT_PLACEHOLDER = "#a6a6a6"
+FOCUS_BORDER = "#007acc"  # Border color when focused
 
 # Button colors
 BUTTON_BACKGROUND = "#0e639c"
@@ -72,6 +74,7 @@ BUTTON_FOREGROUND = "#ffffff"
 BUTTON_HOVER_BACKGROUND = "#1177bb"
 BUTTON_SECONDARY_BACKGROUND = "#3a3d41"
 BUTTON_SECONDARY_FOREGROUND = "#cccccc"
+BUTTON_BORDER = "#0e639c"  # Button border color
 
 # Dropdown colors
 DROPDOWN_BACKGROUND = "#3c3c3c"
@@ -344,6 +347,193 @@ def get_main_window_stylesheet():
         }}
         QMenuBar::item:pressed {{
             background-color: {MENU_BACKGROUND};
+        }}
+    """
+
+def get_settings_widget_stylesheet():
+    """Get stylesheet for settings/configuration widgets."""
+    return f"""
+        /* Main container */
+        QWidget {{
+            background-color: {EDITOR_BACKGROUND};
+            color: {EDITOR_FOREGROUND};
+        }}
+
+        /* Tree/Table widgets for displaying settings */
+        QTreeWidget, QTableWidget {{
+            background-color: {EDITOR_BACKGROUND};
+            color: {EDITOR_FOREGROUND};
+            border: 1px solid {PANEL_BORDER};
+            outline: none;
+            font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+            font-size: 13px;
+            alternate-background-color: {EDITOR_BACKGROUND};  /* Disable alternating colors */
+        }}
+
+        QTreeWidget::item, QTableWidget::item {{
+            padding: 6px;
+            border: none;
+            background-color: transparent;
+        }}
+
+        QTreeWidget::item:alternate {{
+            background-color: {EDITOR_BACKGROUND};  /* Ensure no alternating colors */
+        }}
+
+        QTreeWidget::item:hover, QTableWidget::item:hover {{
+            background-color: {LIST_HOVER_BACKGROUND};
+        }}
+
+        QTreeWidget::item:selected, QTableWidget::item:selected {{
+            background-color: {LIST_ACTIVE_SELECTION_BACKGROUND};
+            color: {LIST_ACTIVE_SELECTION_FOREGROUND};
+        }}
+
+        /* Headers */
+        QHeaderView::section {{
+            background-color: {PANEL_BACKGROUND};
+            color: {PANEL_FOREGROUND};
+            border: none;
+            border-bottom: 1px solid {PANEL_BORDER};
+            padding: 8px;
+            font-weight: 600;
+        }}
+
+        /* Line edits for input */
+        QLineEdit {{
+            background-color: {INPUT_BACKGROUND};
+            color: {INPUT_FOREGROUND};
+            border: 1px solid {INPUT_BORDER};
+            border-radius: 2px;
+            padding: 4px 8px;
+            font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+            font-size: 13px;
+        }}
+
+        QLineEdit:focus {{
+            border-color: {FOCUS_BORDER};
+            outline: none;
+        }}
+
+        QLineEdit:disabled {{
+            background-color: {SIDEBAR_BACKGROUND};
+            color: {TAB_INACTIVE_FOREGROUND};
+        }}
+
+        /* Buttons */
+        QPushButton {{
+            background-color: {BUTTON_BACKGROUND};
+            color: {BUTTON_FOREGROUND};
+            border: 1px solid {BUTTON_BORDER};
+            border-radius: 2px;
+            padding: 6px 14px;
+            font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+        }}
+
+        QPushButton:hover {{
+            background-color: {BUTTON_HOVER_BACKGROUND};
+        }}
+
+        QPushButton:pressed {{
+            background-color: {BUTTON_SECONDARY_BACKGROUND};
+        }}
+
+        QPushButton:disabled {{
+            background-color: {SIDEBAR_BACKGROUND};
+            color: {TAB_INACTIVE_FOREGROUND};
+            border-color: {PANEL_BORDER};
+        }}
+
+        /* Labels */
+        QLabel {{
+            color: {EDITOR_FOREGROUND};
+            font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+            font-size: 13px;
+        }}
+
+        /* ComboBox */
+        QComboBox {{
+            background-color: {INPUT_BACKGROUND};
+            color: {INPUT_FOREGROUND};
+            border: 1px solid {INPUT_BORDER};
+            border-radius: 2px;
+            padding: 4px 8px;
+            font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+            font-size: 13px;
+        }}
+
+        QComboBox:focus {{
+            border-color: {FOCUS_BORDER};
+        }}
+
+        QComboBox::drop-down {{
+            border: none;
+            width: 20px;
+        }}
+
+        QComboBox::down-arrow {{
+            image: none;
+            border-style: solid;
+            border-width: 4px;
+            border-color: transparent;
+            border-top-color: {INPUT_FOREGROUND};
+            margin-top: 4px;
+        }}
+
+        QComboBox QAbstractItemView {{
+            background-color: {DROPDOWN_BACKGROUND};
+            color: {DROPDOWN_FOREGROUND};
+            border: 1px solid {INPUT_BORDER};
+            selection-background-color: {LIST_ACTIVE_SELECTION_BACKGROUND};
+            selection-color: {LIST_ACTIVE_SELECTION_FOREGROUND};
+        }}
+
+        /* Scroll bars */
+        QScrollBar:vertical {{
+            background-color: {EDITOR_BACKGROUND};
+            width: 14px;
+            border: none;
+        }}
+
+        QScrollBar::handle:vertical {{
+            background-color: {SCROLLBAR_SLIDER_BACKGROUND};
+            border-radius: 7px;
+            min-height: 20px;
+        }}
+
+        QScrollBar::handle:vertical:hover {{
+            background-color: {SCROLLBAR_SLIDER_HOVER_BACKGROUND};
+        }}
+
+        QScrollBar::handle:vertical:pressed {{
+            background-color: {SCROLLBAR_SLIDER_ACTIVE_BACKGROUND};
+        }}
+
+        QScrollBar:horizontal {{
+            background-color: {EDITOR_BACKGROUND};
+            height: 14px;
+            border: none;
+        }}
+
+        QScrollBar::handle:horizontal {{
+            background-color: {SCROLLBAR_SLIDER_BACKGROUND};
+            border-radius: 7px;
+            min-width: 20px;
+        }}
+
+        QScrollBar::handle:horizontal:hover {{
+            background-color: {SCROLLBAR_SLIDER_HOVER_BACKGROUND};
+        }}
+
+        QScrollBar::handle:horizontal:pressed {{
+            background-color: {SCROLLBAR_SLIDER_ACTIVE_BACKGROUND};
+        }}
+
+        QScrollBar::add-line, QScrollBar::sub-line {{
+            border: none;
+            background: none;
         }}
     """
 

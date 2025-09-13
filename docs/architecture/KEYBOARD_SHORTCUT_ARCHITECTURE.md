@@ -765,8 +765,70 @@ When implementing a new shortcut:
 - JavaScript handlers should return quickly
 - Use logging judiciously in production
 
+## Keyboard Shortcut Customization
+
+### User Configuration Interface
+
+The application provides a comprehensive keyboard shortcut configuration system accessible through File → Keyboard Shortcuts... (Ctrl+K, Ctrl+S).
+
+#### ShortcutConfigAppWidget
+
+The configuration interface is implemented as an AppWidget (`ui/widgets/shortcut_config_app_widget.py`) that provides:
+
+- **Complete shortcut listing**: All commands and their current shortcuts displayed in a categorized tree
+- **Real-time recording**: Click any shortcut field to record new key combinations
+- **Conflict detection**: Automatic detection and highlighting of conflicting shortcuts
+- **Search and filtering**: Find shortcuts by command name or category
+- **Reset functionality**: Reset individual shortcuts or all shortcuts to defaults
+- **Persistence**: Changes are immediately saved to QSettings and applied to the keyboard service
+
+#### Configuration Flow
+
+```
+User Opens Config → ShortcutConfigAppWidget → Records New Shortcut →
+Validates for Conflicts → Updates SettingsService → Re-registers in KeyboardService
+```
+
+#### Implementation Details
+
+The shortcut configuration system integrates with the existing architecture:
+
+1. **Command Integration**: Opened via `settings.openKeyboardShortcuts` command
+2. **Settings Persistence**: Uses `SettingsService.set_keyboard_shortcut()`
+3. **Live Updates**: Re-registers shortcuts in `KeyboardService` immediately
+4. **AppWidget Pattern**: Follows the same lifecycle as terminal/editor widgets
+
+#### Shortcut Recording
+
+The `ShortcutRecorder` widget provides an intuitive recording interface:
+
+- Click to start recording (visual feedback with border highlight)
+- Press key combination (automatically captures modifiers + key)
+- Auto-stops recording after valid sequence
+- Escape key cancels recording
+- Normalizes format (e.g., "Ctrl+N" → "ctrl+n")
+
+#### Conflict Resolution
+
+Real-time conflict detection ensures shortcut uniqueness:
+
+- Highlights conflicting commands in red
+- Shows warning panel with conflict details
+- Allows user to resolve conflicts before applying
+- Option to force override with confirmation
+
+### Architecture Integration
+
+The customization system extends the existing keyboard architecture without disrupting core functionality:
+
+- **Non-intrusive**: Existing shortcuts continue to work during configuration
+- **Backward compatible**: Default shortcuts preserved if no customization
+- **Service integration**: Leverages existing KeyboardService and SettingsService
+- **Command pattern**: Follows established command execution patterns
+
 ## References
 
 - Qt Event System: https://doc.qt.io/qt-6/eventsandfilters.html
 - xterm.js API: https://xtermjs.org/docs/api/terminal/
 - PySide6 QAction: https://doc.qt.io/qtforpython-6/PySide6/QtGui/QAction.html
+- [Keyboard Shortcut Configuration Guide](SHORTCUT_CONFIGURATION.md)

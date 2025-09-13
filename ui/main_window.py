@@ -499,7 +499,17 @@ class MainWindow(QMainWindow):
         new_terminal_tab_action.setToolTip("Create a new terminal tab (Ctrl+`)")
         new_terminal_tab_action.triggered.connect(lambda: self.execute_command("file.newTerminalTab"))
         file_menu.addAction(new_terminal_tab_action)
-        
+
+        file_menu.addSeparator()
+
+        # Keyboard Shortcuts action (now using commands)
+        keyboard_shortcuts_action = QAction("Keyboard Shortcuts...", self)
+        keyboard_shortcuts_action.setToolTip("Configure keyboard shortcuts (Ctrl+K, Ctrl+S)")
+        keyboard_shortcuts_action.triggered.connect(
+            lambda: self.execute_command("settings.openKeyboardShortcuts")
+        )
+        file_menu.addAction(keyboard_shortcuts_action)
+
         file_menu.addSeparator()
         
         # View menu

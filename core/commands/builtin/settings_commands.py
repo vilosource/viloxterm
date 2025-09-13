@@ -11,6 +11,24 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Register the shortcut configuration widget factory at module load time
+def _register_shortcut_config_widget():
+    """Register the shortcut configuration widget factory."""
+    try:
+        from ui.widgets.shortcut_config_app_widget import ShortcutConfigAppWidget
+        from ui.widgets.widget_registry import widget_registry, WidgetType
+
+        def create_shortcut_config_widget(widget_id: str) -> ShortcutConfigAppWidget:
+            return ShortcutConfigAppWidget(widget_id)
+
+        widget_registry.register_factory(WidgetType.SETTINGS, create_shortcut_config_widget)
+        logger.debug("Registered shortcut configuration widget factory")
+    except ImportError as e:
+        logger.error(f"Failed to register shortcut config widget: {e}")
+
+# Register the factory when this module is imported
+_register_shortcut_config_widget()
+
 
 @command(
     id="settings.openSettings", 
@@ -267,11 +285,47 @@ def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
 
 
 @command(
+    id="settings.openKeyboardShortcuts",
+    title="Keyboard Shortcuts...",
+    category="Settings",
+    description="Open keyboard shortcuts configuration",
+    shortcut="ctrl+k ctrl+s",  # This is a chord, not conflicting with ctrl+s
+    icon="keyboard"
+)
+def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
+    """Open keyboard shortcuts configuration widget."""
+    try:
+        from services.workspace_service import WorkspaceService
+        from ui.widgets.widget_registry import WidgetType
+        import uuid
+
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
+
+        # Create and add shortcut configuration widget in a new tab
+        # The factory is already registered at module load time
+        widget_id = f"shortcuts_config_{uuid.uuid4().hex[:8]}"
+        success = workspace_service.add_app_widget(WidgetType.SETTINGS, widget_id, "Keyboard Shortcuts")
+
+        if success:
+            return CommandResult(
+                success=True,
+                value={'widget_id': widget_id, 'message': 'Opened keyboard shortcuts configuration'}
+            )
+        else:
+            return CommandResult(success=False, error="Failed to create shortcuts configuration tab")
+
+    except Exception as e:
+        logger.error(f"Failed to open keyboard shortcuts configuration: {e}")
+        return CommandResult(success=False, error=str(e))
+
+
+@command(
     id="settings.showKeyboardShortcuts",
     title="Show Keyboard Shortcuts",
     category="Settings",
     description="Display all keyboard shortcuts",
-    shortcut="ctrl+k ctrl+s",  # This is a chord, not conflicting with ctrl+s
     icon="keyboard"
 )
 def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
@@ -280,13 +334,13 @@ def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
         settings_service = context.get_service(SettingsService)
         if not settings_service:
             return CommandResult(success=False, error="SettingsService not available")
-        
+
         # Get keyboard shortcuts
         shortcuts = settings_service.get_keyboard_shortcuts()
-        
+
         # Filter out empty shortcuts and sort
         active_shortcuts = {cmd: shortcut for cmd, shortcut in shortcuts.items() if shortcut.strip()}
-        
+
         # Show in status bar
         if context.main_window and hasattr(context.main_window, 'status_bar'):
             total_shortcuts = len(shortcuts)
@@ -294,9 +348,9 @@ def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
             context.main_window.status_bar.set_message(
                 f"Shortcuts: {active_count} active of {total_shortcuts} total", 3000
             )
-        
+
         return CommandResult(
-            success=True, 
+            success=True,
             value={
                 'shortcuts': shortcuts,
                 'active_shortcuts': active_shortcuts,
@@ -304,7 +358,7 @@ def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
                 'active': len(active_shortcuts)
             }
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to show keyboard shortcuts: {e}")
         return CommandResult(success=False, error=str(e))

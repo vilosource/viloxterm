@@ -308,9 +308,52 @@ class Workspace(QWidget):
         
         # Emit signal
         self.tab_added.emit(name)
-        
+
         return index
-    
+
+    def add_app_widget_tab(self, widget_type, widget_id: str, name: str = None) -> bool:
+        """Add a tab for a generic app widget."""
+        try:
+            if not name:
+                name = f"{widget_type.value.title()} Widget"
+
+            # Create SplitPaneWidget with the specified widget type
+            split_widget = SplitPaneWidget(
+                initial_widget_type=widget_type
+            )
+
+            # Connect signals
+            split_widget.pane_added.connect(
+                lambda pane_id: self.on_pane_added(name, pane_id)
+            )
+            split_widget.pane_removed.connect(
+                lambda pane_id: self.on_pane_removed(name, pane_id)
+            )
+            split_widget.active_pane_changed.connect(
+                lambda pane_id: self.active_pane_changed.emit(name, pane_id)
+            )
+
+            # Add to tab widget
+            index = self.tab_widget.addTab(split_widget, name)
+
+            # Set up custom close button
+            self._setup_tab_close_button(index)
+
+            # Store tab data
+            self.tabs[index] = WorkspaceTab(name, split_widget)
+
+            # Switch to new tab
+            self.tab_widget.setCurrentIndex(index)
+
+            # Emit signal
+            self.tab_added.emit(name)
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to add app widget tab: {e}")
+            return False
+
     def close_tab(self, index: int, show_message=True):
         """Close a tab."""
         # Don't close the last tab

@@ -95,16 +95,17 @@ class SplitPaneModel:
     def create_app_widget(self, widget_type: WidgetType, widget_id: str) -> AppWidget:
         """
         Factory method to create AppWidgets.
-        
+
         Args:
             widget_type: Type of widget to create
             widget_id: Unique ID for the widget
-            
+
         Returns:
             New AppWidget instance
         """
         logger.info(f"Creating AppWidget: type={widget_type}, id={widget_id}")
-        
+
+        # Special handling for terminal (needs signal connection)
         if widget_type == WidgetType.TERMINAL:
             terminal_widget = TerminalAppWidget(widget_id)
             # Connect the terminal's pane close request signal to our handler
@@ -112,12 +113,32 @@ class SplitPaneModel:
                 lambda: self.on_terminal_close_requested(widget_id)
             )
             return terminal_widget
-        elif widget_type == WidgetType.TEXT_EDITOR:
+
+        # Check if widget registry has a factory for this type
+        from ui.widgets.widget_registry import widget_registry
+        config = widget_registry.get_config(widget_type)
+
+        if config and config.factory:
+            # Use factory from registry
+            try:
+                logger.debug(f"Using factory from registry for {widget_type}")
+                widget = config.factory(widget_id)
+                if isinstance(widget, AppWidget):
+                    return widget
+                # If factory returns a QWidget, we might need to wrap it
+                # For now, log an error as factories should return AppWidget
+                logger.error(f"Factory for {widget_type} didn't return an AppWidget")
+            except Exception as e:
+                logger.error(f"Factory failed for {widget_type}: {e}")
+
+        # Fallback to built-in types
+        if widget_type == WidgetType.TEXT_EDITOR:
             return EditorAppWidget(widget_id)
         elif widget_type == WidgetType.PLACEHOLDER:
             return PlaceholderAppWidget(widget_id, widget_type)
         else:
-            # Fallback for any other type
+            # Default fallback
+            logger.warning(f"No handler for widget type {widget_type}, using placeholder")
             return PlaceholderAppWidget(widget_id, widget_type)
             
     def set_terminal_close_callback(self, callback: Callable[[str], None]):

@@ -141,6 +141,47 @@ class WorkspaceService(Service):
         
         logger.info(f"Added terminal tab '{name}' at index {index}")
         return index
+
+    def add_app_widget(self, widget_type, widget_id: str, name: Optional[str] = None) -> bool:
+        """
+        Add a generic app widget tab.
+
+        Args:
+            widget_type: The WidgetType of the widget to add
+            widget_id: Unique ID for the widget
+            name: Optional tab name
+
+        Returns:
+            bool: True if successfully added, False otherwise
+        """
+        if not self._workspace:
+            logger.error("Cannot add app widget: workspace not available")
+            return False
+
+        try:
+            # Add the generic app widget tab
+            success = self._workspace.add_app_widget_tab(widget_type, widget_id, name)
+
+            if success:
+                # Notify observers
+                self.notify('tab_added', {
+                    'type': str(widget_type.value),
+                    'widget_id': widget_id,
+                    'name': name
+                })
+
+                # Update context
+                from core.context.manager import context_manager
+                context_manager.set('workbench.tabs.count', self.get_tab_count())
+                context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
+
+                logger.info(f"Added app widget '{name}' (type: {widget_type}) with id {widget_id}")
+
+            return success
+
+        except Exception as e:
+            logger.error(f"Failed to add app widget: {e}")
+            return False
     
     def close_tab(self, index: Optional[int] = None) -> bool:
         """

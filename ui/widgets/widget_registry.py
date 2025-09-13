@@ -160,6 +160,7 @@ class WidgetType(Enum):
     TABLE_VIEW = "table_view"
     TREE_VIEW = "tree_view"
     WEB_VIEW = "web_view"
+    SETTINGS = "settings"
     CUSTOM = "custom"
     PLACEHOLDER = "placeholder"
 
@@ -295,6 +296,19 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
         deserializer=deserialize_label
     ),
     
+    WidgetType.SETTINGS: WidgetConfig(
+        widget_class=QWidget,  # Will be overridden by factory
+        factory=None,  # Will be set when creating shortcut config widget
+        preserve_context_menu=False,
+        show_header=True,
+        allow_type_change=False,  # Settings widgets are special-purpose
+        can_be_closed=True,
+        can_be_split=False,  # Settings should not be split
+        min_width=600,
+        min_height=400,
+        stylesheet=""  # Settings widget handles its own styling
+    ),
+
     WidgetType.PLACEHOLDER: WidgetConfig(
         widget_class=QLabel,
         preserve_context_menu=False,
