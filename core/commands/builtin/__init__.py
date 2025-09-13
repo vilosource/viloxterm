@@ -18,8 +18,9 @@ from core.commands.builtin.terminal_commands import register_terminal_commands
 from core.commands.builtin.tab_commands import register_tab_commands
 from core.commands.builtin.pane_commands import register_pane_commands
 from core.commands.builtin.sidebar_commands import register_sidebar_commands
-# Import UI commands to trigger their decorators
+# Import UI and window commands to trigger their decorators
 import core.commands.builtin.ui_commands
+import core.commands.builtin.window_commands
 
 def register_all_builtin_commands():
     """Register all built-in commands with the command registry."""

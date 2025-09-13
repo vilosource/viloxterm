@@ -2,8 +2,16 @@
 
 import warnings
 import pytest
+import os
+import sys
+
+# Set test mode environment variable BEFORE importing any app modules
+os.environ['VILOAPP_TEST_MODE'] = '1'
+os.environ['VILOAPP_SHOW_CONFIRMATIONS'] = '0'
+
 from PySide6.QtWidgets import QApplication
 from ui.main_window import MainWindow
+from core.app_config import app_config
 
 
 def pytest_configure(config):
@@ -28,11 +36,23 @@ def pytest_configure(config):
 @pytest.fixture(scope="session")
 def qapp():
     """Create QApplication instance for entire test session."""
+    # Ensure test mode is enabled
+    app_config.set_test_mode(True)
+    app_config.set_show_confirmations(False)
+
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
     yield app
     app.quit()
+
+
+@pytest.fixture(autouse=True)
+def ensure_test_mode():
+    """Auto-use fixture that ensures test mode is enabled for all tests."""
+    app_config.set_test_mode(True)
+    app_config.set_show_confirmations(False)
+    yield
 
 
 @pytest.fixture

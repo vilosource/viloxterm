@@ -36,7 +36,9 @@ class UIService(Service):
         self._menu_bar_visible = True
         self._current_theme = "dark"
         self._sidebar_view = "explorer"
-        self._settings = QSettings("ViloxTerm", "UI")
+        # Use the same settings as main.py for consistency
+        from core.settings.config import get_settings
+        self._settings = get_settings("ViloxTerm", "ViloxTerm")
         
     def initialize(self, context: Dict[str, Any]) -> None:
         """Initialize the service with application context."""
@@ -62,6 +64,49 @@ class UIService(Service):
     def get_main_window(self):
         """Get the main window instance."""
         return self._main_window
+
+    def is_frameless_mode_enabled(self) -> bool:
+        """Check if frameless mode is enabled."""
+        return self._settings.value("UI/FramelessMode", False, type=bool)
+
+    def toggle_frameless_mode(self) -> bool:
+        """
+        Toggle frameless window mode.
+        Note: Requires application restart to take effect.
+
+        Returns:
+            True if frameless mode is now enabled, False if disabled
+        """
+        current = self.is_frameless_mode_enabled()
+        new_mode = not current
+        self._settings.setValue("UI/FramelessMode", new_mode)
+        self._settings.sync()
+
+        # Log for debugging
+        logger.info(f"Toggled frameless mode from {current} to {new_mode}")
+        logger.info(f"Settings file: {self._settings.fileName()}")
+        logger.info(f"Verified setting value: {self._settings.value('UI/FramelessMode')}")
+
+        return new_mode
+
+    def get_window_state(self) -> str:
+        """
+        Get the current window state.
+
+        Returns:
+            'normal', 'minimized', 'maximized', or 'fullscreen'
+        """
+        if not self._main_window:
+            return 'normal'
+
+        if self._main_window.isFullScreen():
+            return 'fullscreen'
+        elif self._main_window.isMaximized():
+            return 'maximized'
+        elif self._main_window.isMinimized():
+            return 'minimized'
+        else:
+            return 'normal'
 
     # ============= Theme Management =============
     

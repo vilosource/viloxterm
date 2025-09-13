@@ -118,7 +118,8 @@ UI_SETTINGS = {
     "word_wrap": False,
     "line_numbers": True,
     "minimap_enabled": False,
-    "breadcrumbs_enabled": True
+    "breadcrumbs_enabled": True,
+    "frameless_mode": False  # Enable frameless window mode for more screen space
 }
 
 # ============= Workspace Settings =============

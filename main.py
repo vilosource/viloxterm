@@ -32,6 +32,7 @@ except Exception as e:
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt, QCoreApplication, QSettings
 from ui.main_window import MainWindow
+from ui.frameless_window import FramelessWindow
 
 # Start terminal server early to ensure it's ready before any widgets are created
 from ui.terminal.terminal_server import terminal_server
@@ -57,10 +58,15 @@ except ImportError as e:
 
 def main():
     """Initialize and run the application."""
+    # Initialize app configuration (command line args and env vars)
+    from core.app_config import app_config
+    app_config.parse_args()
+    logger.info(f"App configuration: {app_config}")
+
     # Initialize configurable settings system FIRST
     from core.settings.config import initialize_settings_from_cli, get_settings, get_settings_info
     settings_config = initialize_settings_from_cli()
-    
+
     # Log settings information
     settings_info = get_settings_info()
     logger.info(f"Settings location: {settings_info['location']}")
@@ -82,8 +88,28 @@ def main():
     # Create application
     app = QApplication(sys.argv)
     
-    # Create main window
-    window = MainWindow()
+    # Check if frameless mode is enabled
+    settings = get_settings("ViloxTerm", "ViloxTerm")
+    frameless_mode = settings.value("UI/FramelessMode", False, type=bool)
+
+    # Log the decision for debugging
+    logger.info(f"Frameless mode setting: {frameless_mode}")
+    logger.info(f"Settings file location: {settings.fileName()}")
+
+    # Debug: List all keys to see what's stored
+    all_keys = settings.allKeys()
+    if "UI/FramelessMode" in all_keys:
+        logger.info(f"UI/FramelessMode found in settings with value: {settings.value('UI/FramelessMode')}")
+    else:
+        logger.info("UI/FramelessMode not found in settings, using default (False)")
+
+    # Create appropriate window based on preference
+    if frameless_mode:
+        logger.info("Creating FramelessWindow")
+        window = FramelessWindow()
+    else:
+        logger.info("Creating MainWindow")
+        window = MainWindow()
     
     window.show()
     

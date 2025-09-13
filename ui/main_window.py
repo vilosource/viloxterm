@@ -557,6 +557,15 @@ class MainWindow(QMainWindow):
         
         view_menu.addSeparator()
 
+        # Frameless mode toggle
+        frameless_action = QAction("Frameless Mode", self)
+        frameless_action.setCheckable(True)
+        frameless_action.setToolTip("Use frameless window for maximum screen space (requires restart)")
+        settings = QSettings("ViloxTerm", "ViloxTerm")
+        frameless_action.setChecked(settings.value("UI/FramelessMode", False, type=bool))
+        frameless_action.triggered.connect(lambda: self.execute_command("window.toggleFrameless"))
+        view_menu.addAction(frameless_action)
+
         # Debug menu
         debug_menu = menubar.addMenu("Debug")
         
