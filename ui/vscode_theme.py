@@ -308,8 +308,18 @@ def get_status_bar_stylesheet():
         }}
     """
 
-def get_main_window_stylesheet():
-    """Get complete stylesheet for main window."""
+def get_main_window_stylesheet(dev_mode: bool = False):
+    """
+    Get complete stylesheet for main window.
+
+    Args:
+        dev_mode: If True, applies red background to menu bar to indicate development mode
+    """
+    # Only change the menu bar color in dev mode for visual distinction
+    menu_bar_bg = "#8B0000" if dev_mode else TITLE_BAR_ACTIVE_BACKGROUND  # Dark red for dev mode
+    menu_bar_fg = "#FFFFFF" if dev_mode else TITLE_BAR_ACTIVE_FOREGROUND  # White text for contrast
+    menu_bar_hover = "#A52A2A" if dev_mode else BUTTON_SECONDARY_BACKGROUND  # Lighter red on hover
+
     return f"""
         QMainWindow {{
             background-color: {EDITOR_BACKGROUND};
@@ -334,8 +344,8 @@ def get_main_window_stylesheet():
             background-color: {BUTTON_BACKGROUND};
         }}
         QMenuBar {{
-            background-color: {TITLE_BAR_ACTIVE_BACKGROUND};
-            color: {TITLE_BAR_ACTIVE_FOREGROUND};
+            background-color: {menu_bar_bg};
+            color: {menu_bar_fg};
             border: none;
         }}
         QMenuBar::item {{
@@ -343,7 +353,7 @@ def get_main_window_stylesheet():
             background-color: transparent;
         }}
         QMenuBar::item:selected {{
-            background-color: {BUTTON_SECONDARY_BACKGROUND};
+            background-color: {menu_bar_hover};
         }}
         QMenuBar::item:pressed {{
             background-color: {MENU_BACKGROUND};

@@ -35,14 +35,50 @@ class AppConfig:
     def __init__(self):
         """Initialize configuration with defaults."""
         if not self._initialized:
+            # Check if running from a built executable (production mode)
+            is_production = self._is_production_build()
+
             self._config: Dict[str, Any] = {
                 'show_confirmations': True,  # Show confirmation dialogs
                 'test_mode': False,          # Running in test mode
                 'debug_mode': False,         # Debug logging enabled
-                'dev_mode': False,           # Development mode features
+                'dev_mode': not is_production,  # Dev mode by default unless production build
+                'production_mode': is_production,  # Explicitly track production mode
             }
             self._initialized = True
             self._load_from_environment()
+
+    def _is_production_build(self) -> bool:
+        """
+        Detect if running from a production build (AppImage or packaged executable).
+
+        Returns:
+            True if running from production build, False otherwise
+        """
+        import sys
+
+        # Check for AppImage environment variable
+        if os.environ.get('APPIMAGE'):
+            logger.info("Running from AppImage (production mode)")
+            return True
+
+        # Check for production environment variable (set by build system)
+        if os.environ.get('VILOAPP_PRODUCTION', '').lower() in ('1', 'true', 'yes'):
+            logger.info("Production mode set via environment variable")
+            return True
+
+        # Check if running from a frozen executable (PyInstaller/Nuitka)
+        if getattr(sys, 'frozen', False):
+            logger.info("Running from frozen executable (production mode)")
+            return True
+
+        # Check if running from .dist directory (Nuitka output)
+        if '.dist' in sys.executable or 'ViloxTerm.dist' in sys.executable:
+            logger.info("Running from Nuitka dist (production mode)")
+            return True
+
+        logger.info("Running in development mode (not a production build)")
+        return False
 
     def _load_from_environment(self):
         """Load configuration from environment variables."""
@@ -63,9 +99,16 @@ class AppConfig:
         if os.environ.get('VILOAPP_DEBUG', '').lower() in ('1', 'true', 'yes'):
             self._config['debug_mode'] = True
 
-        # Check for dev mode
-        if os.environ.get('VILOAPP_DEV', '').lower() in ('1', 'true', 'yes'):
+        # Check for dev mode override (environment variable overrides auto-detection)
+        dev_env = os.environ.get('VILOAPP_DEV', '').lower()
+        if dev_env in ('1', 'true', 'yes'):
             self._config['dev_mode'] = True
+            self._config['production_mode'] = False
+            logger.info("Dev mode forced via environment variable")
+        elif dev_env in ('0', 'false', 'no'):
+            self._config['dev_mode'] = False
+            self._config['production_mode'] = True
+            logger.info("Production mode forced via environment variable")
 
     def parse_args(self, args: Optional[list] = None):
         """
@@ -150,6 +193,11 @@ class AppConfig:
     def dev_mode(self) -> bool:
         """Check if development mode is enabled."""
         return self._config['dev_mode']
+
+    @property
+    def production_mode(self) -> bool:
+        """Check if running in production mode."""
+        return self._config.get('production_mode', False)
 
     def set_test_mode(self, enabled: bool = True):
         """

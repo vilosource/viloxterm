@@ -211,6 +211,13 @@ exe: build ## Short alias for building executable
 	find . -type d -name "build" -exec rm -rf {} + 2>/dev/null || true
 	rm -f resources/resources_rc.py
 
+.PHONY: appimage
+appimage: resources ## Build AppImage (portable Linux executable)
+	@echo "Building AppImage..."
+	cd builder && ./build.sh appimage
+	@echo "AppImage created: docker-build-output/ViloxTerm-x86_64.AppImage"
+	@ls -lh docker-build-output/ViloxTerm-x86_64.AppImage 2>/dev/null || echo "Build may have failed - check output above"
+
 .PHONY: clean-all
 clean-all: clean ## Clean everything including virtual environment
 	rm -rf .direnv/

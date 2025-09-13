@@ -300,6 +300,42 @@ widget.update()
 self.setFocusPolicy(Qt.NoFocus)  # If widget doesn't need keyboard focus
 ```
 
+### Issue 4: Custom Widget Stylesheet Selectors
+**Problem:** Using ID selectors (#widgetName) or class selectors in stylesheets may not apply to the widget itself.
+**Solution:** For custom widgets, combine multiple approaches:
+```python
+# Method 1: Use class name selector without ID
+widget.setStyleSheet("CustomTitleBar { background-color: #8B0000; }")
+
+# Method 2: Combine with QPalette for reliability
+widget.setAutoFillBackground(True)
+palette = widget.palette()
+palette.setColor(QPalette.Window, QColor("#8B0000"))
+widget.setPalette(palette)
+
+# Method 3: Use inline styles for critical styling
+widget.setStyleSheet("background-color: #8B0000;")
+```
+
+### Issue 5: Frameless Window Custom Title Bars
+**Problem:** Custom title bars in frameless windows may not respond to stylesheet changes.
+**Solution:** Apply styling through multiple methods and ensure proper initialization order:
+```python
+class CustomTitleBar(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setup_ui()
+        # Apply styles AFTER UI setup to ensure widgets exist
+        self.apply_styles()
+
+    def apply_styles(self):
+        # Use both palette and stylesheet for reliability
+        self.setAutoFillBackground(True)
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor(bg_color))
+        self.setPalette(palette)
+```
+
 ## Theme Toggle Implementation
 
 The theme toggle (Ctrl+T) is implemented in:
@@ -311,6 +347,63 @@ To add theme support to new components:
 1. Listen to the `theme_changed` signal
 2. Update colors from `vscode_theme.py`
 3. Call `update()` or reapply stylesheets
+
+## Development Mode Visual Indicators
+
+### Overview
+ViloxTerm provides visual indicators to distinguish development builds from production releases.
+
+### Implementation
+**Files:** `core/app_config.py`, `ui/widgets/custom_title_bar.py`
+
+**Detection Logic:**
+```python
+# Auto-detect production builds
+def _is_production_build(self) -> bool:
+    if os.environ.get('APPIMAGE'):  # Running from AppImage
+        return True
+    if os.environ.get('VILOAPP_PRODUCTION', '').lower() in ('1', 'true', 'yes'):
+        return True
+    if getattr(sys, 'frozen', False):  # PyInstaller/Nuitka build
+        return True
+    if '.dist' in sys.executable:  # Nuitka dist folder
+        return True
+    return False
+```
+
+**Visual Changes in Dev Mode:**
+1. Title bar shows "[DEV]" suffix: "ViloxTerm [DEV]"
+2. Title bar background color: #8B0000 (dark red) instead of #2d2d30 (dark gray)
+
+**Styling Approach:**
+```python
+# Combine palette and stylesheet for reliability
+def apply_styles(self):
+    from core.app_config import app_config
+
+    # Choose color based on mode
+    title_bar_bg = "#8B0000" if app_config.dev_mode else "#2d2d30"
+
+    # Method 1: Set background using palette
+    self.setAutoFillBackground(True)
+    palette = self.palette()
+    palette.setColor(QPalette.Window, QColor(title_bar_bg))
+    self.setPalette(palette)
+
+    # Method 2: Apply stylesheets for child widgets
+    self.setStyleSheet(f"""
+        QToolButton {{
+            background-color: transparent;
+            color: #cccccc;
+        }}
+        /* ... other styles ... */
+    """)
+```
+
+### Build System Integration
+The build system automatically sets production mode:
+- Docker builds: `export VILOAPP_PRODUCTION=1` in entrypoint.sh
+- AppImage wrapper: Sets environment variable before launching
 
 ## Future Improvements
 
@@ -330,6 +423,11 @@ To add theme support to new components:
    - High contrast theme option
    - Configurable font sizes
    - Better focus indicators
+
+5. **Enhanced Dev Mode Indicators**
+   - Optional debug overlay showing performance metrics
+   - Configurable dev mode colors via settings
+   - Git branch name in title bar
 
 ## References
 

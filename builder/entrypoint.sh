@@ -29,6 +29,9 @@ case "$1" in
             echo "Resources compiled successfully!"
         fi
 
+        # Set production mode environment variable for builds
+        export VILOAPP_PRODUCTION=1
+
         # Build standalone distribution with pyside6-deploy
         echo "Building standalone distribution with pyside6-deploy..."
         pyside6-deploy -v main.py || {
@@ -85,8 +88,10 @@ case "$1" in
             # Create wrapper script
             cat > /output/ViloxTerm.AppDir/usr/bin/ViloxTerm << 'EOF'
 #!/bin/bash
-APPDIR="$(dirname "$(dirname "$(readlink -f "$0")")")"
-exec "$APPDIR/usr/lib/main.bin" "$@"
+# This script is located in usr/bin/, so we need to go up to usr then to lib
+BIN_DIR="$(dirname "$(readlink -f "$0")")"
+export VILOAPP_PRODUCTION=1
+exec "$BIN_DIR/../lib/main.bin" "$@"
 EOF
             chmod +x /output/ViloxTerm.AppDir/usr/bin/ViloxTerm
 

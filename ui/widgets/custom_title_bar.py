@@ -48,8 +48,10 @@ class CustomTitleBar(QWidget):
         self.menu_button.clicked.connect(self.on_menu_clicked)
         layout.addWidget(self.menu_button)
 
-        # Application title
-        self.title_label = QLabel("ViloxTerm", self)
+        # Application title with dev mode indicator
+        from core.app_config import app_config
+        title_text = "ViloxTerm [DEV]" if app_config.dev_mode else "ViloxTerm"
+        self.title_label = QLabel(title_text, self)
         self.title_label.setObjectName("titleLabel")
         self.title_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         layout.addWidget(self.title_label)
@@ -81,45 +83,53 @@ class CustomTitleBar(QWidget):
 
     def apply_styles(self):
         """Apply styling to the title bar."""
-        self.setStyleSheet("""
-            /* Title bar background */
-            #customTitleBar {
-                background-color: #2d2d30;
-                border: none;
-            }
+        from core.app_config import app_config
+        from PySide6.QtGui import QPalette, QColor
+
+        # Use red background for dev mode
+        title_bar_bg = "#8B0000" if app_config.dev_mode else "#2d2d30"
+        logger.info(f"CustomTitleBar: dev_mode={app_config.dev_mode}, bg_color={title_bar_bg}")
+
+        # Set background using palette
+        self.setAutoFillBackground(True)
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor(title_bar_bg))
+        self.setPalette(palette)
+
+        self.setStyleSheet(f"""
 
             /* Title label */
-            #titleLabel {
+            #titleLabel {{
                 color: #cccccc;
                 font-size: 13px;
                 padding: 0 8px;
-            }
+            }}
 
             /* Common button style */
-            QToolButton {
+            QToolButton {{
                 background-color: transparent;
                 color: #cccccc;
                 border: none;
                 padding: 4px 8px;
                 font-size: 14px;
                 font-weight: bold;
-            }
+            }}
 
-            QToolButton:hover {
+            QToolButton:hover {{
                 background-color: #3e3e42;
-            }
+            }}
 
             /* Close button special styling */
-            #closeButton:hover {
+            #closeButton:hover {{
                 background-color: #e81123;
                 color: white;
-            }
+            }}
 
             /* Menu button */
-            #menuButton {
+            #menuButton {{
                 font-size: 16px;
                 padding: 4px 6px;
-            }
+            }}
         """)
 
     def on_menu_clicked(self):

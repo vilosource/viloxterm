@@ -21,6 +21,7 @@ from core.commands.builtin.sidebar_commands import register_sidebar_commands
 # Import UI and window commands to trigger their decorators
 import core.commands.builtin.ui_commands
 import core.commands.builtin.window_commands
+import core.commands.builtin.help_commands
 
 def register_all_builtin_commands():
     """Register all built-in commands with the command registry."""

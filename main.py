@@ -4,13 +4,15 @@ Main entry point for the VSCode-style PySide6 application.
 """
 
 import sys
-import logging
 
-# Set up logging FIRST
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Import app config FIRST to detect production mode
+from core.app_config import app_config
+
+# Set up centralized logging configuration
+from logging_config import setup_logging
+setup_logging()  # Will auto-detect production mode from app_config
+
+import logging
 logger = logging.getLogger(__name__)
 
 # Configure environment BEFORE any Qt imports
@@ -18,7 +20,7 @@ try:
     from core.environment_detector import EnvironmentConfigurator
     env_configurator = EnvironmentConfigurator()
     env_configurator.apply_configuration()
-    
+
     # Log environment info
     env_info, strategy = env_configurator.get_info()
     logger.info(f"Environment: OS={env_info.os_type}, WSL={env_info.is_wsl}, "
@@ -58,8 +60,7 @@ except ImportError as e:
 
 def main():
     """Initialize and run the application."""
-    # Initialize app configuration (command line args and env vars)
-    from core.app_config import app_config
+    # Parse command line args (app_config already imported at top)
     app_config.parse_args()
     logger.info(f"App configuration: {app_config}")
 

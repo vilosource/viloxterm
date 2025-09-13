@@ -30,11 +30,17 @@ class MainWindow(QMainWindow):
         
     def setup_ui(self):
         """Initialize the UI components."""
-        self.setWindowTitle("ViloxTerm")
+        # Set window title with dev mode indicator if applicable
+        from core.app_config import app_config
+        dev_mode = app_config.dev_mode
+        title = "ViloxTerm [DEV]" if dev_mode else "ViloxTerm"
+        self.setWindowTitle(title)
         self.resize(1200, 800)
-        
+
         # Apply VSCode theme to main window
-        self.setStyleSheet(get_main_window_stylesheet() + get_menu_stylesheet())
+        # Check if we're in dev mode and apply appropriate styling
+        print(f"DEBUG: Applying main window style with dev_mode={dev_mode}")
+        self.setStyleSheet(get_main_window_stylesheet(dev_mode) + get_menu_stylesheet())
         
         # Create central widget and main layout
         central_widget = QWidget()
@@ -511,7 +517,13 @@ class MainWindow(QMainWindow):
         file_menu.addAction(keyboard_shortcuts_action)
 
         file_menu.addSeparator()
-        
+
+        # About action
+        about_action = QAction("About ViloxTerm", self)
+        about_action.setToolTip("Show information about ViloxTerm")
+        about_action.triggered.connect(lambda: self.execute_command("help.about"))
+        file_menu.addAction(about_action)
+
         # View menu
         view_menu = menubar.addMenu("View")
         
@@ -585,7 +597,38 @@ class MainWindow(QMainWindow):
         reset_state_action.setToolTip("Reset application to default state, clearing all saved settings (Ctrl+Shift+R)")
         reset_state_action.triggered.connect(lambda: self.execute_command("debug.resetAppState"))
         debug_menu.addAction(reset_state_action)
-        
+
+        # Help menu
+        help_menu = menubar.addMenu("Help")
+
+        # Documentation action
+        docs_action = QAction("Documentation", self)
+        docs_action.setToolTip("Open ViloxTerm documentation")
+        docs_action.triggered.connect(lambda: self.execute_command("help.documentation"))
+        help_menu.addAction(docs_action)
+
+        # Report issue action
+        issue_action = QAction("Report Issue", self)
+        issue_action.setToolTip("Report an issue on GitHub")
+        issue_action.triggered.connect(lambda: self.execute_command("help.reportIssue"))
+        help_menu.addAction(issue_action)
+
+        help_menu.addSeparator()
+
+        # Check for updates action
+        updates_action = QAction("Check for Updates...", self)
+        updates_action.setToolTip("Check for ViloxTerm updates")
+        updates_action.triggered.connect(lambda: self.execute_command("help.checkForUpdates"))
+        help_menu.addAction(updates_action)
+
+        help_menu.addSeparator()
+
+        # About action (also in Help menu)
+        about_help_action = QAction("About ViloxTerm", self)
+        about_help_action.setToolTip("Show information about ViloxTerm")
+        about_help_action.triggered.connect(lambda: self.execute_command("help.about"))
+        help_menu.addAction(about_help_action)
+
     def toggle_theme(self):
         """Toggle application theme - now routes through command system."""
         return self.execute_command("view.toggleTheme")
