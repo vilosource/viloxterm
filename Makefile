@@ -150,42 +150,42 @@ clean: ## Clean up generated files
 	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
 
-# Deployment targets
-.PHONY: deploy-icons
-deploy-icons: ## Generate application icons
+# Build executable targets
+.PHONY: build-icons
+build-icons: ## Generate application icons
 	$(PYTHON) deploy/scripts/generate_simple_icon.py
 
-.PHONY: deploy-init
-deploy-init: ## Initialize deployment configuration
+.PHONY: build-init
+build-init: ## Initialize build configuration
 	$(PYSIDE6_DEPLOY) --init main.py
 
-.PHONY: deploy-dry-run
-deploy-dry-run: ## Show deployment commands without executing
+.PHONY: build-dry-run
+build-dry-run: ## Show build commands without executing
 	$(PYSIDE6_DEPLOY) --dry-run
 
-.PHONY: deploy
-deploy: resources ## Build standalone executable
+.PHONY: build
+build: resources ## Build standalone executable
 	@echo "Building ViloxTerm executable..."
 	$(PYSIDE6_DEPLOY) -v
 
-.PHONY: deploy-onefile
-deploy-onefile: resources ## Build single-file executable
+.PHONY: build-onefile
+build-onefile: resources ## Build single-file executable
 	@echo "Building single-file ViloxTerm executable..."
 	@cp pysidedeploy.spec pysidedeploy.spec.bak
 	@sed -i 's/mode = standalone/mode = onefile/' pysidedeploy.spec
 	$(PYSIDE6_DEPLOY) -v
 	@mv pysidedeploy.spec.bak pysidedeploy.spec
 
-.PHONY: deploy-clean
-deploy-clean: ## Clean deployment artifacts
+.PHONY: build-clean
+build-clean: ## Clean build artifacts
 	rm -rf deployment/ build/ dist/
 	rm -f *.bin *.exe *.app
 	rm -f main.dist/ main.build/
 	find . -name "*.dist" -type d -exec rm -rf {} + 2>/dev/null || true
 	find . -name "*.build" -type d -exec rm -rf {} + 2>/dev/null || true
 
-.PHONY: deploy-test
-deploy-test: ## Test the deployed executable
+.PHONY: test-executable
+test-executable: ## Test the built executable
 	@if [ -f "main.bin" ]; then \
 		echo "Testing Linux executable..."; \
 		./main.bin --version; \
@@ -196,11 +196,17 @@ deploy-test: ## Test the deployed executable
 		echo "Testing macOS app..."; \
 		./main.app/Contents/MacOS/main --version; \
 	else \
-		echo "No executable found. Run 'make deploy' first."; \
+		echo "No executable found. Run 'make build' first."; \
 	fi
 
-.PHONY: deploy-all
-deploy-all: deploy-icons deploy ## Build everything for deployment
+.PHONY: build-all
+build-all: build-icons build ## Build executable with all assets
+
+.PHONY: executable
+executable: build ## Build the ViloxTerm executable (alias for build)
+
+.PHONY: exe
+exe: build ## Short alias for building executable
 	find . -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "build" -exec rm -rf {} + 2>/dev/null || true
 	rm -f resources/resources_rc.py

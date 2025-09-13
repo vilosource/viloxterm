@@ -37,10 +37,10 @@ android_packages = buildozer==1.5.0,cython==0.29.33
 qml_files = 
 
 # excluded qml plugin binaries
-excluded_qml_plugins = QtQuick3D,QtCharts,QtTest,QtSensors,QtMultimedia,QtBluetooth,QtNfc 
+excluded_qml_plugins = QtQuick3D,QtCharts,QtTest,QtSensors,QtMultimedia,QtBluetooth,QtNfc
 
 # qt modules used. comma separated
-modules = Core,DBus,Gui,Network,OpenGL,PrintSupport,WebChannel,WebEngineCore,WebEngineWidgets,Widgets,Svg
+modules = Core,DBus,Gui,Network,OpenGL,Positioning,PrintSupport,Qml,QmlMeta,QmlModels,QmlWorkerScript,Quick,QuickWidgets,WebChannel,WebEngineCore,WebEngineWidgets,Widgets
 
 # qt plugins used by the application. only relevant for desktop deployment
 # for qt plugins used in android application see [android][plugins]
