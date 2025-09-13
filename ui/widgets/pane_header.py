@@ -10,10 +10,6 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QAction, QFont, QPalette, QColor, QPainter, QBrush
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-from ui.vscode_theme import *
 from core.commands.executor import execute_command
 
 
@@ -34,8 +30,9 @@ class PaneHeaderBar(QWidget):
         self.pane_id = pane_id
         self.show_type_menu = show_type_menu
         self.is_active = False
-        self.background_color = QColor(PANE_HEADER_BACKGROUND)
+        self.background_color = QColor("#252526")  # Default dark background
         self.setup_ui()
+        self.apply_theme()
     
     def setup_ui(self):
         """Initialize the header UI."""
@@ -102,21 +99,7 @@ class PaneHeaderBar(QWidget):
         # Close button
         self.close_button = self.create_tool_button("×", "Close this pane")
         self.close_button.clicked.connect(lambda: execute_command("workbench.action.closePane", pane=self.parent()))
-        self.close_button.setStyleSheet(f"""
-            QToolButton {{
-                background-color: transparent;
-                color: {PANE_HEADER_FOREGROUND};
-                border: none;
-                padding: 0px 2px;
-                font-size: 12px;
-                font-weight: bold;
-            }}
-            QToolButton:hover {{
-                background-color: {PANE_HEADER_CLOSE_HOVER};
-                color: white;
-                border-radius: 2px;
-            }}
-        """)
+        # Style will be applied by theme
         layout.addWidget(self.close_button)
     
     def create_tool_button(self, text: str, tooltip: str) -> QToolButton:
@@ -126,25 +109,7 @@ class PaneHeaderBar(QWidget):
         button.setToolTip(tooltip)
         button.setFixedSize(16, 16)  # Smaller buttons
         
-        # Style the button with VSCode theme
-        button.setStyleSheet(f"""
-            QToolButton {{
-                background-color: transparent;
-                color: {PANE_HEADER_FOREGROUND};
-                border: none;
-                padding: 0px;
-                font-size: 12px;
-                font-weight: bold;
-            }}
-            QToolButton:hover {{
-                background-color: {PANE_HEADER_BUTTON_HOVER};
-                border: 1px solid {ACCENT_COLOR};
-                border-radius: 2px;
-            }}
-            QToolButton:pressed {{
-                background-color: {ACCENT_COLOR};
-            }}
-        """)
+        # Style will be applied by theme
         
         return button
     
@@ -177,12 +142,12 @@ class PaneHeaderBar(QWidget):
         
         if active:
             # Set active background color
-            self.background_color = QColor(PANE_HEADER_ACTIVE_BACKGROUND)
+            self.background_color = QColor("#2d2d30")  # Default active background
             self.update()  # Force repaint
             
             self.id_label.setStyleSheet(f"""
                 QLabel {{
-                    color: {PANE_HEADER_ACTIVE_FOREGROUND};
+                    color: #ffffff;
                     font-size: 10px;
                     padding: 0 2px;
                     font-weight: bold;
@@ -192,7 +157,7 @@ class PaneHeaderBar(QWidget):
             if self.number_label.isVisible():
                 self.number_label.setStyleSheet(f"""
                     QLabel {{
-                        background-color: {ACCENT_COLOR};
+                        background-color: #007ACC;
                         color: white;
                         border-radius: 2px;
                         padding: 0px 4px;
@@ -205,12 +170,12 @@ class PaneHeaderBar(QWidget):
                 """)
         else:
             # Set inactive background color
-            self.background_color = QColor(PANE_HEADER_BACKGROUND)
+            self.background_color = QColor("#252526")  # Default inactive background
             self.update()  # Force repaint
             
             self.id_label.setStyleSheet(f"""
                 QLabel {{
-                    color: {TAB_INACTIVE_FOREGROUND};
+                    color: #969696;
                     font-size: 10px;
                     padding: 0 2px;
                 }}
@@ -219,8 +184,8 @@ class PaneHeaderBar(QWidget):
             if self.number_label.isVisible():
                 self.number_label.setStyleSheet(f"""
                     QLabel {{
-                        background-color: {PANE_HEADER_BUTTON_HOVER};
-                        color: {TAB_INACTIVE_FOREGROUND};
+                        background-color: #505050;
+                        color: #969696;
                         border-radius: 2px;
                         padding: 0px 4px;
                         font-weight: bold;
@@ -229,6 +194,66 @@ class PaneHeaderBar(QWidget):
                         max-width: 12px;
                     }}
                 """)
+
+    def apply_theme(self):
+        """Apply current theme to pane header."""
+        from services.service_locator import ServiceLocator
+        from ui.themes.theme_provider import ThemeProvider
+
+        locator = ServiceLocator.get_instance()
+        theme_provider = locator.get(ThemeProvider)
+        if theme_provider:
+            colors = theme_provider.theme_service.get_current_colors()
+
+            # Update background color
+            self.background_color = QColor(colors.get("editor.background", "#252526"))
+
+            # Update button styles
+            button_style = f"""
+                QToolButton {{
+                    background-color: transparent;
+                    color: {colors.get("titleBar.activeForeground", "#cccccc")};
+                    border: none;
+                    padding: 0px;
+                    font-size: 12px;
+                    font-weight: bold;
+                }}
+                QToolButton:hover {{
+                    background-color: {colors.get("toolbar.hoverBackground", "#505050")};
+                    border: 1px solid {colors.get("focusBorder", "#007ACC")};
+                    border-radius: 2px;
+                }}
+                QToolButton:pressed {{
+                    background-color: {colors.get("focusBorder", "#007ACC")};
+                }}
+            """
+
+            if hasattr(self, 'split_h_button'):
+                self.split_h_button.setStyleSheet(button_style)
+            if hasattr(self, 'split_v_button'):
+                self.split_v_button.setStyleSheet(button_style)
+
+            # Close button special style
+            if hasattr(self, 'close_button'):
+                self.close_button.setStyleSheet(f"""
+                    QToolButton {{
+                        background-color: transparent;
+                        color: {colors.get("titleBar.activeForeground", "#cccccc")};
+                        border: none;
+                        padding: 0px 2px;
+                        font-size: 12px;
+                        font-weight: bold;
+                    }}
+                    QToolButton:hover {{
+                        background-color: {colors.get("editorGroupHeader.tabsBackground", "#252526")};
+                        color: white;
+                        border-radius: 2px;
+                    }}
+                """)
+
+            # Update label styles based on active state
+            self.set_active(self.is_active)
+            self.update()  # Force repaint
 
 
 class CompactPaneHeader(QWidget):

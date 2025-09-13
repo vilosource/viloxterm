@@ -17,7 +17,6 @@ import logging
 
 from core.commands.base import Command
 from core.commands.registry import command_registry
-from ui.vscode_theme import *
 from ui.icon_manager import get_icon_manager
 
 logger = logging.getLogger(__name__)
@@ -62,7 +61,7 @@ class CommandListItem(QWidget):
         title_label = QLabel(self.command.title)
         title_label.setStyleSheet(f"""
             QLabel {{
-                color: {EDITOR_FOREGROUND};
+                color: #cccccc;
                 font-weight: bold;
                 font-size: 13px;
                 background-color: transparent;
@@ -75,7 +74,7 @@ class CommandListItem(QWidget):
             desc_label = QLabel(self.command.description)
             desc_label.setStyleSheet(f"""
                 QLabel {{
-                    color: {TAB_INACTIVE_FOREGROUND};
+                    color: #969696;
                     font-size: 11px;
                     background-color: transparent;
                 }}
@@ -90,7 +89,7 @@ class CommandListItem(QWidget):
             shortcut_label = QLabel(self.command.shortcut.upper())
             shortcut_label.setStyleSheet(f"""
                 QLabel {{
-                    color: {TAB_INACTIVE_FOREGROUND};
+                    color: #969696;
                     font-size: 10px;
                     font-family: 'Consolas', 'Monaco', monospace;
                     background-color: rgba(128, 128, 128, 0.2);
@@ -105,7 +104,7 @@ class CommandListItem(QWidget):
         category_label = QLabel(self.command.category)
         category_label.setStyleSheet(f"""
             QLabel {{
-                color: {EDITOR_FOREGROUND};
+                color: #cccccc;
                 font-size: 10px;
                 background-color: rgba(0, 122, 204, 0.3);
                 border-radius: 8px;
@@ -129,7 +128,7 @@ class CommandListWidget(QListWidget):
         """Initialize the list widget UI."""
         self.setStyleSheet(f"""
             QListWidget {{
-                background-color: {EDITOR_BACKGROUND};
+                background-color: #252526;
                 border: none;
                 outline: none;
             }}
@@ -142,12 +141,12 @@ class CommandListWidget(QListWidget):
             }}
             
             QListWidget::item:selected {{
-                background-color: {LIST_HOVER_BACKGROUND};
-                border-left: 2px solid {ACTIVITY_BAR_ACTIVE_BORDER};
+                background-color: #2a2d2e;
+                border-left: 2px solid #007ACC;
             }}
             
             QListWidget::item:hover {{
-                background-color: {LIST_HOVER_BACKGROUND};
+                background-color: #2a2d2e;
             }}
         """)
         
@@ -204,6 +203,41 @@ class CommandListWidget(QListWidget):
         else:
             super().keyPressEvent(event)
 
+    def apply_theme(self):
+        """Apply current theme to command list widget."""
+        from services.service_locator import ServiceLocator
+        from ui.themes.theme_provider import ThemeProvider
+
+        locator = ServiceLocator.get_instance()
+        theme_provider = locator.get(ThemeProvider)
+        colors = {}
+        if theme_provider:
+            colors = theme_provider.theme_service.get_current_colors()
+
+        self.setStyleSheet(f"""
+            QListWidget {{
+                background-color: {colors.get("editor.background", "#252526")};
+                border: none;
+                outline: none;
+            }}
+
+            QListWidget::item {{
+                background-color: transparent;
+                border: none;
+                padding: 0px;
+                margin: 1px 0px;
+            }}
+
+            QListWidget::item:selected {{
+                background-color: {colors.get("list.hoverBackground", "#2a2d2e")};
+                border-left: 2px solid {colors.get("activityBar.activeBorder", "#007ACC")};
+            }}
+
+            QListWidget::item:hover {{
+                background-color: {colors.get("list.hoverBackground", "#2a2d2e")};
+            }}
+        """)
+
 
 class CommandPaletteWidget(QDialog):
     """
@@ -244,17 +278,17 @@ class CommandPaletteWidget(QDialog):
         layout.setSpacing(0)
         
         # Create main frame for styling
-        main_frame = QFrame()
-        main_frame.setStyleSheet(f"""
+        self.main_frame = QFrame()
+        self.main_frame.setStyleSheet(f"""
             QFrame {{
-                background-color: {EDITOR_BACKGROUND};
-                border: 1px solid {SPLITTER_BACKGROUND};
+                background-color: #252526;
+                border: 1px solid #3e3e42;
                 border-radius: 6px;
             }}
         """)
-        layout.addWidget(main_frame)
-        
-        frame_layout = QVBoxLayout(main_frame)
+        layout.addWidget(self.main_frame)
+
+        frame_layout = QVBoxLayout(self.main_frame)
         frame_layout.setContentsMargins(0, 0, 0, 0)
         frame_layout.setSpacing(0)
         
@@ -263,17 +297,17 @@ class CommandPaletteWidget(QDialog):
         self.search_input.setPlaceholderText("Search commands...")
         self.search_input.setStyleSheet(f"""
             QLineEdit {{
-                background-color: {PANEL_BACKGROUND};
-                color: {EDITOR_FOREGROUND};
+                background-color: #252526;
+                color: #cccccc;
                 border: none;
-                border-bottom: 1px solid {SPLITTER_BACKGROUND};
+                border-bottom: 1px solid #3e3e42;
                 padding: 12px 16px;
                 font-size: 14px;
                 border-radius: 0px;
             }}
             
             QLineEdit:focus {{
-                border-bottom: 2px solid {ACTIVITY_BAR_ACTIVE_BORDER};
+                border-bottom: 2px solid #007ACC;
             }}
         """)
         frame_layout.addWidget(self.search_input)
@@ -282,11 +316,11 @@ class CommandPaletteWidget(QDialog):
         self.results_header = QLabel()
         self.results_header.setStyleSheet(f"""
             QLabel {{
-                background-color: {PANEL_BACKGROUND};
-                color: {TAB_INACTIVE_FOREGROUND};
+                background-color: #252526;
+                color: #969696;
                 padding: 8px 16px;
                 font-size: 11px;
-                border-bottom: 1px solid {SPLITTER_BACKGROUND};
+                border-bottom: 1px solid #3e3e42;
             }}
         """)
         frame_layout.addWidget(self.results_header)
@@ -299,11 +333,11 @@ class CommandPaletteWidget(QDialog):
         self.status_label = QLabel()
         self.status_label.setStyleSheet(f"""
             QLabel {{
-                background-color: {STATUS_BAR_BACKGROUND};
-                color: {STATUS_BAR_FOREGROUND};
+                background-color: #007ACC;
+                color: #ffffff;
                 padding: 6px 16px;
                 font-size: 11px;
-                border-top: 1px solid {SPLITTER_BACKGROUND};
+                border-top: 1px solid #3e3e42;
             }}
         """)
         frame_layout.addWidget(self.status_label)
@@ -314,6 +348,9 @@ class CommandPaletteWidget(QDialog):
         
         # Initial status
         self.update_status("Type to search commands...")
+
+        # Apply theme
+        self.apply_theme()
     
     def setup_shortcuts(self):
         """Set up keyboard shortcuts."""
@@ -480,3 +517,78 @@ class CommandPaletteWidget(QDialog):
             event.accept()
         else:
             super().keyPressEvent(event)
+
+    def _get_theme_colors(self):
+        """Get current theme colors."""
+        from services.service_locator import ServiceLocator
+        from ui.themes.theme_provider import ThemeProvider
+
+        locator = ServiceLocator.get_instance()
+        theme_provider = locator.get(ThemeProvider)
+        if theme_provider:
+            return theme_provider.theme_service.get_current_colors()
+        # Fallback colors
+        return {
+            "editor.background": "#252526",
+            "editor.foreground": "#cccccc",
+            "panel.background": "#252526",
+            "statusBar.background": "#007ACC",
+            "statusBar.foreground": "#ffffff",
+            "list.hoverBackground": "#2a2d2e",
+            "activityBar.activeBorder": "#007ACC",
+            "widget.border": "#3e3e42",
+            "tab.inactiveForeground": "#969696"
+        }
+
+    def apply_theme(self):
+        """Apply current theme to command palette."""
+        colors = self._get_theme_colors()
+
+        # Update main container style
+        if hasattr(self, 'main_frame'):
+            self.main_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {colors.get("editor.background", "#252526")};
+                border: 1px solid {colors.get("widget.border", "#3e3e42")};
+                border-radius: 6px;
+            }}
+            """)
+
+        # Update search input style
+        self.search_input.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {colors.get("panel.background", "#252526")};
+                color: {colors.get("editor.foreground", "#cccccc")};
+                border: none;
+                border-bottom: 1px solid {colors.get("widget.border", "#3e3e42")};
+                padding: 12px 16px;
+                font-size: 14px;
+                font-weight: 500;
+            }}
+        """)
+
+        # Update results header style
+        self.results_header.setStyleSheet(f"""
+            QLabel {{
+                background-color: {colors.get("panel.background", "#252526")};
+                color: {colors.get("tab.inactiveForeground", "#969696")};
+                padding: 8px 16px;
+                font-size: 11px;
+                border-bottom: 1px solid {colors.get("widget.border", "#3e3e42")};
+            }}
+        """)
+
+        # Update status label style
+        self.status_label.setStyleSheet(f"""
+            QLabel {{
+                background-color: {colors.get("statusBar.background", "#007ACC")};
+                color: {colors.get("statusBar.foreground", "#ffffff")};
+                padding: 6px 16px;
+                font-size: 11px;
+                border-top: 1px solid {colors.get("widget.border", "#3e3e42")};
+            }}
+        """)
+
+        # Update list view style
+        if hasattr(self, 'command_list'):
+            self.command_list.apply_theme()

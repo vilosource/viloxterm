@@ -15,7 +15,6 @@ from PySide6.QtGui import QAction
 from ui.widgets.split_pane_widget import SplitPaneWidget
 from ui.widgets.widget_registry import WidgetType
 from ui.widgets.rename_editor import RenameEditor
-from ui.vscode_theme import *
 from core.commands.executor import execute_command
 
 logger = logging.getLogger(__name__)
@@ -65,8 +64,8 @@ class Workspace(QWidget):
         self.tab_widget.setDocumentMode(True)
         self.tab_widget.setElideMode(Qt.ElideRight)
         
-        # Apply VSCode theme to tab widget
-        self.tab_widget.setStyleSheet(get_tab_widget_stylesheet())
+        # Apply theme
+        self.apply_theme()
         
         layout.addWidget(self.tab_widget)
         
@@ -653,3 +652,13 @@ class Workspace(QWidget):
         
         # Create default tab
         self.create_default_tab()
+
+    def apply_theme(self):
+        """Apply current theme to workspace."""
+        from services.service_locator import ServiceLocator
+        from ui.themes.theme_provider import ThemeProvider
+
+        locator = ServiceLocator.get_instance()
+        theme_provider = locator.get(ThemeProvider)
+        if theme_provider:
+            self.tab_widget.setStyleSheet(theme_provider.get_stylesheet("tab_widget"))

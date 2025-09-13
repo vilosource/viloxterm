@@ -5,39 +5,37 @@ Converts application themes to xterm.js format.
 """
 
 from typing import Dict, Any
-import ui.vscode_theme as vt
 
 
 def get_dark_theme() -> Dict[str, Any]:
     """Get dark theme for xterm.js."""
     return {
-        'background': vt.TERMINAL_BACKGROUND,
-        'foreground': vt.TERMINAL_FOREGROUND,
+        'background': '#1e1e1e',
+        'foreground': '#d4d4d4',
         'cursor': '#ffffff',
         'cursorAccent': '#000000',
-        'selection': vt.EDITOR_SELECTION,
-        'black': vt.TERMINAL_ANSI_BLACK,
-        'red': vt.TERMINAL_ANSI_RED,
-        'green': vt.TERMINAL_ANSI_GREEN,
-        'yellow': vt.TERMINAL_ANSI_YELLOW,
-        'blue': vt.TERMINAL_ANSI_BLUE,
-        'magenta': vt.TERMINAL_ANSI_MAGENTA,
-        'cyan': vt.TERMINAL_ANSI_CYAN,
-        'white': vt.TERMINAL_ANSI_WHITE,
-        'brightBlack': vt.TERMINAL_ANSI_BRIGHT_BLACK,
-        'brightRed': vt.TERMINAL_ANSI_BRIGHT_RED,
-        'brightGreen': vt.TERMINAL_ANSI_BRIGHT_GREEN,
-        'brightYellow': vt.TERMINAL_ANSI_BRIGHT_YELLOW,
-        'brightBlue': vt.TERMINAL_ANSI_BRIGHT_BLUE,
-        'brightMagenta': vt.TERMINAL_ANSI_BRIGHT_MAGENTA,
-        'brightCyan': vt.TERMINAL_ANSI_BRIGHT_CYAN,
-        'brightWhite': vt.TERMINAL_ANSI_BRIGHT_WHITE,
+        'selection': '#264f78',
+        'black': '#000000',
+        'red': '#cd3131',
+        'green': '#0dbc79',
+        'yellow': '#e5e510',
+        'blue': '#2472c8',
+        'magenta': '#bc3fbc',
+        'cyan': '#11a8cd',
+        'white': '#e5e5e5',
+        'brightBlack': '#666666',
+        'brightRed': '#f14c4c',
+        'brightGreen': '#23d18b',
+        'brightYellow': '#f5f543',
+        'brightBlue': '#3b8eea',
+        'brightMagenta': '#d670d6',
+        'brightCyan': '#29b8db',
+        'brightWhite': '#e5e5e5',
     }
 
 
 def get_light_theme() -> Dict[str, Any]:
     """Get light theme for xterm.js."""
-    # Light theme colors (VSCode Light+ inspired)
     return {
         'background': '#ffffff',
         'foreground': '#333333',
@@ -63,45 +61,59 @@ def get_light_theme() -> Dict[str, Any]:
     }
 
 
-def get_terminal_theme(theme_name: str) -> Dict[str, Any]:
+def get_terminal_theme_from_app_theme() -> Dict[str, Any]:
+    """Get terminal theme based on current application theme."""
+    from services.service_locator import ServiceLocator
+    from ui.themes.theme_provider import ThemeProvider
+
+    locator = ServiceLocator.get_instance()
+    theme_provider = locator.get(ThemeProvider)
+
+    if theme_provider:
+        colors = theme_provider.theme_service.get_current_colors()
+
+        # Build terminal theme from application theme colors
+        return {
+            'background': colors.get('terminal.background', '#1e1e1e'),
+            'foreground': colors.get('terminal.foreground', '#d4d4d4'),
+            'cursor': colors.get('terminalCursor.foreground', '#ffffff'),
+            'cursorAccent': colors.get('terminalCursor.background', '#000000'),
+            'selection': colors.get('editor.selectionBackground', '#264f78'),
+            'black': colors.get('terminal.ansiBlack', '#000000'),
+            'red': colors.get('terminal.ansiRed', '#cd3131'),
+            'green': colors.get('terminal.ansiGreen', '#0dbc79'),
+            'yellow': colors.get('terminal.ansiYellow', '#e5e510'),
+            'blue': colors.get('terminal.ansiBlue', '#2472c8'),
+            'magenta': colors.get('terminal.ansiMagenta', '#bc3fbc'),
+            'cyan': colors.get('terminal.ansiCyan', '#11a8cd'),
+            'white': colors.get('terminal.ansiWhite', '#e5e5e5'),
+            'brightBlack': colors.get('terminal.ansiBrightBlack', '#666666'),
+            'brightRed': colors.get('terminal.ansiBrightRed', '#f14c4c'),
+            'brightGreen': colors.get('terminal.ansiBrightGreen', '#23d18b'),
+            'brightYellow': colors.get('terminal.ansiBrightYellow', '#f5f543'),
+            'brightBlue': colors.get('terminal.ansiBrightBlue', '#3b8eea'),
+            'brightMagenta': colors.get('terminal.ansiBrightMagenta', '#d670d6'),
+            'brightCyan': colors.get('terminal.ansiBrightCyan', '#29b8db'),
+            'brightWhite': colors.get('terminal.ansiBrightWhite', '#e5e5e5'),
+        }
+
+    # Fallback to dark theme if service not available
+    return get_dark_theme()
+
+
+def get_terminal_theme(theme_name: str = None) -> Dict[str, Any]:
     """
-    Get terminal theme by name.
-    
+    Get terminal theme by name or current app theme.
+
     Args:
-        theme_name: Name of the theme ('dark' or 'light')
-        
+        theme_name: 'dark', 'light', or None for current app theme
+
     Returns:
-        Dictionary with xterm.js theme configuration
+        Terminal theme dictionary for xterm.js
     """
-    if theme_name == 'light':
+    if theme_name == 'dark':
+        return get_dark_theme()
+    elif theme_name == 'light':
         return get_light_theme()
     else:
-        return get_dark_theme()
-
-
-def get_terminal_config(font_size: int = 14, 
-                        font_family: str = 'Consolas, "Courier New", monospace',
-                        line_height: float = 1.2) -> Dict[str, Any]:
-    """
-    Get terminal configuration options.
-    
-    Args:
-        font_size: Font size in pixels
-        font_family: Font family string
-        line_height: Line height multiplier
-        
-    Returns:
-        Dictionary with terminal configuration
-    """
-    return {
-        'cursorBlink': True,
-        'macOptionIsMeta': True,
-        'scrollback': 1000,
-        'fontFamily': font_family,
-        'fontSize': font_size,
-        'lineHeight': line_height,
-        'bellStyle': 'visual',
-        'allowTransparency': False,
-        'rightClickSelectsWord': True,
-        'wordSeparator': ' ()[]{}\'"',
-    }
+        return get_terminal_theme_from_app_theme()

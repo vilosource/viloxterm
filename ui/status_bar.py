@@ -2,7 +2,6 @@
 
 from PySide6.QtWidgets import QStatusBar, QLabel
 from PySide6.QtCore import Qt
-from ui.vscode_theme import *
 
 
 class AppStatusBar(QStatusBar):
@@ -15,10 +14,10 @@ class AppStatusBar(QStatusBar):
     def setup_ui(self):
         """Initialize the status bar UI."""
         self.setObjectName("appStatusBar")
-        
-        # Apply VSCode theme
-        self.setStyleSheet(get_status_bar_stylesheet())
-        
+
+        # Apply theme
+        self.apply_theme()
+
         # Create status widgets
         self.status_label = QLabel("Ready")
         self.addWidget(self.status_label)
@@ -44,3 +43,13 @@ class AppStatusBar(QStatusBar):
     def set_encoding(self, encoding: str):
         """Update encoding display."""
         self.encoding_label.setText(encoding)
+
+    def apply_theme(self):
+        """Apply current theme to status bar."""
+        from services.service_locator import ServiceLocator
+        from ui.themes.theme_provider import ThemeProvider
+
+        locator = ServiceLocator.get_instance()
+        theme_provider = locator.get(ThemeProvider)
+        if theme_provider:
+            self.setStyleSheet(theme_provider.get_stylesheet("status_bar"))

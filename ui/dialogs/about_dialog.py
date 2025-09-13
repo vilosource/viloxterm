@@ -16,12 +16,6 @@ from core.version import (
     get_full_version_info, get_version_string,
     APP_NAME, APP_DESCRIPTION, APP_COPYRIGHT, APP_URL, APP_LICENSE
 )
-from ui.vscode_theme import (
-    EDITOR_BACKGROUND, EDITOR_FOREGROUND,
-    TAB_ACTIVE_BACKGROUND, TAB_INACTIVE_BACKGROUND,
-    BUTTON_BACKGROUND, BUTTON_FOREGROUND,
-    SIDEBAR_BACKGROUND
-)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -91,8 +85,8 @@ class AboutDialog(QDialog):
         logo_label.setAlignment(Qt.AlignCenter)
         logo_label.setStyleSheet(f"""
             QLabel {{
-                background-color: {BUTTON_BACKGROUND};
-                color: {BUTTON_FOREGROUND};
+                background-color: #0e639c;
+                color: #ffffff;
                 font-size: 32px;
                 font-weight: bold;
                 padding: 20px;
@@ -329,38 +323,38 @@ SOFTWARE."""
         """Apply VSCode theme to the dialog."""
         self.setStyleSheet(f"""
             QDialog {{
-                background-color: {EDITOR_BACKGROUND};
-                color: {EDITOR_FOREGROUND};
+                background-color: #252526;
+                color: #cccccc;
             }}
 
             QTabWidget::pane {{
                 background-color: {EDITOR_BACKGROUND};
-                border: 1px solid {TAB_INACTIVE_BACKGROUND};
+                border: 1px solid #2d2d30;
             }}
 
             QTabBar::tab {{
-                background-color: {TAB_INACTIVE_BACKGROUND};
-                color: {EDITOR_FOREGROUND};
+                background-color: #2d2d30;
+                color: #cccccc;
                 padding: 8px 16px;
                 margin-right: 2px;
             }}
 
             QTabBar::tab:selected {{
-                background-color: {TAB_ACTIVE_BACKGROUND};
-                border-bottom: 2px solid {BUTTON_BACKGROUND};
+                background-color: #1e1e1e;
+                border-bottom: 2px solid #0e639c;
             }}
 
             QTextEdit {{
-                background-color: {SIDEBAR_BACKGROUND};
-                color: {EDITOR_FOREGROUND};
-                border: 1px solid {TAB_INACTIVE_BACKGROUND};
+                background-color: #252526;
+                color: #cccccc;
+                border: 1px solid #2d2d30;
                 padding: 10px;
                 font-family: 'Consolas', 'Monaco', monospace;
             }}
 
             QPushButton {{
-                background-color: {BUTTON_BACKGROUND};
-                color: {BUTTON_FOREGROUND};
+                background-color: #0e639c;
+                color: #ffffff;
                 border: none;
                 padding: 6px 16px;
                 font-weight: bold;
@@ -375,7 +369,7 @@ SOFTWARE."""
             }}
 
             QLabel {{
-                color: {EDITOR_FOREGROUND};
+                color: #cccccc;
             }}
         """)
 
@@ -404,3 +398,79 @@ SOFTWARE."""
 
         # Show brief notification (could be improved with a toast notification)
         logger.info("System information copied to clipboard")
+
+    def apply_theme(self):
+        """Apply current theme to about dialog."""
+        from services.service_locator import ServiceLocator
+        from ui.themes.theme_provider import ThemeProvider
+
+        locator = ServiceLocator.get_instance()
+        theme_provider = locator.get(ThemeProvider)
+        if theme_provider:
+            colors = theme_provider.theme_service.get_current_colors()
+
+            self.setStyleSheet(f"""
+                QDialog {{
+                    background-color: {colors.get("editor.background", "#252526")};
+                    color: {colors.get("editor.foreground", "#cccccc")};
+                }}
+
+                QTabWidget::pane {{
+                    background-color: {colors.get("editor.background", "#252526")};
+                    border: 1px solid {colors.get("tab.inactiveBackground", "#2d2d30")};
+                }}
+
+                QTabBar::tab {{
+                    background-color: {colors.get("tab.inactiveBackground", "#2d2d30")};
+                    color: {colors.get("editor.foreground", "#cccccc")};
+                    padding: 8px 16px;
+                    margin-right: 2px;
+                }}
+
+                QTabBar::tab:selected {{
+                    background-color: {colors.get("tab.activeBackground", "#1e1e1e")};
+                    border-bottom: 2px solid {colors.get("button.background", "#0e639c")};
+                }}
+
+                QTextEdit {{
+                    background-color: {colors.get("sideBar.background", "#252526")};
+                    color: {colors.get("editor.foreground", "#cccccc")};
+                    border: 1px solid {colors.get("tab.inactiveBackground", "#2d2d30")};
+                    padding: 10px;
+                    font-family: monospace;
+                }}
+
+                QPushButton {{
+                    background-color: {colors.get("button.background", "#0e639c")};
+                    color: {colors.get("button.foreground", "#ffffff")};
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    font-weight: bold;
+                }}
+
+                QPushButton:hover {{
+                    background-color: {colors.get("button.hoverBackground", "#1177bb")};
+                }}
+
+                QPushButton:pressed {{
+                    background-color: {colors.get("button.background", "#0e639c")};
+                }}
+
+                QLabel {{
+                    color: {colors.get("editor.foreground", "#cccccc")};
+                }}
+            """)
+
+            # Update app icon label if it exists
+            if hasattr(self, 'app_icon_label'):
+                self.app_icon_label.setStyleSheet(f"""
+                    QLabel {{
+                        background-color: {colors.get("button.background", "#0e639c")};
+                        color: {colors.get("button.foreground", "#ffffff")};
+                        font-size: 32px;
+                        font-weight: bold;
+                        border-radius: 8px;
+                        padding: 20px;
+                    }}
+                """)

@@ -25,12 +25,6 @@ from core.commands.base import Command
 from core.keyboard.service import KeyboardService
 from core.settings.service import SettingsService
 from services.service_locator import ServiceLocator
-from ui.vscode_theme import (
-    get_settings_widget_stylesheet,
-    WARNING_COLOR,
-    FOCUS_BORDER,
-    EDITOR_BACKGROUND
-)
 
 
 logger = logging.getLogger(__name__)
@@ -81,7 +75,7 @@ class ShortcutRecorder(QLineEdit):
         self.recording = True
         self.recorded_keys = []
         self.setText("Press shortcut keys...")
-        self.setStyleSheet(f"QLineEdit {{ background-color: {EDITOR_BACKGROUND}; border: 2px solid {FOCUS_BORDER}; }}")
+        self.setStyleSheet("QLineEdit { background-color: #1e1e1e; border: 2px solid #007ACC; }")
         self.recording_started.emit()
         self.setFocus()
 
@@ -184,7 +178,7 @@ class ShortcutConfigAppWidget(AppWidget):
     def setup_ui(self):
         """Set up the user interface."""
         # Apply the theme stylesheet to the entire widget
-        self.setStyleSheet(get_settings_widget_stylesheet())
+        self.apply_theme()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -241,9 +235,9 @@ class ShortcutConfigAppWidget(AppWidget):
         self.conflict_label.setStyleSheet(f"""
             QLabel {{
                 background-color: rgba(244, 135, 113, 0.1);
-                color: {WARNING_COLOR};
+                color: #f48771;
                 padding: 8px;
-                border: 1px solid {WARNING_COLOR};
+                border: 1px solid #f48771;
                 border-radius: 4px;
             }}
         """)
@@ -623,3 +617,14 @@ class ShortcutConfigAppWidget(AppWidget):
                 return False
 
         return True
+
+    def apply_theme(self):
+        """Apply current theme to shortcut config widget."""
+        from services.service_locator import ServiceLocator
+        from ui.themes.theme_provider import ThemeProvider
+
+        locator = ServiceLocator.get_instance()
+        theme_provider = locator.get(ThemeProvider)
+        if theme_provider:
+            # Get the stylesheet for this widget type
+            self.setStyleSheet(theme_provider.get_stylesheet("settings_widget"))

@@ -8,8 +8,9 @@ from ui.sidebar import Sidebar
 from ui.workspace import Workspace
 from ui.status_bar import AppStatusBar
 from ui.icon_manager import get_icon_manager
-from ui.vscode_theme import *
 from ui.widgets.focus_sink import FocusSinkWidget
+from ui.themes.theme_provider import ThemeProvider
+from services.theme_service import ThemeService
 from ui.qt_compat import safe_splitter_collapse_setting, log_qt_versions
 
 
@@ -37,10 +38,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(title)
         self.resize(1200, 800)
 
-        # Apply VSCode theme to main window
-        # Check if we're in dev mode and apply appropriate styling
-        print(f"DEBUG: Applying main window style with dev_mode={dev_mode}")
-        self.setStyleSheet(get_main_window_stylesheet(dev_mode) + get_menu_stylesheet())
+        # Note: Theme will be applied after services are initialized
+        # We need ThemeProvider to be available first
         
         # Create central widget and main layout
         central_widget = QWidget()
@@ -56,7 +55,7 @@ class MainWindow(QMainWindow):
         
         # Create main splitter for sidebar and workspace
         self.main_splitter = QSplitter(Qt.Horizontal)
-        self.main_splitter.setStyleSheet(get_splitter_stylesheet())
+        # Splitter styling will be applied with theme
         main_layout.addWidget(self.main_splitter)
         
         # Create sidebar
@@ -98,9 +97,8 @@ class MainWindow(QMainWindow):
             activity_bar=self.activity_bar
         )
         
-        # Auto-detect and apply system theme on startup
-        icon_manager = get_icon_manager()
-        icon_manager.detect_system_theme()
+        # Setup theme system
+        self.setup_theme()
         
         # Log service initialization
         import logging
@@ -527,11 +525,11 @@ class MainWindow(QMainWindow):
         # View menu
         view_menu = menubar.addMenu("View")
         
-        # Theme toggle action (now using commands)
-        theme_action = QAction("Toggle Theme", self)
+        # Theme selection action (now using new theme system)
+        theme_action = QAction("Select Theme", self)
         # Shortcut handled by command system, not QAction
-        theme_action.setToolTip("Toggle between light and dark theme (Ctrl+T)")
-        theme_action.triggered.connect(lambda: self.execute_command("view.toggleTheme"))
+        theme_action.setToolTip("Select a color theme (Ctrl+K, Ctrl+T)")
+        theme_action.triggered.connect(lambda: self.execute_command("theme.selectTheme"))
         view_menu.addAction(theme_action)
         
         # Sidebar toggle action (now using commands)
@@ -778,7 +776,63 @@ class MainWindow(QMainWindow):
                 "Reset Warning", 
                 f"Some settings could not be reset:\n{str(e)}"
             )
-        
+
+    def setup_theme(self):
+        """Setup theme system and apply initial theme."""
+        try:
+            # Get theme provider from service locator
+            self.theme_provider = self.service_locator.get(ThemeProvider)
+            if not self.theme_provider:
+                print("Warning: ThemeProvider not available")
+                return
+
+            # Connect to theme changes
+            self.theme_provider.style_changed.connect(self.apply_theme)
+
+            # Apply initial theme
+            self.apply_theme()
+
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info("Theme system initialized")
+        except Exception as e:
+            print(f"Failed to setup theme: {e}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to setup theme: {e}")
+
+    def apply_theme(self):
+        """Apply current theme to all components."""
+        if not hasattr(self, 'theme_provider'):
+            return
+
+        try:
+            # Apply main window theme
+            self.setStyleSheet(self.theme_provider.get_stylesheet("main_window") +
+                             self.theme_provider.get_stylesheet("menu"))
+
+            # Apply splitter theme
+            self.main_splitter.setStyleSheet(self.theme_provider.get_stylesheet("splitter"))
+
+            # Let each component apply its own theme
+            if hasattr(self, 'activity_bar'):
+                self.activity_bar.apply_theme()
+            if hasattr(self, 'sidebar'):
+                self.sidebar.apply_theme()
+            if hasattr(self, 'workspace'):
+                self.workspace.apply_theme()
+            if hasattr(self, 'status_bar'):
+                self.status_bar.apply_theme()
+
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug("Theme applied to all components")
+        except Exception as e:
+            print(f"Failed to apply theme: {e}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to apply theme: {e}")
+
     def closeEvent(self, event):
         """Save state and clean up resources before closing."""
         self.save_state()

@@ -11,10 +11,6 @@ from PySide6.QtWidgets import (
     QWidget, QTextEdit, QPlainTextEdit, QTableWidget,
     QTreeWidget, QListWidget, QLabel
 )
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-from ui.vscode_theme import *
 
 
 # Widget state serialization functions
@@ -207,7 +203,7 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
         show_header=True,
         allow_type_change=True,
         default_content="# Text Editor\n\n",
-        stylesheet=get_editor_stylesheet(),
+        stylesheet="",  # Theme will be applied dynamically
         serializer=serialize_text_editor,
         deserializer=deserialize_text_editor
     ),
@@ -230,15 +226,7 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
         show_header=True,
         allow_type_change=True,
         default_content="Output Panel\n",
-        stylesheet=f"""
-            QTextEdit {{
-                background-color: {PANEL_BACKGROUND};
-                color: {SIDEBAR_FOREGROUND};
-                font-family: 'Consolas', 'Monaco', monospace;
-                font-size: 12px;
-                border: none;
-            }}
-        """,
+        stylesheet="",  # Theme will be applied dynamically
         serializer=serialize_terminal,  # Same as terminal
         deserializer=deserialize_terminal
     ),
@@ -249,7 +237,7 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
         show_header=True,
         header_compact=True,  # Use compact header for explorer
         allow_type_change=False,
-        stylesheet=get_sidebar_stylesheet()
+        stylesheet=""  # Theme will be applied dynamically
     ),
     
     WidgetType.TABLE_VIEW: WidgetConfig(
@@ -258,20 +246,7 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
         show_header=True,
         allow_type_change=True,
         min_width=200,
-        stylesheet=f"""
-            QTableWidget {{
-                background-color: {EDITOR_BACKGROUND};
-                color: {EDITOR_FOREGROUND};
-                border: none;
-                gridline-color: {SPLITTER_BACKGROUND};
-            }}
-            QHeaderView::section {{
-                background-color: {PANE_HEADER_BACKGROUND};
-                color: {SIDEBAR_FOREGROUND};
-                border: 1px solid {SPLITTER_BACKGROUND};
-                padding: 4px;
-            }}
-        """,
+        stylesheet="",  # Theme will be applied dynamically
         serializer=serialize_table_view,
         deserializer=deserialize_table_view
     ),
@@ -283,15 +258,7 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
         header_auto_hide=True,  # Auto-hide for better viewing
         allow_type_change=True,
         default_content="[Image Viewer]",
-        stylesheet=f"""
-            QLabel {{
-                background-color: {TAB_INACTIVE_BACKGROUND};
-                color: {TAB_INACTIVE_FOREGROUND};
-                qproperty-alignment: AlignCenter;
-                border: none;
-                padding: 20px;
-            }}
-        """,
+        stylesheet="",  # Theme will be applied dynamically
         serializer=serialize_label,
         deserializer=deserialize_label
     ),
@@ -315,15 +282,7 @@ WIDGET_CONFIGS: Dict[WidgetType, WidgetConfig] = {
         show_header=True,
         allow_type_change=True,
         default_content="Empty Pane\n\nRight-click to change type",
-        stylesheet=f"""
-            QLabel {{
-                background-color: {TAB_INACTIVE_BACKGROUND};
-                color: {TAB_INACTIVE_FOREGROUND};
-                qproperty-alignment: AlignCenter;
-                padding: 20px;
-                border: 1px dashed {SPLITTER_BACKGROUND};
-            }}
-        """,
+        stylesheet="",  # Theme will be applied dynamically
         serializer=serialize_label,
         deserializer=deserialize_label
     ),

@@ -20,7 +20,6 @@ from ui.widgets.widget_registry import WidgetType, widget_registry
 from ui.widgets.pane_header import PaneHeaderBar
 from ui.widgets.widget_pool import get_widget_pool, cleanup_widget_pool
 # from ui.widgets.overlay_transition import TransitionManager  # Disabled - causing UI freeze
-from ui.vscode_theme import get_splitter_stylesheet, EDITOR_BACKGROUND
 from core.commands.executor import execute_command
 
 logger = logging.getLogger(__name__)
@@ -321,10 +320,10 @@ class SplitPaneWidget(QWidget):
     def setup_ui(self):
         """Initialize the UI."""
         # Set dark background to prevent white flash
-        self.setStyleSheet(f"""
-            SplitPaneWidget {{
-                background-color: {EDITOR_BACKGROUND};
-            }}
+        self.setStyleSheet("""
+            SplitPaneWidget {
+                background-color: #1e1e1e;
+            }
         """)
         self.setAutoFillBackground(True)
         
@@ -641,7 +640,7 @@ class SplitPaneWidget(QWidget):
             splitter.setChildrenCollapsible(False)  # Prevent child widgets from collapsing
             
             # Apply styling
-            splitter.setStyleSheet(get_splitter_stylesheet())
+            splitter.setStyleSheet(self._get_splitter_stylesheet())
             
             # Render children
             if node.first:
@@ -959,3 +958,45 @@ class SplitPaneWidget(QWidget):
         # Clean up widget pool and log statistics
         self.widget_pool.log_stats()
         # Note: Global pool cleanup is handled at application shutdown
+
+    def _get_splitter_stylesheet(self):
+        """Get splitter stylesheet from theme."""
+        from services.service_locator import ServiceLocator
+        from ui.themes.theme_provider import ThemeProvider
+
+        locator = ServiceLocator.get_instance()
+        theme_provider = locator.get(ThemeProvider)
+        if theme_provider:
+            return theme_provider.get_stylesheet("splitter")
+        # Fallback style
+        return """
+            QSplitter::handle {
+                background-color: #3e3e42;
+            }
+            QSplitter::handle:horizontal {
+                width: 1px;
+            }
+            QSplitter::handle:vertical {
+                height: 1px;
+            }
+            QSplitter::handle:hover {
+                background-color: #007ACC;
+            }
+        """
+
+    def apply_theme(self):
+        """Apply current theme to split pane widget."""
+        from services.service_locator import ServiceLocator
+        from ui.themes.theme_provider import ThemeProvider
+
+        locator = ServiceLocator.get_instance()
+        theme_provider = locator.get(ThemeProvider)
+        if theme_provider:
+            colors = theme_provider.theme_service.get_current_colors()
+            self.setStyleSheet(f"""
+                SplitPaneWidget {{
+                    background-color: {colors.get("editor.background", "#1e1e1e")};
+                }}
+            """)
+            # Update all splitters in the widget tree
+            self.refresh_view()
