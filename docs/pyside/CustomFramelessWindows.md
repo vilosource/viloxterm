@@ -1,148 +1,431 @@
-# Building a Custom Frameless Window in PySide6 That Works on Wayland
+# Building Custom Frameless Windows in PySide6/Qt6 (Cross-Platform Guide)
 
-One of the first things many desktop developers want to do when building a polished application is **remove the default OS chrome** and implement their own window decorations. This allows for custom title bars, buttons, and a consistent cross-platform look.
+This guide covers creating custom frameless windows that work reliably across Windows, macOS, and Linux (including Wayland). Based on real-world implementation experience with PySide6/Qt6.
 
-On Windows and macOS, that’s relatively straightforward: you can make a window frameless, capture mouse events, and move the window around manually with `move()`.
-
-But on **Wayland** — the modern Linux display server protocol — things work differently. In fact, if you try to drag a top-level window by calling `move()` during mouse events, you’ll run into limitations or outright failures.
-
-So how do we do this correctly in **PySide6**?
-
----
-
-## Why Manual Moving Doesn’t Work on Wayland
-
-Wayland was designed to put window management in the hands of the **compositor** (the system component that draws and arranges windows). Applications aren’t allowed to reposition themselves arbitrarily, because that could break tiling, snapping, or even basic security guarantees.
-
-That means if you remove the chrome and want your app to be draggable, you **must ask the compositor** to move or resize the window for you.
+## Table of Contents
+- [Why Frameless Windows?](#why-frameless-windows)
+- [Platform Considerations](#platform-considerations)
+- [Complete Implementation](#complete-implementation)
+- [Edge Cases and Solutions](#edge-cases-and-solutions)
+- [Testing Considerations](#testing-considerations)
 
 ---
 
-## The Qt Way: `startSystemMove()` and `startSystemResize()`
+## Why Frameless Windows?
 
-Fortunately, Qt 6 (and thus PySide6) provides the right APIs for this:
-
-* `QWindow.startSystemMove()`
-* `QWindow.startSystemResize(Qt.Edges)`
-
-These tell the underlying OS or compositor:
-*"Please start a drag or resize operation on this window, beginning at the current pointer location."*
-
-On X11, macOS, and Windows, these map to native calls. On Wayland, they are **the only way** to implement client-side decorated windows that behave properly.
+Custom frameless windows allow you to:
+- **Maximize screen real estate** by integrating controls into your UI
+- **Create consistent branding** across all platforms
+- **Implement modern UI patterns** like combined tab/title bars (Chrome-style)
+- **Control every pixel** of your application's appearance
 
 ---
 
-## Step 1: Create a Frameless Window
+## Platform Considerations
 
-Start by removing the default system chrome:
+### The Wayland Challenge
 
-```python
-self.setWindowFlags(Qt.FramelessWindowHint)
-self.setAttribute(Qt.WA_TranslucentBackground, True)  # optional
-```
+On traditional X11, Windows, and macOS, you can manually position windows using `move()`. However, **Wayland prohibits this** for security and compositor control reasons.
 
-This gives you a clean canvas to draw your own borders and title bar.
+**The Solution:** Qt6 provides platform-agnostic APIs:
+- `QWindow.startSystemMove()` - Initiates system-controlled window dragging
+- `QWindow.startSystemResize(edges)` - Initiates system-controlled resizing
 
-> Tip: If you use a translucent background, draw your own rounded-rect background with anti-aliased painting to get crisp corners.
-
----
-
-## Step 2: Build Your Own Title Bar
-
-A simple `QWidget` with a label and a few buttons works well:
-
-* **Minimize** → `window.showMinimized()`
-* **Maximize / Restore** → toggle `showMaximized()` / `showNormal()`
-* **Close** → `window.close()`
-
-You can add hover effects and animations to match your brand.
+These work on ALL platforms, making them the preferred approach.
 
 ---
 
-## Step 3: Dragging the Window (Wayland-Safe)
+## Complete Implementation
 
-Instead of faking movement with `move()`, hook into mouse press events on the title bar:
-
-```python
-def mousePressEvent(self, e):
-    if e.button() == Qt.LeftButton:
-        wh = self.window().windowHandle()
-        if wh:
-            wh.startSystemMove()
-```
-
-Now when the user clicks and drags your title bar, the compositor takes care of it. On Wayland this is not optional — it’s the *only* way.
-
----
-
-## Step 4: Resizing with Hit-Test Borders
-
-Implement custom resize borders by detecting the pointer near an edge/corner, then call:
-
-```python
-self.window().windowHandle().startSystemResize(Qt.LeftEdge)
-```
-
-or any combination of `Qt.Edges` (e.g. `Qt.TopEdge | Qt.LeftEdge` for top-left corner). The compositor will handle the resizing sequence.
-
-> Practical border thickness: 5–8 px usually feels right. Provide visible affordances on hover if your UI allows.
-
----
-
-## Step 5: Embrace the Wayland Rules
-
-On Wayland you **cannot**:
-
-* Force a window’s absolute screen position during interactive drag
-* Warp the pointer to new coordinates
-* Perform interactive resize by setting geometry manually
-
-These limitations are intentional. Use `startSystemMove()`/`startSystemResize()` and let the compositor manage snapping, tiling, and multi-monitor behavior.
-
----
-
-## Minimal Example: Custom Title Bar + System Move
+### 1. Basic Frameless Window Setup
 
 ```python
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QMainWindow
 
-class TitleBar(QWidget):
-    def mousePressEvent(self, e):
-        if e.button() == Qt.LeftButton:
-            wh = self.window().windowHandle()
-            if wh:
-                wh.startSystemMove()
+class FramelessWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        # Essential window flags for frameless mode
+        self.setWindowFlags(
+            Qt.FramelessWindowHint |           # Remove window decorations
+            Qt.WindowSystemMenuHint |          # Keep system menu functionality
+            Qt.WindowMinMaxButtonsHint         # Allow min/max operations
+        )
+
+        # Enable mouse tracking for resize cursor feedback
+        self.setMouseTracking(True)
+
+        # Set minimum size to prevent window from becoming too small
+        self.setMinimumSize(400, 300)
 ```
 
-Combine this with your main layout (title bar at the top, central widget below) to form a fully custom-decorated window.
+### 2. Custom Title Bar Implementation
+
+```python
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QToolButton
+from PySide6.QtCore import Signal
+
+class CustomTitleBar(QWidget):
+    # Signals for window operations
+    minimize_requested = Signal()
+    maximize_requested = Signal()
+    close_requested = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedHeight(36)  # Standard height for title bars
+        self.setup_ui()
+
+    def setup_ui(self):
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 0, 8, 0)
+
+        # Application title
+        self.title_label = QLabel("My Application")
+        layout.addWidget(self.title_label)
+
+        # Spacer
+        layout.addStretch()
+
+        # Window control buttons
+        self.minimize_btn = QToolButton()
+        self.minimize_btn.setText("─")
+        self.minimize_btn.clicked.connect(self.minimize_requested.emit)
+
+        self.maximize_btn = QToolButton()
+        self.maximize_btn.setText("□")
+        self.maximize_btn.clicked.connect(self.maximize_requested.emit)
+
+        self.close_btn = QToolButton()
+        self.close_btn.setText("×")
+        self.close_btn.clicked.connect(self.close_requested.emit)
+
+        layout.addWidget(self.minimize_btn)
+        layout.addWidget(self.maximize_btn)
+        layout.addWidget(self.close_btn)
+
+    def mousePressEvent(self, event):
+        """Initiate window dragging on title bar click."""
+        if event.button() == Qt.LeftButton:
+            # Get the window's native handle
+            window_handle = self.window().windowHandle()
+            if window_handle:
+                # Use Qt's system move (works on Wayland!)
+                window_handle.startSystemMove()
+
+    def mouseDoubleClickEvent(self, event):
+        """Toggle maximize on double-click."""
+        if event.button() == Qt.LeftButton:
+            self.maximize_requested.emit()
+```
+
+### 3. Edge Detection and Resizing
+
+```python
+class FramelessWindow(QMainWindow):
+    RESIZE_BORDER = 6  # Pixels for resize detection
+
+    def get_resize_direction(self, pos):
+        """Determine resize direction based on mouse position."""
+        rect = self.rect()
+        x, y = pos.x(), pos.y()
+
+        # Check corners first (8 pixels for corner detection)
+        corner_size = 8
+
+        # Use Qt.Edge enum (Qt6 style)
+        if x <= corner_size and y <= corner_size:
+            return Qt.Edge.TopEdge | Qt.Edge.LeftEdge
+        elif x >= rect.width() - corner_size and y <= corner_size:
+            return Qt.Edge.TopEdge | Qt.Edge.RightEdge
+        elif x <= corner_size and y >= rect.height() - corner_size:
+            return Qt.Edge.BottomEdge | Qt.Edge.LeftEdge
+        elif x >= rect.width() - corner_size and y >= rect.height() - corner_size:
+            return Qt.Edge.BottomEdge | Qt.Edge.RightEdge
+
+        # Check edges
+        elif x <= self.RESIZE_BORDER:
+            return Qt.Edge.LeftEdge
+        elif x >= rect.width() - self.RESIZE_BORDER:
+            return Qt.Edge.RightEdge
+        elif y <= self.RESIZE_BORDER:
+            return Qt.Edge.TopEdge
+        elif y >= rect.height() - self.RESIZE_BORDER:
+            return Qt.Edge.BottomEdge
+
+        return None
+
+    def update_cursor(self, pos):
+        """Update cursor based on resize direction."""
+        direction = self.get_resize_direction(pos)
+
+        if direction == Qt.Edge.LeftEdge or direction == Qt.Edge.RightEdge:
+            self.setCursor(Qt.SizeHorCursor)
+        elif direction == Qt.Edge.TopEdge or direction == Qt.Edge.BottomEdge:
+            self.setCursor(Qt.SizeVerCursor)
+        elif direction == (Qt.Edge.TopEdge | Qt.Edge.LeftEdge) or \
+             direction == (Qt.Edge.BottomEdge | Qt.Edge.RightEdge):
+            self.setCursor(Qt.SizeFDiagCursor)
+        elif direction == (Qt.Edge.TopEdge | Qt.Edge.RightEdge) or \
+             direction == (Qt.Edge.BottomEdge | Qt.Edge.LeftEdge):
+            self.setCursor(Qt.SizeBDiagCursor)
+        else:
+            self.setCursor(Qt.ArrowCursor)
+
+    def mousePressEvent(self, event):
+        """Handle mouse press for resize operations."""
+        if event.button() == Qt.LeftButton and not self.isMaximized():
+            direction = self.get_resize_direction(event.pos())
+            if direction:
+                window_handle = self.windowHandle()
+                if window_handle:
+                    # Use Qt's system resize (Wayland-compatible!)
+                    window_handle.startSystemResize(direction)
+                    return
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        """Update cursor on mouse move."""
+        if not self.isMaximized():
+            self.update_cursor(event.pos())
+        super().mouseMoveEvent(event)
+```
+
+### 4. Complete Integration
+
+```python
+from PySide6.QtWidgets import QVBoxLayout, QWidget
+
+class FramelessWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setup_frameless()
+        self.setup_ui()
+
+    def setup_frameless(self):
+        """Configure frameless window settings."""
+        self.setWindowFlags(
+            Qt.FramelessWindowHint |
+            Qt.WindowSystemMenuHint |
+            Qt.WindowMinMaxButtonsHint
+        )
+        self.setMouseTracking(True)
+        self.setMinimumSize(400, 300)
+
+    def setup_ui(self):
+        """Create and integrate custom title bar."""
+        # Create custom title bar
+        self.title_bar = CustomTitleBar(self)
+
+        # Connect signals
+        self.title_bar.minimize_requested.connect(self.showMinimized)
+        self.title_bar.maximize_requested.connect(self.toggle_maximize)
+        self.title_bar.close_requested.connect(self.close)
+
+        # Get current central widget
+        original_central = self.centralWidget()
+
+        # Create container for new layout
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # Add title bar at top
+        layout.addWidget(self.title_bar)
+
+        # Add original content below
+        if original_central:
+            layout.addWidget(original_central)
+
+        # Set as new central widget
+        self.setCentralWidget(container)
+
+    def toggle_maximize(self):
+        """Toggle between maximized and normal state."""
+        if self.isMaximized():
+            self.showNormal()
+            self.title_bar.maximize_btn.setText("□")
+        else:
+            self.showMaximized()
+            self.title_bar.maximize_btn.setText("❐")
+```
 
 ---
 
-## Common Pitfalls & Fixes
+## Edge Cases and Solutions
 
-* **Manual `move()` during drag causes jitter or no-op on Wayland** → Replace with `startSystemMove()`.
-* **Resizing by `setGeometry()` feels wrong** → Switch to `startSystemResize()` from hit-tested edges.
-* **Double-click to maximize** → Handle `mouseDoubleClickEvent` on the title bar and toggle `showMaximized()`/`showNormal()`.
-* **Window shadows** → Compositors often draw shadows only for server-side decorations. For client-side, mimic shadows via drop-shadows in your background painting.
-* **HiDPI** → Use device-independent units and test on multiple scale factors.
+### 1. Menu Bar Integration
+
+When removing the native menu bar, you need alternative access to menu items:
+
+```python
+def hide_native_menu_bar(self):
+    """Hide native menu bar and provide alternative access."""
+    if self.menuBar():
+        # Option 1: Create hamburger menu
+        self.create_hamburger_menu()
+
+        # Option 2: Hide completely
+        self.menuBar().hide()
+        self.menuBar().setMaximumHeight(0)
+
+def create_hamburger_menu(self):
+    """Create consolidated menu for hamburger button."""
+    menu = QMenu(self)
+
+    # Copy all menus from menu bar
+    for action in self.menuBar().actions():
+        if action.menu():
+            # Add submenu
+            menu.addMenu(action.menu())
+        else:
+            # Add action directly
+            menu.addAction(action)
+
+    # Attach to hamburger button
+    self.title_bar.menu_button.setMenu(menu)
+```
+
+### 2. State Preservation
+
+Maximize state needs special handling:
+
+```python
+def changeEvent(self, event):
+    """Handle window state changes."""
+    if event.type() == QEvent.WindowStateChange:
+        if self.isMaximized():
+            # Remove resize borders when maximized
+            self.RESIZE_BORDER = 0
+            self.title_bar.maximize_btn.setText("❐")
+        else:
+            # Restore resize borders
+            self.RESIZE_BORDER = 6
+            self.title_bar.maximize_btn.setText("□")
+    super().changeEvent(event)
+```
+
+### 3. Settings Persistence
+
+Store user preference for frameless mode:
+
+```python
+from PySide6.QtCore import QSettings
+
+def save_frameless_preference(enabled: bool):
+    settings = QSettings("MyCompany", "MyApp")
+    settings.setValue("UI/FramelessMode", enabled)
+    settings.sync()
+
+def load_frameless_preference() -> bool:
+    settings = QSettings("MyCompany", "MyApp")
+    return settings.value("UI/FramelessMode", False, type=bool)
+```
 
 ---
 
-## Optional: Corner Cases (Pun Intended)
+## Testing Considerations
 
-* **Rounded corners with live resize**: Clip your window painting to a rounded path to avoid artifacts.
-* **Drag from anywhere**: If you want to allow dragging from empty regions of your UI (not just the title bar), forward those region events to the same `startSystemMove()` call.
-* **Maximize vs. Fullscreen**: Prefer `showMaximized()` for standard behavior; use `showFullScreen()` only if you truly want to cover docks/panels.
+### 1. Automated Testing
+
+When testing frameless windows, bypass confirmation dialogs:
+
+```python
+import os
+
+# Set environment variable before importing app modules
+os.environ['APP_TEST_MODE'] = '1'
+
+# In your app configuration
+def should_show_confirmations():
+    return os.environ.get('APP_TEST_MODE') != '1'
+```
+
+### 2. Platform-Specific Testing
+
+Test on multiple platforms and configurations:
+
+```python
+import platform
+
+def test_window_operations():
+    """Test window operations across platforms."""
+    window = FramelessWindow()
+
+    # Test dragging (mock for CI/CD)
+    if platform.system() == "Linux":
+        # Wayland requires special handling
+        assert window.windowHandle() is not None
+
+    # Test resize operations
+    for edge in [Qt.Edge.LeftEdge, Qt.Edge.RightEdge]:
+        # Verify edge detection works
+        pass
+```
+
+### 3. Common Test Cases
+
+Essential tests for frameless windows:
+
+```python
+def test_frameless_window_creation(qtbot):
+    """Test frameless window is created with correct flags."""
+    window = FramelessWindow()
+    qtbot.addWidget(window)
+
+    flags = window.windowFlags()
+    assert flags & Qt.FramelessWindowHint
+    assert hasattr(window, 'title_bar')
+
+def test_window_controls(qtbot):
+    """Test minimize, maximize, close buttons."""
+    window = FramelessWindow()
+    qtbot.addWidget(window)
+
+    # Test each control
+    window.title_bar.minimize_requested.emit()
+    assert window.isMinimized()
+
+    window.showNormal()
+    window.title_bar.maximize_requested.emit()
+    assert window.isMaximized()
+```
+
+---
+
+## Common Pitfalls and Solutions
+
+| Problem | Solution |
+|---------|----------|
+| **Window not draggable on Wayland** | Use `startSystemMove()` instead of manual `move()` |
+| **Resize doesn't work** | Use `startSystemResize()` with proper edge detection |
+| **Menu bar still visible** | Call both `hide()` and `setMaximumHeight(0)` |
+| **Double-click maximize not working** | Handle `mouseDoubleClickEvent` in title bar |
+| **Settings not persisting** | Ensure consistent QSettings organization/app names |
+| **Tests blocked by dialogs** | Implement test mode flag to bypass confirmations |
+| **Window too small** | Set `minimumSize()` in constructor |
+| **Cursor not changing on edges** | Enable `setMouseTracking(True)` |
+
+---
+
+## Best Practices
+
+1. **Always use Qt's system APIs** (`startSystemMove/Resize`) for compatibility
+2. **Set reasonable minimum window size** (typically 400x300)
+3. **Provide visual feedback** with cursor changes on resize borders
+4. **Test on all target platforms**, especially Wayland
+5. **Handle window state changes** properly (maximize/restore)
+6. **Make resize borders at least 6px** for usability
+7. **Use Qt.Edge enum** (not the deprecated individual edge constants)
+8. **Store user preferences** for window mode
 
 ---
 
 ## Conclusion
 
-If you’re building a frameless PySide6 application and want it to work reliably across platforms — **especially Wayland** — rely on:
+Creating frameless windows in PySide6/Qt6 requires careful attention to platform differences, especially Wayland's restrictions. By using Qt's `startSystemMove()` and `startSystemResize()` APIs, you can create beautiful, custom-styled windows that work reliably across all platforms.
 
-* `startSystemMove()` for dragging
-* `startSystemResize()` for resizing
-
-These APIs hand control to the OS compositor, ensuring your app plays nicely with modern desktop environments, window snapping, and multi‑monitor setups. With them, you can design your own chrome confidently across Linux (Wayland), Windows, and macOS.
-
+Remember: The compositor is your friend on modern systems. Work with it, not against it, and your users will have a smooth, native-feeling experience regardless of their platform.
