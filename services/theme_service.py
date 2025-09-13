@@ -35,6 +35,11 @@ class ThemeService(Service):
         self._user_themes_path = Path.home() / ".config/ViloxTerm/themes"
         self._theme_provider = None  # Will be set after initialization
 
+        # Preview mode state
+        self._preview_mode = False
+        self._preview_backup: Optional[Theme] = None
+        self._preview_colors: Dict[str, str] = {}
+
         # Ensure user themes directory exists
         self._user_themes_path.mkdir(parents=True, exist_ok=True)
 
@@ -188,14 +193,8 @@ class ThemeService(Service):
             else:
                 logger.warning(f"Parent theme not found: {theme.extends}")
 
-        # Set current theme
-        self._current_theme = theme
-
-        # Emit change signal with color dictionary
-        self.theme_changed.emit(theme.colors)
-
-        # Save preference
-        self._save_theme_preference(theme_id)
+        # Apply theme using internal method
+        self._apply_theme_internal(theme, save=True)
 
         logger.info(f"Applied theme: {theme_id}")
         return True
@@ -225,6 +224,65 @@ class ThemeService(Service):
         if self._current_theme:
             return self._current_theme.colors.copy()
         return {}
+
+    def apply_theme_preview(self, colors: Dict[str, str]) -> None:
+        """
+        Apply temporary theme for preview without saving.
+
+        Args:
+            colors: Dictionary of color key-value pairs to preview
+        """
+        if not self._preview_mode:
+            # Backup current theme
+            self._preview_backup = self._current_theme
+            self._preview_mode = True
+
+        # Merge preview colors with current theme
+        preview_theme = Theme(
+            id="__preview__",
+            name="Preview",
+            description="Temporary preview theme",
+            version="1.0.0",
+            author="Theme Editor",
+            colors={**self._current_theme.colors, **colors} if self._current_theme else colors
+        )
+
+        # Store preview colors for reference
+        self._preview_colors = colors
+
+        # Apply without saving to settings
+        self._apply_theme_internal(preview_theme, save=False)
+
+    def end_preview(self) -> None:
+        """End preview and restore previous theme."""
+        if self._preview_mode and self._preview_backup:
+            self._apply_theme_internal(self._preview_backup, save=False)
+            self._preview_mode = False
+            self._preview_backup = None
+            self._preview_colors = {}
+
+    def is_preview_mode(self) -> bool:
+        """Check if in preview mode."""
+        return self._preview_mode
+
+    def get_preview_colors(self) -> Dict[str, str]:
+        """Get colors being previewed."""
+        return self._preview_colors.copy()
+
+    def _apply_theme_internal(self, theme: Theme, save: bool = True) -> None:
+        """
+        Internal method to apply theme.
+
+        Args:
+            theme: Theme to apply
+            save: Whether to save to settings
+        """
+        self._current_theme = theme
+        if save and not self._preview_mode and theme.id != "__preview__":
+            self._save_theme_preference(theme.id)
+
+        # Emit signal for UI updates
+        self.theme_changed.emit(theme.colors)
 
     def create_custom_theme(self, base_theme_id: str, name: str,
                           description: str = "") -> Optional[Theme]:
