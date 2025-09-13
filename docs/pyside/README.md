@@ -22,6 +22,24 @@ Learn how to create modern, custom-styled windows that work reliably across Wind
 
 ---
 
+### 📦 [Building Executables](BuildingExecutables.md)
+**Comprehensive guide to deploying PySide6 applications as standalone executables**
+
+Learn how to use `pyside6-deploy` to create production-ready executables that work across Windows, macOS, and Linux. This guide covers everything from basic deployment to advanced optimization:
+
+- **Quick start** - Deploy your first app in minutes
+- **Configuration mastery** - Understanding and customizing pysidedeploy.spec
+- **Size optimization** - Techniques to reduce executable size by 50-70%
+- **Platform specifics** - Windows code signing, macOS notarization, Linux AppImage
+- **Performance tuning** - Startup time optimization and resource handling
+- **Troubleshooting** - Solutions to common deployment issues
+- **Tool comparison** - pyside6-deploy vs PyInstaller vs manual Nuitka
+- **CI/CD integration** - Automated builds with GitHub Actions
+
+*Perfect for: Developers ready to distribute their PySide6 applications, teams setting up automated build pipelines, or anyone wanting smaller, faster executables than PyInstaller provides.*
+
+---
+
 ## Guide Structure
 
 Each document in this collection follows a consistent structure:
