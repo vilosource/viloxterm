@@ -13,6 +13,7 @@ from services.ui_service import UIService
 from services.terminal_service import TerminalService
 from services.state_service import StateService
 from services.editor_service import EditorService
+from services.theme_service import ThemeService
 
 __all__ = [
     'Service',
@@ -23,6 +24,7 @@ __all__ = [
     'TerminalService',
     'StateService',
     'EditorService',
+    'ThemeService',
 ]
 
 def initialize_services(main_window=None, workspace=None, sidebar=None, activity_bar=None):
@@ -39,23 +41,32 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
     
     # Create and register services (order matters - StateService before SettingsService)
     state_service = StateService()
-    
+
+    # ThemeService early in chain (before UIService)
+    theme_service = ThemeService()
+
     # Import SettingsService here to avoid circular imports
     from core.settings.service import SettingsService
     settings_service = SettingsService()
-    
+
     workspace_service = WorkspaceService(workspace)
     ui_service = UIService(main_window)
     terminal_service = TerminalService()
     editor_service = EditorService()
-    
+
+    # Create theme provider
+    from ui.themes.theme_provider import ThemeProvider
+    theme_provider = ThemeProvider(theme_service)
+
     # Register in dependency order
     locator.register(StateService, state_service)
+    locator.register(ThemeService, theme_service)
     locator.register(SettingsService, settings_service)
     locator.register(WorkspaceService, workspace_service)
     locator.register(UIService, ui_service)
     locator.register(TerminalService, terminal_service)
     locator.register(EditorService, editor_service)
+    locator.register(ThemeProvider, theme_provider)
     
     # Initialize all services with context
     context = {

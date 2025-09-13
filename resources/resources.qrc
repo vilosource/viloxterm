@@ -12,4 +12,9 @@
         <file alias="git">icons/dark/git.svg</file>
         <file alias="settings">icons/dark/settings.svg</file>
     </qresource>
+    <qresource prefix="/themes/builtin">
+        <file alias="vscode-dark.json">themes/builtin/vscode-dark.json</file>
+        <file alias="vscode-light.json">themes/builtin/vscode-light.json</file>
+        <file alias="monokai.json">themes/builtin/monokai.json</file>
+    </qresource>
 </RCC>
