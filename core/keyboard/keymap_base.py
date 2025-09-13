@@ -23,11 +23,12 @@ class BaseKeymapShortcuts:
         """
         return [
             # ========== File Operations ==========
-            {"id": "file.new", "sequence": "ctrl+n", "command_id": CommandID.File.NEW_EDITOR_TAB},
+            {"id": "file.new_terminal", "sequence": "ctrl+n", "command_id": "file.newTerminalTab"},
+            {"id": "file.new_editor", "sequence": "ctrl+shift+n", "command_id": "file.newEditorTab"},
             {"id": "file.open", "sequence": "ctrl+o", "command_id": CommandID.File.OPEN},
             {"id": "file.save", "sequence": "ctrl+s", "command_id": CommandID.File.SAVE},
             {"id": "file.save_as", "sequence": "ctrl+shift+s", "command_id": CommandID.File.SAVE_AS},
-            {"id": "file.close", "sequence": "ctrl+w", "command_id": CommandID.File.CLOSE_ACTIVE_TAB},
+            {"id": "file.close", "sequence": "ctrl+w", "command_id": "file.closeTab"},
             
             # ========== Edit Operations ==========
             {"id": "edit.cut", "sequence": "ctrl+x", "command_id": CommandID.Edit.CUT},

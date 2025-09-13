@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
     title="Open Settings",
     category="Settings",
     description="Open application settings dialog",
-    shortcut="ctrl+comma",
+    shortcut="ctrl+,",
     icon="settings"
 )
 def open_settings_command(context: CommandContext) -> CommandResult:

@@ -33,7 +33,8 @@ DEFAULT_KEYBOARD_SHORTCUTS = {
     "commandPalette.showInCurrentCategory": "ctrl+p",
     
     # File Operations
-    "file.newFile": "ctrl+n",
+    "file.newTerminalTab": "ctrl+n",
+    "file.newEditorTab": "ctrl+shift+n",
     "file.openFile": "ctrl+o",
     "file.save": "ctrl+s",
     "file.saveAs": "ctrl+shift+s",

@@ -241,7 +241,7 @@ def register_terminal_commands():
             category="Terminal",
             handler=clear_terminal_handler,
             description="Clear the terminal screen",
-            shortcut="Ctrl+L",
+            shortcut="ctrl+l",
             keywords=["clear", "cls", "reset"]
         ),
         Command(
@@ -250,7 +250,7 @@ def register_terminal_commands():
             category="Terminal",
             handler=new_terminal_handler,
             description="Open a new terminal tab",
-            shortcut="Ctrl+Shift+`",
+            shortcut="ctrl+shift+`",
             keywords=["new", "terminal", "console", "shell"]
         ),
         Command(
@@ -259,7 +259,7 @@ def register_terminal_commands():
             category="Terminal",
             handler=copy_terminal_handler,
             description="Copy selected text from the terminal",
-            shortcut="Ctrl+Shift+C",
+            shortcut="ctrl+shift+c",
             keywords=["copy", "clipboard"]
         ),
         Command(
@@ -268,7 +268,7 @@ def register_terminal_commands():
             category="Terminal",
             handler=paste_terminal_handler,
             description="Paste text from clipboard to the terminal",
-            shortcut="Ctrl+Shift+V",
+            shortcut="ctrl+shift+v",
             keywords=["paste", "clipboard"]
         ),
         Command(

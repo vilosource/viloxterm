@@ -34,8 +34,9 @@ WEBENGINE_RESERVED_SHORTCUTS = [
     "Ctrl+Shift+P",    # Show command palette
     
     # File operations
-    "Ctrl+N",          # New editor tab
-    "Ctrl+`",          # New terminal tab
+    "Ctrl+N",          # New terminal tab (default)
+    "Ctrl+Shift+N",    # New editor tab
+    "Ctrl+`",          # New terminal tab (alternative)
     "Ctrl+S",          # Save
     
     # Navigation

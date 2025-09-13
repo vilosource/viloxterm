@@ -189,7 +189,6 @@ def show_git_command(context: CommandContext) -> CommandResult:
     title="Show Settings",
     category="View",
     description="Show the Settings in the sidebar",
-    shortcut="ctrl+,",
     icon="settings"
 )
 def show_settings_command(context: CommandContext) -> CommandResult:

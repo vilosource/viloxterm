@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     title="New Editor Tab",
     category="File",
     description="Create a new editor tab",
-    shortcut="ctrl+n",
+    shortcut="ctrl+shift+n",
     icon="file-plus"
 )
 def new_editor_tab_command(context: CommandContext) -> CommandResult:
@@ -46,7 +46,7 @@ def new_editor_tab_command(context: CommandContext) -> CommandResult:
     title="New Terminal Tab",
     category="File",
     description="Create a new terminal tab",
-    shortcut="ctrl+`",
+    shortcut="ctrl+n",
     icon="terminal"
 )
 def new_terminal_tab_command(context: CommandContext) -> CommandResult:
@@ -77,6 +77,19 @@ def new_terminal_tab_command(context: CommandContext) -> CommandResult:
     except Exception as e:
         logger.error(f"Failed to create terminal tab: {e}")
         return CommandResult(success=False, error=str(e))
+
+
+@command(
+    id="terminal.newTerminal",
+    title="New Terminal",
+    category="Terminal",
+    description="Create a new terminal tab",
+    shortcut="ctrl+`",
+    icon="terminal"
+)
+def new_terminal_command(context: CommandContext) -> CommandResult:
+    """Alias for new_terminal_tab_command with backtick shortcut."""
+    return new_terminal_tab_command(context)
 
 
 @command(

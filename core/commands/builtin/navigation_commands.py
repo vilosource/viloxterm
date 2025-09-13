@@ -504,7 +504,7 @@ def get_focus_navigation_commands():
             category="Navigation",
             handler=focus_next_group_handler,
             description="Move focus to the next UI group",
-            shortcut="F6",
+            shortcut="f6",
             keywords=["focus", "next", "group", "navigation"]
         ),
         Command(
@@ -513,7 +513,7 @@ def get_focus_navigation_commands():
             category="Navigation",
             handler=focus_previous_group_handler,
             description="Move focus to the previous UI group",
-            shortcut="Shift+F6",
+            shortcut="shift+f6",
             keywords=["focus", "previous", "group", "navigation"]
         ),
     ]
