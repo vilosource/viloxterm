@@ -28,7 +28,7 @@ class StateService(Service):
     def __init__(self):
         """Initialize the state service."""
         super().__init__("StateService")
-        self._settings = QSettings("ViloApp", "State")
+        self._settings = QSettings("ViloxTerm", "State")
         self._main_window = None
         self._workspace = None
         self._autosave_enabled = True

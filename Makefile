@@ -1,4 +1,4 @@
-# Makefile for ViloApp
+# Makefile for ViloxTerm
 # VSCode-style PySide6 Application
 
 # Python paths (using direnv virtual environment)
@@ -15,7 +15,7 @@ PYSIDE6_RCC := .direnv/python-3.12.3/bin/pyside6-rcc
 
 .PHONY: help
 help: ## Show this help message
-	@echo "ViloApp Development Commands"
+	@echo "ViloxTerm Development Commands"
 	@echo "============================"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -240,7 +240,7 @@ ci-full: ## Run full CI pipeline including slow GUI tests
 # Settings development targets
 .PHONY: run-dev
 run-dev: resources ## Run with development settings directory
-	VILOAPP_SETTINGS_DIR=~/.viloapp-dev $(PYTHON) main.py
+	VILOXTERM_SETTINGS_DIR=~/.viloxterm-dev $(PYTHON) main.py
 
 .PHONY: run-test
 run-test: resources ## Run with temporary settings (no persistence)
@@ -256,11 +256,11 @@ run-portable: resources ## Run in portable mode (settings in app directory)
 
 .PHONY: run-custom
 run-custom: resources ## Run with custom settings file (specify with SETTINGS_FILE=path)
-	$(PYTHON) main.py --settings-file $(or $(SETTINGS_FILE),/tmp/viloapp-custom.ini)
+	$(PYTHON) main.py --settings-file $(or $(SETTINGS_FILE),/tmp/viloxterm-custom.ini)
 
 .PHONY: settings-info
 settings-info: ## Show current settings location
-	@echo "Settings configuration for ViloApp:"
+	@echo "Settings configuration for ViloxTerm:"
 	@echo "===================================="
 	@echo "Default: System locations (Registry/~/.config/macOS ~/Library)"
 	@echo ""
@@ -272,13 +272,13 @@ settings-info: ## Show current settings location
 	@echo "  --reset-settings         Reset to defaults"
 	@echo ""
 	@echo "Environment variables:"
-	@echo "  VILOAPP_SETTINGS_DIR     Custom settings directory"
-	@echo "  VILOAPP_SETTINGS_FILE    Specific settings file"
-	@echo "  VILOAPP_PORTABLE=1       Enable portable mode"
-	@echo "  VILOAPP_TEMP_SETTINGS=1  Enable temporary settings"
+	@echo "  VILOXTERM_SETTINGS_DIR     Custom settings directory"
+	@echo "  VILOXTERM_SETTINGS_FILE    Specific settings file"
+	@echo "  VILOXTERM_PORTABLE=1       Enable portable mode"
+	@echo "  VILOXTERM_TEMP_SETTINGS=1  Enable temporary settings"
 	@echo ""
 	@echo "Development targets:"
-	@echo "  make run-dev            Run with dev settings (~/.viloapp-dev)"
+	@echo "  make run-dev            Run with dev settings (~/.viloxterm-dev)"
 	@echo "  make run-test           Run with temporary settings"
 	@echo "  make run-clean          Run with defaults + temp settings"
 	@echo "  make run-portable       Run in portable mode"
@@ -286,17 +286,17 @@ settings-info: ## Show current settings location
 
 .PHONY: clean-dev-settings
 clean-dev-settings: ## Remove development settings directory
-	rm -rf ~/.viloapp-dev
+	rm -rf ~/.viloxterm-dev
 	@echo "Development settings directory removed"
 
 .PHONY: backup-settings
-backup-settings: ## Backup current settings to ~/viloapp-settings-backup
+backup-settings: ## Backup current settings to ~/viloxterm-settings-backup
 	@echo "Creating settings backup..."
-	@mkdir -p ~/viloapp-settings-backup
-	@if [ -d ~/.config/ViloApp ]; then cp -r ~/.config/ViloApp ~/viloapp-settings-backup/system-config-$(shell date +%Y%m%d-%H%M%S); fi
-	@if [ -d ~/.viloapp-dev ]; then cp -r ~/.viloapp-dev ~/viloapp-settings-backup/dev-settings-$(shell date +%Y%m%d-%H%M%S); fi
-	@if [ -d ./settings ]; then cp -r ./settings ~/viloapp-settings-backup/portable-settings-$(shell date +%Y%m%d-%H%M%S); fi
-	@echo "Settings backed up to ~/viloapp-settings-backup/"
+	@mkdir -p ~/viloxterm-settings-backup
+	@if [ -d ~/.config/ViloxTerm ]; then cp -r ~/.config/ViloxTerm ~/viloxterm-settings-backup/system-config-$(shell date +%Y%m%d-%H%M%S); fi
+	@if [ -d ~/.viloxterm-dev ]; then cp -r ~/.viloxterm-dev ~/viloxterm-settings-backup/dev-settings-$(shell date +%Y%m%d-%H%M%S); fi
+	@if [ -d ./settings ]; then cp -r ./settings ~/viloxterm-settings-backup/portable-settings-$(shell date +%Y%m%d-%H%M%S); fi
+	@echo "Settings backed up to ~/viloxterm-settings-backup/"
 
 # Quick aliases
 .PHONY: r

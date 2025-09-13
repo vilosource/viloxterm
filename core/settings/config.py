@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Settings configuration system for ViloApp.
+Settings configuration system for ViloxTerm.
 
 Provides configurable settings storage locations and formats based on
 command line arguments or environment variables.
@@ -169,7 +169,7 @@ class SettingsConfig:
         # Default behavior - use system default
         logger.info("Using system default settings location")
     
-    def create_settings(self, organization: str = "ViloApp", application: str = "ViloApp") -> QSettings:
+    def create_settings(self, organization: str = "ViloxTerm", application: str = "ViloxTerm") -> QSettings:
         """
         Create a QSettings instance with the configured location.
         
@@ -213,17 +213,17 @@ class SettingsConfig:
             return f"Custom directory: {self.settings_dir}"
         else:
             # Try to determine system default location
-            temp_settings = QSettings("ViloApp", "ViloApp")
+            temp_settings = QSettings("ViloxTerm", "ViloxTerm")
             return f"System default: {temp_settings.fileName()}"
     
     def reset_all_settings(self) -> None:
         """Reset all application settings to defaults."""
         settings_domains = [
-            ("ViloApp", "ViloApp"),      # Main application
-            ("ViloApp", "State"),        # State service  
-            ("ViloApp", "UI"),           # UI service
-            ("ViloApp", "Editor"),       # Editor service
-            ("ViloApp", "CommandPalette") # Command palette
+            ("ViloxTerm", "ViloxTerm"),      # Main application
+            ("ViloxTerm", "State"),        # State service  
+            ("ViloxTerm", "UI"),           # UI service
+            ("ViloxTerm", "Editor"),       # Editor service
+            ("ViloxTerm", "CommandPalette") # Command palette
         ]
         
         for org, app in settings_domains:
@@ -243,11 +243,11 @@ class SettingsConfig:
         backup_path.mkdir(parents=True, exist_ok=True)
         
         settings_domains = [
-            ("ViloApp", "ViloApp"),
-            ("ViloApp", "State"),
-            ("ViloApp", "UI"),
-            ("ViloApp", "Editor"),
-            ("ViloApp", "CommandPalette")
+            ("ViloxTerm", "ViloxTerm"),
+            ("ViloxTerm", "State"),
+            ("ViloxTerm", "UI"),
+            ("ViloxTerm", "Editor"),
+            ("ViloxTerm", "CommandPalette")
         ]
         
         for org, app in settings_domains:
@@ -270,7 +270,7 @@ class SettingsConfig:
 
 
 # Convenience functions for common usage patterns
-def get_settings(organization: str = "ViloApp", application: str = "ViloApp") -> QSettings:
+def get_settings(organization: str = "ViloxTerm", application: str = "ViloxTerm") -> QSettings:
     """
     Get a QSettings instance using the configured settings location.
     

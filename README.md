@@ -1,4 +1,4 @@
-# ViloApp
+# ViloxTerm
 
 A VSCode-style desktop application built with PySide6, featuring a collapsible sidebar, activity bar, and split-pane workspace.
 
@@ -13,7 +13,7 @@ A VSCode-style desktop application built with PySide6, featuring a collapsible s
 ## Project Structure
 
 ```
-viloapp/
+viloxterm/
 ├── main.py                 # Application entry point
 ├── ui/                     # UI components
 │   ├── main_window.py      # Main application window
@@ -42,8 +42,8 @@ viloapp/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/viloapp.git
-cd viloapp
+git clone https://github.com/yourusername/viloxterm.git
+cd viloxterm
 ```
 
 2. Create and activate a virtual environment:

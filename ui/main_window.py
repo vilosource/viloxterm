@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
         
     def setup_ui(self):
         """Initialize the UI components."""
-        self.setWindowTitle("ViloApp")
+        self.setWindowTitle("ViloxTerm")
         self.resize(1200, 800)
         
         # Apply VSCode theme to main window

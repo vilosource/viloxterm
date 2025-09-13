@@ -1,4 +1,4 @@
-# ViloApp Next Generation (NG) - Plugin Architecture Vision
+# ViloxTerm Next Generation (NG) - Plugin Architecture Vision
 
 > **Status**: Future Project Concept  
 > **Created**: December 2024  
@@ -6,10 +6,10 @@
 
 ## Executive Summary
 
-This document outlines the vision for transforming ViloApp from its current monolithic desktop application into a next-generation, extensible plugin framework. Drawing inspiration from successful plugin architectures like VS Code, Jupyter, and IntelliJ IDEA, ViloApp-NG would become a minimal core framework that can be extended through a rich plugin ecosystem.
+This document outlines the vision for transforming ViloxTerm from its current monolithic desktop application into a next-generation, extensible plugin framework. Drawing inspiration from successful plugin architectures like VS Code, Jupyter, and IntelliJ IDEA, ViloxTerm-NG would become a minimal core framework that can be extended through a rich plugin ecosystem.
 
 ### Vision Statement
-*Transform ViloApp into the VS Code of desktop applications - a lightweight, extensible framework where functionality is delivered through plugins rather than monolithic features.*
+*Transform ViloxTerm into the VS Code of desktop applications - a lightweight, extensible framework where functionality is delivered through plugins rather than monolithic features.*
 
 ### Key Goals
 - **Modularity**: Convert built-in widgets (Terminal, Editor) into plugins

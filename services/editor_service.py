@@ -520,7 +520,7 @@ class EditorService(Service):
         """Load search/replace history from settings."""
         try:
             from PySide6.QtCore import QSettings
-            settings = QSettings("ViloApp", "Editor")
+            settings = QSettings("ViloxTerm", "Editor")
             
             search_history = settings.value("search_history", [])
             if isinstance(search_history, list):
@@ -537,7 +537,7 @@ class EditorService(Service):
         """Save search/replace history to settings."""
         try:
             from PySide6.QtCore import QSettings
-            settings = QSettings("ViloApp", "Editor")
+            settings = QSettings("ViloxTerm", "Editor")
             
             settings.setValue("search_history", self._search_history)
             settings.setValue("replace_history", self._replace_history)

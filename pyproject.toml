@@ -3,13 +3,13 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "viloapp"
+name = "viloxterm"
 version = "0.1.0"
 description = "A VSCode-style desktop application built with PySide6"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
-    {name = "ViloApp Team", email = "team@viloapp.local"}
+    {name = "ViloxTerm Team", email = "team@viloxterm.local"}
 ]
 license = {text = "MIT"}
 classifiers = [
@@ -43,7 +43,7 @@ docs = [
 ]
 
 [project.scripts]
-viloapp = "main:main"
+viloxterm = "main:main"
 
 [tool.black]
 line-length = 88

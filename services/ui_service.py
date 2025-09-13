@@ -36,7 +36,7 @@ class UIService(Service):
         self._menu_bar_visible = True
         self._current_theme = "dark"
         self._sidebar_view = "explorer"
-        self._settings = QSettings("ViloApp", "UI")
+        self._settings = QSettings("ViloxTerm", "UI")
         
     def initialize(self, context: Dict[str, Any]) -> None:
         """Initialize the service with application context."""

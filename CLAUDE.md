@@ -75,7 +75,7 @@ Every user action goes through the command system:
 
 ## Project Structure
 ```
-viloapp/
+viloxterm/
 ├── main.py                      # Application entry point
 ├── core/
 │   ├── commands/               

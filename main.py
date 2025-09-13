@@ -71,9 +71,9 @@ def main():
         logger.info("Using temporary settings (will not persist)")
     
     # Set application metadata
-    QCoreApplication.setApplicationName("ViloApp")
-    QCoreApplication.setOrganizationName("ViloApp")
-    QCoreApplication.setOrganizationDomain("viloapp.local")
+    QCoreApplication.setApplicationName("ViloxTerm")
+    QCoreApplication.setOrganizationName("ViloxTerm")
+    QCoreApplication.setOrganizationDomain("viloxterm.local")
     
     # Enable high DPI scaling
     QApplication.setHighDpiScaleFactorRoundingPolicy(
@@ -84,7 +84,7 @@ def main():
     app = QApplication(sys.argv)
     
     # Check if Chrome mode is enabled using the new settings system
-    settings = get_settings("ViloApp", "ViloApp")
+    settings = get_settings("ViloxTerm", "ViloxTerm")
     chrome_mode = settings.value("UI/ChromeMode", False, type=bool)
     
     # Create appropriate main window based on preference

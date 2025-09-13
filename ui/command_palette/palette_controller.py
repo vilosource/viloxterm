@@ -288,7 +288,7 @@ class CommandPaletteController(QObject):
     def _load_recent_commands(self):
         """Load recent commands from settings."""
         try:
-            settings = QSettings("ViloApp", "CommandPalette")
+            settings = QSettings("ViloxTerm", "CommandPalette")
             recent_json = settings.value("recent_commands", "[]")
             if recent_json:
                 self._recent_commands = json.loads(recent_json)
@@ -304,7 +304,7 @@ class CommandPaletteController(QObject):
     def _save_recent_commands(self):
         """Save recent commands to settings."""
         try:
-            settings = QSettings("ViloApp", "CommandPalette")
+            settings = QSettings("ViloxTerm", "CommandPalette")
             settings.setValue("recent_commands", json.dumps(self._recent_commands))
         except Exception as e:
             logger.error(f"Failed to save recent commands: {e}")
