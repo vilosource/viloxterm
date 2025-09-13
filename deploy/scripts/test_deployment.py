@@ -24,7 +24,8 @@ class DeploymentTester:
     def find_executable(self):
         """Find the deployed executable based on platform."""
         candidates = [
-            Path("main.bin"),  # Linux
+            Path("ViloxTerm.dist/main.bin"),  # Linux standalone
+            Path("main.bin"),  # Linux single file
             Path("main.exe"),  # Windows
             Path("main.app/Contents/MacOS/main"),  # macOS
             Path("deployment/main.dist/main"),  # Standalone folder

@@ -22,21 +22,21 @@ Learn how to create modern, custom-styled windows that work reliably across Wind
 
 ---
 
-### 📦 [Building Executables](BuildingExecutables.md)
-**Comprehensive guide to deploying PySide6 applications as standalone executables**
+### 📦 [Building Executables with Docker and AppImage](BuildingExecutables.md)
+**Production-ready build pipeline using Docker containers and AppImage packaging**
 
-Learn how to use `pyside6-deploy` to create production-ready executables that work across Windows, macOS, and Linux. This guide covers everything from basic deployment to advanced optimization:
+Learn how to create reproducible builds for PySide6 applications using Docker containers and package them as AppImages for universal Linux distribution. This guide addresses real-world challenges like environment corruption and dependency conflicts:
 
-- **Quick start** - Deploy your first app in minutes
-- **Configuration mastery** - Understanding and customizing pysidedeploy.spec
-- **Size optimization** - Techniques to reduce executable size by 50-70%
-- **Platform specifics** - Windows code signing, macOS notarization, Linux AppImage
-- **Performance tuning** - Startup time optimization and resource handling
-- **Troubleshooting** - Solutions to common deployment issues
-- **Tool comparison** - pyside6-deploy vs PyInstaller vs manual Nuitka
-- **CI/CD integration** - Automated builds with GitHub Actions
+- **Docker build environment** - Isolated, reproducible builds that work every time
+- **pyside6-deploy integration** - Leveraging the official tool within containers
+- **AppImage creation** - Single portable file that runs on any Linux distribution
+- **Build automation** - Complete scripts for setup, build, and packaging
+- **Troubleshooting guide** - Solutions to environment corruption and build failures
+- **CI/CD integration** - GitHub Actions and GitLab CI examples
+- **Best practices** - Resource management, caching, and security
+- **Quick reference** - Get started in minutes with proven patterns
 
-*Perfect for: Developers ready to distribute their PySide6 applications, teams setting up automated build pipelines, or anyone wanting smaller, faster executables than PyInstaller provides.*
+*Perfect for: Teams needing reproducible builds, developers tired of "works on my machine" issues, anyone distributing Linux applications, or projects requiring consistent CI/CD pipelines.*
 
 ---
 

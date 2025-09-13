@@ -68,7 +68,7 @@ macos.permissions =
 mode = standalone
 
 # specify any extra nuitka arguments
-extra_args = --quiet --noinclude-qt-translations --enable-plugin=pyside6 --include-module=flask --include-module=flask_socketio --include-module=socketio --include-module=engineio --include-module=engineio.async_drivers.threading --include-module=simple_websocket --include-module=core.environment_detector --include-module=resources.resources_rc --include-data-dir=resources/icons=resources/icons --include-data-dir=ui/terminal/assets=ui/terminal/assets --include-data-dir=deploy/icons=deploy/icons --assume-yes-for-downloads
+extra_args = --quiet --noinclude-qt-translations --enable-plugin=pyside6 --include-module=flask --include-module=flask_socketio --include-module=socketio --include-module=engineio --include-module=engineio.async_drivers.threading --include-module=simple_websocket --include-module=core.environment_detector --include-module=resources.resources_rc --include-data-dir=resources/icons=resources/icons --include-data-dir=ui/terminal/static=ui/terminal/static --include-data-dir=deploy/icons=deploy/icons --assume-yes-for-downloads
 
 [buildozer]
 

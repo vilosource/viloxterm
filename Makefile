@@ -227,8 +227,8 @@ setup: ## Initial project setup
 dev: ## Run application in development mode with auto-reload (if implemented)
 	$(PYTHON) main.py --debug
 
-.PHONY: build
-build: clean ## Build distribution packages
+.PHONY: dist
+dist: clean ## Build distribution packages (wheel/sdist)
 	$(PYTHON) -m build
 
 .PHONY: docs

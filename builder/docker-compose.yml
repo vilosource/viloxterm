@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: viloxterm-builder:latest
+    container_name: viloxterm-build
+    volumes:
+      # Mount source code as read-only
+      - ..:/workspace:ro
+      # Output directory for build artifacts
+      - ./output:/output
+      # Cache directory for faster rebuilds
+      - ccache:/ccache
+    environment:
+      # Build environment variables
+      - CCACHE_DIR=/ccache
+      - PYTHONUNBUFFERED=1
+    command: build
+    # Uncomment for interactive shell
+    # stdin_open: true
+    # tty: true
+    # command: shell
+
+  # Service for running tests
+  tester:
+    image: viloxterm-builder:latest
+    volumes:
+      - ..:/workspace:ro
+    command: test
+
+  # Service for development (interactive shell)
+  dev:
+    image: viloxterm-builder:latest
+    stdin_open: true
+    tty: true
+    volumes:
+      - ..:/workspace
+      - ./output:/output
+      - ccache:/ccache
+    command: shell
+
+volumes:
+  # Named volume for ccache to persist between builds
+  ccache:
+    driver: local

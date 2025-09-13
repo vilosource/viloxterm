@@ -67,3 +67,22 @@ docs/_templates/
 .dmypy.json
 dmypy.json
 .ruff_cache/
+
+# Build artifacts from pyside6-deploy and Docker builds
+docker-build-output/
+*.dist/
+*.build/
+*.onefile-build/
+ViloxTerm
+ViloxTerm.exe
+ViloxTerm.bin
+ViloxTerm-x86_64.AppImage
+*.AppImage
+ViloxTerm.AppDir/
+appimagetool-x86_64.AppImage
+build.log
+build_final.log
+
+# Nuitka build artifacts
+*.pyi
+*.pyx

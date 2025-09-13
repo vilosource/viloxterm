@@ -1,418 +1,586 @@
-# Building Executables with PySide6-Deploy
+# Building PySide6 Applications with Docker and AppImage
 
-A comprehensive guide to deploying PySide6 applications as standalone executables across Windows, Linux, and macOS platforms using the official `pyside6-deploy` tool.
+A comprehensive guide to building reproducible PySide6 executables using Docker containers and packaging them as AppImages for Linux distribution.
 
 ## Table of Contents
 - [Overview](#overview)
+- [Why Docker for Builds?](#why-docker-for-builds)
 - [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Configuration](#configuration)
-- [Platform-Specific Considerations](#platform-specific-considerations)
-- [Optimization Techniques](#optimization-techniques)
+- [Project Structure](#project-structure)
+- [Docker Build Environment](#docker-build-environment)
+- [Building Executables](#building-executables)
+- [Creating AppImages](#creating-appimages)
+- [CI/CD Integration](#cicd-integration)
 - [Troubleshooting](#troubleshooting)
-- [Alternative Deployment Methods](#alternative-deployment-methods)
+- [Best Practices](#best-practices)
 
 ---
 
 ## Overview
 
-`pyside6-deploy` is the official deployment tool for PySide6 applications, introduced in PySide6 6.5+. It simplifies the process of creating standalone executables by:
+This guide covers a production-ready build pipeline for PySide6 applications that:
+- Uses **Docker** for reproducible builds across different developer machines
+- Leverages **pyside6-deploy** for creating optimized executables
+- Packages as **AppImage** for universal Linux distribution
+- Avoids common pitfalls like environment corruption and dependency conflicts
 
-- **Wrapping Nuitka** - Compiles Python to C++ for better performance and smaller executables
-- **Managing dependencies** - Automatically detects and bundles required modules
-- **Cross-platform support** - Creates `.exe` (Windows), `.bin` (Linux), `.app` (macOS)
-- **Optimizing Qt modules** - Smart detection and exclusion of unused Qt components
+### Build Pipeline Flow
+```
+Source Code → Docker Container → pyside6-deploy → Standalone Build → AppImage
+```
 
-### Why Use pyside6-deploy?
+### Why This Approach?
 
-| Feature | pyside6-deploy | PyInstaller | cx_Freeze |
-|---------|---------------|-------------|-----------|
-| **Executable Size** | ✅ Smallest | ❌ Larger | ❌ Larger |
-| **Performance** | ✅ Best (compiled) | ⚠️ Good | ⚠️ Good |
-| **Qt Integration** | ✅ Native | ⚠️ Manual | ⚠️ Manual |
-| **Setup Complexity** | ✅ Simple | ⚠️ Moderate | ❌ Complex |
-| **Build Time** | ❌ Slower | ✅ Fast | ✅ Fast |
+| Challenge | Solution |
+|-----------|----------|
+| **Environment Corruption** | Docker provides isolated, reproducible builds |
+| **Dependency Conflicts** | Container includes exact versions needed |
+| **Cross-distribution Linux** | AppImage runs on any Linux distro |
+| **Build Reproducibility** | Same container = same output every time |
+| **CI/CD Integration** | Docker works seamlessly in pipelines |
+
+---
+
+## Why Docker for Builds?
+
+### The Problem
+During development, you might encounter:
+- `ModuleNotFoundError: No module named 'pip._internal.operations.build'`
+- `ModuleNotFoundError: No module named 'nuitka.build'`
+- Conflicting Python package versions
+- System library mismatches
+- "Works on my machine" syndrome
+
+### The Solution
+Docker containers provide:
+- **Isolation**: Build environment separate from development
+- **Reproducibility**: Same build every time, on any machine
+- **Version Control**: Dockerfile defines exact environment
+- **Team Collaboration**: Everyone uses the same build container
+- **CI/CD Ready**: Deploy the same container in pipelines
 
 ---
 
 ## Prerequisites
 
-### Installation
-
+### Required Software
 ```bash
-# PySide6 includes pyside6-deploy by default
-pip install PySide6>=6.5.0
+# Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
 
-# Verify installation
-pyside6-deploy --help
+# Docker Compose (optional but recommended)
+sudo apt-get install docker-compose-plugin
+
+# Git (for version control)
+sudo apt-get install git
 ```
 
-### System Requirements
-
-#### Windows
+### Verify Installation
 ```bash
-# Install Visual Studio Build Tools (for dumpbin)
-# Download from: https://visualstudio.microsoft.com/downloads/
-# Select "Desktop development with C++"
-```
-
-#### Linux
-```bash
-# Install required tools
-sudo apt-get update
-sudo apt-get install patchelf  # For binary patching
-sudo apt-get install binutils  # For readelf
-```
-
-#### macOS
-```bash
-# Xcode Command Line Tools (includes dyld_info)
-xcode-select --install
-```
-
-### Virtual Environment (Recommended)
-
-```bash
-# Create virtual environment
-python -m venv deploy_env
-
-# Activate
-# Windows
-deploy_env\Scripts\activate
-# Linux/macOS
-source deploy_env/bin/activate
-
-# Install dependencies
-pip install PySide6 nuitka
+docker --version
+docker compose version  # or docker-compose --version
 ```
 
 ---
 
-## Quick Start
+## Project Structure
 
-### Basic Deployment
-
-#### 1. Simple Application Structure
+### Recommended Layout
 ```
-my_app/
-├── main.py           # Entry point with if __name__ == "__main__"
-├── ui/
+my_pyside_app/
+├── main.py                    # Application entry point
+├── ui/                        # UI components
 │   ├── main_window.py
+│   └── widgets/
+├── resources/                 # Icons, styles, QML
+│   ├── icons/
 │   └── resources.qrc
-└── utils/
-    └── helpers.py
-```
-
-#### 2. Deploy Command
-```bash
-# Navigate to project directory
-cd my_app
-
-# Deploy (first time - creates pysidedeploy.spec)
-pyside6-deploy main.py
-
-# Subsequent deployments (uses existing spec)
-pyside6-deploy
-```
-
-#### 3. Output
-```
-my_app/
-├── main.exe          # Windows
-├── main.bin          # Linux
-└── main.app/         # macOS
-    └── Contents/
-        └── MacOS/
-            └── main
-```
-
-### Minimal Example Application
-
-```python
-# main.py
-import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton
-
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("PySide6 Deploy Example")
-
-        button = QPushButton("Click Me!")
-        button.clicked.connect(self.on_click)
-        self.setCentralWidget(button)
-
-    def on_click(self):
-        print("Button clicked!")
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
-```
-
-Deploy:
-```bash
-pyside6-deploy main.py --name "MyApp"
+├── builder/                   # Build infrastructure
+│   ├── Dockerfile            # Build environment definition
+│   ├── entrypoint.sh         # Container build script
+│   ├── build.sh              # Host build management script
+│   ├── create-appimage.sh    # AppImage creation script
+│   ├── AppRun                # AppImage launcher
+│   └── MyApp.desktop         # Desktop entry file
+├── pysidedeploy.spec         # pyside6-deploy configuration
+└── requirements.txt          # Python dependencies
 ```
 
 ---
 
-## Configuration
+## Docker Build Environment
 
-### The pysidedeploy.spec File
+### 1. Create the Dockerfile
 
-Generated automatically on first run, controls all deployment parameters:
+```dockerfile
+# builder/Dockerfile
+FROM ubuntu:22.04
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    # Python and build tools
+    python3.12 \
+    python3.12-dev \
+    python3.12-venv \
+    python3-pip \
+    build-essential \
+    cmake \
+    ninja-build \
+    # Qt dependencies
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libxcb-xinerama0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-randr0 \
+    libxcb-render-util0 \
+    libxcb-xkb1 \
+    libxkbcommon-x11-0 \
+    libdbus-1-3 \
+    libxcb-shape0 \
+    libxcb-xfixes0 \
+    # Additional tools
+    patchelf \
+    ccache \
+    wget \
+    file \
+    zlib1g-dev \
+    # AppImage tools
+    fuse \
+    libfuse2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Python 3.12 as default
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1
+
+# Create virtual environment
+RUN python3 -m venv /venv
+ENV PATH="/venv/bin:$PATH"
+
+# Install Python packages
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install \
+        PySide6 \
+        pyside6-addons \
+        pyside6-essentials \
+        Nuitka==2.7.11 \
+        ordered-set \
+        zstandard
+
+# Download AppImageTool
+RUN wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+    -O /usr/local/bin/appimagetool && \
+    chmod +x /usr/local/bin/appimagetool
+
+# Setup ccache for faster rebuilds
+ENV CCACHE_DIR=/ccache
+ENV PATH="/usr/lib/ccache:$PATH"
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+```
+
+### 2. Create the Build Entrypoint
+
+```bash
+#!/bin/bash
+# builder/entrypoint.sh
+set -e
+
+echo "========================================="
+echo "PySide6 Docker Build Environment"
+echo "Python: $(python3 --version)"
+echo "PySide6: $(python3 -c 'import PySide6; print(PySide6.__version__)')"
+echo "Nuitka: $(python3 -m nuitka --version | head -1)"
+echo "========================================="
+
+cd /workspace
+
+case "$1" in
+    build)
+        echo "Starting build process..."
+
+        # Copy source to build directory (preserve mounted volume)
+        cp -r /workspace/* /build/ 2>/dev/null || true
+        cd /build
+
+        # Compile Qt resources if present
+        if [ -f "resources/resources.qrc" ]; then
+            echo "Compiling Qt resources..."
+            pyside6-rcc resources/resources.qrc -o resources/resources_rc.py
+        fi
+
+        # Build with pyside6-deploy
+        echo "Building with pyside6-deploy..."
+        if [ "$2" = "standalone" ]; then
+            # Ensure spec file has standalone mode
+            sed -i 's/mode = "onefile"/mode = "standalone"/' pysidedeploy.spec 2>/dev/null || true
+        fi
+
+        # Run pyside6-deploy
+        pyside6-deploy -v || {
+            echo "pyside6-deploy failed, using direct Nuitka..."
+            python3 -m nuitka \
+                --standalone \
+                --enable-plugin=pyside6 \
+                --output-dir=/output \
+                --assume-yes-for-downloads \
+                main.py
+        }
+
+        # Copy output
+        if [ -d "MyApp.dist" ]; then
+            cp -r MyApp.dist /output/
+        elif [ -d "main.dist" ]; then
+            mv main.dist /output/MyApp.dist
+        fi
+
+        # Make executable
+        chmod +x /output/MyApp.dist/*.bin 2>/dev/null || true
+
+        echo "Build complete!"
+        ;;
+
+    appimage)
+        echo "Creating AppImage..."
+
+        # First build standalone if not exists
+        if [ ! -d "/output/MyApp.dist" ]; then
+            $0 build standalone
+        fi
+
+        # Create AppDir structure
+        mkdir -p /output/MyApp.AppDir/usr/bin
+        mkdir -p /output/MyApp.AppDir/usr/lib
+        mkdir -p /output/MyApp.AppDir/usr/share/applications
+        mkdir -p /output/MyApp.AppDir/usr/share/icons/hicolor/256x256/apps
+
+        # Copy distribution
+        cp -r /output/MyApp.dist/* /output/MyApp.AppDir/usr/lib/
+
+        # Create wrapper script
+        cat > /output/MyApp.AppDir/usr/bin/MyApp << 'EOF'
+#!/bin/bash
+BIN_DIR="$(dirname "$(readlink -f "$0")")"
+exec "$BIN_DIR/../lib/main.bin" "$@"
+EOF
+        chmod +x /output/MyApp.AppDir/usr/bin/MyApp
+
+        # Create AppRun
+        cat > /output/MyApp.AppDir/AppRun << 'EOF'
+#!/bin/bash
+APPDIR="$(dirname "$(readlink -f "$0")")"
+exec "$APPDIR/usr/bin/MyApp" "$@"
+EOF
+        chmod +x /output/MyApp.AppDir/AppRun
+
+        # Copy desktop file and icon
+        cp /workspace/builder/MyApp.desktop /output/MyApp.AppDir/
+        cp /workspace/builder/MyApp.desktop /output/MyApp.AppDir/usr/share/applications/
+
+        if [ -f "/workspace/resources/icon.png" ]; then
+            cp /workspace/resources/icon.png /output/MyApp.AppDir/myapp.png
+            cp /workspace/resources/icon.png /output/MyApp.AppDir/usr/share/icons/hicolor/256x256/apps/
+        fi
+
+        # Build AppImage
+        cd /output
+        ARCH=x86_64 appimagetool --appimage-extract-and-run MyApp.AppDir MyApp-x86_64.AppImage
+
+        if [ -f "MyApp-x86_64.AppImage" ]; then
+            chmod +x MyApp-x86_64.AppImage
+            echo "AppImage created successfully!"
+            ls -lh MyApp-x86_64.AppImage
+        fi
+        ;;
+
+    shell)
+        echo "Starting interactive shell..."
+        exec /bin/bash
+        ;;
+
+    clean)
+        echo "Cleaning build artifacts..."
+        rm -rf /build/* /output/*
+        ;;
+
+    *)
+        echo "Usage: $0 {build|appimage|shell|clean}"
+        exit 1
+        ;;
+esac
+```
+
+### 3. Create Host Build Script
+
+```bash
+#!/bin/bash
+# builder/build.sh
+set -e
+
+# Configuration
+IMAGE_NAME="pyside-builder"
+CONTAINER_NAME="pyside-build"
+PROJECT_ROOT="$(dirname "$(dirname "$(readlink -f "$0")")")"
+OUTPUT_DIR="${PROJECT_ROOT}/build-output"
+
+# Colors for output
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+print_msg() {
+    echo -e "${GREEN}[Builder]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check Docker
+check_docker() {
+    if ! command -v docker &> /dev/null; then
+        print_error "Docker not installed"
+        exit 1
+    fi
+}
+
+# Build Docker image
+build_image() {
+    print_msg "Building Docker image..."
+    docker build -t "${IMAGE_NAME}" -f "${PROJECT_ROOT}/builder/Dockerfile" "${PROJECT_ROOT}/builder"
+}
+
+# Run build
+run_build() {
+    print_msg "Running build in Docker..."
+    mkdir -p "${OUTPUT_DIR}"
+
+    docker run --rm \
+        -v "${PROJECT_ROOT}:/workspace:ro" \
+        -v "${OUTPUT_DIR}:/output" \
+        -v "pyside-ccache:/ccache" \
+        "${IMAGE_NAME}" \
+        build "$1"
+}
+
+# Build AppImage
+build_appimage() {
+    print_msg "Building AppImage..."
+    mkdir -p "${OUTPUT_DIR}"
+
+    docker run --rm \
+        -v "${PROJECT_ROOT}:/workspace:ro" \
+        -v "${OUTPUT_DIR}:/output" \
+        -v "pyside-ccache:/ccache" \
+        "${IMAGE_NAME}" \
+        appimage
+}
+
+# Main
+check_docker
+
+case "$1" in
+    setup)
+        build_image
+        ;;
+    build)
+        run_build standalone
+        ;;
+    appimage)
+        build_appimage
+        ;;
+    clean)
+        rm -rf "${OUTPUT_DIR}"
+        docker volume rm pyside-ccache 2>/dev/null || true
+        ;;
+    *)
+        echo "Usage: $0 {setup|build|appimage|clean}"
+        exit 1
+        ;;
+esac
+```
+
+---
+
+## Building Executables
+
+### 1. Configure pyside6-deploy
+
+Create `pysidedeploy.spec` in your project root:
 
 ```toml
 # pysidedeploy.spec
-
 [app]
-# Application name and metadata
-title = "My Application"
+title = "My PySide App"
 project_dir = "."
 input_file = "main.py"
 exec_directory = "."
-icon = "resources/icon.ico"  # .ico for Windows, .icns for macOS
+icon = "resources/icon.ico"
 
 [python]
-# Python configuration
-python_path = "/path/to/python"
-packages = "Nuitka==2.6.8"  # Nuitka version
+packages = "Nuitka==2.7.11"
 
 [qt]
-# Qt modules and resources
-qml_files = "qml/"
-excluded_qml_plugins = "QtQuick3D,QtCharts,QtWebEngine,QtTest"
-
-# Explicitly include modules if not auto-detected
-modules = ["Network", "Svg", "Widgets"]
-
-# Include specific plugins
+modules = ["Core", "Widgets", "Gui", "Network"]
 plugins = ["platforms", "styles", "imageformats"]
+excluded_qml_plugins = "QtQuick3D,QtCharts,QtWebEngine,QtTest,QtSensors"
 
 [nuitka]
-# Deployment mode
-# - onefile: Single executable (default)
-# - standalone: Folder with executable and libraries
-mode = "onefile"
+mode = "standalone"  # Use standalone for AppImage conversion
 
-# Extra Nuitka arguments
-extra_args = "--quiet --assume-yes-for-downloads"
+# Include your application's specific modules and data
+extra_args = """
+--quiet
+--noinclude-qt-translations
+--enable-plugin=pyside6
+--include-data-dir=resources=resources
+--assume-yes-for-downloads
+"""
 
 [deployment]
-# Platform-specific settings
-platforms = ["Windows", "Linux", "Darwin"]
+platforms = ["Linux"]
 ```
 
-### Advanced Configuration Options
+### 2. Build Process
 
-#### Including Additional Files
+```bash
+# One-time setup
+cd your_project
+mkdir builder
+# Copy Dockerfile, entrypoint.sh, build.sh from examples above
 
-```toml
-[nuitka]
-# Include data files
-extra_args = """
---include-data-files=config.json=config.json
---include-data-files=assets/*.png=assets/
---include-data-dir=resources=resources
-"""
-```
+# Build Docker image (first time only)
+./builder/build.sh setup
 
-#### Excluding Unnecessary Modules
+# Build standalone executable
+./builder/build.sh build
 
-```toml
-[qt]
-# Exclude heavy modules if not needed
-excluded_qml_plugins = "QtQuick3D,QtCharts,QtWebEngine,QtTest,QtSensors"
+# Create AppImage
+./builder/build.sh appimage
 
-[nuitka]
-# Exclude Python modules
-extra_args = """
---nofollow-import-to=tkinter
---nofollow-import-to=matplotlib
-"""
-```
-
-#### Custom Icon and Version Info (Windows)
-
-```toml
-[app]
-icon = "resources/app.ico"
-
-[nuitka]
-extra_args = """
---windows-icon-from-ico=resources/app.ico
---windows-company-name="My Company"
---windows-product-name="My Product"
---windows-file-version=1.0.0.0
---windows-product-version=1.0.0.0
---windows-file-description="My Application"
-"""
+# Output will be in build-output/MyApp-x86_64.AppImage
 ```
 
 ---
 
-## Platform-Specific Considerations
+## Creating AppImages
 
-### Windows
-
-#### Console Window
-```toml
-[nuitka]
-# Hide console window for GUI apps
-extra_args = "--windows-disable-console"
-```
-
-#### Code Signing
-```bash
-# After building, sign the executable
-signtool sign /f certificate.pfx /p password /t http://timestamp.server.com myapp.exe
-```
-
-#### Antivirus Issues
-- Add executable to Windows Defender exclusions during development
-- Submit false positives to antivirus vendors
-- Consider code signing certificate for production
-
-### Linux
-
-#### Desktop Integration
-Create `.desktop` file for application menu:
+### Desktop Entry File
 
 ```ini
-# myapp.desktop
+# builder/MyApp.desktop
 [Desktop Entry]
+Name=My PySide App
+Exec=MyApp
+Icon=myapp
 Type=Application
-Name=My Application
-Exec=/opt/myapp/myapp.bin
-Icon=/opt/myapp/icon.png
-Categories=Utility;
+Categories=Development;Utility;
+Comment=Description of your application
+Terminal=false
+StartupNotify=true
+MimeType=text/plain;
+Keywords=keyword1;keyword2;
 ```
 
-#### AppImage Creation
+### AppImage Benefits
+
+- **Universal**: Runs on any Linux distribution
+- **Portable**: Single file, no installation needed
+- **Self-contained**: All dependencies included
+- **Desktop Integration**: Works with app launchers
+- **Update System**: Can integrate with AppImageUpdate
+
+### Testing AppImage
+
 ```bash
-# After pyside6-deploy
-wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-chmod +x appimagetool-x86_64.AppImage
+# Make executable
+chmod +x MyApp-x86_64.AppImage
 
-# Create AppDir structure
-mkdir -p MyApp.AppDir/usr/bin
-cp main.bin MyApp.AppDir/usr/bin/
-cp myapp.desktop MyApp.AppDir/
-cp icon.png MyApp.AppDir/
+# Run directly
+./MyApp-x86_64.AppImage
 
-# Build AppImage
-./appimagetool-x86_64.AppImage MyApp.AppDir
-```
+# With arguments
+./MyApp-x86_64.AppImage --help
 
-### macOS
-
-#### App Bundle Structure
-```
-MyApp.app/
-├── Contents/
-│   ├── Info.plist
-│   ├── MacOS/
-│   │   └── MyApp
-│   ├── Resources/
-│   │   └── icon.icns
-│   └── Frameworks/
-│       └── (Qt frameworks)
-```
-
-#### Code Signing and Notarization
-```bash
-# Sign the app
-codesign --deep --force --verify --verbose --sign "Developer ID" MyApp.app
-
-# Notarize (required for distribution)
-xcrun altool --notarize-app --primary-bundle-id "com.company.myapp" \
-  --username "apple@id.com" --password "@keychain:AC_PASSWORD" \
-  --file MyApp.zip
-```
-
-#### Permissions (macOS 10.14+)
-Add to Info.plist for required permissions:
-```xml
-<key>NSCameraUsageDescription</key>
-<string>This app needs camera access</string>
+# Desktop integration (optional)
+./MyApp-x86_64.AppImage --install-desktop-file
 ```
 
 ---
 
-## Optimization Techniques
+## CI/CD Integration
 
-### 1. Reduce Executable Size
+### GitHub Actions Example
 
-#### Exclude Unused Qt Modules
-```toml
-[qt]
-# Only include what you use
-modules = ["Core", "Widgets"]  # Don't include "all"
-excluded_qml_plugins = "QtQuick3D,QtCharts,QtWebEngine,QtTest,QtSensors"
+```yaml
+# .github/workflows/build.yml
+name: Build AppImage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build Docker Image
+      run: |
+        cd builder
+        docker build -t pyside-builder .
+
+    - name: Build AppImage
+      run: |
+        docker run --rm \
+          -v $PWD:/workspace:ro \
+          -v $PWD/output:/output \
+          pyside-builder appimage
+
+    - name: Upload AppImage
+      uses: actions/upload-artifact@v3
+      with:
+        name: AppImage
+        path: output/*.AppImage
 ```
 
-#### Strip Debug Symbols
-```toml
-[nuitka]
-extra_args = "--lto=yes --strip"
-```
+### GitLab CI Example
 
-#### Use UPX Compression (Optional)
-```bash
-# Download UPX: https://upx.github.io/
-upx --best myapp.exe  # Can reduce size by 50-70%
-```
+```yaml
+# .gitlab-ci.yml
+stages:
+  - build
 
-### 2. Improve Startup Time
-
-#### Use Standalone Mode for Faster Startup
-```toml
-[nuitka]
-mode = "standalone"  # Faster startup than onefile
-```
-
-#### Lazy Import Heavy Modules
-```python
-# Instead of
-import heavy_module
-
-# Use
-def use_heavy_feature():
-    import heavy_module
-    heavy_module.do_something()
-```
-
-### 3. Handle Resources Properly
-
-#### Compile Qt Resources
-```bash
-# Compile .qrc to Python module
-pyside6-rcc resources.qrc -o resources_rc.py
-
-# Import in main.py
-import resources_rc
-```
-
-#### Access Bundled Files
-```python
-import sys
-import os
-
-def resource_path(relative_path):
-    """Get absolute path to resource, works for dev and deployed"""
-    if hasattr(sys, '_MEIPASS'):
-        # PyInstaller path
-        return os.path.join(sys._MEIPASS, relative_path)
-    elif hasattr(sys, 'frozen'):
-        # Nuitka path
-        return os.path.join(os.path.dirname(sys.executable), relative_path)
-    return os.path.join(os.path.abspath("."), relative_path)
-
-# Usage
-icon_path = resource_path("icons/app.png")
+build-appimage:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t pyside-builder builder/
+    - docker run --rm -v $PWD:/workspace:ro -v $PWD/output:/output pyside-builder appimage
+  artifacts:
+    paths:
+      - output/*.AppImage
+    expire_in: 1 week
 ```
 
 ---
@@ -421,235 +589,199 @@ icon_path = resource_path("icons/app.png")
 
 ### Common Issues and Solutions
 
-#### Issue: "Module not found" after deployment
+#### Environment Corruption
+**Problem**: `ModuleNotFoundError` for pip or nuitka modules
+
+**Solution**: Always use Docker for builds
+```bash
+# Never run pyside6-deploy directly on host
+# Always use:
+./builder/build.sh build
+```
+
+#### Missing Libraries in AppImage
+**Problem**: Application fails to start with library errors
+
+**Solution**: Check ldd output and include missing libraries
+```bash
+# Inside container
+ldd /output/MyApp.dist/main.bin | grep "not found"
+
+# Add to Dockerfile if system library missing
+RUN apt-get install -y libmissing-library
+```
+
+#### Resources Not Found
+**Problem**: Icons, QML, or data files missing in build
+
+**Solution**: Include in pysidedeploy.spec
 ```toml
-# Solution: Explicitly include the module
-[qt]
-modules = ["Network", "WebEngineWidgets"]
-
 [nuitka]
-extra_args = "--include-module=requests"
+extra_args = """
+--include-data-dir=resources=resources
+--include-data-files=config.json=config.json
+"""
 ```
 
-#### Issue: QML files not loading
+#### Large AppImage Size
+**Problem**: AppImage over 200MB
+
+**Solution**: Exclude unnecessary Qt modules
 ```toml
-# Solution: Include QML files
 [qt]
-qml_files = "qml/"
-
-[nuitka]
-extra_args = "--include-data-dir=qml=qml"
+modules = ["Core", "Widgets"]  # Only what you need
+excluded_qml_plugins = "QtQuick3D,QtCharts,QtWebEngine,QtTest"
 ```
 
-#### Issue: Icons/Images not showing
-```python
-# Solution: Use resource system or bundle files
-# Option 1: Qt Resource System (.qrc)
-icon = QIcon(":/icons/app.png")
+#### Build Failures
+**Problem**: pyside6-deploy fails in container
 
-# Option 2: Bundle with executable
-icon = QIcon(resource_path("icons/app.png"))
-```
-
-#### Issue: Large executable size
+**Solution**: Use fallback to direct Nuitka (already in entrypoint.sh)
 ```bash
-# Check what's included
-pyside6-deploy --dry-run  # See Nuitka command
-
-# Analyze with tools
-# Windows: dumpbin /dependents myapp.exe
-# Linux: ldd myapp.bin
-# macOS: otool -L myapp.app/Contents/MacOS/myapp
-```
-
-### Debug Deployment Issues
-
-#### Enable Verbose Output
-```bash
-pyside6-deploy -v main.py
-```
-
-#### Keep Build Files for Inspection
-```bash
-pyside6-deploy --keep-deployment-files main.py
-```
-
-#### Test Nuitka Command Directly
-```bash
-# See generated command
-pyside6-deploy --dry-run
-
-# Run Nuitka directly for debugging
-python -m nuitka --standalone --enable-plugin=pyside6 main.py
-```
-
----
-
-## Alternative Deployment Methods
-
-### PyInstaller (Faster Builds)
-
-```bash
-pip install pyinstaller
-
-# Basic usage
-pyinstaller --onefile --windowed main.py
-
-# With icon and name
-pyinstaller --onefile --windowed --icon=icon.ico --name="MyApp" main.py
-```
-
-**Pros:**
-- Faster build times
-- Simpler configuration
-- Good for development/testing
-
-**Cons:**
-- Larger executables
-- Slower startup
-- Less optimization
-
-### Manual Nuitka (Full Control)
-
-```bash
-pip install nuitka
-
-# Full control over options
-python -m nuitka \
+python3 -m nuitka \
     --standalone \
-    --onefile \
     --enable-plugin=pyside6 \
-    --windows-disable-console \
-    --windows-icon-from-ico=icon.ico \
-    --include-data-files=config.json=config.json \
-    --output-dir=build \
+    --output-dir=/output \
     main.py
 ```
-
-### Comparison for a Sample PySide6 App
-
-| Method | Build Time | Exe Size | Startup Time |
-|--------|------------|----------|--------------|
-| pyside6-deploy | 5-10 min | 15-30 MB | Fast |
-| PyInstaller | 1-2 min | 40-80 MB | Moderate |
-| cx_Freeze | 2-3 min | 35-70 MB | Moderate |
-| Manual Nuitka | 5-15 min | 12-25 MB | Fastest |
 
 ---
 
 ## Best Practices
 
-### 1. Development Workflow
+### 1. Version Control
+- Keep `builder/` directory in git
+- Track `pysidedeploy.spec`
+- Use `.gitignore` for build outputs:
+```gitignore
+build-output/
+*.AppImage
+*.dist/
+```
 
+### 2. Development Workflow
 ```bash
-# Development structure
-project/
-├── src/              # Source code
-├── resources/        # Icons, QML, etc.
-├── tests/           # Test files
-├── deploy/          # Deployment configs
-│   ├── pysidedeploy.spec
-│   ├── windows/     # Platform-specific
-│   ├── linux/
-│   └── macos/
-└── requirements.txt
+# Development (local Python)
+python main.py
+
+# Testing build
+./builder/build.sh build
+./build-output/MyApp.dist/main.bin
+
+# Production release
+./builder/build.sh appimage
 ```
 
-### 2. CI/CD Integration
-
-```yaml
-# GitHub Actions example
-name: Build Executables
-
-on: [push, pull_request]
-
-jobs:
-  build:
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      run: |
-        pip install PySide6 nuitka
-        pip install -r requirements.txt
-
-    - name: Build executable
-      run: pyside6-deploy -c deploy/pysidedeploy.spec
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.os }}-executable
-        path: |
-          *.exe
-          *.bin
-          *.app
-```
-
-### 3. Version Management
-
+### 3. Resource Management
 ```python
-# version.py
-__version__ = "1.0.0"
-
-# main.py
-from version import __version__
-
-app = QApplication(sys.argv)
-app.setApplicationVersion(__version__)
-```
-
-### 4. Testing Deployment
-
-```python
-# test_deployment.py
-import subprocess
+# Proper resource loading
 import sys
 import os
 
-def test_executable():
-    """Test that executable runs without errors"""
-    if sys.platform == "win32":
-        exe = "myapp.exe"
-    elif sys.platform == "darwin":
-        exe = "myapp.app/Contents/MacOS/myapp"
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works in dev and deployed"""
+    if getattr(sys, 'frozen', False):
+        # Running in Nuitka bundle
+        base_path = os.path.dirname(sys.executable)
     else:
-        exe = "myapp.bin"
+        # Running in normal Python
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
-    result = subprocess.run([exe, "--version"], capture_output=True)
+# Usage
+icon_path = get_resource_path("resources/icon.png")
+```
+
+### 4. Docker Image Optimization
+```dockerfile
+# Use multi-stage builds for smaller images
+FROM ubuntu:22.04 as builder
+# ... build steps ...
+
+FROM ubuntu:22.04
+COPY --from=builder /output /output
+```
+
+### 5. Caching for Faster Builds
+- Use ccache volume (included in examples)
+- Cache pip packages:
+```yaml
+# docker-compose.yml
+services:
+  builder:
+    volumes:
+      - pip-cache:/root/.cache/pip
+      - ccache:/ccache
+volumes:
+  pip-cache:
+  ccache:
+```
+
+### 6. Testing Builds
+```python
+# test_build.py
+import subprocess
+import os
+
+def test_appimage_runs():
+    """Test that AppImage executes"""
+    appimage = "build-output/MyApp-x86_64.AppImage"
+    assert os.path.exists(appimage)
+
+    result = subprocess.run(
+        [appimage, "--version"],
+        capture_output=True,
+        timeout=10
+    )
     assert result.returncode == 0
+```
+
+### 7. Security Considerations
+- Regularly update base Docker image
+- Scan for vulnerabilities:
+```bash
+docker scan pyside-builder
+```
+- Sign AppImages for distribution:
+```bash
+# Using appimagetool with signing
+appimagetool --sign MyApp.AppDir MyApp-x86_64.AppImage
 ```
 
 ---
 
 ## Conclusion
 
-`pyside6-deploy` provides a robust solution for deploying PySide6 applications across platforms. While it requires more build time than alternatives, the resulting executables are smaller, faster, and more professional.
+Using Docker for PySide6 builds ensures:
+- **Reproducibility**: Same build on any machine
+- **Isolation**: No environment corruption
+- **Portability**: AppImage runs everywhere
+- **Team Collaboration**: Shared build environment
+- **CI/CD Ready**: Easy automation
 
-### Key Takeaways
+This approach eliminates the "works on my machine" problem and provides a professional distribution format for Linux applications.
 
-1. **Start early** - Test deployment from the beginning of development
-2. **Use virtual environments** - Ensures clean, reproducible builds
-3. **Optimize carefully** - Balance size vs functionality
-4. **Test on target platforms** - Each OS has unique requirements
-5. **Keep spec file in version control** - Ensures consistent builds
+### Quick Reference
+
+```bash
+# Complete build workflow
+git clone your-repo
+cd your-repo
+./builder/build.sh setup    # Build Docker image (once)
+./builder/build.sh appimage  # Create AppImage
+./build-output/MyApp-x86_64.AppImage  # Run it!
+```
 
 ### Next Steps
 
-- Experiment with the examples in this guide
-- Create a simple test application and deploy it
-- Customize the configuration for your specific needs
-- Set up automated builds in your CI/CD pipeline
+1. Adapt the Docker and build scripts to your project
+2. Test the AppImage on different Linux distributions
+3. Set up CI/CD pipelines for automated builds
+4. Consider code signing for production releases
+5. Implement auto-update functionality with AppImageUpdate
 
-For more information, consult the [official Qt for Python deployment documentation](https://doc.qt.io/qtforpython-6/deployment/index.html).
+For more details on specific components:
+- [PySide6 Deployment](https://doc.qt.io/qtforpython-6/deployment/index.html)
+- [Nuitka Documentation](https://nuitka.net/doc/user-manual.html)
+- [AppImage Documentation](https://appimage.org/)
+- [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
