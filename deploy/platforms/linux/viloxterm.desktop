@@ -1,0 +1,22 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ViloxTerm
+GenericName=Terminal Emulator
+Comment=Modern terminal emulator with VSCode-style UI
+Exec=viloxterm %F
+Terminal=false
+Icon=viloxterm
+Categories=System;TerminalEmulator;Utility;
+Keywords=terminal;console;shell;command;
+StartupNotify=true
+StartupWMClass=ViloxTerm
+Actions=new-window;new-tab;
+
+[Desktop Action new-window]
+Name=Open a New Window
+Exec=viloxterm --new-window
+
+[Desktop Action new-tab]
+Name=Open a New Tab
+Exec=viloxterm --new-tab
