@@ -28,8 +28,9 @@ def register_builtin_widgets():
     # Register Terminal Widget
     try:
         from ui.terminal.terminal_app_widget import TerminalAppWidget
+        from core.widget_placement import WidgetPlacement
 
-        manager.register_widget(AppWidgetMetadata(
+        metadata = AppWidgetMetadata(
             widget_id="com.viloapp.terminal",
             widget_type=WidgetType.TERMINAL,
             display_name="Terminal",
@@ -43,8 +44,21 @@ def register_builtin_widgets():
             requires_services=["terminal_service"],
             preserve_context_menu=True,
             min_width=300,
-            min_height=200
-        ))
+            min_height=200,
+
+            # Intent metadata
+            default_placement=WidgetPlacement.SMART,
+            supports_replacement=True,
+            supports_new_tab=True
+        )
+
+        # Add context-specific commands
+        metadata.commands = {
+            "open_new_tab": "file.newTerminalTab",
+            "replace_pane": "file.replaceWithTerminal"
+        }
+
+        manager.register_widget(metadata)
         logger.debug("Registered Terminal widget")
     except ImportError as e:
         logger.warning(f"Could not register Terminal widget: {e}")
@@ -53,7 +67,7 @@ def register_builtin_widgets():
     try:
         from ui.widgets.editor_app_widget import EditorAppWidget
 
-        manager.register_widget(AppWidgetMetadata(
+        metadata = AppWidgetMetadata(
             widget_id="com.viloapp.editor",
             widget_type=WidgetType.TEXT_EDITOR,
             display_name="Text Editor",
@@ -66,8 +80,21 @@ def register_builtin_widgets():
             supported_file_types=["txt", "py", "js", "json", "md", "yml", "yaml"],
             preserve_context_menu=True,
             min_width=400,
-            min_height=300
-        ))
+            min_height=300,
+
+            # Intent metadata
+            default_placement=WidgetPlacement.SMART,
+            supports_replacement=True,
+            supports_new_tab=True
+        )
+
+        # Add context-specific commands
+        metadata.commands = {
+            "open_new_tab": "file.newEditorTab",
+            "replace_pane": "file.replaceWithEditor"
+        }
+
+        manager.register_widget(metadata)
         logger.debug("Registered Text Editor widget")
     except ImportError as e:
         logger.warning(f"Could not register Text Editor widget: {e}")
@@ -122,7 +149,7 @@ def register_builtin_widgets():
         def create_shortcut_config_widget(widget_id: str) -> 'ShortcutConfigAppWidget':
             return ShortcutConfigAppWidget(widget_id)
 
-        manager.register_widget(AppWidgetMetadata(
+        metadata = AppWidgetMetadata(
             widget_id="com.viloapp.shortcuts",
             widget_type=WidgetType.SETTINGS,  # Note: multiple widgets can share a type
             display_name="Keyboard Shortcuts",
@@ -136,8 +163,21 @@ def register_builtin_widgets():
             provides_capabilities=["shortcut_configuration", "keybinding_editor"],
             requires_services=["keyboard_service", "command_service"],
             min_width=600,
-            min_height=400
-        ))
+            min_height=400,
+
+            # Intent metadata
+            default_placement=WidgetPlacement.SMART,
+            supports_replacement=True,
+            supports_new_tab=True
+        )
+
+        # Add context-specific commands
+        metadata.commands = {
+            "open_new_tab": "settings.openKeyboardShortcuts",
+            "replace_pane": "settings.replaceWithKeyboardShortcuts"
+        }
+
+        manager.register_widget(metadata)
         logger.debug("Registered Keyboard Shortcuts widget")
     except ImportError as e:
         logger.warning(f"Could not register Keyboard Shortcuts widget: {e}")

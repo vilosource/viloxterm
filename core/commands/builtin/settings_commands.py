@@ -324,6 +324,65 @@ def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
 
 
 @command(
+    id="settings.replaceWithKeyboardShortcuts",
+    title="Replace Pane with Keyboard Shortcuts",
+    category="Settings",
+    description="Replace current pane content with keyboard shortcuts editor"
+)
+def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
+    """Replace current pane with keyboard shortcuts editor."""
+    try:
+        from ui.widgets.widget_registry import WidgetType
+        from services.workspace_service import WorkspaceService
+
+        # Get the pane and pane_id from context
+        pane = context.args.get('pane')
+        pane_id = context.args.get('pane_id')
+
+        # Get workspace service
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
+
+        # Get workspace
+        workspace = workspace_service.get_workspace()
+        if not workspace:
+            return CommandResult(success=False, error="No workspace available")
+
+        # Get current tab's split widget
+        current_tab = workspace.tab_widget.currentWidget()
+        if not current_tab or not hasattr(current_tab, 'model'):
+            return CommandResult(success=False, error="No split widget available")
+
+        split_widget = current_tab
+
+        # Try to get pane_id if not provided
+        if not pane_id:
+            if pane and hasattr(pane, 'leaf_node') and hasattr(pane.leaf_node, 'id'):
+                pane_id = pane.leaf_node.id
+
+        if pane_id:
+            # Change the pane type directly to SETTINGS (which triggers the shortcuts widget factory)
+            success = split_widget.model.change_pane_type(pane_id, WidgetType.SETTINGS)
+            if success:
+                split_widget.refresh_view()
+                logger.info(f"Replaced pane {pane_id} with keyboard shortcuts editor")
+                return CommandResult(success=True)
+
+        return CommandResult(
+            success=False,
+            error="Could not identify pane for replacement"
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to replace pane with keyboard shortcuts editor: {e}")
+        return CommandResult(
+            success=False,
+            error=str(e)
+        )
+
+
+@command(
     id="settings.showKeyboardShortcuts",
     title="Show Keyboard Shortcuts",
     category="Settings",

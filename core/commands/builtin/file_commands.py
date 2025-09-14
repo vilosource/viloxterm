@@ -148,7 +148,7 @@ def save_state_command(context: CommandContext) -> CommandResult:
 
 
 @command(
-    id="file.restoreState", 
+    id="file.restoreState",
     title="Restore Application State",
     category="File",
     description="Restore the saved application state"
@@ -159,20 +159,128 @@ def restore_state_command(context: CommandContext) -> CommandResult:
         state_service = context.get_service(StateService)
         if not state_service:
             return CommandResult(success=False, error="StateService not available")
-        
+
         success = state_service.restore_all_state()
-        
+
         if success:
             # Show status message
             if context.main_window and hasattr(context.main_window, 'status_bar'):
                 context.main_window.status_bar.set_message("State restored", 2000)
-            
+
             return CommandResult(success=True)
         else:
             return CommandResult(success=False, error="No saved state found")
-            
+
     except Exception as e:
         logger.error(f"Failed to restore state: {e}")
+        return CommandResult(success=False, error=str(e))
+
+
+@command(
+    id="file.replaceWithTerminal",
+    title="Replace Pane with Terminal",
+    category="File",
+    description="Replace current pane content with terminal"
+)
+def replace_with_terminal_command(context: CommandContext) -> CommandResult:
+    """Replace current pane with terminal."""
+    try:
+        from ui.widgets.widget_registry import WidgetType
+
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
+
+        # Get the pane and pane_id from context
+        pane = context.args.get('pane')
+        pane_id = context.args.get('pane_id')
+
+        # Get workspace
+        workspace = workspace_service.get_workspace()
+        if not workspace:
+            return CommandResult(success=False, error="No workspace available")
+
+        # Get current tab's split widget
+        current_tab = workspace.tab_widget.currentWidget()
+        if not current_tab or not hasattr(current_tab, 'model'):
+            return CommandResult(success=False, error="No split widget available")
+
+        split_widget = current_tab
+
+        # Try to get pane_id if not provided
+        if not pane_id:
+            if pane and hasattr(pane, 'leaf_node') and hasattr(pane.leaf_node, 'id'):
+                pane_id = pane.leaf_node.id
+
+        if pane_id:
+            # Change the pane type directly to TERMINAL
+            success = split_widget.model.change_pane_type(pane_id, WidgetType.TERMINAL)
+            if success:
+                split_widget.refresh_view()
+                logger.info(f"Replaced pane {pane_id} with terminal")
+                return CommandResult(success=True)
+
+        return CommandResult(
+            success=False,
+            error="Could not identify pane for replacement"
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to replace pane with terminal: {e}")
+        return CommandResult(success=False, error=str(e))
+
+
+@command(
+    id="file.replaceWithEditor",
+    title="Replace Pane with Editor",
+    category="File",
+    description="Replace current pane content with text editor"
+)
+def replace_with_editor_command(context: CommandContext) -> CommandResult:
+    """Replace current pane with text editor."""
+    try:
+        from ui.widgets.widget_registry import WidgetType
+
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
+
+        # Get the pane and pane_id from context
+        pane = context.args.get('pane')
+        pane_id = context.args.get('pane_id')
+
+        # Get workspace
+        workspace = workspace_service.get_workspace()
+        if not workspace:
+            return CommandResult(success=False, error="No workspace available")
+
+        # Get current tab's split widget
+        current_tab = workspace.tab_widget.currentWidget()
+        if not current_tab or not hasattr(current_tab, 'model'):
+            return CommandResult(success=False, error="No split widget available")
+
+        split_widget = current_tab
+
+        # Try to get pane_id if not provided
+        if not pane_id:
+            if pane and hasattr(pane, 'leaf_node') and hasattr(pane.leaf_node, 'id'):
+                pane_id = pane.leaf_node.id
+
+        if pane_id:
+            # Change the pane type directly to TEXT_EDITOR
+            success = split_widget.model.change_pane_type(pane_id, WidgetType.TEXT_EDITOR)
+            if success:
+                split_widget.refresh_view()
+                logger.info(f"Replaced pane {pane_id} with text editor")
+                return CommandResult(success=True)
+
+        return CommandResult(
+            success=False,
+            error="Could not identify pane for replacement"
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to replace pane with editor: {e}")
         return CommandResult(success=False, error=str(e))
 
 
