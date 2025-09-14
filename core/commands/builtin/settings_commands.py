@@ -33,7 +33,7 @@ _register_shortcut_config_widget()
 
 
 @command(
-    id="settings.openSettings", 
+    id="settings.openSettings",
     title="Open Settings",
     category="Settings",
     description="Open application settings dialog",
@@ -43,11 +43,33 @@ _register_shortcut_config_widget()
 def open_settings_command(context: CommandContext) -> CommandResult:
     """Open the settings dialog."""
     try:
-        # For now, show a message that settings UI is coming soon
-        if context.main_window:
-            QMessageBox.information(
-                context.main_window,
-                "Settings",
+        from services.workspace_service import WorkspaceService
+        workspace_service = context.get_service(WorkspaceService)
+
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
+
+        # Add a Settings tab
+        from core.app_widget_manager import AppWidgetManager
+        manager = AppWidgetManager.get_instance()
+
+        # Create a Settings widget instance
+        widget_id, widget = manager.create_widget("com.viloapp.settings")
+
+        if widget:
+            # Add it to the workspace
+            success = workspace_service.add_app_widget("settings", widget_id, "Settings")
+
+            if success:
+                return CommandResult(success=True, value={'widget_id': widget_id})
+            else:
+                return CommandResult(success=False, error="Failed to add Settings to workspace")
+        else:
+            # Fallback to message if widget not available
+            if context.main_window:
+                QMessageBox.information(
+                    context.main_window,
+                    "Settings",
                 "Settings UI is coming soon!\n\n"
                 "Currently available settings commands:\n"
                 "• Reset Settings\n"

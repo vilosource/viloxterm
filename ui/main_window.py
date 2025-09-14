@@ -491,20 +491,27 @@ class MainWindow(QMainWindow):
         # File menu
         file_menu = menubar.addMenu("File")
         
-        # New tab actions (now using commands)
-        new_editor_tab_action = QAction("New Editor Tab", self)
-        # Shortcut handled by command system, not QAction
-        new_editor_tab_action.setToolTip("Create a new editor tab (Ctrl+N)")
-        new_editor_tab_action.triggered.connect(lambda: self.execute_command("file.newEditorTab"))
-        file_menu.addAction(new_editor_tab_action)
-        
-        new_terminal_tab_action = QAction("New Terminal Tab", self)
-        # Shortcut handled by command system, not QAction
-        new_terminal_tab_action.setToolTip("Create a new terminal tab (Ctrl+`)")
-        new_terminal_tab_action.triggered.connect(lambda: self.execute_command("file.newTerminalTab"))
-        file_menu.addAction(new_terminal_tab_action)
+        # New tab actions (using new unified command)
+        new_tab_action = QAction("New Tab", self)
+        new_tab_action.setToolTip("Create a new tab (Ctrl+T)")
+        new_tab_action.triggered.connect(lambda: self.execute_command("workspace.newTab"))
+        file_menu.addAction(new_tab_action)
+
+        new_tab_with_type_action = QAction("New Tab (Choose Type)...", self)
+        new_tab_with_type_action.setToolTip("Create a new tab with specific type (Ctrl+Shift+T)")
+        new_tab_with_type_action.triggered.connect(lambda: self.execute_command("workspace.newTabWithType"))
+        file_menu.addAction(new_tab_with_type_action)
 
         file_menu.addSeparator()
+
+        # Preferences/Settings menu
+        preferences_menu = file_menu.addMenu("Preferences")
+
+        # Settings action
+        settings_action = QAction("Settings...", self)
+        settings_action.setToolTip("Configure application settings and defaults (Ctrl+,)")
+        settings_action.triggered.connect(lambda: self.execute_command("settings.openSettings"))
+        preferences_menu.addAction(settings_action)
 
         # Keyboard Shortcuts action (now using commands)
         keyboard_shortcuts_action = QAction("Keyboard Shortcuts...", self)
@@ -512,7 +519,7 @@ class MainWindow(QMainWindow):
         keyboard_shortcuts_action.triggered.connect(
             lambda: self.execute_command("settings.openKeyboardShortcuts")
         )
-        file_menu.addAction(keyboard_shortcuts_action)
+        preferences_menu.addAction(keyboard_shortcuts_action)
 
         file_menu.addSeparator()
 
