@@ -45,15 +45,27 @@ class TerminalAppWidget(AppWidget):
         self.config = TerminalConfig()
         self.current_theme = "dark"
         self.bridge = None  # Will be created in setup_terminal
-        
+
         # Connect to theme changes from IconManager
         icon_manager = get_icon_manager()
         self.current_theme = icon_manager.theme
-        icon_manager.theme_changed.connect(self.on_app_theme_changed)
-        
+
+        # Use signal manager for connections
+        self._signal_manager.connect(
+            icon_manager.theme_changed,
+            self.on_app_theme_changed,
+            description="Icon manager theme change"
+        )
+
         # Connect to terminal server session ended signal
-        terminal_server.session_ended.connect(self.on_session_ended)
-        
+        self._signal_manager.connect(
+            terminal_server.session_ended,
+            self.on_session_ended,
+            description="Terminal server session ended"
+        )
+
+        # Start initialization
+        self.initialize()
         self.setup_terminal()
         
     def setup_terminal(self):
@@ -141,11 +153,16 @@ class TerminalAppWidget(AppWidget):
         
     def focus_widget(self):
         """Set keyboard focus on the terminal web view and terminal element."""
-        if self.web_view:
-            self.web_view.setFocus()
-            # Also focus the terminal element inside the web page
-            if self.bridge:
-                self.bridge.focus_terminal_element(self.web_view)
+        # Use base class to check state and handle pending focus
+        if super().focus_widget():
+            # Base class says we're ready, now do terminal-specific focus
+            if self.web_view:
+                self.web_view.setFocus()
+                # Also focus the terminal element inside the web page
+                if self.bridge:
+                    self.bridge.focus_terminal_element(self.web_view)
+            return True
+        return False
     
     def handle_console_message(self, level, msg, line, source):
         """Handle JavaScript console messages for debugging."""
@@ -176,11 +193,16 @@ class TerminalAppWidget(AppWidget):
                 "console.log('Terminal available:', typeof Terminal !== 'undefined'); "
                 "console.log('Socket.io available:', typeof io !== 'undefined');"
             )
+            # Mark widget as ready - this will handle any pending focus
+            self.set_ready()
         else:
-            logger.error(f"Terminal content FAILED to load for widget {self.widget_id}")
+            error_msg = f"Terminal content FAILED to load for widget {self.widget_id}"
+            logger.error(error_msg)
             # Try to get more info about the failure
             url = self.web_view.url().toString()
             logger.error(f"Failed URL was: {url}")
+            # Mark widget as in error state
+            self.set_error(error_msg)
         
     def start_terminal_session(self):
         """Start a new terminal session."""
@@ -223,7 +245,7 @@ class TerminalAppWidget(AppWidget):
             """
             self.web_view.setHtml(error_html)
             
-    def cleanup(self):
+    def on_cleanup(self):
         """Clean up terminal session when widget is destroyed."""
         if self.session_id:
             try:
@@ -313,6 +335,16 @@ class TerminalAppWidget(AppWidget):
             if isinstance(main_window, MainWindow):
                 main_window.execute_command("workbench.action.togglePaneNumbers")
                 
+    def retry_initialization(self):
+        """Retry loading terminal on error."""
+        if self.web_view and self.session_id:
+            logger.info(f"Retrying terminal initialization for {self.widget_id}")
+            # Reload the terminal HTML
+            self.reload()
+        else:
+            # Need to recreate from scratch
+            super().retry_initialization()
+
     def on_session_ended(self, ended_session_id: str):
         """
         Handle terminal session ended signal from terminal server.

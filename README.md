@@ -200,7 +200,9 @@ text_editors = manager.get_widgets_with_capability("text_editing")
 ### Documentation
 
 - [AppWidget Architecture](docs/architecture/app-widget-manager.md) - Detailed system architecture
-- [Widget Development Guide](docs/development/widget-development-guide.md) - How to create new widgets
+- [AppWidget Development Guide](docs/dev-guides/appwidget-development-guide.md) - How to create new widgets
+- [Widget Lifecycle Guide](docs/dev-guides/widget-lifecycle-guide.md) - Widget lifecycle management and state handling
+- [Theme Development Guide](docs/dev-guides/theme-development-guide.md) - Creating and customizing themes
 
 ## Development
 

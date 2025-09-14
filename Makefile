@@ -114,6 +114,10 @@ test-gui-accessibility: ## Run GUI accessibility tests
 test-gui-coverage: ## Run GUI tests with coverage report
 	$(PYTEST) tests/gui/ --cov=ui --cov-report=html --cov-report=term -v
 
+.PHONY: test-lifecycle
+test-lifecycle: ## Run widget lifecycle tests specifically
+	$(PYTEST) tests/gui/test_split_pane_widget_lifecycle.py -v
+
 .PHONY: test-headless
 test-headless: ## Run all tests in headless mode (Linux)
 	xvfb-run -a $(PYTEST)

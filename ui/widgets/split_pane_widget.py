@@ -745,20 +745,35 @@ class SplitPaneWidget(QWidget):
         # Overlay transitions disabled - causing UI to freeze
         # if self.transition_manager:
         #     self.transition_manager.begin_transition()
-        
+
         new_id = self.model.split_pane(pane_id, "horizontal")
         if new_id:
             # Full refresh is more reliable for now
             self.refresh_view()
             self.pane_added.emit(new_id)
-            # Set the new pane as active and focus it
+            # Set the new pane as active
             if self.isVisible():
-                self.set_active_pane(new_id, focus=True)
-        
+                self.set_active_pane(new_id, focus=False)  # Don't focus yet
+
+                # Get the new widget and check its state
+                leaf = self.model.find_leaf(new_id)
+                if leaf and leaf.app_widget:
+                    from ui.widgets.widget_state import WidgetState
+                    if leaf.app_widget.widget_state == WidgetState.READY:
+                        # Widget is synchronously ready (e.g., PlaceholderWidget)
+                        self.focus_specific_pane(new_id)
+                    else:
+                        # Widget needs async initialization - connect to ready signal
+                        logger.debug(f"Widget {new_id} not ready, connecting to widget_ready signal")
+                        leaf.app_widget.widget_ready.connect(
+                            lambda: self._on_widget_ready_for_focus(new_id),
+                            Qt.SingleShotConnection  # Auto-disconnect after firing
+                        )
+
         # End transition with fade
         # if self.transition_manager:
         #     self.transition_manager.end_transition(delay=10)
-        
+
         return new_id
             
     def split_vertical(self, pane_id: str):
@@ -766,20 +781,35 @@ class SplitPaneWidget(QWidget):
         # Overlay transitions disabled - causing UI to freeze
         # if self.transition_manager:
         #     self.transition_manager.begin_transition()
-        
+
         new_id = self.model.split_pane(pane_id, "vertical")
         if new_id:
             # Full refresh is more reliable for now
             self.refresh_view()
             self.pane_added.emit(new_id)
-            # Set the new pane as active and focus it
+            # Set the new pane as active
             if self.isVisible():
-                self.set_active_pane(new_id, focus=True)
-        
+                self.set_active_pane(new_id, focus=False)  # Don't focus yet
+
+                # Get the new widget and check its state
+                leaf = self.model.find_leaf(new_id)
+                if leaf and leaf.app_widget:
+                    from ui.widgets.widget_state import WidgetState
+                    if leaf.app_widget.widget_state == WidgetState.READY:
+                        # Widget is synchronously ready (e.g., PlaceholderWidget)
+                        self.focus_specific_pane(new_id)
+                    else:
+                        # Widget needs async initialization - connect to ready signal
+                        logger.debug(f"Widget {new_id} not ready, connecting to widget_ready signal")
+                        leaf.app_widget.widget_ready.connect(
+                            lambda: self._on_widget_ready_for_focus(new_id),
+                            Qt.SingleShotConnection  # Auto-disconnect after firing
+                        )
+
         # End transition with fade
         # if self.transition_manager:
         #     self.transition_manager.end_transition(delay=10)
-        
+
         return new_id
             
     def close_pane(self, pane_id: str):
@@ -850,7 +880,7 @@ class SplitPaneWidget(QWidget):
     def focus_specific_pane(self, pane_id: str):
         """
         Set keyboard focus to a specific pane's widget.
-        
+
         Args:
             pane_id: ID of the pane to focus
         """
@@ -859,20 +889,29 @@ class SplitPaneWidget(QWidget):
         if not leaf or not leaf.app_widget:
             logger.warning(f"Cannot focus pane {pane_id}: not found or no widget")
             return
-            
-        # Use a timer to ensure widget is ready, like restore_active_pane_focus does
-        def set_focus():
-            try:
-                # Call the focus_widget method on the AppWidget
-                if leaf.app_widget and hasattr(leaf.app_widget, 'focus_widget'):
-                    logger.debug(f"Calling focus_widget on {leaf.app_widget.__class__.__name__} for pane {pane_id}")
-                    leaf.app_widget.focus_widget()
+
+        try:
+            # Call the focus_widget method on the AppWidget
+            # It will handle readiness checking internally
+            if leaf.app_widget and hasattr(leaf.app_widget, 'focus_widget'):
+                logger.debug(f"Calling focus_widget on {leaf.app_widget.__class__.__name__} for pane {pane_id}")
+                success = leaf.app_widget.focus_widget()
+                if success:
                     logger.info(f"Keyboard focus set to pane {pane_id} widget")
-            except Exception as e:
-                logger.warning(f"Failed to set focus to pane {pane_id}: {e}")
-                
-        # Use slightly longer delay to ensure widget is fully ready
-        QTimer.singleShot(50, set_focus)
+                else:
+                    logger.debug(f"Focus queued for pane {pane_id} (widget not ready)")
+        except Exception as e:
+            logger.warning(f"Failed to set focus to pane {pane_id}: {e}")
+
+    def _on_widget_ready_for_focus(self, pane_id: str):
+        """
+        Called when a widget becomes ready and needs focus.
+
+        Args:
+            pane_id: ID of the pane whose widget just became ready
+        """
+        logger.debug(f"Widget ready signal received for pane {pane_id}, setting focus")
+        self.focus_specific_pane(pane_id)
     
     def restore_active_pane_focus(self):
         """
