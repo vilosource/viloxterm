@@ -44,47 +44,25 @@ def open_settings_command(context: CommandContext) -> CommandResult:
     """Open the settings dialog."""
     try:
         from services.workspace_service import WorkspaceService
+        from ui.widgets.widget_registry import WidgetType
+        import uuid
+
         workspace_service = context.get_service(WorkspaceService)
 
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
 
-        # Add a Settings tab
-        from core.app_widget_manager import AppWidgetManager
-        import uuid
-
-        manager = AppWidgetManager.get_instance()
-
         # Generate a unique instance ID for the settings widget
-        instance_id = str(uuid.uuid4())[:8]
+        widget_id = str(uuid.uuid4())[:8]
 
-        # Create a Settings widget instance
-        widget = manager.create_widget("com.viloapp.settings", instance_id)
+        # Add a Settings tab using the proper WidgetType
+        success = workspace_service.add_app_widget(WidgetType.SETTINGS, widget_id, "Settings")
 
-        if widget:
-            # Add it to the workspace
-            success = workspace_service.add_app_widget("settings", instance_id, "Settings")
-
-            if success:
-                return CommandResult(success=True, value={'widget_id': instance_id})
-            else:
-                return CommandResult(success=False, error="Failed to add Settings to workspace")
+        if success:
+            return CommandResult(success=True, value={'widget_id': widget_id})
         else:
-            # Fallback to message if widget not available
-            if context.main_window:
-                QMessageBox.information(
-                    context.main_window,
-                    "Settings",
-                "Settings UI is coming soon!\n\n"
-                "Currently available settings commands:\n"
-                "• Reset Settings\n"
-                "• Show Settings Information\n"
-                "• Toggle Theme\n"
-                "• Change Font Size"
-            )
-        
-        return CommandResult(success=True, message="Settings dialog shown")
-        
+            return CommandResult(success=False, error="Failed to add Settings to workspace")
+
     except Exception as e:
         logger.error(f"Failed to open settings: {e}")
         return CommandResult(success=False, error=str(e))
