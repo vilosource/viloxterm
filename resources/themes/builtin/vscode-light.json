@@ -4,6 +4,23 @@
   "description": "Official Visual Studio Code Light theme",
   "version": "1.0.0",
   "author": "ViloxTerm",
+  "typography": {
+    "fontFamily": "Fira Code, Consolas, Monaco, monospace",
+    "fontSizeBase": 14,
+    "lineHeight": 1.5,
+    "fontWeightNormal": 400,
+    "fontWeightMedium": 500,
+    "fontWeightBold": 700,
+    "sizeScale": {
+      "xs": 0.75,
+      "sm": 0.875,
+      "base": 1.0,
+      "lg": 1.125,
+      "xl": 1.25,
+      "2xl": 1.5,
+      "3xl": 1.875
+    }
+  },
   "colors": {
     "editor.background": "#ffffff",
     "editor.foreground": "#000000",

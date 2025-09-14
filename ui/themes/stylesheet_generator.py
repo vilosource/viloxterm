@@ -65,6 +65,18 @@ class StylesheetGenerator:
         """Helper to get color from theme service."""
         return self._theme_service.get_color(key, fallback)
 
+    def _get_font_size(self, scale: str = "base") -> int:
+        """Helper to get font size from theme service."""
+        return self._theme_service.get_font_size(scale)
+
+    def _get_font_family(self) -> str:
+        """Helper to get font family from theme service."""
+        return self._theme_service.get_font_family()
+
+    def _get_component_typography(self, component: str) -> Dict:
+        """Helper to get component-specific typography."""
+        return self._theme_service.get_component_typography(component)
+
     def _main_window_style(self) -> str:
         """Generate main window stylesheet."""
         from core.app_config import app_config
@@ -117,13 +129,18 @@ class StylesheetGenerator:
 
     def _editor_style(self) -> str:
         """Generate editor stylesheet."""
+        # Get typography settings for editor component
+        typography = self._get_component_typography("editor")
+        font_family = typography.get("font-family", self._get_font_family())
+        font_size = typography.get("font-size", f"{self._get_font_size('base')}px")
+
         return f"""
             QPlainTextEdit, QTextEdit {{
                 background-color: {self._get_color("editor.background")};
                 color: {self._get_color("editor.foreground")};
                 border: none;
-                font-family: 'Consolas', 'Cascadia Code', 'Monaco', monospace;
-                font-size: 13px;
+                font-family: {font_family};
+                font-size: {font_size};
                 selection-background-color: {self._get_color("editor.selectionBackground")};
                 selection-color: {self._get_color("editor.foreground")};
             }}
@@ -131,19 +148,27 @@ class StylesheetGenerator:
 
     def _terminal_style(self) -> str:
         """Generate terminal stylesheet."""
+        # Get typography settings for terminal component
+        typography = self._get_component_typography("terminal")
+        font_family = typography.get("font-family", self._get_font_family())
+        font_size = typography.get("font-size", f"{self._get_font_size('base')}px")
+
         return f"""
             QTextEdit {{
                 background-color: {self._get_color("terminal.background")};
                 color: {self._get_color("terminal.foreground")};
                 border: none;
-                font-family: 'Consolas', 'Cascadia Code', 'Monaco', monospace;
-                font-size: 13px;
+                font-family: {font_family};
+                font-size: {font_size};
                 selection-background-color: {self._get_color("terminal.selectionBackground")};
             }}
         """
 
     def _sidebar_style(self) -> str:
         """Generate sidebar stylesheet."""
+        # Use slightly smaller font for sidebar
+        font_size = self._get_font_size("sm")
+
         return f"""
             QWidget#sidebar {{
                 background-color: {self._get_color("sideBar.background")};
@@ -154,6 +179,7 @@ class StylesheetGenerator:
                 color: {self._get_color("sideBar.foreground")};
                 border: none;
                 outline: none;
+                font-size: {font_size}px;
             }}
             QTreeWidget::item {{
                 padding: 4px;
@@ -195,13 +221,16 @@ class StylesheetGenerator:
 
     def _status_bar_style(self) -> str:
         """Generate status bar stylesheet."""
+        # Use extra small font for status bar
+        font_size = self._get_font_size("xs")
+
         return f"""
             QStatusBar {{
                 background-color: {self._get_color("statusBar.background")};
                 color: {self._get_color("statusBar.foreground")};
                 border: none;
                 padding: 2px 10px;
-                font-size: 12px;
+                font-size: {font_size}px;
             }}
             QStatusBar::item {{
                 border: none;
@@ -304,6 +333,10 @@ class StylesheetGenerator:
 
     def _settings_widget_style(self) -> str:
         """Generate settings widget stylesheet."""
+        # Use base font size for settings
+        font_size = self._get_font_size("base")
+        font_family = self._get_font_family()
+
         return f"""
             /* Main container */
             QWidget {{
@@ -317,8 +350,8 @@ class StylesheetGenerator:
                 color: {self._get_color("editor.foreground")};
                 border: 1px solid {self._get_color("panel.border")};
                 outline: none;
-                font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
-                font-size: 13px;
+                font-family: {font_family};
+                font-size: {font_size}px;
                 alternate-background-color: {self._get_color("editor.background")};
             }}
 
@@ -354,8 +387,8 @@ class StylesheetGenerator:
                 border: 1px solid {self._get_color("input.border")};
                 border-radius: 2px;
                 padding: 4px 8px;
-                font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
-                font-size: 13px;
+                font-family: {font_family};
+                font-size: {font_size}px;
             }}
 
             QLineEdit:focus {{
@@ -370,8 +403,8 @@ class StylesheetGenerator:
                 border: 1px solid {self._get_color("button.border")};
                 border-radius: 2px;
                 padding: 6px 14px;
-                font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
-                font-size: 13px;
+                font-family: {font_family};
+                font-size: {font_size}px;
                 font-weight: 600;
             }}
 
@@ -386,8 +419,8 @@ class StylesheetGenerator:
             /* Labels */
             QLabel {{
                 color: {self._get_color("editor.foreground")};
-                font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
-                font-size: 13px;
+                font-family: {font_family};
+                font-size: {font_size}px;
             }}
 
             /* ComboBox */
@@ -397,8 +430,8 @@ class StylesheetGenerator:
                 border: 1px solid {self._get_color("input.border")};
                 border-radius: 2px;
                 padding: 4px 8px;
-                font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
-                font-size: 13px;
+                font-family: {font_family};
+                font-size: {font_size}px;
             }}
 
             QComboBox:focus {{
@@ -476,6 +509,10 @@ class StylesheetGenerator:
 
     def _pane_header_style(self) -> str:
         """Generate pane header stylesheet."""
+        # Use extra small font for pane headers
+        font_size_xs = self._get_font_size("xs")
+        font_size_sm = self._get_font_size("sm")
+
         return f"""
             PaneHeaderBar {{
                 background-color: {self._get_color("paneHeader.background")};
@@ -487,7 +524,7 @@ class StylesheetGenerator:
             }}
             PaneHeaderBar QLabel {{
                 color: {self._get_color("paneHeader.foreground")};
-                font-size: 12px;
+                font-size: {font_size_xs}px;
                 padding: 0 4px;
             }}
             PaneHeaderBar[active="true"] QLabel {{
@@ -499,7 +536,7 @@ class StylesheetGenerator:
                 color: {self._get_color("paneHeader.foreground")};
                 border: none;
                 padding: 2px;
-                font-size: 14px;
+                font-size: {font_size_sm}px;
             }}
             PaneHeaderBar QToolButton:hover {{
                 background-color: {self._get_color("paneHeader.buttonHoverBackground")};
@@ -513,6 +550,9 @@ class StylesheetGenerator:
 
     def _command_palette_style(self) -> str:
         """Generate command palette stylesheet."""
+        # Use base font size for command palette
+        font_size = self._get_font_size("base")
+
         return f"""
             QDialog {{
                 background-color: {self._get_color("dropdown.background")};
@@ -523,7 +563,7 @@ class StylesheetGenerator:
                 color: {self._get_color("input.foreground")};
                 border: 1px solid {self._get_color("input.border")};
                 padding: 8px;
-                font-size: 14px;
+                font-size: {font_size}px;
             }}
             QListWidget {{
                 background-color: {self._get_color("dropdown.background")};

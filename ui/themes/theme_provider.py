@@ -38,6 +38,8 @@ class ThemeProvider(QObject):
 
         # Connect to theme changes
         theme_service.theme_changed.connect(self._on_theme_changed)
+        # Connect to typography changes
+        theme_service.typography_changed.connect(self._on_typography_changed)
 
         # Initialize stylesheet generator
         from ui.themes.stylesheet_generator import StylesheetGenerator
@@ -57,6 +59,21 @@ class ThemeProvider(QObject):
         self.style_changed.emit()
 
         logger.debug("Theme changed, cache cleared and widgets notified")
+
+    def _on_typography_changed(self, typography) -> None:
+        """
+        Handle typography change from service.
+
+        Args:
+            typography: New typography configuration
+        """
+        # Clear stylesheet cache (fonts affect all stylesheets)
+        self._stylesheet_cache.clear()
+
+        # Notify all widgets to update
+        self.style_changed.emit()
+
+        logger.debug("Typography changed, cache cleared and widgets notified")
 
     def get_color(self, key: str, fallback: str = "#000000") -> str:
         """
@@ -79,6 +96,36 @@ class ThemeProvider(QObject):
             Dictionary of color mappings
         """
         return self._theme_service.get_colors()
+
+    def get_typography(self):
+        """
+        Get typography configuration from the current theme.
+
+        Returns:
+            ThemeTypography instance
+        """
+        return self._theme_service.get_typography()
+
+    def get_font_size(self, scale: str = "base") -> int:
+        """
+        Get font size for a specific scale.
+
+        Args:
+            scale: Size scale key (xs, sm, base, lg, xl, 2xl, 3xl)
+
+        Returns:
+            Font size in pixels
+        """
+        return self._theme_service.get_font_size(scale)
+
+    def get_font_family(self) -> str:
+        """
+        Get the font family from current theme.
+
+        Returns:
+            Font family string
+        """
+        return self._theme_service.get_font_family()
 
     def get_stylesheet(self, component: str) -> str:
         """

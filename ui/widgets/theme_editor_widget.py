@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QTabWidget, QPushButton, QLabel, QComboBox,
     QScrollArea, QFrame, QGroupBox, QMessageBox,
     QFileDialog, QLineEdit, QTextEdit, QToolBar,
-    QToolButton, QMenu
+    QToolButton, QMenu, QSpinBox, QSlider, QFontComboBox
 )
 from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QAction, QIcon
@@ -216,10 +216,32 @@ class ThemeEditorAppWidget(AppWidget):
         return toolbar
 
     def _create_property_editor(self) -> QWidget:
-        """Create property editor with categorized color pickers."""
+        """Create property editor with categorized color pickers and typography controls."""
         container = QFrame()
         layout = QVBoxLayout()
         layout.setContentsMargins(8, 8, 8, 8)
+
+        # Tab widget for colors and typography
+        self._property_tabs = QTabWidget()
+
+        # Colors tab
+        colors_tab = self._create_colors_tab()
+        self._property_tabs.addTab(colors_tab, "Colors")
+
+        # Typography tab
+        typography_tab = self._create_typography_tab()
+        self._property_tabs.addTab(typography_tab, "Typography")
+
+        layout.addWidget(self._property_tabs)
+
+        container.setLayout(layout)
+        return container
+
+    def _create_colors_tab(self) -> QWidget:
+        """Create the colors property editor tab."""
+        container = QWidget()
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
 
         # Search/filter
         search_layout = QHBoxLayout()
@@ -282,6 +304,124 @@ class ThemeEditorAppWidget(AppWidget):
         container.setLayout(layout)
         return container
 
+    def _create_typography_tab(self) -> QWidget:
+        """Create the typography settings tab."""
+        container = QWidget()
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # Typography presets
+        preset_layout = QHBoxLayout()
+        preset_layout.addWidget(QLabel("Preset:"))
+
+        self._preset_combo = QComboBox()
+        self._preset_combo.addItem("Custom", "custom")
+        self._preset_combo.addItem("Compact", "compact")
+        self._preset_combo.addItem("Default", "default")
+        self._preset_combo.addItem("Comfortable", "comfortable")
+        self._preset_combo.addItem("Large", "large")
+        self._preset_combo.currentIndexChanged.connect(self._on_preset_changed)
+        preset_layout.addWidget(self._preset_combo, 1)
+
+        layout.addLayout(preset_layout)
+
+        # Scrollable typography controls
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        typography_container = QWidget()
+        typography_layout = QVBoxLayout()
+        typography_layout.setSpacing(8)
+
+        # Font family
+        font_group = QGroupBox("Font Settings")
+        font_layout = QVBoxLayout()
+
+        family_layout = QHBoxLayout()
+        family_layout.addWidget(QLabel("Font Family:"))
+        self._font_family_combo = QFontComboBox()
+        self._font_family_combo.setCurrentFont("Fira Code")
+        self._font_family_combo.currentFontChanged.connect(self._on_typography_changed)
+        family_layout.addWidget(self._font_family_combo, 1)
+        font_layout.addLayout(family_layout)
+
+        # Base font size
+        size_layout = QHBoxLayout()
+        size_layout.addWidget(QLabel("Base Font Size:"))
+        self._font_size_spin = QSpinBox()
+        self._font_size_spin.setRange(8, 32)
+        self._font_size_spin.setValue(14)
+        self._font_size_spin.setSuffix(" px")
+        self._font_size_spin.valueChanged.connect(self._on_typography_changed)
+        size_layout.addWidget(self._font_size_spin)
+
+        self._font_size_slider = QSlider(Qt.Horizontal)
+        self._font_size_slider.setRange(8, 32)
+        self._font_size_slider.setValue(14)
+        self._font_size_slider.valueChanged.connect(self._font_size_spin.setValue)
+        self._font_size_spin.valueChanged.connect(self._font_size_slider.setValue)
+        size_layout.addWidget(self._font_size_slider, 1)
+        font_layout.addLayout(size_layout)
+
+        # Line height
+        line_height_layout = QHBoxLayout()
+        line_height_layout.addWidget(QLabel("Line Height:"))
+        self._line_height_spin = QSpinBox()
+        self._line_height_spin.setRange(100, 300)
+        self._line_height_spin.setValue(150)
+        self._line_height_spin.setSuffix(" %")
+        self._line_height_spin.valueChanged.connect(self._on_typography_changed)
+        line_height_layout.addWidget(self._line_height_spin)
+
+        self._line_height_slider = QSlider(Qt.Horizontal)
+        self._line_height_slider.setRange(100, 300)
+        self._line_height_slider.setValue(150)
+        self._line_height_slider.valueChanged.connect(self._line_height_spin.setValue)
+        self._line_height_spin.valueChanged.connect(self._line_height_slider.setValue)
+        line_height_layout.addWidget(self._line_height_slider, 1)
+        font_layout.addLayout(line_height_layout)
+
+        font_group.setLayout(font_layout)
+        typography_layout.addWidget(font_group)
+
+        # Size scale preview
+        scale_group = QGroupBox("Size Scale Preview")
+        scale_layout = QVBoxLayout()
+
+        scale_sizes = [
+            ("Extra Small (xs)", "xs"),
+            ("Small (sm)", "sm"),
+            ("Base", "base"),
+            ("Large (lg)", "lg"),
+            ("Extra Large (xl)", "xl"),
+            ("2X Large (2xl)", "2xl"),
+            ("3X Large (3xl)", "3xl"),
+        ]
+
+        for label, scale in scale_sizes:
+            scale_row = QHBoxLayout()
+            scale_label = QLabel(label)
+            scale_label.setMinimumWidth(120)
+            scale_row.addWidget(scale_label)
+
+            self._scale_label = QLabel("Sample Text")
+            scale_row.addWidget(self._scale_label, 1)
+
+            scale_layout.addLayout(scale_row)
+
+        scale_group.setLayout(scale_layout)
+        typography_layout.addWidget(scale_group)
+
+        typography_layout.addStretch()
+        typography_container.setLayout(typography_layout)
+
+        scroll_area.setWidget(typography_container)
+        layout.addWidget(scroll_area, 1)
+
+        container.setLayout(layout)
+        return container
+
     def _load_current_theme(self):
         """Load current theme and available themes."""
         try:
@@ -323,6 +463,20 @@ class ThemeEditorAppWidget(AppWidget):
             for prop_key, field in self._color_fields.items():
                 color = theme.get_color(prop_key, "#000000")
                 field.set_color(color)
+
+            # Update typography settings
+            if theme.typography:
+                typography = theme.typography
+                self._font_family_combo.setCurrentFont(typography.font_family.split(',')[0].strip())
+                self._font_size_spin.setValue(typography.font_size_base)
+                self._line_height_spin.setValue(int(typography.line_height * 100))
+                self._preset_combo.setCurrentIndex(0)  # Set to custom
+            else:
+                # Use defaults
+                self._font_family_combo.setCurrentFont("Fira Code")
+                self._font_size_spin.setValue(14)
+                self._line_height_spin.setValue(150)
+                self._preset_combo.setCurrentIndex(2)  # Set to default
 
             # Update preview
             self._preview_widget.apply_theme_colors(theme.colors)
@@ -396,6 +550,18 @@ class ThemeEditorAppWidget(AppWidget):
             colors = self._get_current_colors()
             self._current_theme.colors = colors
 
+            # Update theme typography
+            from core.themes.typography import ThemeTypography
+            font_family = self._font_family_combo.currentFont().family()
+            font_size_base = self._font_size_spin.value()
+            line_height = self._line_height_spin.value() / 100.0
+
+            self._current_theme.typography = ThemeTypography(
+                font_family=f"{font_family}, monospace",
+                font_size_base=font_size_base,
+                line_height=line_height
+            )
+
             # Apply theme
             self._theme_service.apply_theme(self._current_theme.id)
 
@@ -421,6 +587,18 @@ class ThemeEditorAppWidget(AppWidget):
             # Update theme colors
             colors = self._get_current_colors()
             self._current_theme.colors = colors
+
+            # Update theme typography
+            from core.themes.typography import ThemeTypography
+            font_family = self._font_family_combo.currentFont().family()
+            font_size_base = self._font_size_spin.value()
+            line_height = self._line_height_spin.value() / 100.0
+
+            self._current_theme.typography = ThemeTypography(
+                font_family=f"{font_family}, monospace",
+                font_size_base=font_size_base,
+                line_height=line_height
+            )
 
             # Save theme
             if self._theme_service.save_custom_theme(self._current_theme):
@@ -625,6 +803,68 @@ class ThemeEditorAppWidget(AppWidget):
                                     break
 
                     widget.setVisible(has_visible or not search_text)
+
+    def _on_typography_changed(self):
+        """Handle typography settings change."""
+        if self._updating:
+            return
+
+        self._modified = True
+        self._update_button_states()
+
+        # Update preset combo to "Custom" if user manually changed settings
+        if self._preset_combo.currentData() != "custom":
+            self._preset_combo.blockSignals(True)
+            self._preset_combo.setCurrentIndex(0)  # Custom
+            self._preset_combo.blockSignals(False)
+
+        # Apply preview
+        self._apply_typography_preview()
+
+    def _on_preset_changed(self):
+        """Handle typography preset selection."""
+        if self._updating:
+            return
+
+        preset = self._preset_combo.currentData()
+        if preset != "custom" and self._theme_service:
+            # Apply preset
+            self._theme_service.apply_typography_preset(preset)
+
+            # Reload typography settings
+            typography = self._theme_service.get_typography()
+            self._updating = True
+            try:
+                self._font_family_combo.setCurrentFont(typography.font_family.split(',')[0].strip())
+                self._font_size_spin.setValue(typography.font_size_base)
+                self._line_height_spin.setValue(int(typography.line_height * 100))
+            finally:
+                self._updating = False
+
+            self._modified = True
+            self._update_button_states()
+
+    def _apply_typography_preview(self):
+        """Apply typography preview to the application."""
+        if not self._theme_service:
+            return
+
+        from core.themes.typography import ThemeTypography
+
+        # Create typography from current settings
+        font_family = self._font_family_combo.currentFont().family()
+        font_size_base = self._font_size_spin.value()
+        line_height = self._line_height_spin.value() / 100.0
+
+        typography = ThemeTypography(
+            font_family=f"{font_family}, monospace",
+            font_size_base=font_size_base,
+            line_height=line_height
+        )
+
+        # Apply preview
+        if self._current_theme:
+            self._theme_service.apply_theme_preview(self._current_theme.colors, typography)
 
     def _update_button_states(self):
         """Update button enabled states."""

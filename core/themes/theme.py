@@ -9,6 +9,8 @@ from pathlib import Path
 import json
 import logging
 
+from .typography import ThemeTypography
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,6 +47,7 @@ class Theme:
     author: str
     extends: Optional[str] = None
     colors: Dict[str, str] = field(default_factory=dict)
+    typography: Optional[ThemeTypography] = None
 
     def get_color(self, key: str, fallback: str = "#000000") -> str:
         """
@@ -58,6 +61,17 @@ class Theme:
             Color value as hex string
         """
         return self.colors.get(key, fallback)
+
+    def get_typography(self) -> ThemeTypography:
+        """
+        Get typography configuration with fallback to default.
+
+        Returns:
+            ThemeTypography instance
+        """
+        if self.typography:
+            return self.typography
+        return ThemeTypography()  # Return default typography
 
     def validate(self) -> Tuple[bool, List[str]]:
         """
@@ -126,9 +140,29 @@ class Theme:
         # Update colors
         self.colors = merged_colors
 
+        # Merge typography if parent has it
+        if parent.typography and not self.typography:
+            self.typography = parent.typography
+        elif parent.typography and self.typography:
+            # Merge typography settings (child overrides parent)
+            parent_typography_dict = parent.typography.to_dict()
+            child_typography_dict = self.typography.to_dict()
+
+            # Deep merge typography
+            for key, value in parent_typography_dict.items():
+                if key not in child_typography_dict:
+                    child_typography_dict[key] = value
+                elif isinstance(value, dict) and key in child_typography_dict:
+                    # Merge nested dicts like overrides
+                    merged_dict = value.copy()
+                    merged_dict.update(child_typography_dict[key])
+                    child_typography_dict[key] = merged_dict
+
+            self.typography = ThemeTypography.from_dict(child_typography_dict)
+
     def to_dict(self) -> Dict:
         """Convert theme to dictionary."""
-        return {
+        result = {
             'id': self.id,
             'name': self.name,
             'description': self.description,
@@ -137,6 +171,11 @@ class Theme:
             'extends': self.extends,
             'colors': self.colors
         }
+
+        if self.typography:
+            result['typography'] = self.typography.to_dict()
+
+        return result
 
     def to_json(self) -> str:
         """Convert theme to JSON string."""
@@ -153,6 +192,10 @@ class Theme:
         Returns:
             Theme instance
         """
+        typography = None
+        if 'typography' in data:
+            typography = ThemeTypography.from_dict(data['typography'])
+
         return cls(
             id=data.get('id', 'unknown'),
             name=data.get('name', 'Unknown Theme'),
@@ -160,7 +203,8 @@ class Theme:
             version=data.get('version', '1.0.0'),
             author=data.get('author', 'Unknown'),
             extends=data.get('extends'),
-            colors=data.get('colors', {})
+            colors=data.get('colors', {}),
+            typography=typography
         )
 
     @classmethod

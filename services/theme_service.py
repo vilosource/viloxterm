@@ -11,6 +11,7 @@ import logging
 
 from services.base import Service
 from core.themes.theme import Theme, ThemeInfo
+from core.themes.typography import ThemeTypography, TYPOGRAPHY_PRESETS
 from core.themes.schema import ThemeSchema
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,8 @@ class ThemeService(Service):
 
     # Signal emitted when theme changes (emits color dictionary)
     theme_changed = Signal(dict)
+    # Signal emitted when typography changes
+    typography_changed = Signal(object)
 
     def __init__(self):
         """Initialize theme service."""
@@ -225,12 +228,117 @@ class ThemeService(Service):
             return self._current_theme.colors.copy()
         return {}
 
-    def apply_theme_preview(self, colors: Dict[str, str]) -> None:
+    def get_typography(self) -> ThemeTypography:
+        """
+        Get typography configuration from the current theme.
+
+        Returns:
+            ThemeTypography instance
+        """
+        if self._current_theme:
+            return self._current_theme.get_typography()
+        return ThemeTypography()
+
+    def get_font_size(self, scale_key: str = "base") -> int:
+        """
+        Get font size for a specific scale.
+
+        Args:
+            scale_key: Size scale key (xs, sm, base, lg, xl, 2xl, 3xl)
+
+        Returns:
+            Font size in pixels
+        """
+        typography = self.get_typography()
+        return typography.get_font_size(scale_key)
+
+    def get_font_family(self) -> str:
+        """
+        Get the font family from current theme.
+
+        Returns:
+            Font family string
+        """
+        typography = self.get_typography()
+        return typography.font_family
+
+    def get_component_typography(self, component: str) -> Dict[str, any]:
+        """
+        Get typography style for a specific component.
+
+        Args:
+            component: Component identifier (e.g., "editor", "terminal", "sidebar")
+
+        Returns:
+            Dictionary of typography properties for the component
+        """
+        typography = self.get_typography()
+        return typography.get_component_style(component)
+
+    def update_typography(self, typography_data: Dict) -> None:
+        """
+        Update typography settings for current theme.
+
+        Args:
+            typography_data: Dictionary with typography settings
+        """
+        if not self._current_theme:
+            return
+
+        # Create or update typography
+        if self._current_theme.typography:
+            # Merge with existing
+            current_data = self._current_theme.typography.to_dict()
+            current_data.update(typography_data)
+            self._current_theme.typography = ThemeTypography.from_dict(current_data)
+        else:
+            # Create new typography
+            self._current_theme.typography = ThemeTypography.from_dict(typography_data)
+
+        # Emit change signal
+        self.typography_changed.emit(self._current_theme.typography)
+
+        # If not in preview mode, save the theme
+        if not self._preview_mode:
+            self.save_custom_theme(self._current_theme)
+
+    def apply_typography_preset(self, preset_name: str) -> bool:
+        """
+        Apply a typography preset to the current theme.
+
+        Args:
+            preset_name: Name of the preset (compact, default, comfortable, large)
+
+        Returns:
+            True if preset was applied successfully
+        """
+        if preset_name not in TYPOGRAPHY_PRESETS:
+            logger.error(f"Typography preset not found: {preset_name}")
+            return False
+
+        if not self._current_theme:
+            return False
+
+        # Apply preset
+        self._current_theme.typography = TYPOGRAPHY_PRESETS[preset_name]
+
+        # Emit change signal
+        self.typography_changed.emit(self._current_theme.typography)
+
+        # Save if not in preview mode
+        if not self._preview_mode:
+            self.save_custom_theme(self._current_theme)
+
+        logger.info(f"Applied typography preset: {preset_name}")
+        return True
+
+    def apply_theme_preview(self, colors: Dict[str, str], typography: Optional[ThemeTypography] = None) -> None:
         """
         Apply temporary theme for preview without saving.
 
         Args:
             colors: Dictionary of color key-value pairs to preview
+            typography: Optional typography configuration to preview
         """
         if not self._preview_mode:
             # Backup current theme
@@ -244,7 +352,8 @@ class ThemeService(Service):
             description="Temporary preview theme",
             version="1.0.0",
             author="Theme Editor",
-            colors={**self._current_theme.colors, **colors} if self._current_theme else colors
+            colors={**self._current_theme.colors, **colors} if self._current_theme else colors,
+            typography=typography or (self._current_theme.typography if self._current_theme else None)
         )
 
         # Store preview colors for reference
@@ -281,8 +390,9 @@ class ThemeService(Service):
         if save and not self._preview_mode and theme.id != "__preview__":
             self._save_theme_preference(theme.id)
 
-        # Emit signal for UI updates
+        # Emit signals for UI updates
         self.theme_changed.emit(theme.colors)
+        self.typography_changed.emit(theme.get_typography())
 
     def create_custom_theme(self, base_theme_id: str, name: str,
                           description: str = "") -> Optional[Theme]:
