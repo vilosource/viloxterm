@@ -315,30 +315,46 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
     """Replace current pane with theme editor."""
     try:
         from ui.widgets.widget_registry import WidgetType
+        from services.workspace_service import WorkspaceService
 
-        # Get the pane from context
+        # Get the pane and pane_id from context
         pane = context.args.get('pane')
-        if not pane:
-            return CommandResult(
-                success=False,
-                error="No pane specified for replacement"
-            )
+        pane_id = context.args.get('pane_id')
 
-        # Use the change pane type command to replace with theme editor
-        # Theme editor is registered as CUSTOM widget type
-        from core.commands.executor import execute_command
-        result = execute_command("workbench.action.changePaneType",
-                                pane=pane,
-                                widget_type=WidgetType.CUSTOM)
+        # Get workspace service
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
 
-        if result and result.success:
-            logger.info("Replaced pane with theme editor")
-            return CommandResult(success=True)
-        else:
-            return CommandResult(
-                success=False,
-                error="Failed to replace pane with theme editor"
-            )
+        # Get workspace
+        workspace = workspace_service.get_workspace()
+        if not workspace:
+            return CommandResult(success=False, error="No workspace available")
+
+        # Get current tab's split widget
+        current_tab = workspace.tab_widget.currentWidget()
+        if not current_tab or not hasattr(current_tab, 'model'):
+            return CommandResult(success=False, error="No split widget available")
+
+        split_widget = current_tab
+
+        # Try to get pane_id if not provided
+        if not pane_id:
+            if pane and hasattr(pane, 'leaf_node') and hasattr(pane.leaf_node, 'id'):
+                pane_id = pane.leaf_node.id
+
+        if pane_id:
+            # Change the pane type directly
+            success = split_widget.model.change_pane_type(pane_id, WidgetType.SETTINGS)
+            if success:
+                split_widget.refresh_view()
+                logger.info(f"Replaced pane {pane_id} with theme editor")
+                return CommandResult(success=True)
+
+        return CommandResult(
+            success=False,
+            error="Could not identify pane for replacement"
+        )
 
     except Exception as e:
         logger.error(f"Failed to replace pane with theme editor: {e}")

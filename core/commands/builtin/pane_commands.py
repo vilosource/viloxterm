@@ -202,6 +202,7 @@ def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
 
         widget_id = context.args.get('widget_id')
         pane = context.args.get('pane')
+        pane_id = context.args.get('pane_id')  # Can be passed directly
 
         if not widget_id:
             return CommandResult(success=False, error="No widget_id specified")
@@ -223,13 +224,19 @@ def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
 
         split_widget = current_tab
 
-        # Get the pane's ID from the PaneContent wrapper
-        if pane and hasattr(pane, 'pane_id'):
-            pane_id = pane.pane_id
+        # Try to get pane_id from different sources
+        if not pane_id:
+            # Try from PaneContent wrapper
+            if pane and hasattr(pane, 'leaf_node') and hasattr(pane.leaf_node, 'id'):
+                pane_id = pane.leaf_node.id
+            elif pane and hasattr(pane, 'pane_id'):
+                pane_id = pane.pane_id
+
+        if pane_id:
 
             # Get widget metadata
             manager = AppWidgetManager.get_instance()
-            metadata = manager.get_widget(widget_id)
+            metadata = manager.get_widget_metadata(widget_id)
 
             if metadata:
                 # Change the pane to use the new widget

@@ -323,15 +323,23 @@ class PaneHeaderBar(QWidget):
 
         In pane header context, always replace the current pane content.
         """
+        # Get the pane ID from the parent PaneContent
+        pane = self.parent()
+        pane_id = None
+        if hasattr(pane, 'leaf_node') and hasattr(pane.leaf_node, 'id'):
+            pane_id = pane.leaf_node.id
+
         # Check for replace command first
         if hasattr(widget_meta, 'commands') and "replace_pane" in widget_meta.commands:
             execute_command(widget_meta.commands["replace_pane"],
-                           pane=self.parent(),
+                           pane=pane,
+                           pane_id=pane_id,
                            widget_id=widget_meta.widget_id)
         elif hasattr(widget_meta, 'supports_replacement') and widget_meta.supports_replacement:
             # Use generic replacement for widgets that support it
             execute_command("workbench.action.replaceWidgetInPane",
-                           pane=self.parent(),
+                           pane=pane,
+                           pane_id=pane_id,
                            widget_id=widget_meta.widget_id)
         else:
             # Fallback to type change for basic widgets
