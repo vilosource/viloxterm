@@ -315,7 +315,7 @@ class SettingsAppWidget(AppWidget):
     def _create_keyboard_tab(self) -> QWidget:
         """Create the keyboard settings tab."""
         # For now, embed the existing Keyboard Shortcuts widget
-        return ShortcutConfigAppWidget(parent=self)
+        return ShortcutConfigAppWidget(widget_id=f"{self.widget_id}_shortcuts", parent=self)
 
     def _create_terminal_tab(self) -> QWidget:
         """Create the terminal settings tab."""

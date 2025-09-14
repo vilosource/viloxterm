@@ -71,19 +71,48 @@ def new_tab_command(context: CommandContext) -> CommandResult:
 )
 def new_tab_with_type_command(context: CommandContext) -> CommandResult:
     """Create a new tab, prompting for widget type."""
-    # This would typically open a quick pick dialog
-    # For now, we'll just use the widget_type from args
-    widget_type = context.args.get('widget_type')
+    from PySide6.QtWidgets import QInputDialog
+
+    # Check if widget_type provided in args (for testing/programmatic use)
+    widget_type = context.args.get('widget_type') if context.args else None
+
+    if not widget_type and context.main_window:
+        # Show selection dialog
+        widget_types = ["Terminal", "Editor", "Theme Editor", "Explorer", "Settings"]
+        widget_type_map = {
+            "Terminal": "terminal",
+            "Editor": "editor",
+            "Theme Editor": "theme_editor",
+            "Explorer": "explorer",
+            "Settings": "settings"
+        }
+
+        selected, ok = QInputDialog.getItem(
+            context.main_window,
+            "New Tab",
+            "Select widget type:",
+            widget_types,
+            0,  # Default to Terminal
+            False  # Not editable
+        )
+
+        if not ok or not selected:
+            return CommandResult(success=False, error="User cancelled")
+
+        widget_type = widget_type_map[selected]
+
     if not widget_type:
         return CommandResult(
             success=False,
             error="Widget type must be specified",
-            value={'available_types': ['terminal', 'editor', 'theme_editor', 'explorer']}
+            value={'available_types': ['terminal', 'editor', 'theme_editor', 'explorer', 'settings']}
         )
 
     # Delegate to new_tab_command with the specified type
+    if not context.args:
+        context.args = {}
     context.args['widget_type'] = widget_type
-    return new_tab_command(context)
+    return new_tab_command._original_func(context)
 
 
 @command(
