@@ -115,6 +115,7 @@ Dynamic QMenu creation
 | `com.viloapp.editor` | Text Editor | editor | TEXT_EDITOR | Syntax highlighting, file editing |
 | `com.viloapp.theme_editor` | Theme Editor | tools | SETTINGS | Live preview, color customization |
 | `com.viloapp.shortcuts` | Keyboard Shortcuts | tools | SETTINGS | Shortcut configuration |
+| `com.viloapp.settings` | Settings | editor | SETTINGS | Application defaults, preferences management |
 | `com.viloapp.placeholder` | Empty Pane | system | PLACEHOLDER | Placeholder content |
 | `com.viloapp.output` | Output Panel | tools | OUTPUT | Command output display |
 | `com.viloapp.explorer` | File Explorer | viewer | FILE_EXPLORER | File system navigation |

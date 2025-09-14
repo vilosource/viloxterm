@@ -247,6 +247,29 @@ def register_builtin_widgets():
     except ImportError as e:
         logger.warning(f"Could not register File Explorer widget: {e}")
 
+    # Register Settings widget
+    try:
+        from ui.widgets.settings_app_widget import SettingsAppWidget
+
+        manager.register_widget(AppWidgetMetadata(
+            widget_id="com.viloapp.settings",
+            widget_type=WidgetType.SETTINGS,
+            display_name="Settings",
+            description="Configure application settings and preferences",
+            icon="settings",
+            category=WidgetCategory.EDITOR,
+            widget_class=SettingsAppWidget,
+            provides_capabilities=["settings_management", "preferences"],
+            requires_services=["settings_service"],
+            singleton=True,  # Only one settings instance
+            min_width=600,
+            min_height=400,
+            show_in_menu=True
+        ))
+        logger.debug("Registered Settings widget")
+    except ImportError as e:
+        logger.warning(f"Could not register Settings widget: {e}")
+
     logger.info(f"Registered {len(manager)} built-in widgets")
 
 

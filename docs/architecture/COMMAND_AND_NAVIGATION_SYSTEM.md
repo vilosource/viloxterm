@@ -26,8 +26,8 @@ The `Command` dataclass represents an executable action:
 @dataclass
 class Command:
     # Identity
-    id: str                    # Unique identifier (e.g., "file.newEditorTab")
-    title: str                 # Display name (e.g., "New Editor Tab")
+    id: str                    # Unique identifier (e.g., "workspace.newTab")
+    title: str                 # Display name (e.g., "New Tab")
     category: str              # Category for grouping (e.g., "File")
     
     # Execution
@@ -357,9 +357,9 @@ class WhenClauseEvaluator:
 ### Example Flow
 
 ```python
-# 1. User presses Ctrl+N
-# 2. Keyboard manager maps to "file.newEditorTab"
-# 3. execute_command("file.newEditorTab") called
+# 1. User presses Ctrl+T
+# 2. Keyboard manager maps to "workspace.newTab"
+# 3. execute_command("workspace.newTab") called
 # 4. Registry returns Command object
 # 5. CommandContext created with main_window, workspace, etc.
 # 6. Command handler executed
@@ -485,8 +485,8 @@ This mostly-centralized approach balances several concerns:
 The application currently implements 80+ commands across 11 categories:
 
 ### File Commands
-- `file.newEditorTab` - **Ctrl+N** - New editor tab
-- `file.newTerminalTab` - **Ctrl+`** - New terminal tab
+- `workspace.newTab` - **Ctrl+T** - New tab (uses default widget type from settings)
+- `workspace.newTabWithType` - **Ctrl+Shift+T** - New tab with type selection
 - `file.closeTab` - **Ctrl+W** - Close current tab
 - `file.saveState` - **Ctrl+S** - Save application state
 - `file.restoreState` - Restore application state
@@ -575,7 +575,7 @@ The application currently implements 80+ commands across 11 categories:
 - `commandPalette.refresh` - Refresh command list
 
 ### Settings Commands
-- `settings.openSettings` - Open settings dialog
+- `settings.openSettings` - **Ctrl+,** - Open comprehensive settings widget
 - `settings.resetSettings` - Reset all settings to defaults
 - `settings.showSettingsInfo` - Show settings information
 - `settings.toggleTheme` - Toggle application theme

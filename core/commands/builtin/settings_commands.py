@@ -33,7 +33,7 @@ _register_shortcut_config_widget()
 
 
 @command(
-    id="settings.openSettings", 
+    id="settings.openSettings",
     title="Open Settings",
     category="Settings",
     description="Open application settings dialog",
@@ -43,21 +43,26 @@ _register_shortcut_config_widget()
 def open_settings_command(context: CommandContext) -> CommandResult:
     """Open the settings dialog."""
     try:
-        # For now, show a message that settings UI is coming soon
-        if context.main_window:
-            QMessageBox.information(
-                context.main_window,
-                "Settings",
-                "Settings UI is coming soon!\n\n"
-                "Currently available settings commands:\n"
-                "• Reset Settings\n"
-                "• Show Settings Information\n"
-                "• Toggle Theme\n"
-                "• Change Font Size"
-            )
-        
-        return CommandResult(success=True, message="Settings dialog shown")
-        
+        from services.workspace_service import WorkspaceService
+        from ui.widgets.widget_registry import WidgetType
+        import uuid
+
+        workspace_service = context.get_service(WorkspaceService)
+
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
+
+        # Generate a unique instance ID for the settings widget
+        widget_id = str(uuid.uuid4())[:8]
+
+        # Add a Settings tab using the proper WidgetType
+        success = workspace_service.add_app_widget(WidgetType.SETTINGS, widget_id, "Settings")
+
+        if success:
+            return CommandResult(success=True, value={'widget_id': widget_id})
+        else:
+            return CommandResult(success=False, error="Failed to add Settings to workspace")
+
     except Exception as e:
         logger.error(f"Failed to open settings: {e}")
         return CommandResult(success=False, error=str(e))

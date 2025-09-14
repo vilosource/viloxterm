@@ -6,9 +6,143 @@ Workspace-related commands using the service layer.
 from core.commands.base import Command, CommandResult, CommandContext
 from core.commands.decorators import command
 from services.workspace_service import WorkspaceService
+from services.terminal_service import TerminalService
+from core.settings.app_defaults import get_app_default, get_default_widget_type
+from ui.widgets.widget_registry import WidgetType
+import uuid
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+@command(
+    id="workspace.newTab",
+    title="New Tab",
+    category="Workspace",
+    description="Create a new tab with default widget type",
+    shortcut="ctrl+t"
+)
+def new_tab_command(context: CommandContext) -> CommandResult:
+    """Create a new tab using the default widget type from settings."""
+    try:
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
+
+        # Get widget type from args or settings
+        widget_type = context.args.get('widget_type')
+        if not widget_type:
+            widget_type = get_default_widget_type()
+
+        # Special handling for terminal
+        if widget_type == "terminal":
+            terminal_service = context.get_service(TerminalService)
+            if terminal_service and not terminal_service.is_server_running():
+                terminal_service.start_server()
+
+        # Create the tab
+        name = context.args.get('name')
+
+        # Map string widget type to WidgetType enum and widget ID
+        # Note: theme_editor and shortcuts also use WidgetType.SETTINGS
+        widget_type_map = {
+            "terminal": (WidgetType.TERMINAL, None),
+            "editor": (WidgetType.TEXT_EDITOR, None),
+            "theme_editor": (WidgetType.SETTINGS, "com.viloapp.theme_editor"),
+            "explorer": (WidgetType.EXPLORER, None),
+            "output": (WidgetType.OUTPUT, None),
+            "settings": (WidgetType.SETTINGS, "com.viloapp.settings"),
+            "shortcuts": (WidgetType.SETTINGS, "com.viloapp.shortcuts"),
+            "placeholder": (WidgetType.PLACEHOLDER, None)
+        }
+
+        # Use appropriate method based on widget type
+        if widget_type == "terminal":
+            index = workspace_service.add_terminal_tab(name)
+        elif widget_type == "editor":
+            index = workspace_service.add_editor_tab(name)
+        elif widget_type in widget_type_map:
+            # Use the generic app widget method for other types
+            widget_enum, specific_widget_id = widget_type_map[widget_type]
+
+            # Use specific widget ID if provided, otherwise generate one
+            if specific_widget_id:
+                widget_id = specific_widget_id
+            else:
+                widget_id = str(uuid.uuid4())[:8]  # Generate unique widget ID
+
+            success = workspace_service.add_app_widget(widget_enum, widget_id, name)
+            if success:
+                # Get the index of the newly added tab
+                index = workspace_service.get_tab_count() - 1
+            else:
+                return CommandResult(success=False, error=f"Failed to create {widget_type} tab")
+        else:
+            # Unknown widget type, fall back to terminal
+            logger.warning(f"Unknown widget type '{widget_type}', using terminal")
+            index = workspace_service.add_terminal_tab(name)
+
+        return CommandResult(
+            success=True,
+            value={'index': index, 'widget_type': widget_type, 'name': name}
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to create new tab: {e}")
+        return CommandResult(success=False, error=str(e))
+
+
+@command(
+    id="workspace.newTabWithType",
+    title="New Tab (Choose Type)...",
+    category="Workspace",
+    description="Create a new tab with a specific widget type",
+    shortcut="ctrl+shift+t"
+)
+def new_tab_with_type_command(context: CommandContext) -> CommandResult:
+    """Create a new tab, prompting for widget type."""
+    from PySide6.QtWidgets import QInputDialog
+
+    # Check if widget_type provided in args (for testing/programmatic use)
+    widget_type = context.args.get('widget_type') if context.args else None
+
+    if not widget_type and context.main_window:
+        # Show selection dialog
+        widget_types = ["Terminal", "Editor", "Theme Editor", "Explorer", "Settings"]
+        widget_type_map = {
+            "Terminal": "terminal",
+            "Editor": "editor",
+            "Theme Editor": "theme_editor",
+            "Explorer": "explorer",
+            "Settings": "settings"
+        }
+
+        selected, ok = QInputDialog.getItem(
+            context.main_window,
+            "New Tab",
+            "Select widget type:",
+            widget_types,
+            0,  # Default to Terminal
+            False  # Not editable
+        )
+
+        if not ok or not selected:
+            return CommandResult(success=False, error="User cancelled")
+
+        widget_type = widget_type_map[selected]
+
+    if not widget_type:
+        return CommandResult(
+            success=False,
+            error="Widget type must be specified",
+            value={'available_types': ['terminal', 'editor', 'theme_editor', 'explorer', 'settings']}
+        )
+
+    # Delegate to new_tab_command with the specified type
+    if not context.args:
+        context.args = {}
+    context.args['widget_type'] = widget_type
+    return new_tab_command._original_func(context)
 
 
 @command(
