@@ -134,6 +134,11 @@ class ThemeEditorAppWidget(AppWidget):
 
         # Left: Property editor
         property_widget = self._create_property_editor()
+
+        # Set minimum width for property editor based on Typography tab content
+        # This ensures controls are always visible and usable
+        property_widget.setMinimumWidth(400)  # Minimum width for typography controls
+
         splitter.addWidget(property_widget)
 
         # Right: Preview
@@ -151,8 +156,9 @@ class ThemeEditorAppWidget(AppWidget):
         preview_container.setLayout(preview_layout)
         splitter.addWidget(preview_container)
 
-        # Set splitter sizes (60/40 split)
-        splitter.setSizes([600, 400])
+        # Set splitter sizes (25/75 split for property editor/preview)
+        # With minimum width of 400px for property editor
+        splitter.setSizes([400, 1200])  # Total 1600px default, 75% for preview
 
         layout.addWidget(splitter, 1)
 
