@@ -51,17 +51,22 @@ def open_settings_command(context: CommandContext) -> CommandResult:
 
         # Add a Settings tab
         from core.app_widget_manager import AppWidgetManager
+        import uuid
+
         manager = AppWidgetManager.get_instance()
 
+        # Generate a unique instance ID for the settings widget
+        instance_id = str(uuid.uuid4())[:8]
+
         # Create a Settings widget instance
-        widget_id, widget = manager.create_widget("com.viloapp.settings")
+        widget = manager.create_widget("com.viloapp.settings", instance_id)
 
         if widget:
             # Add it to the workspace
-            success = workspace_service.add_app_widget("settings", widget_id, "Settings")
+            success = workspace_service.add_app_widget("settings", instance_id, "Settings")
 
             if success:
-                return CommandResult(success=True, value={'widget_id': widget_id})
+                return CommandResult(success=True, value={'widget_id': instance_id})
             else:
                 return CommandResult(success=False, error="Failed to add Settings to workspace")
         else:
