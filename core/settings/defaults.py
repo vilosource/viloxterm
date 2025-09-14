@@ -32,9 +32,9 @@ DEFAULT_KEYBOARD_SHORTCUTS = {
     "commandPalette.show": "ctrl+shift+p",
     "commandPalette.showInCurrentCategory": "ctrl+p",
     
-    # File Operations
-    "file.newTerminalTab": "ctrl+n",
-    "file.newEditorTab": "ctrl+shift+n",
+    # File Operations (Legacy - to be removed)
+    # "file.newTerminalTab": "ctrl+n",  # Replaced by workspace.newTab
+    # "file.newEditorTab": "ctrl+shift+n",  # Replaced by workspace.newTab
     "file.openFile": "ctrl+o",
     "file.save": "ctrl+s",
     "file.saveAs": "ctrl+shift+s",
@@ -57,7 +57,8 @@ DEFAULT_KEYBOARD_SHORTCUTS = {
     "workspace.splitVertical": "ctrl+\\",
     "workspace.splitHorizontal": "ctrl+shift+\\",
     "workspace.closePane": "ctrl+shift+w",
-    "workspace.newTab": "ctrl+t",
+    "workspace.newTab": "ctrl+t",  # Uses default widget type from settings
+    "workspace.newTabWithType": "ctrl+shift+t",  # Choose widget type
     "workspace.closeTab": "ctrl+w",
     "workspace.nextTab": "ctrl+tab",
     "workspace.previousTab": "ctrl+shift+tab",

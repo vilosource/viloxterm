@@ -10,6 +10,12 @@ from typing import Optional, Dict, Any, List, Tuple
 import logging
 
 from services.base import Service
+from core.settings.app_defaults import (
+    get_app_default,
+    get_default_widget_type,
+    get_default_split_direction,
+    get_default_split_ratio
+)
 
 logger = logging.getLogger(__name__)
 
@@ -272,7 +278,7 @@ class WorkspaceService(Service):
     
     # ============= Pane Operations =============
     
-    def split_active_pane(self, orientation: str = "horizontal") -> Optional[str]:
+    def split_active_pane(self, orientation: Optional[str] = None) -> Optional[str]:
         """
         Split the active pane in the current tab.
         
@@ -286,14 +292,20 @@ class WorkspaceService(Service):
         
         if not self._workspace:
             return None
-        
+
+        # Use default orientation if not specified
+        if orientation is None:
+            orientation = get_default_split_direction()
+
         # Get current split widget
         widget = self._workspace.get_current_split_widget()
         if not widget or not widget.active_pane_id:
             logger.warning("No active pane to split")
             return None
-        
-        # Perform the split
+
+        # Perform the split with default ratio
+        # Note: Current split methods don't support ratio parameter yet
+        # This will need to be added to SplitPaneWidget
         if orientation == "horizontal":
             new_id = widget.split_horizontal(widget.active_pane_id)
         elif orientation == "vertical":

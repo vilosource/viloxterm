@@ -6,9 +6,84 @@ Workspace-related commands using the service layer.
 from core.commands.base import Command, CommandResult, CommandContext
 from core.commands.decorators import command
 from services.workspace_service import WorkspaceService
+from services.terminal_service import TerminalService
+from core.settings.app_defaults import get_app_default, get_default_widget_type
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+@command(
+    id="workspace.newTab",
+    title="New Tab",
+    category="Workspace",
+    description="Create a new tab with default widget type",
+    shortcut="ctrl+t"
+)
+def new_tab_command(context: CommandContext) -> CommandResult:
+    """Create a new tab using the default widget type from settings."""
+    try:
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
+
+        # Get widget type from args or settings
+        widget_type = context.args.get('widget_type')
+        if not widget_type:
+            widget_type = get_default_widget_type()
+
+        # Special handling for terminal
+        if widget_type == "terminal":
+            terminal_service = context.get_service(TerminalService)
+            if terminal_service and not terminal_service.is_server_running():
+                terminal_service.start_server()
+
+        # Create the tab
+        name = context.args.get('name')
+
+        # Use appropriate method based on widget type
+        if widget_type == "terminal":
+            index = workspace_service.add_terminal_tab(name)
+        elif widget_type == "editor":
+            index = workspace_service.add_editor_tab(name)
+        else:
+            # For other widget types, we'll need to use a generic method
+            # For now, default to terminal
+            logger.warning(f"Widget type '{widget_type}' not fully implemented, using terminal")
+            index = workspace_service.add_terminal_tab(name)
+
+        return CommandResult(
+            success=True,
+            value={'index': index, 'widget_type': widget_type, 'name': name}
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to create new tab: {e}")
+        return CommandResult(success=False, error=str(e))
+
+
+@command(
+    id="workspace.newTabWithType",
+    title="New Tab (Choose Type)...",
+    category="Workspace",
+    description="Create a new tab with a specific widget type",
+    shortcut="ctrl+shift+t"
+)
+def new_tab_with_type_command(context: CommandContext) -> CommandResult:
+    """Create a new tab, prompting for widget type."""
+    # This would typically open a quick pick dialog
+    # For now, we'll just use the widget_type from args
+    widget_type = context.args.get('widget_type')
+    if not widget_type:
+        return CommandResult(
+            success=False,
+            error="Widget type must be specified",
+            value={'available_types': ['terminal', 'editor', 'theme_editor', 'explorer']}
+        )
+
+    # Delegate to new_tab_command with the specified type
+    context.args['widget_type'] = widget_type
+    return new_tab_command(context)
 
 
 @command(
