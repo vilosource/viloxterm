@@ -4,6 +4,8 @@
 
 This document describes the algorithm for navigating between split panes using Alt+Arrow keys. The navigation system uses the tree structure of splits combined with position tracking to find the most intuitive target pane.
 
+> **Architecture Context:** This document is part of the comprehensive [Tab Pane Splitting Architecture](TAB_PANE_SPLITTING.md). For complete context including Model-View-Controller patterns, performance optimizations, widget lifecycle integration, and command system integration, see the main architecture document.
+
 ## Core Concepts
 
 ### 1. Tree Structure Encodes Spatial Layout
@@ -169,7 +171,25 @@ When candidates have equal overlap, prefer:
 - UP navigation: bottommost candidate
 - DOWN navigation: topmost candidate
 
-## Implementation Notes
+## Implementation Details
+
+### Code Location
+The directional navigation algorithm is implemented in `SplitPaneModel.find_pane_in_direction()` (ui/widgets/split_pane_model.py:300).
+
+### Integration with Command System
+Navigation is triggered through the command pattern:
+- `workbench.action.focusPaneLeft` → `workspace_service.navigate_in_direction("left")`
+- `workbench.action.focusPaneRight` → `workspace_service.navigate_in_direction("right")`
+- `workbench.action.focusPaneUp` → `workspace_service.navigate_in_direction("up")`
+- `workbench.action.focusPaneDown` → `workspace_service.navigate_in_direction("down")`
+
+See [TAB_PANE_SPLITTING.md - Command Integration](TAB_PANE_SPLITTING.md#command-integration) for complete command flow.
+
+### Focus Management Integration
+Navigation coordinates with the focus management system:
+- Calls `widget.focus_specific_pane(target_id)` to transfer focus
+- Integrates with AppWidget lifecycle states (only focuses READY widgets)
+- Handles focus restoration after failed navigation attempts
 
 ### Performance
 - Tree traversal is O(log n) for finding splits
@@ -180,9 +200,32 @@ When candidates have equal overlap, prefer:
 - No additional state needed beyond existing tree structure
 - Position bounds calculated on-demand
 - No dependency on actual widget geometry
+- Coordinates with pane numbering system for visual feedback
 
-### Future Enhancements
+### Testing Coverage
+Comprehensive test coverage in:
+- `tests/unit/test_split_pane_model.py` - Algorithm correctness
+- `tests/gui/test_pane_operations_gui.py` - UI integration
+- `tests/integration/test_state_persistence.py` - Navigation after restore
+
+## Related Systems
+
+### Focus Sink Command Mode
+The directional navigation complements the focus sink command mode (Alt+P + digit):
+- **Directional Navigation**: Spatial movement between adjacent panes
+- **Command Mode**: Direct selection of any visible pane by number
+
+See [TAB_PANE_SPLITTING.md - Focus Sink Command Mode](TAB_PANE_SPLITTING.md#focus-sink-command-mode) for details.
+
+### Pane Numbering
+Visual pane numbers (1-9) provide alternative navigation method:
+- Numbers displayed during command mode
+- Spatial navigation still available during command mode
+- Complementary interaction methods for different user preferences
+
+## Future Enhancements
 1. Wrap-around navigation (optional)
 2. Diagonal navigation with Alt+Shift+Arrow
 3. Visual indicators showing navigation path
 4. Customizable navigation strategy
+5. Multi-monitor support for cross-screen navigation

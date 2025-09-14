@@ -4,6 +4,8 @@
 
 The Widget Lifecycle Architecture provides a robust, event-driven system for managing the complete lifecycle of application widgets (AppWidgets) in ViloxTerm. This architecture ensures proper initialization, state management, resource cleanup, and coordination between asynchronous widget operations and the UI framework.
 
+> **Integration Context:** This widget lifecycle system is deeply integrated with the [Tab Pane Splitting Architecture](TAB_PANE_SPLITTING.md). The split pane system manages the tree structure and layout, while this system manages the individual widget lifecycles within each pane. See the main architecture document for how split operations coordinate with widget states.
+
 ## Core Concepts
 
 ### AppWidget
