@@ -8,6 +8,8 @@ from core.commands.decorators import command
 from services.workspace_service import WorkspaceService
 from services.terminal_service import TerminalService
 from core.settings.app_defaults import get_app_default, get_default_widget_type
+from ui.widgets.widget_registry import WidgetType
+import uuid
 import logging
 
 logger = logging.getLogger(__name__)
@@ -41,15 +43,43 @@ def new_tab_command(context: CommandContext) -> CommandResult:
         # Create the tab
         name = context.args.get('name')
 
+        # Map string widget type to WidgetType enum and widget ID
+        # Note: theme_editor and shortcuts also use WidgetType.SETTINGS
+        widget_type_map = {
+            "terminal": (WidgetType.TERMINAL, None),
+            "editor": (WidgetType.TEXT_EDITOR, None),
+            "theme_editor": (WidgetType.SETTINGS, "com.viloapp.theme_editor"),
+            "explorer": (WidgetType.EXPLORER, None),
+            "output": (WidgetType.OUTPUT, None),
+            "settings": (WidgetType.SETTINGS, "com.viloapp.settings"),
+            "shortcuts": (WidgetType.SETTINGS, "com.viloapp.shortcuts"),
+            "placeholder": (WidgetType.PLACEHOLDER, None)
+        }
+
         # Use appropriate method based on widget type
         if widget_type == "terminal":
             index = workspace_service.add_terminal_tab(name)
         elif widget_type == "editor":
             index = workspace_service.add_editor_tab(name)
+        elif widget_type in widget_type_map:
+            # Use the generic app widget method for other types
+            widget_enum, specific_widget_id = widget_type_map[widget_type]
+
+            # Use specific widget ID if provided, otherwise generate one
+            if specific_widget_id:
+                widget_id = specific_widget_id
+            else:
+                widget_id = str(uuid.uuid4())[:8]  # Generate unique widget ID
+
+            success = workspace_service.add_app_widget(widget_enum, widget_id, name)
+            if success:
+                # Get the index of the newly added tab
+                index = workspace_service.get_tab_count() - 1
+            else:
+                return CommandResult(success=False, error=f"Failed to create {widget_type} tab")
         else:
-            # For other widget types, we'll need to use a generic method
-            # For now, default to terminal
-            logger.warning(f"Widget type '{widget_type}' not fully implemented, using terminal")
+            # Unknown widget type, fall back to terminal
+            logger.warning(f"Unknown widget type '{widget_type}', using terminal")
             index = workspace_service.add_terminal_tab(name)
 
         return CommandResult(
