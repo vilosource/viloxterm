@@ -218,6 +218,49 @@ def load_plugin_widgets(plugin_path: str):
 - **Errors**: Error logs with context for troubleshooting
 - **Performance**: Debug logs for performance monitoring
 
+## Widget Intent System
+
+### Overview
+The Widget Intent System provides context-aware placement of widgets based on invocation source.
+
+### Intent Configuration
+Widgets can specify their placement behavior through metadata:
+- **default_placement**: WidgetPlacement enum (NEW_TAB, REPLACE_CURRENT, SMART)
+- **supports_replacement**: Whether widget can replace pane content
+- **supports_new_tab**: Whether widget can open in new tab
+- **commands**: Context-specific command mapping
+
+### Command Mapping
+Each widget can define commands for different contexts:
+```python
+metadata.commands = {
+    "open_new_tab": "widget.open",         # Menu bar/command palette
+    "replace_pane": "widget.replaceInPane" # Pane header menu
+}
+```
+
+### Pane Header Integration
+The pane header menu automatically:
+1. Queries AppWidgetManager for available widgets
+2. Filters widgets that support replacement
+3. Invokes the appropriate replacement command
+4. Passes pane context (pane_id) to the command
+
+### Implementation Example
+```python
+# Widget registration with intent
+metadata = AppWidgetMetadata(
+    widget_id="com.viloapp.terminal",
+    default_placement=WidgetPlacement.SMART,
+    supports_replacement=True,
+    supports_new_tab=True,
+    commands={
+        "open_new_tab": "file.newTerminalTab",
+        "replace_pane": "file.replaceWithTerminal"
+    }
+)
+```
+
 ## Future Enhancements
 
 ### Planned Features
@@ -226,6 +269,8 @@ def load_plugin_widgets(plugin_path: str):
 3. **Widget Templates**: Template system for common widget types
 4. **Dependency Injection**: Service locator integration
 5. **Capability Negotiation**: Advanced capability matching
+6. **Intent Profiles**: User-configurable placement preferences
+7. **Smart Placement AI**: ML-based context-aware placement
 
 ### Extension Points
 - **Custom Categories**: Support for plugin-defined categories

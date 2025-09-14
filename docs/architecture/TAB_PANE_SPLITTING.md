@@ -885,6 +885,96 @@ Standalone implementation demonstrating core algorithms:
 - Widget pooling: O(1) acquisition/release
 - State serialization: O(n) linear with pane count
 
+## Widget Menu Intent System
+
+### Overview
+
+The Widget Menu Intent System provides context-aware widget placement behavior based on where commands are invoked from. This ensures widgets open in the appropriate location - either replacing the current pane content or creating a new tab.
+
+### Architecture Components
+
+**Placement Intent Enum:** core/widget_placement.py:6
+```python
+class WidgetPlacement(Enum):
+    NEW_TAB = "new_tab"         # Always open in new tab
+    REPLACE_CURRENT = "replace"  # Always replace current pane
+    SMART = "smart"              # Context-aware placement
+```
+
+**Command Source Tracking:** core/widget_placement.py:12
+```python
+class CommandSource(Enum):
+    MENU_BAR = "menu_bar"           # From application menu
+    PANE_HEADER = "pane_header"      # From pane header menu
+    COMMAND_PALETTE = "command_palette"  # From command palette
+    KEYBOARD = "keyboard"            # From keyboard shortcut
+```
+
+### Widget Metadata Enhancement
+
+**AppWidgetMetadata Fields:** core/app_widget_metadata.py:89-93
+- `default_placement`: Default placement behavior (WidgetPlacement)
+- `supports_replacement`: Whether widget supports pane replacement
+- `supports_new_tab`: Whether widget supports opening in new tab
+- `commands`: Dict mapping context to command IDs
+
+### Pane Header Menu Integration
+
+**Widget Selection Handler:** ui/widgets/pane_header.py:176-208
+```python
+def _handle_widget_selection(self, widget_meta):
+    # Get pane_id from parent PaneContent
+    pane = self.parent()
+    pane_id = pane.leaf_node.id if hasattr(pane, 'leaf_node') else None
+
+    # Check for context-specific replacement command
+    if hasattr(widget_meta, 'commands') and "replace_pane" in widget_meta.commands:
+        execute_command(widget_meta.commands["replace_pane"],
+                       pane=pane, pane_id=pane_id)
+    else:
+        # Fallback to generic replacement
+        execute_command("workbench.action.replaceWidgetInPane",
+                       widget_id=widget_meta.widget_id,
+                       pane=pane, pane_id=pane_id)
+```
+
+### Widget Registration Example
+
+**Theme Editor Registration:** core/app_widget_registry.py:102-114
+```python
+metadata = AppWidgetMetadata(
+    widget_id="com.viloapp.theme_editor",
+    widget_type=WidgetType.CUSTOM,
+    # ... other fields ...
+
+    # Intent metadata
+    default_placement=WidgetPlacement.SMART,
+    supports_replacement=True,
+    supports_new_tab=True
+)
+
+# Context-specific commands
+metadata.commands = {
+    "open_new_tab": "theme.openEditor",
+    "replace_pane": "theme.replaceInPane"
+}
+```
+
+### Replacement Commands
+
+Each widget type has specialized replacement commands:
+
+**Terminal:** file.replaceWithTerminal (file_commands.py:179)
+**Editor:** file.replaceWithEditor (file_commands.py:233)
+**Theme Editor:** theme.replaceInPane (theme_commands.py:308)
+**Keyboard Shortcuts:** settings.replaceWithKeyboardShortcuts (settings_commands.py:326)
+
+These commands:
+1. Extract pane_id from context
+2. Get the split widget for current tab
+3. Call `change_pane_type()` with appropriate WidgetType
+4. Refresh the view to apply changes
+
 ## Implementation Status
 
 ### Current Features
@@ -896,11 +986,14 @@ Standalone implementation demonstrating core algorithms:
 - ✅ Complete state persistence
 - ✅ Widget pooling optimization
 - ✅ Overlay transition system
+- ✅ Widget menu intent system
 
 **Advanced Features:**
 - ✅ Focus sink command mode (Alt+P + digit)
 - ✅ Directional navigation (arrow keys)
 - ✅ Pane numbering display (1-9)
+- ✅ Context-aware widget placement
+- ✅ Pane header widget menu
 - ✅ AppWidget lifecycle integration
 - ✅ Theme integration
 - ✅ Comprehensive testing

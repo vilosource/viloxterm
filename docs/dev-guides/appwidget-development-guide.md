@@ -510,6 +510,127 @@ return CommandResult(
 )
 ```
 
+## Widget Intent System
+
+The Widget Intent System enables context-aware placement of widgets based on where they are invoked from.
+
+### Registering with Intent Support
+
+When registering your widget with AppWidgetManager, specify placement intent metadata:
+
+```python
+from core.app_widget_manager import AppWidgetManager
+from core.app_widget_metadata import AppWidgetMetadata, WidgetCategory
+from core.widget_placement import WidgetPlacement
+
+metadata = AppWidgetMetadata(
+    widget_id="com.example.mywidget",
+    widget_type=WidgetType.CUSTOM,
+    display_name="My Widget",
+    description="A custom widget",
+    icon="custom",
+    category=WidgetCategory.TOOLS,
+    widget_class=MyCustomWidget,
+
+    # Intent configuration
+    default_placement=WidgetPlacement.SMART,
+    supports_replacement=True,  # Allow replacing pane content
+    supports_new_tab=True,      # Allow opening in new tab
+
+    # Widget configuration
+    show_header=True,
+    allow_type_change=True,  # IMPORTANT: Must be True to show pane menu
+    min_width=400,
+    min_height=300
+)
+
+# Define context-specific commands
+metadata.commands = {
+    "open_new_tab": "mywidget.open",         # Command for new tab
+    "replace_pane": "mywidget.replaceInPane" # Command for pane replacement
+}
+
+manager = AppWidgetManager.get_instance()
+manager.register_widget(metadata)
+```
+
+### Creating Replacement Commands
+
+Create specialized commands for different contexts:
+
+```python
+@command(
+    id="mywidget.replaceInPane",
+    title="Replace Pane with My Widget",
+    category="My Category",
+    description="Replace current pane content with my widget"
+)
+def replace_with_my_widget_command(context: CommandContext) -> CommandResult:
+    """Replace current pane with my widget."""
+    from ui.widgets.widget_registry import WidgetType
+    from services.workspace_service import WorkspaceService
+
+    # Get pane information from context
+    pane = context.args.get('pane')
+    pane_id = context.args.get('pane_id')
+
+    # Get workspace service
+    workspace_service = context.get_service(WorkspaceService)
+    if not workspace_service:
+        return CommandResult(success=False, error="WorkspaceService not available")
+
+    # Get current tab's split widget
+    workspace = workspace_service.get_workspace()
+    if not workspace:
+        return CommandResult(success=False, error="No workspace available")
+
+    current_tab = workspace.tab_widget.currentWidget()
+    if not current_tab or not hasattr(current_tab, 'model'):
+        return CommandResult(success=False, error="No split widget available")
+
+    split_widget = current_tab
+
+    # Extract pane_id if not provided
+    if not pane_id and pane and hasattr(pane, 'leaf_node'):
+        pane_id = pane.leaf_node.id
+
+    if pane_id:
+        # Change the pane type
+        success = split_widget.model.change_pane_type(pane_id, WidgetType.CUSTOM)
+        if success:
+            split_widget.refresh_view()
+            return CommandResult(success=True)
+
+    return CommandResult(success=False, error="Could not identify pane")
+```
+
+### Widget Type Configuration
+
+For custom widget types, ensure they have proper configuration:
+
+```python
+from ui.widgets.widget_registry import widget_registry, WidgetType, WidgetConfig
+
+# Register widget type configuration
+if not widget_registry.get_config(WidgetType.CUSTOM):
+    config = WidgetConfig(
+        widget_class=None,  # Will use factory
+        factory=create_my_widget,
+        show_header=True,
+        allow_type_change=True,  # IMPORTANT: Enables pane header menu
+        default_content=""
+    )
+    widget_registry.register_widget_type(WidgetType.CUSTOM, config)
+```
+
+### Key Points
+
+1. **allow_type_change**: Must be `True` for pane header menu to appear
+2. **Placement Intent**: Use `WidgetPlacement.SMART` for context-aware behavior
+3. **Context Commands**: Define separate commands for different invocation contexts
+4. **Pane ID Extraction**: Get `pane_id` from `pane.leaf_node.id`
+5. **Widget Types**: Use appropriate WidgetType (CUSTOM, SETTINGS, etc.)
+
 ## Complete Example
 
 Here's the complete implementation of a settings widget (ShortcutConfigAppWidget):
