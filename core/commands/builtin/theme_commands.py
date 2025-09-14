@@ -30,7 +30,7 @@ try:
             widget_class=None,  # Will use factory
             factory=create_theme_editor_widget,
             show_header=True,
-            allow_type_change=False,
+            allow_type_change=True,  # Allow changing to other widget types
             default_content=""
         )
         widget_registry.register_widget_type(WidgetType.CUSTOM, config)
@@ -344,8 +344,8 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
                 pane_id = pane.leaf_node.id
 
         if pane_id:
-            # Change the pane type directly
-            success = split_widget.model.change_pane_type(pane_id, WidgetType.SETTINGS)
+            # Change the pane type directly to CUSTOM (which is used for theme editor)
+            success = split_widget.model.change_pane_type(pane_id, WidgetType.CUSTOM)
             if success:
                 split_widget.refresh_view()
                 logger.info(f"Replaced pane {pane_id} with theme editor")
