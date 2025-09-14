@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Type, Callable, Optional, List, Dict, Any
 from enum import Enum
 from ui.widgets.widget_registry import WidgetType
+from core.widget_placement import WidgetPlacement
 
 
 class WidgetCategory(Enum):
@@ -50,6 +51,10 @@ class AppWidgetMetadata:
     open_command: Optional[str] = None  # Command ID to open this widget
     associated_commands: List[str] = field(default_factory=list)  # Related commands
 
+    # Context-specific commands (for different placement intents)
+    commands: Dict[str, str] = field(default_factory=dict)
+    # Expected keys: "open_new_tab", "replace_pane", "open_smart"
+
     # === Behavior ===
     singleton: bool = False  # Only allow one instance
     can_split: bool = True  # Can be used in split panes
@@ -57,6 +62,11 @@ class AppWidgetMetadata:
     show_in_palette: bool = True  # Show in command palette
     show_header: bool = True  # Show pane header bar
     preserve_context_menu: bool = False  # Preserve native context menu
+
+    # === Placement Intent ===
+    default_placement: WidgetPlacement = WidgetPlacement.SMART
+    supports_replacement: bool = True  # Can replace existing pane content
+    supports_new_tab: bool = True  # Can open in new tab
 
     # === Size constraints ===
     min_width: int = 150

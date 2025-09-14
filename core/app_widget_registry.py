@@ -79,7 +79,9 @@ def register_builtin_widgets():
         def create_theme_editor_widget(widget_id: str) -> 'ThemeEditorAppWidget':
             return ThemeEditorAppWidget(widget_id)
 
-        manager.register_widget(AppWidgetMetadata(
+        from core.widget_placement import WidgetPlacement
+
+        metadata = AppWidgetMetadata(
             widget_id="com.viloapp.theme_editor",
             widget_type=WidgetType.SETTINGS,  # Using SETTINGS for now, should be THEME_EDITOR
             display_name="Theme Editor",
@@ -94,8 +96,21 @@ def register_builtin_widgets():
             requires_services=["theme_service"],
             min_width=800,
             min_height=600,
-            show_header=True
-        ))
+            show_header=True,
+
+            # New intent fields
+            default_placement=WidgetPlacement.SMART,
+            supports_replacement=True,
+            supports_new_tab=True
+        )
+
+        # Add context-specific commands
+        metadata.commands = {
+            "open_new_tab": "theme.openEditor",
+            "replace_pane": "theme.replaceInPane"
+        }
+
+        manager.register_widget(metadata)
         logger.debug("Registered Theme Editor widget")
     except ImportError as e:
         logger.warning(f"Could not register Theme Editor widget: {e}")

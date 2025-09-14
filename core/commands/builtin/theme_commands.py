@@ -306,6 +306,49 @@ def reset_theme_command(context: CommandContext) -> CommandResult:
 
 
 @command(
+    id="theme.replaceInPane",
+    title="Replace Pane with Theme Editor",
+    category="Preferences",
+    description="Replace current pane content with theme editor"
+)
+def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
+    """Replace current pane with theme editor."""
+    try:
+        from ui.widgets.widget_registry import WidgetType
+
+        # Get the pane from context
+        pane = context.args.get('pane')
+        if not pane:
+            return CommandResult(
+                success=False,
+                error="No pane specified for replacement"
+            )
+
+        # Use the change pane type command to replace with theme editor
+        # Theme editor is registered as CUSTOM widget type
+        from core.commands.executor import execute_command
+        result = execute_command("workbench.action.changePaneType",
+                                pane=pane,
+                                widget_type=WidgetType.CUSTOM)
+
+        if result and result.success:
+            logger.info("Replaced pane with theme editor")
+            return CommandResult(success=True)
+        else:
+            return CommandResult(
+                success=False,
+                error="Failed to replace pane with theme editor"
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to replace pane with theme editor: {e}")
+        return CommandResult(
+            success=False,
+            error=str(e)
+        )
+
+
+@command(
     id="theme.openEditor",
     title="Open Theme Editor",
     category="Preferences",

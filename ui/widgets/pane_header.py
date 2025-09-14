@@ -4,6 +4,7 @@ Pane header bar component for split operations.
 Provides a minimal, unobtrusive header with split/close controls.
 """
 
+import logging
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QPushButton, QLabel,
     QToolButton, QMenu, QSizePolicy
@@ -12,6 +13,8 @@ from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QAction, QFont, QPalette, QColor, QPainter, QBrush
 from core.commands.executor import execute_command
 from ui.widgets.widget_registry import WidgetType, widget_registry
+
+logger = logging.getLogger(__name__)
 
 
 class PaneHeaderBar(QWidget):
@@ -184,15 +187,10 @@ class PaneHeaderBar(QWidget):
                         action = QAction(action_text, self)
                         action.setToolTip(widget_meta.description)
 
-                        # Connect to appropriate command or type change
-                        if widget_meta.open_command:
-                            action.triggered.connect(
-                                lambda checked, cmd=widget_meta.open_command: execute_command(cmd)
-                            )
-                        else:
-                            action.triggered.connect(
-                                lambda checked, wt=widget_meta.widget_type: self._change_widget_type(wt)
-                            )
+                        # Always use replacement behavior in pane header context
+                        action.triggered.connect(
+                            lambda checked, wm=widget_meta: self._handle_widget_selection(wm)
+                        )
                         menu.addAction(action)
 
         except ImportError:
@@ -318,6 +316,30 @@ class PaneHeaderBar(QWidget):
             WidgetType.PLACEHOLDER: "⬜ Empty Pane"
         }
         return display_names.get(widget_type, widget_type.value.replace('_', ' ').title())
+
+    def _handle_widget_selection(self, widget_meta):
+        """
+        Handle widget selection with proper placement intent.
+
+        In pane header context, always replace the current pane content.
+        """
+        # Check for replace command first
+        if hasattr(widget_meta, 'commands') and "replace_pane" in widget_meta.commands:
+            execute_command(widget_meta.commands["replace_pane"],
+                           pane=self.parent(),
+                           widget_id=widget_meta.widget_id)
+        elif hasattr(widget_meta, 'supports_replacement') and widget_meta.supports_replacement:
+            # Use generic replacement for widgets that support it
+            execute_command("workbench.action.replaceWidgetInPane",
+                           pane=self.parent(),
+                           widget_id=widget_meta.widget_id)
+        else:
+            # Fallback to type change for basic widgets
+            if hasattr(widget_meta, 'widget_type'):
+                self._change_widget_type(widget_meta.widget_type)
+            elif widget_meta.open_command:
+                # Last resort: use open command (will create new tab)
+                execute_command(widget_meta.open_command)
 
     def _change_widget_type(self, widget_type: WidgetType):
         """Change the widget type of the current pane."""

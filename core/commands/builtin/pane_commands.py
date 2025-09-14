@@ -182,6 +182,75 @@ def maximize_pane_command(context: CommandContext) -> CommandResult:
 
 
 @command(
+    id="workbench.action.replaceWidgetInPane",
+    title="Replace Widget in Pane",
+    category="Panes",
+    description="Replace current pane content with specified widget"
+)
+def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
+    """
+    Replace the current pane's widget with a new one from AppWidgetManager.
+
+    Args:
+        context: Command context with widget_id and pane reference
+
+    Returns:
+        CommandResult indicating success or failure
+    """
+    try:
+        from core.app_widget_manager import AppWidgetManager
+
+        widget_id = context.args.get('widget_id')
+        pane = context.args.get('pane')
+
+        if not widget_id:
+            return CommandResult(success=False, error="No widget_id specified")
+
+        # Get workspace service
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
+
+        # Get workspace
+        workspace = workspace_service.get_workspace()
+        if not workspace:
+            return CommandResult(success=False, error="No workspace available")
+
+        # Get current tab's split widget
+        current_tab = workspace.tab_widget.currentWidget()
+        if not current_tab or not hasattr(current_tab, 'model'):
+            return CommandResult(success=False, error="No split widget available")
+
+        split_widget = current_tab
+
+        # Get the pane's ID from the PaneContent wrapper
+        if pane and hasattr(pane, 'pane_id'):
+            pane_id = pane.pane_id
+
+            # Get widget metadata
+            manager = AppWidgetManager.get_instance()
+            metadata = manager.get_widget(widget_id)
+
+            if metadata:
+                # Change the pane to use the new widget
+                # We'll use the existing change_pane_type if it's a basic widget type
+                if hasattr(metadata, 'widget_type'):
+                    success = split_widget.model.change_pane_type(pane_id, metadata.widget_type)
+                    if success:
+                        split_widget.refresh_view()
+                        logger.info(f"Replaced pane {pane_id} with widget {widget_id}")
+                        return CommandResult(success=True, value={'widget_id': widget_id})
+
+            return CommandResult(success=False, error=f"Could not find widget {widget_id}")
+
+        return CommandResult(success=False, error="Could not identify pane")
+
+    except Exception as e:
+        logger.error(f"Error replacing widget in pane: {e}", exc_info=True)
+        return CommandResult(success=False, error=str(e))
+
+
+@command(
     id="workbench.action.changePaneType",
     title="Change Pane Type",
     category="Panes",
