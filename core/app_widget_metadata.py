@@ -62,6 +62,7 @@ class AppWidgetMetadata:
     show_in_palette: bool = True  # Show in command palette
     show_header: bool = True  # Show pane header bar
     preserve_context_menu: bool = False  # Preserve native context menu
+    can_suspend: bool = True  # Can be suspended when hidden (False for widgets with background processes)
 
     # === Placement Intent ===
     default_placement: WidgetPlacement = WidgetPlacement.SMART

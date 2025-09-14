@@ -344,8 +344,8 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
                 pane_id = pane.leaf_node.id
 
         if pane_id:
-            # Change the pane type directly to CUSTOM (which is used for theme editor)
-            success = split_widget.model.change_pane_type(pane_id, WidgetType.CUSTOM)
+            # Change the pane type directly to SETTINGS (theme editor is registered as SETTINGS type)
+            success = split_widget.model.change_pane_type(pane_id, WidgetType.SETTINGS)
             if success:
                 split_widget.refresh_view()
                 logger.info(f"Replaced pane {pane_id} with theme editor")
@@ -376,7 +376,6 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
     try:
         from services.workspace_service import WorkspaceService
         from ui.widgets.widget_registry import WidgetType
-        import uuid
 
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
@@ -385,12 +384,22 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
                 error="Workspace service not available"
             )
 
-        # Create unique widget ID
-        widget_id = f"theme_editor_{uuid.uuid4().hex[:8]}"
+        # 🚨 SINGLETON PATTERN: Use consistent widget_id for Theme Editor
+        # This ensures only one Theme Editor instance exists at a time
+        widget_id = "com.viloapp.theme_editor"  # Same as registered widget_id
+
+        # Check for existing Theme Editor instance
+        if workspace_service.has_widget(widget_id):
+            workspace_service.focus_widget(widget_id)
+            return CommandResult(
+                success=True,
+                value={'widget_id': widget_id, 'action': 'focused_existing'}
+            )
 
         # Add theme editor widget to workspace using the registered factory
+        # Note: Theme Editor is registered with WidgetType.SETTINGS in app_widget_registry.py
         success = workspace_service.add_app_widget(
-            widget_type=WidgetType.CUSTOM,
+            widget_type=WidgetType.SETTINGS,  # Must match registration
             widget_id=widget_id,
             name="Theme Editor"
         )
@@ -399,7 +408,7 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
             logger.info("Opened theme editor")
             return CommandResult(
                 success=True,
-                value={'widget_id': widget_id}
+                value={'widget_id': widget_id, 'action': 'created_new'}
             )
         else:
             return CommandResult(

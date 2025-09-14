@@ -45,21 +45,26 @@ def open_settings_command(context: CommandContext) -> CommandResult:
     try:
         from services.workspace_service import WorkspaceService
         from ui.widgets.widget_registry import WidgetType
-        import uuid
 
         workspace_service = context.get_service(WorkspaceService)
 
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
 
-        # Generate a unique instance ID for the settings widget
-        widget_id = str(uuid.uuid4())[:8]
+        # 🚨 SINGLETON PATTERN: Use consistent widget_id for Settings
+        # This ensures only one Settings instance exists at a time
+        widget_id = "com.viloapp.settings"  # Same as registered widget_id
+
+        # Check for existing Settings instance
+        if workspace_service.has_widget(widget_id):
+            workspace_service.focus_widget(widget_id)
+            return CommandResult(success=True, value={'widget_id': widget_id, 'action': 'focused_existing'})
 
         # Add a Settings tab using the proper WidgetType
         success = workspace_service.add_app_widget(WidgetType.SETTINGS, widget_id, "Settings")
 
         if success:
-            return CommandResult(success=True, value={'widget_id': widget_id})
+            return CommandResult(success=True, value={'widget_id': widget_id, 'action': 'created_new'})
         else:
             return CommandResult(success=False, error="Failed to add Settings to workspace")
 
@@ -304,21 +309,31 @@ def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     try:
         from services.workspace_service import WorkspaceService
         from ui.widgets.widget_registry import WidgetType
-        import uuid
 
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
 
+        # 🚨 SINGLETON PATTERN: Use consistent widget_id for Shortcuts
+        # This ensures only one Shortcuts configuration instance exists at a time
+        widget_id = "com.viloapp.shortcuts"  # Same as registered widget_id
+
+        # Check for existing Shortcuts instance
+        if workspace_service.has_widget(widget_id):
+            workspace_service.focus_widget(widget_id)
+            return CommandResult(
+                success=True,
+                value={'widget_id': widget_id, 'message': 'Focused existing keyboard shortcuts configuration', 'action': 'focused_existing'}
+            )
+
         # Create and add shortcut configuration widget in a new tab
         # The factory is already registered at module load time
-        widget_id = f"shortcuts_config_{uuid.uuid4().hex[:8]}"
         success = workspace_service.add_app_widget(WidgetType.SETTINGS, widget_id, "Keyboard Shortcuts")
 
         if success:
             return CommandResult(
                 success=True,
-                value={'widget_id': widget_id, 'message': 'Opened keyboard shortcuts configuration'}
+                value={'widget_id': widget_id, 'message': 'Opened keyboard shortcuts configuration', 'action': 'created_new'}
             )
         else:
             return CommandResult(success=False, error="Failed to create shortcuts configuration tab")

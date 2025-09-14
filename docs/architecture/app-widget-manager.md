@@ -4,6 +4,11 @@
 
 The AppWidgetManager is a centralized registry system that manages all application widgets in ViloxTerm. It replaces the previous fragmented widget management approach with a unified system that provides comprehensive metadata, dynamic discovery, and plugin-ready architecture.
 
+> **📖 Related Documentation:**
+> - [Widget Architecture Guide](WIDGET-ARCHITECTURE-GUIDE.md) - Complete widget architecture overview
+> - [Widget Lifecycle](WIDGET_LIFECYCLE.md) - State management and lifecycle patterns
+> - [Developer Guide](../dev-guides/widget-lifecycle-guide.md) - Practical implementation examples
+
 ## Architecture Components
 
 ### Core Classes
@@ -35,6 +40,7 @@ class AppWidgetMetadata:
     # Behavior
     singleton: bool = False         # Only one instance allowed
     show_in_menu: bool = True      # Show in UI menus
+    can_suspend: bool = True       # Can be suspended when hidden
     supported_file_types: List[str] # File types this widget handles
 
     # Plugin support
@@ -107,18 +113,179 @@ Group by category
 Dynamic QMenu creation
 ```
 
+## Widget Lifecycle Patterns
+
+The AppWidgetManager supports four distinct widget lifecycle patterns:
+
+### Pattern 1: Multi-Instance Widgets
+```python
+# Example: Text Editor - Multiple independent instances
+AppWidgetMetadata(
+    widget_id="com.viloapp.editor",
+    singleton=False,                    # ← Multiple instances allowed
+    open_command="file.newEditorTab"
+)
+
+# Usage: Each command call creates new instance
+instance_id = f"editor_{uuid.uuid4().hex[:8]}"  # ← Unique ID each time
+```
+
+### Pattern 2: Singleton Widgets
+```python
+# Example: Settings - Only one instance allowed
+AppWidgetMetadata(
+    widget_id="com.viloapp.settings",
+    singleton=True,                     # ← Only one instance
+    open_command="settings.openSettings"
+)
+
+# Usage: Reuse existing instance
+instance_id = "com.viloapp.settings"   # ← Same ID for singleton
+```
+
+### Pattern 3: Service-Backed Widgets
+```python
+# Example: Terminal - Multiple UI instances sharing background service
+AppWidgetMetadata(
+    widget_id="com.viloapp.terminal",
+    singleton=False,                    # ← Multiple UI instances
+    requires_services=["terminal_service"],  # ← Background service required
+    persistent_service=True             # ← Service persists after UI closes
+)
+
+# Service Architecture:
+# TerminalService (Background) ←→ Multiple TerminalAppWidget instances
+```
+
+### Pattern 4: Utility Widgets
+```python
+# Example: Placeholder - System utility widget
+AppWidgetMetadata(
+    widget_id="com.viloapp.placeholder",
+    singleton=False,
+    show_in_menu=False,                 # ← Hidden from user menus
+    category=WidgetCategory.SYSTEM      # ← System widget
+)
+```
+
 ## Current Registered Widgets
 
-| Widget ID | Display Name | Category | Type | Features |
-|-----------|--------------|----------|------|----------|
-| `com.viloapp.terminal` | Terminal | terminal | TERMINAL | Shell execution, ANSI colors |
-| `com.viloapp.editor` | Text Editor | editor | TEXT_EDITOR | Syntax highlighting, file editing |
-| `com.viloapp.theme_editor` | Theme Editor | tools | SETTINGS | Live preview, color customization |
-| `com.viloapp.shortcuts` | Keyboard Shortcuts | tools | SETTINGS | Shortcut configuration |
-| `com.viloapp.settings` | Settings | editor | SETTINGS | Application defaults, preferences management |
-| `com.viloapp.placeholder` | Empty Pane | system | PLACEHOLDER | Placeholder content |
-| `com.viloapp.output` | Output Panel | tools | OUTPUT | Command output display |
-| `com.viloapp.explorer` | File Explorer | viewer | FILE_EXPLORER | File system navigation |
+| Widget ID | Display Name | Pattern | Type | Can Suspend | Features |
+|-----------|--------------|---------|------|-------------|----------|
+| `com.viloapp.terminal` | Terminal | Service-Backed | TERMINAL | ❌ No | Shell execution, ANSI colors, PTY process |
+| `com.viloapp.editor` | Text Editor | Multi-Instance | TEXT_EDITOR | ✅ Yes | Syntax highlighting, file editing |
+| `com.viloapp.theme_editor` | Theme Editor | Singleton | SETTINGS | ✅ Yes | Live preview, color customization |
+| `com.viloapp.shortcuts` | Keyboard Shortcuts | Singleton | SETTINGS | ✅ Yes | Shortcut configuration |
+| `com.viloapp.settings` | Settings | Singleton | SETTINGS | ✅ Yes | Application defaults, preferences |
+| `com.viloapp.placeholder` | Empty Pane | Utility | PLACEHOLDER | ✅ Yes | Placeholder content |
+| `com.viloapp.output` | Output Panel | Multi-Instance | OUTPUT | ✅ Yes | Command output display |
+| `com.viloapp.explorer` | File Explorer | Multi-Instance | EXPLORER | File system navigation |
+
+## Service vs Widget Architecture
+
+### Service-Backed Widgets (Terminal Example)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    TerminalService                          │
+│                 (Background Service)                        │
+├─────────────────────────────────────────────────────────────┤
+│ • Always running after first terminal created              │
+│ • Manages PTY processes and sessions                        │
+│ • Handles I/O between shell and UI                          │
+│ • Persists after UI widgets are closed                      │
+├─────────────────────────────────────────────────────────────┤
+│ Session 1 (bash) │ Session 2 (zsh) │ Session 3 (fish)     │
+└─────────────────────────────────────────────────────────────┘
+         ↑                   ↑                   ↑
+  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+  │Terminal     │     │Terminal     │     │Terminal     │
+  │Widget 1     │     │Widget 2     │     │Widget 3     │
+  │(UI View)    │     │(UI View)    │     │(UI View)    │
+  └─────────────┘     └─────────────┘     └─────────────┘
+```
+
+**Key Points:**
+- **Service**: Persistent, manages actual functionality
+- **Widgets**: Transient UI views into service state
+- **Relationship**: One service, many widgets
+- **Lifecycle**: Service starts on first widget, continues after widgets close
+
+### Singleton Widgets (Settings Example)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   Settings Widget                           │
+│                  (Singleton Pattern)                        │
+├─────────────────────────────────────────────────────────────┤
+│ • Only one instance allowed                                 │
+│ • Opening again switches to existing tab                    │
+│ • widget_id used as instance_id                             │
+│ • No background service required                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Widget Suspension Control
+
+### Overview
+The AppWidgetManager supports suspension control through the `can_suspend` property in widget metadata. This allows widgets with background processes to prevent automatic suspension when hidden.
+
+### How It Works
+1. **Metadata Configuration**: Set `can_suspend` in AppWidgetMetadata during registration
+2. **Widget Creation**: AppWidgetManager calls `set_metadata()` on created widgets
+3. **Runtime Behavior**: AppWidget checks `can_suspend` before entering SUSPENDED state
+4. **Visibility Events**: hideEvent/showEvent respect the suspension setting
+
+### Suspension Guidelines
+
+#### Widgets That Should NOT Suspend (`can_suspend=False`)
+- **Terminal**: Has PTY process that must continue running
+- **Network Clients**: Maintain persistent connections
+- **Real-time Monitors**: Display live data streams
+- **Background Workers**: Perform ongoing computations
+
+#### Widgets That SHOULD Suspend (`can_suspend=True`, default)
+- **Editors**: Only active when user is editing
+- **Settings**: Static configuration UI
+- **File Browsers**: No background operations
+- **Documentation**: Static content viewers
+
+### Example Registration
+```python
+# Terminal - Never suspend (has PTY process)
+AppWidgetMetadata(
+    widget_id="com.viloapp.terminal",
+    widget_type=WidgetType.TERMINAL,
+    can_suspend=False,  # Critical: PTY must keep running
+    # ... other metadata
+)
+
+# Editor - Can suspend (no background operations)
+AppWidgetMetadata(
+    widget_id="com.viloapp.editor",
+    widget_type=WidgetType.TEXT_EDITOR,
+    can_suspend=True,  # Default: saves resources when hidden
+    # ... other metadata
+)
+```
+
+### Implementation in AppWidget
+```python
+class AppWidget(QWidget):
+    def suspend(self):
+        """Suspend widget when hidden/inactive."""
+        if not self.can_suspend:
+            logger.debug(f"Widget {self.widget_id} cannot be suspended")
+            return
+        # ... suspension logic
+
+    @property
+    def can_suspend(self) -> bool:
+        """Check if widget can be suspended."""
+        if self._metadata:
+            return self._metadata.can_suspend
+        return True  # Default allows suspension
+```
 
 ## Benefits
 
@@ -294,25 +461,124 @@ metadata = AppWidgetMetadata(
 3. **Handle Failures**: Gracefully handle missing widgets
 4. **Update Tests**: Test with AppWidgetManager
 
+## Common Mistakes and Solutions
+
+### ❌ Anti-Pattern: Random IDs for Singletons
+```python
+# WRONG - Creates multiple Settings instances
+@command(id="settings.open")
+def open_settings(context):
+    widget_id = str(uuid.uuid4())[:8]  # ← Different ID each time!
+    workspace_service.add_app_widget(WidgetType.SETTINGS, widget_id, "Settings")
+```
+
+```python
+# CORRECT - Singleton behavior
+@command(id="settings.open")
+def open_settings(context):
+    widget_id = "com.viloapp.settings"  # ← Consistent with registration
+
+    # Check for existing instance
+    if workspace_service.has_widget(widget_id):
+        workspace_service.focus_widget(widget_id)
+        return
+
+    workspace_service.add_app_widget(WidgetType.SETTINGS, widget_id, "Settings")
+```
+
+### ❌ Anti-Pattern: WidgetType Mismatches
+```python
+# WRONG - Registration vs command mismatch
+# In registration:
+AppWidgetMetadata(
+    widget_id="com.viloapp.theme_editor",
+    widget_type=WidgetType.SETTINGS,    # ← Registered as SETTINGS
+    ...
+)
+
+# In command:
+workspace_service.add_app_widget(
+    widget_type=WidgetType.CUSTOM,      # ← Using different type!
+    widget_id=widget_id
+)
+```
+
+```python
+# CORRECT - Consistent types
+# Get metadata and use its type
+metadata = manager.get_widget_metadata("com.viloapp.theme_editor")
+workspace_service.add_app_widget(
+    widget_type=metadata.widget_type,   # ← Use registered type
+    widget_id=widget_id
+)
+```
+
+### ❌ Anti-Pattern: Service-Widget Confusion
+```python
+# WRONG - Creating service in widget command
+@command(id="terminal.new")
+def new_terminal(context):
+    service = TerminalService()         # ← This is a service, not a widget!
+    workspace_service.add_tab(service)  # ← Won't work
+```
+
+```python
+# CORRECT - Create widget that uses service
+@command(id="terminal.new")
+def new_terminal(context):
+    # Ensure service is running
+    terminal_service = service_locator.get(TerminalService)
+    if not terminal_service.is_running():
+        terminal_service.start()
+
+    # Create widget instance
+    instance_id = f"terminal_{uuid.uuid4().hex[:8]}"
+    workspace_service.add_app_widget(WidgetType.TERMINAL, instance_id, "Terminal")
+```
+
+## Troubleshooting Guide
+
+### Issue: "Multiple Settings tabs appear"
+**Cause**: Command generates new widget_id each time instead of reusing singleton ID
+**Solution**: Use `com.viloapp.settings` as both registration and instance ID
+
+### Issue: "Widget not found in AppWidgetManager"
+**Cause**: Widget not registered or registration failed
+**Solution**: Check `core/app_widget_registry.py` and verify registration code
+
+### Issue: "WidgetType not found error"
+**Cause**: Using wrong WidgetType in command vs registration
+**Solution**: Use `metadata.widget_type` from registered metadata
+
+### Issue: "Service not available when widget loads"
+**Cause**: Service dependency not started before widget creation
+**Solution**: Ensure required services are running in widget creation command
+
 ## Best Practices
 
 ### Widget Registration
 - Use reverse domain naming: `com.company.widget`
-- Provide complete metadata
-- Include meaningful descriptions
-- Specify all capabilities and requirements
+- Provide complete metadata including lifecycle pattern
+- Include meaningful descriptions and capabilities
+- Specify service dependencies clearly
 
 ### Widget Implementation
 - Follow AppWidget base class contract
-- Handle cleanup properly
-- Emit appropriate signals
-- Support serialization if needed
+- Handle cleanup properly for all resource types
+- Emit appropriate lifecycle signals
+- Support serialization if widget has persistent state
+
+### Command Implementation
+- Always use registered widget_id for singletons
+- Generate unique instance_id only for multi-instance widgets
+- Check service dependencies before widget creation
+- Handle creation failures gracefully
 
 ### Error Handling
-- Check widget creation success
+- Check widget creation success and provide user feedback
 - Provide fallbacks for missing widgets
-- Log errors with context
-- Don't crash on widget failures
+- Log errors with sufficient context for debugging
+- Never crash the application due to widget failures
 
 ## Conclusion
 

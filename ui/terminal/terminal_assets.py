@@ -186,7 +186,12 @@ class TerminalAssetBundler:
             scrollback: 1000,
             fontFamily: 'Consolas, "Courier New", monospace',
             fontSize: 14,
-            lineHeight: 1.2
+            lineHeight: 1.2,
+            // Fix for Canvas2D getImageData warning
+            drawBoldTextInBrightColors: true,
+            // Additional performance settings
+            fastScrollModifier: 'ctrl',
+            fastScrollSensitivity: 5
         }};
         
         // Initialize terminal
@@ -246,6 +251,13 @@ class TerminalAssetBundler:
                 // Initial fit
                 socket.on("connect", () => {{
                     setTimeout(fitTerminal, 100);
+
+                    // Start heartbeat to keep session alive
+                    setInterval(() => {{
+                        socket.emit("heartbeat", {{
+                            session_id: SESSION_ID
+                        }});
+                    }}, 30000); // Send heartbeat every 30 seconds
                 }});
                 
                 // Handle window resize

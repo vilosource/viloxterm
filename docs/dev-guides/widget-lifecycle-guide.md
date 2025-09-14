@@ -102,6 +102,32 @@ def on_state_changed(self, state_str: str):
 
 ## Creating New Widget Types
 
+### Widget Registration with Suspension Control
+
+When registering your widget, consider whether it should be suspended:
+
+```python
+from core.app_widget_metadata import AppWidgetMetadata
+
+# Widget with background process - should NOT suspend
+AppWidgetMetadata(
+    widget_id="com.myapp.monitor",
+    widget_type=WidgetType.MONITOR,
+    display_name="System Monitor",
+    can_suspend=False,  # Keep monitoring even when hidden
+    # ... other metadata
+)
+
+# UI-only widget - CAN suspend
+AppWidgetMetadata(
+    widget_id="com.myapp.editor",
+    widget_type=WidgetType.EDITOR,
+    display_name="Code Editor",
+    can_suspend=True,  # Default - saves resources when hidden
+    # ... other metadata
+)
+```
+
 ### Synchronous Widget Template
 
 For widgets that initialize immediately (e.g., text editors):
@@ -170,16 +196,26 @@ Override these methods to customize behavior:
 ```python
 class CustomWidget(AppWidget):
     def on_suspend(self):
-        """Called when widget is hidden."""
+        """Called when widget is hidden.
+
+        NOTE: Only called if can_suspend=True in metadata.
+        Widgets with can_suspend=False will never suspend.
+        """
         # Pause expensive operations
         self.timer.stop()
         self.animation.pause()
+        self.clear_cache()
 
     def on_resume(self):
-        """Called when widget is shown again."""
+        """Called when widget is shown again.
+
+        NOTE: Only called if widget was previously suspended.
+        Widgets with can_suspend=False never suspend/resume.
+        """
         # Resume operations
         self.timer.start()
         self.animation.resume()
+        self.rebuild_cache()
 
     def on_cleanup(self):
         """Called during widget destruction."""
@@ -750,6 +786,93 @@ def test_error_recovery(qtbot):
     assert widget.widget_state == WidgetState.READY
 ```
 
+## Suspension Control Patterns
+
+### Pattern: Widget with Background Process
+
+For widgets that must keep running even when hidden:
+
+```python
+class MonitorWidget(AppWidget):
+    """Real-time monitoring widget that shouldn't suspend."""
+
+    def __init__(self, widget_id: str, parent=None):
+        super().__init__(widget_id, WidgetType.MONITOR, parent)
+        self.initialize()
+
+        # Start background monitoring
+        self.monitor_timer = QTimer()
+        self.monitor_timer.timeout.connect(self.collect_metrics)
+        self.monitor_timer.start(1000)  # Collect every second
+
+        self.set_ready()
+
+    def collect_metrics(self):
+        """Collect metrics even when widget is hidden."""
+        # This continues running because can_suspend=False
+        metrics = self.get_system_metrics()
+        self.update_buffer(metrics)
+
+        # Only update UI if visible
+        if self.isVisible():
+            self.update_display(metrics)
+
+    # on_suspend() will NEVER be called due to can_suspend=False
+```
+
+### Pattern: Widget with Expensive UI Operations
+
+For widgets that should pause expensive operations when hidden:
+
+```python
+class VisualizationWidget(AppWidget):
+    """3D visualization that should pause when hidden."""
+
+    def __init__(self, widget_id: str, parent=None):
+        super().__init__(widget_id, WidgetType.VIEWER, parent)
+        self.animation_timer = None
+        self.setup_3d_scene()
+        self.set_ready()
+
+    def on_suspend(self):
+        """Pause rendering when hidden (can_suspend=True)."""
+        if self.animation_timer:
+            self.animation_timer.stop()
+        self.renderer.pause()
+        self.free_gpu_resources()
+        logger.debug("Visualization suspended - GPU resources freed")
+
+    def on_resume(self):
+        """Resume rendering when shown again."""
+        self.allocate_gpu_resources()
+        self.renderer.resume()
+        if self.animation_timer:
+            self.animation_timer.start()
+        logger.debug("Visualization resumed - rendering active")
+```
+
+### Pattern: Terminal Widget (Never Suspends)
+
+```python
+class TerminalAppWidget(AppWidget):
+    """Terminal with PTY process that must keep running."""
+
+    # Registration includes can_suspend=False
+
+    def hideEvent(self, event):
+        """Terminal stays READY even when hidden."""
+        super().hideEvent(event)
+        # Widget remains in READY state
+        # PTY process continues running
+        # Output continues to be collected
+
+    def showEvent(self, event):
+        """Show accumulated output when visible again."""
+        super().showEvent(event)
+        # Flush any buffered output to display
+        self.flush_output_buffer()
+```
+
 ## Common Patterns
 
 ### Pattern: Wait for Multiple Widgets
@@ -832,6 +955,34 @@ class LazyWidget(AppWidget):
 1. Is `set_ready()` called after async operation completes?
 2. Is there an error preventing ready state?
 3. Check logs for state transitions
+
+### Issue: Background Process Stops When Widget Hidden
+
+**Symptom**: Terminal output stops, monitoring pauses, connections drop
+
+**Solution**:
+1. Set `can_suspend=False` in widget metadata registration
+2. Verify metadata is being set via `set_metadata()` during creation
+3. Check that widget doesn't manually call `suspend()` in `hideEvent()`
+
+```python
+# In widget registration
+AppWidgetMetadata(
+    widget_id="com.viloapp.terminal",
+    can_suspend=False,  # ← Critical for background processes
+    # ...
+)
+```
+
+### Issue: Widget Not Resuming After Being Shown
+
+**Symptom**: Widget stays suspended after becoming visible
+
+**Check**:
+1. Is `can_suspend=True` (widgets with `False` never suspend/resume)?
+2. Check if `showEvent()` is being called
+3. Verify no exceptions in `on_resume()` hook
+4. Check widget state with debugger
 
 **Solution**:
 ```python

@@ -144,6 +144,10 @@ class AppWidgetManager:
                 # Widget classes handle their own widget_type internally
                 widget = metadata.widget_class(instance_id)
 
+            # Set the metadata on the widget so it knows its configuration
+            if hasattr(widget, 'set_metadata'):
+                widget.set_metadata(metadata)
+
             logger.debug(f"Created widget instance: {widget_id} (instance: {instance_id})")
             return widget
 

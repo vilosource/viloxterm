@@ -5,6 +5,34 @@ Built-in widget registration.
 This module registers all built-in widgets with the AppWidgetManager
 at application startup. It serves as the central location for defining
 metadata for all built-in widgets.
+
+🚨 IMPORTANT: Widget Registration Patterns
+
+This file contains the complete registry of all built-in widgets.
+When adding new widgets, follow these patterns exactly:
+
+1. WIDGET LIFECYCLE PATTERNS:
+   - Multi-Instance: Each command creates a new independent widget (Text Editor)
+   - Singleton: Only one instance exists, reuse if exists (Settings, Theme Editor)
+   - Service-Backed: Multiple UI widgets share a background service (Terminal)
+
+2. WIDGET ID USAGE:
+   - Registration: Use widget_id for AppWidgetMetadata ("com.viloapp.settings")
+   - Commands: For singletons, use SAME widget_id as instance_id
+   - Commands: For multi-instance, generate unique instance_id each time
+
+3. WIDGETTYPE CONSISTENCY:
+   - Registration: Set widget_type in AppWidgetMetadata
+   - Commands: Use the SAME WidgetType when calling add_app_widget()
+   - Multiple widgets can share the same WidgetType (e.g., all settings use SETTINGS)
+
+4. COMMON MISTAKES TO AVOID:
+   - ❌ Random instance_id for singletons (breaks singleton behavior)
+   - ❌ Different WidgetType in registration vs command (causes mismatches)
+   - ❌ Forgetting to set singleton=True for singleton widgets
+   - ❌ Missing open_command (breaks menu integration)
+
+See WIDGET-ARCHITECTURE-GUIDE.md for complete documentation.
 """
 
 import logging
@@ -25,7 +53,17 @@ def register_builtin_widgets():
     """
     manager = AppWidgetManager.get_instance()
 
-    # Register Terminal Widget
+    # ========================================
+    # SERVICE-BACKED PATTERN: Terminal Widget
+    # ========================================
+    # Terminal uses a service-backed pattern:
+    # - Multiple UI widgets (TerminalAppWidget instances)
+    # - Shared background service (TerminalService) manages PTY sessions
+    # - Service persists after UI widgets are closed
+    # - Each UI widget connects to a unique session in the service
+    #
+    # Instance ID Pattern: Generate unique IDs like "terminal_abc123"
+    # Widget Commands: file.newTerminalTab (creates new instance each time)
     try:
         from ui.terminal.terminal_app_widget import TerminalAppWidget
         from core.widget_placement import WidgetPlacement
@@ -39,10 +77,12 @@ def register_builtin_widgets():
             category=WidgetCategory.TERMINAL,
             widget_class=TerminalAppWidget,
             # Note: No factory needed - TerminalAppWidget can be instantiated directly
+            # Service dependency: TerminalService must be running before widget creation
             open_command="file.newTerminalTab",
             provides_capabilities=["shell_execution", "ansi_colors", "terminal_emulation"],
             requires_services=["terminal_service"],
             preserve_context_menu=True,
+            can_suspend=False,  # Terminal should never be suspended (has background PTY process)
             min_width=300,
             min_height=200,
 
@@ -63,7 +103,16 @@ def register_builtin_widgets():
     except ImportError as e:
         logger.warning(f"Could not register Terminal widget: {e}")
 
-    # Register Text Editor Widget
+    # ========================================
+    # MULTI-INSTANCE PATTERN: Text Editor Widget
+    # ========================================
+    # Text Editor uses a multi-instance pattern:
+    # - Each command call creates a new independent editor
+    # - No shared state between instances
+    # - Each editor manages its own file and resources
+    #
+    # Instance ID Pattern: Generate unique IDs like "editor_def456"
+    # Widget Commands: file.newEditorTab (creates new instance each time)
     try:
         from ui.widgets.editor_app_widget import EditorAppWidget
 
@@ -79,6 +128,7 @@ def register_builtin_widgets():
             provides_capabilities=["text_editing", "syntax_highlighting"],
             supported_file_types=["txt", "py", "js", "json", "md", "yml", "yaml"],
             preserve_context_menu=True,
+            can_suspend=True,  # Editor can be suspended (no background processes)
             min_width=400,
             min_height=300,
 
@@ -99,7 +149,17 @@ def register_builtin_widgets():
     except ImportError as e:
         logger.warning(f"Could not register Text Editor widget: {e}")
 
-    # Register Theme Editor Widget
+    # ========================================
+    # SINGLETON PATTERN: Theme Editor Widget
+    # ========================================
+    # Theme Editor uses a singleton pattern:
+    # - Only one instance allowed at a time
+    # - Opening again switches to existing tab
+    # - Uses widget_id as instance_id for consistency
+    #
+    # Instance ID Pattern: Use "com.viloapp.theme_editor" (same as widget_id)
+    # Widget Commands: theme.openEditor (reuses existing or creates new)
+    # 🚨 CRITICAL: Commands must use widget_id as instance_id for singletons!
     try:
         from ui.widgets.theme_editor_widget import ThemeEditorAppWidget
 
@@ -118,7 +178,8 @@ def register_builtin_widgets():
             widget_class=ThemeEditorAppWidget,
             factory=create_theme_editor_widget,
             open_command="theme.openEditor",
-            singleton=True,  # Only one theme editor needed
+            singleton=True,  # 🚨 CRITICAL: This makes it a singleton widget
+            # Commands MUST use "com.viloapp.theme_editor" as instance_id
             provides_capabilities=["theme_editing", "live_preview", "color_customization"],
             requires_services=["theme_service"],
             min_width=800,
@@ -142,7 +203,17 @@ def register_builtin_widgets():
     except ImportError as e:
         logger.warning(f"Could not register Theme Editor widget: {e}")
 
-    # Register Keyboard Shortcuts Widget
+    # ========================================
+    # SINGLETON PATTERN: Keyboard Shortcuts Widget
+    # ========================================
+    # Keyboard Shortcuts uses a singleton pattern (like Theme Editor):
+    # - Only one instance allowed at a time
+    # - Opening again switches to existing tab
+    # - Uses widget_id as instance_id for consistency
+    #
+    # Instance ID Pattern: Use "com.viloapp.shortcuts" (same as widget_id)
+    # Widget Commands: settings.openKeyboardShortcuts (reuses existing or creates new)
+    # 🚨 CRITICAL: Commands must use widget_id as instance_id for singletons!
     try:
         from ui.widgets.shortcut_config_app_widget import ShortcutConfigAppWidget
 
@@ -159,7 +230,8 @@ def register_builtin_widgets():
             widget_class=ShortcutConfigAppWidget,
             factory=create_shortcut_config_widget,
             open_command="settings.openKeyboardShortcuts",
-            singleton=True,  # Only one shortcuts editor needed
+            singleton=True,  # 🚨 CRITICAL: This makes it a singleton widget
+            # Commands MUST use "com.viloapp.shortcuts" as instance_id
             provides_capabilities=["shortcut_configuration", "keybinding_editor"],
             requires_services=["keyboard_service", "command_service"],
             min_width=600,
@@ -182,7 +254,16 @@ def register_builtin_widgets():
     except ImportError as e:
         logger.warning(f"Could not register Keyboard Shortcuts widget: {e}")
 
-    # Register Placeholder Widget
+    # ========================================
+    # UTILITY PATTERN: Placeholder Widget
+    # ========================================
+    # Placeholder is a utility widget for empty panes:
+    # - Multiple instances allowed (each pane can be empty)
+    # - Not singleton (each placeholder is independent)
+    # - Hidden from menus by default (system widget)
+    #
+    # Instance ID Pattern: Generate unique IDs as needed
+    # Widget Commands: Internal use mostly, not user-facing
     try:
         from ui.widgets.placeholder_app_widget import PlaceholderAppWidget
 
@@ -247,7 +328,17 @@ def register_builtin_widgets():
     except ImportError as e:
         logger.warning(f"Could not register File Explorer widget: {e}")
 
-    # Register Settings widget
+    # ========================================
+    # SINGLETON PATTERN: Settings Widget
+    # ========================================
+    # Settings uses a singleton pattern (like Theme Editor and Shortcuts):
+    # - Only one instance allowed at a time
+    # - Opening again switches to existing tab
+    # - Uses widget_id as instance_id for consistency
+    #
+    # Instance ID Pattern: Use "com.viloapp.settings" (same as widget_id)
+    # Widget Commands: Must check for existing instance before creating
+    # 🚨 CRITICAL: Commands must use widget_id as instance_id for singletons!
     try:
         from ui.widgets.settings_app_widget import SettingsAppWidget
 
@@ -261,7 +352,8 @@ def register_builtin_widgets():
             widget_class=SettingsAppWidget,
             provides_capabilities=["settings_management", "preferences"],
             requires_services=["settings_service"],
-            singleton=True,  # Only one settings instance
+            singleton=True,  # 🚨 CRITICAL: This makes it a singleton widget
+            # Commands MUST use "com.viloapp.settings" as instance_id
             min_width=600,
             min_height=400,
             show_in_menu=True
@@ -271,6 +363,164 @@ def register_builtin_widgets():
         logger.warning(f"Could not register Settings widget: {e}")
 
     logger.info(f"Registered {len(manager)} built-in widgets")
+
+
+# ============================================================================
+# WIDGET REGISTRATION PATTERNS AND EXAMPLES
+# ============================================================================
+"""
+When adding a new widget, follow these exact patterns:
+
+1. DETERMINE YOUR WIDGET'S LIFECYCLE PATTERN:
+
+   a) MULTI-INSTANCE (like Text Editor):
+      - Each command creates a NEW independent widget
+      - Generate unique instance_id each time: f"widget_{uuid4().hex[:8]}"
+      - singleton=False in metadata
+
+   b) SINGLETON (like Settings, Theme Editor):
+      - Only ONE instance allowed
+      - Use widget_id as instance_id: "com.viloapp.mywidget"
+      - singleton=True in metadata
+      - Commands must check for existing instance
+
+   c) SERVICE-BACKED (like Terminal):
+      - Background service manages functionality
+      - Multiple UI widgets connect to service
+      - Service starts once, persists after UI closes
+      - Generate unique instance_id for each UI widget
+
+2. REGISTRATION TEMPLATE:
+
+   manager.register_widget(AppWidgetMetadata(
+       widget_id="com.viloapp.mywidget",        # Unique reverse-domain ID
+       widget_type=WidgetType.APPROPRIATE_TYPE, # Choose existing or create new
+       display_name="My Widget",                # User-visible name
+       description="What this widget does",     # Tooltip/help text
+       icon="icon-name",                        # Icon identifier
+       category=WidgetCategory.APPROPRIATE,     # Menu grouping
+       widget_class=MyWidgetClass,              # Implementation class
+       open_command="mywidget.open",            # Command to open widget
+       singleton=False,                         # True for singleton pattern
+       # ... other metadata fields
+   ))
+
+3. COMMAND IMPLEMENTATION PATTERNS:
+
+   a) MULTI-INSTANCE COMMAND:
+
+   @command(id="mywidget.open")
+   def open_my_widget(context: CommandContext) -> CommandResult:
+       # Generate unique instance ID
+       instance_id = f"mywidget_{uuid.uuid4().hex[:8]}"
+
+       workspace_service = context.get_service(WorkspaceService)
+       success = workspace_service.add_app_widget(
+           widget_type=WidgetType.MY_TYPE,
+           widget_id=instance_id,  # ← Unique each time
+           name="My Widget"
+       )
+       return CommandResult(success=success)
+
+   b) SINGLETON COMMAND:
+
+   @command(id="mywidget.open")
+   def open_my_widget(context: CommandContext) -> CommandResult:
+       widget_id = "com.viloapp.mywidget"  # ← Same as registration
+
+       workspace_service = context.get_service(WorkspaceService)
+
+       # Check for existing instance
+       if workspace_service.has_widget(widget_id):
+           workspace_service.focus_widget(widget_id)
+           return CommandResult(success=True)
+
+       # Create singleton instance
+       success = workspace_service.add_app_widget(
+           widget_type=WidgetType.MY_TYPE,
+           widget_id=widget_id,  # ← Always same for singleton
+           name="My Widget"
+       )
+       return CommandResult(success=success)
+
+   c) SERVICE-BACKED COMMAND:
+
+   @command(id="mywidget.open")
+   def open_my_widget(context: CommandContext) -> CommandResult:
+       # Ensure service is running
+       my_service = context.get_service(MyService)
+       if not my_service.is_running():
+           my_service.start()
+
+       # Create session in service
+       session_id = my_service.create_session()
+
+       # Create UI widget with session reference
+       instance_id = f"mywidget_{session_id}"
+       workspace_service = context.get_service(WorkspaceService)
+       success = workspace_service.add_app_widget(
+           widget_type=WidgetType.MY_TYPE,
+           widget_id=instance_id,
+           name="My Widget"
+       )
+       return CommandResult(success=success)
+
+4. COMMON MISTAKES TO AVOID:
+
+   ❌ Using random instance_id for singletons:
+      # WRONG - creates multiple Settings instances
+      instance_id = f"settings_{uuid4().hex[:8]}"
+
+   ✅ Use consistent instance_id for singletons:
+      # CORRECT - singleton behavior
+      instance_id = "com.viloapp.settings"
+
+   ❌ WidgetType mismatch between registration and command:
+      # Registration: WidgetType.SETTINGS
+      # Command: WidgetType.CUSTOM  ← Different type!
+
+   ✅ Use same WidgetType everywhere:
+      # Both registration and command use WidgetType.SETTINGS
+
+   ❌ Forgetting singleton flag:
+      # Settings registered with singleton=False
+      # But command assumes singleton behavior
+
+   ✅ Set singleton flag correctly in registration:
+      singleton=True  # For Settings, Theme Editor, etc.
+
+5. TESTING YOUR WIDGET:
+
+   a) Test Registration:
+      manager = AppWidgetManager.get_instance()
+      metadata = manager.get_widget_metadata("com.viloapp.mywidget")
+      assert metadata is not None
+
+   b) Test Widget Creation:
+      widget = manager.create_widget("com.viloapp.mywidget", "test_instance")
+      assert widget is not None
+      assert isinstance(widget, MyWidgetClass)
+
+   c) Test Singleton Behavior (if applicable):
+      widget1 = manager.create_widget("com.viloapp.mywidget", "same_id")
+      widget2 = manager.create_widget("com.viloapp.mywidget", "same_id")
+      # Should reuse same instance for singletons
+
+6. WIDGET ID NAMING CONVENTION:
+
+   Use reverse domain notation:
+   - "com.viloapp.terminal"      ← Built-in widgets
+   - "com.viloapp.editor"
+   - "com.company.plugin_name"   ← Future plugins
+   - "org.project.widget_name"   ← Third-party
+
+   This prevents naming conflicts and supports future plugin system.
+
+For complete documentation, see:
+- WIDGET-ARCHITECTURE-GUIDE.md - Complete architecture overview
+- app-widget-manager.md - AppWidgetManager implementation details
+- WIDGET_LIFECYCLE.md - Widget lifecycle and state management
+"""
 
 
 def get_widget_for_command(command_id: str) -> Optional[AppWidgetMetadata]:

@@ -138,6 +138,7 @@ class AppWidgetMetadata:
     singleton: bool = False                     # Only one instance
     show_in_menu: bool = True                  # Show in pane menus
     preserve_context_menu: bool = False        # Keep widget's context menu
+    can_suspend: bool = True                   # Can be suspended when hidden
 
     # Layout hints
     min_width: int = 150                       # Minimum width

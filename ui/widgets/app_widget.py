@@ -56,6 +56,7 @@ class AppWidget(QWidget):
         self.widget_id = widget_id
         self.widget_type = widget_type
         self.leaf_node = None  # Back-reference to tree node (set by model)
+        self._metadata = None  # Will be set by AppWidgetManager during creation
 
         # Lifecycle state management
         self.widget_state = WidgetState.CREATED
@@ -128,12 +129,21 @@ class AppWidget(QWidget):
 
     def suspend(self):
         """Suspend widget when hidden/inactive."""
+        # Check if widget can be suspended
+        if not self.can_suspend:
+            logger.debug(f"Widget {self.widget_id} cannot be suspended (can_suspend=False)")
+            return
+
         if self.widget_state == WidgetState.READY:
             self._set_state(WidgetState.SUSPENDED)
             self.on_suspend()
 
     def resume(self):
         """Resume widget when shown/active."""
+        # If widget can't be suspended, it was never suspended
+        if not self.can_suspend:
+            return
+
         if self.widget_state == WidgetState.SUSPENDED:
             self._set_state(WidgetState.READY)
             self.on_resume()
@@ -277,6 +287,33 @@ class AppWidget(QWidget):
             True if widget has keyboard focus
         """
         return self._has_focus
+
+    @property
+    def can_suspend(self) -> bool:
+        """
+        Check if widget can be suspended when hidden.
+
+        Widgets with background processes (like Terminal) should not be suspended.
+
+        Returns:
+            True if widget can be suspended, False otherwise
+        """
+        # If metadata is available, use its can_suspend setting
+        if self._metadata:
+            return self._metadata.can_suspend
+        # Default to allowing suspension if no metadata
+        return True
+
+    def set_metadata(self, metadata):
+        """
+        Set the widget's metadata.
+
+        This is typically called by AppWidgetManager during widget creation.
+
+        Args:
+            metadata: AppWidgetMetadata instance
+        """
+        self._metadata = metadata
 
     def configure_retry_strategy(self, max_retries: int = None, base_delay: int = None, backoff_factor: float = None):
         """

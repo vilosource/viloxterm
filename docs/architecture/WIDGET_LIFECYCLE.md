@@ -4,6 +4,11 @@
 
 The Widget Lifecycle Architecture provides a robust, event-driven system for managing the complete lifecycle of application widgets (AppWidgets) in ViloxTerm. This architecture ensures proper initialization, state management, resource cleanup, and coordination between asynchronous widget operations and the UI framework.
 
+> **📖 Related Documentation:**
+> - [Widget Architecture Guide](WIDGET-ARCHITECTURE-GUIDE.md) - Complete widget architecture overview
+> - [AppWidget Manager](app-widget-manager.md) - Registry and metadata system
+> - [Developer Guide](../dev-guides/widget-lifecycle-guide.md) - Practical implementation examples
+
 > **Integration Context:** This widget lifecycle system is deeply integrated with the [Tab Pane Splitting Architecture](TAB_PANE_SPLITTING.md). The split pane system manages the tree structure and layout, while this system manages the individual widget lifecycles within each pane. See the main architecture document for how split operations coordinate with widget states.
 
 ## Core Concepts
@@ -282,14 +287,17 @@ Example configurations:
 - Aggressive: 5 retries with delays of 500ms, 1000ms, 2000ms, 4000ms, 8000ms (factor: 2.0)
 - Disabled: 0 retries (no automatic recovery)
 
-## Visibility Management
+## Visibility Management and Suspension Control
 
-Widgets automatically suspend when hidden and resume when shown:
+### Automatic Suspension
+
+Widgets automatically suspend when hidden and resume when shown, but this behavior can be controlled through the `can_suspend` property:
 
 ```mermaid
 stateDiagram-v2
-    READY --> SUSPENDED: hideEvent()
+    READY --> SUSPENDED: hideEvent() [if can_suspend=true]
     SUSPENDED --> READY: showEvent()
+    READY --> READY: hideEvent() [if can_suspend=false]
 
     state SUSPENDED {
         [*] --> PausedOperations
@@ -303,6 +311,67 @@ stateDiagram-v2
         ActiveOperations: Resources active
     }
 ```
+
+### Suspension Control
+
+The `can_suspend` property in `AppWidgetMetadata` controls whether a widget can be suspended when hidden:
+
+```python
+# Widget registration with suspension control
+AppWidgetMetadata(
+    widget_id="com.viloapp.terminal",
+    # ... other properties ...
+    can_suspend=False,  # Terminal should never be suspended (has background PTY process)
+)
+```
+
+#### When to Disable Suspension (`can_suspend=False`)
+
+Widgets should **NOT** be suspended when they:
+- Have background processes that must continue running (e.g., Terminal with PTY)
+- Maintain network connections that shouldn't be interrupted
+- Are performing critical background operations
+- Have real-time data streams that shouldn't pause
+
+#### When to Enable Suspension (`can_suspend=True`, default)
+
+Widgets **SHOULD** be suspended when they:
+- Only display static or user-driven content (e.g., Text Editor)
+- Can easily pause and resume operations without side effects
+- Don't have background processes or connections
+- Can benefit from resource savings when hidden
+
+### Implementation Details
+
+The suspension control is implemented in the `AppWidget` base class:
+
+```python
+def suspend(self):
+    """Suspend widget when hidden/inactive."""
+    # Check if widget can be suspended
+    if not self.can_suspend:
+        logger.debug(f"Widget {self.widget_id} cannot be suspended")
+        return
+
+    if self.widget_state == WidgetState.READY:
+        self._set_state(WidgetState.SUSPENDED)
+        self.on_suspend()
+
+def resume(self):
+    """Resume widget when shown/active."""
+    # If widget can't be suspended, it was never suspended
+    if not self.can_suspend:
+        return
+
+    if self.widget_state == WidgetState.SUSPENDED:
+        self._set_state(WidgetState.READY)
+        self.on_resume()
+```
+
+The `can_suspend` property is:
+1. Set in `AppWidgetMetadata` during widget registration
+2. Passed to the widget via `set_metadata()` during creation
+3. Checked before any suspension/resumption operations
 
 ## Advanced Focus Management
 
@@ -499,27 +568,187 @@ Special support for testing environments:
 - **Focus operations**: Immediate for ready widgets, queued for initializing
 - **Error recovery**: Configurable exponential backoff (default: 1s, 1.5s, 2.25s)
 
+## Service-Widget Lifecycle Coordination
+
+### Service-Backed Widget Pattern
+
+Some widgets depend on persistent background services that outlive the widget instances. The Terminal system is the prime example:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  Service Lifecycle                          │
+├─────────────────────────────────────────────────────────────┤
+│ TerminalService (Singleton)                                 │
+│ ├─ Starts on app launch or first terminal request           │
+│ ├─ Manages multiple PTY sessions                            │
+│ ├─ Persists after UI widgets close                          │
+│ └─ Stops only on app shutdown                               │
+└─────────────────────────────────────────────────────────────┘
+                            ↑
+┌─────────────────────────────────────────────────────────────┐
+│                 Widget Lifecycle                            │
+├─────────────────────────────────────────────────────────────┤
+│ TerminalAppWidget (Multiple instances)                      │
+│ ├─ Created: Widget instantiated with session ID             │
+│ ├─ Initializing: Connect to service session                 │
+│ ├─ Ready: Display terminal output, handle input             │
+│ ├─ Suspended: Disconnect from service but keep session      │
+│ ├─ Ready: Reconnect to service session                      │
+│ └─ Destroyed: Disconnect, optionally keep session           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Service Dependency Management
+
+The lifecycle system coordinates with services through these patterns:
+
+#### 1. Service Startup Coordination
+```python
+class TerminalAppWidget(AppWidget):
+    def __init__(self, widget_id: str, session_id: Optional[str] = None):
+        super().__init__(widget_id, WidgetType.TERMINAL)
+        self.session_id = session_id
+
+    def initialize(self):
+        """Ensure service is running before initializing widget."""
+        # 1. Get or start service
+        terminal_service = service_locator.get(TerminalService)
+        if not terminal_service.is_running():
+            terminal_service.start()
+
+        # 2. Create or connect to session
+        if self.session_id:
+            self.session = terminal_service.get_session(self.session_id)
+        else:
+            self.session = terminal_service.create_session()
+            self.session_id = self.session.id
+
+        # 3. Connect to session events
+        self.session.output_received.connect(self._handle_output)
+        self.session.closed.connect(self._handle_session_closed)
+
+        # 4. Mark ready when connected
+        self.set_ready()
+```
+
+#### 2. Widget-Service Communication
+```python
+def suspend(self):
+    """Suspend widget but keep service session alive."""
+    if self.session:
+        # Disconnect UI but keep session running
+        self.session.output_received.disconnect(self._handle_output)
+        self.session.pause_output_buffering()  # Reduce memory usage
+    super().suspend()
+
+def resume(self):
+    """Resume widget and reconnect to service session."""
+    if self.session:
+        # Reconnect UI
+        self.session.output_received.connect(self._handle_output)
+        self.session.resume_output_buffering()
+        # Display any buffered output
+        buffered = self.session.get_buffered_output()
+        self.display_output(buffered)
+    super().resume()
+```
+
+#### 3. Cleanup Coordination
+```python
+def cleanup(self):
+    """Clean up widget and optionally preserve service session."""
+    if self.session:
+        # Disconnect from session
+        self.session.output_received.disconnect(self._handle_output)
+
+        # Decision: Keep session alive or terminate?
+        if self.preserve_session_on_close:
+            # Keep session running for potential reconnection
+            self.session.detach_ui()
+        else:
+            # Terminate session and cleanup resources
+            terminal_service.terminate_session(self.session_id)
+
+    super().cleanup()
+```
+
+### Service Lifecycle States
+
+Services have their own lifecycle that coordinates with widget states:
+
+```
+Service States:
+├─ STOPPED: Service not running
+├─ STARTING: Service initializing
+├─ RUNNING: Service active and available
+├─ STOPPING: Service shutting down gracefully
+└─ ERROR: Service failed, needs restart
+
+Widget-Service Coordination:
+├─ Widget CREATED → Ensure Service RUNNING
+├─ Widget INITIALIZING → Connect to Service
+├─ Widget READY → Active Service communication
+├─ Widget SUSPENDED → Minimal Service communication
+├─ Widget DESTROYING → Disconnect from Service
+└─ Last Widget DESTROYED → Service can STOP (optional)
+```
+
+### Multi-Widget Service Sharing
+
+For services shared by multiple widgets (like Terminal):
+
+```python
+class ServiceBackedWidgetManager:
+    """Coordinates multiple widgets sharing a service."""
+
+    def __init__(self, service_name: str):
+        self.service_name = service_name
+        self.active_widgets = set()
+        self.service = None
+
+    def register_widget(self, widget: AppWidget):
+        """Register widget as service user."""
+        self.active_widgets.add(widget)
+
+        # Start service if first widget
+        if len(self.active_widgets) == 1:
+            self.service = self._start_service()
+
+        widget.destroyed.connect(lambda: self._unregister_widget(widget))
+
+    def _unregister_widget(self, widget: AppWidget):
+        """Unregister widget and potentially stop service."""
+        self.active_widgets.discard(widget)
+
+        # Stop service if last widget (optional)
+        if len(self.active_widgets) == 0 and self.auto_stop_service:
+            self.service.stop()
+```
+
 ## Benefits of This Architecture
 
 ### 1. **Reliability**
 - No race conditions in focus management
-- Predictable state transitions
-- Automatic resource cleanup
+- Predictable state transitions with service coordination
+- Automatic resource cleanup for both widgets and services
 
 ### 2. **Performance**
 - Event-driven eliminates polling
 - Suspended widgets consume minimal resources
-- Efficient signal management
+- Service connection pooling for efficiency
+- Efficient signal management across service boundaries
 
 ### 3. **Maintainability**
-- Clear state model simplifies debugging
+- Clear separation between service and widget lifecycles
 - Centralized lifecycle management
 - Consistent patterns across widget types
+- Service dependency tracking
 
 ### 4. **Extensibility**
-- New widget types easily integrated
-- Lifecycle hooks for customization
+- New widget types easily integrated with services
+- Service lifecycle hooks for customization
 - Signal-based integration points
+- Plugin-ready service architecture
 
 ## Implementation Status
 

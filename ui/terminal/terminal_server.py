@@ -117,6 +117,15 @@ class TerminalServerManager(QObject):
             if not session.child_pid:
                 self._start_terminal_process(session_id)
         
+        @self.socketio.on("heartbeat", namespace="/terminal")
+        def handle_heartbeat(data):
+            """Handle heartbeat from client to keep session alive."""
+            session_id = data.get("session_id")
+            if session_id and session_id in self.sessions:
+                # Update last activity time to prevent cleanup
+                self.sessions[session_id].last_activity = time.time()
+                logger.debug(f"Heartbeat received for session {session_id}")
+
         @self.socketio.on("disconnect", namespace="/terminal")
         def handle_disconnect():
             """Handle client disconnection."""
@@ -379,7 +388,9 @@ class TerminalServerManager(QObject):
             while self.running:
                 time.sleep(60)  # Run cleanup every minute
                 try:
-                    self.cleanup_inactive_sessions(timeout_minutes=15)  # 15 min timeout
+                    # Increased timeout to 60 minutes since we have heartbeat mechanism
+                    # Sessions with active heartbeats will never be cleaned up
+                    self.cleanup_inactive_sessions(timeout_minutes=60)  # 60 min timeout
                 except Exception as e:
                     logger.error(f"Error during session cleanup: {e}")
         
