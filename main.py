@@ -57,13 +57,8 @@ try:
 except ImportError as e:
     logger.warning(f"Could not register widgets with AppWidgetManager: {e}")
 
-# Also register terminal widget in legacy registry (for backward compatibility)
-try:
-    from ui.terminal.terminal_factory import register_terminal_widget
-    register_terminal_widget()
-except ImportError as e:
-    logger.warning(f"Could not import terminal module: {e}")
-    pass
+# Terminal widget is now registered through AppWidgetManager in app_widget_registry.py
+# Legacy registration removed - no longer needed
 
 
 def main():

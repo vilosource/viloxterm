@@ -2,6 +2,11 @@
 """
 Terminal widget factory and registration.
 Handles creation and state management of terminal widgets.
+
+.. deprecated:: 1.0
+    This module is deprecated. Terminal widgets are now managed through
+    the AppWidgetManager system. Use TerminalAppWidget which is registered
+    in core/app_widget_registry.py.
 """
 
 from typing import Dict, Any, Optional

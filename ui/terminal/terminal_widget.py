@@ -2,9 +2,15 @@
 """
 Terminal Widget - QWidget that embeds a terminal using QWebEngineView.
 Connects to the shared TerminalServerManager for session management.
+
+.. deprecated:: 1.0
+    TerminalWidget is deprecated. Use TerminalAppWidget instead,
+    which properly extends AppWidget and integrates with the
+    AppWidgetManager system.
 """
 
 import logging
+import warnings
 from typing import Optional, Dict, Any
 from PySide6.QtCore import QUrl, Signal, Qt, QTimer
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
@@ -56,8 +62,14 @@ class TerminalWidget(QWidget):
             args: Command arguments
             parent: Parent widget
         """
+        warnings.warn(
+            "TerminalWidget is deprecated. Use TerminalAppWidget instead, "
+            "which properly extends AppWidget and integrates with the AppWidgetManager.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         super().__init__(parent)
-        
+
         # Configuration
         self.config = config or terminal_config
         self.command = command or self.config.get_shell_command()

@@ -1,6 +1,9 @@
 """Terminal widget module for viloapp."""
 
-from .terminal_widget import TerminalWidget
+from .terminal_app_widget import TerminalAppWidget
 from .terminal_server import TerminalServerManager
 
-__all__ = ['TerminalWidget', 'TerminalServerManager']
+# Note: TerminalWidget (old implementation) is deprecated
+# Use TerminalAppWidget which properly extends AppWidget
+
+__all__ = ['TerminalAppWidget', 'TerminalServerManager']
