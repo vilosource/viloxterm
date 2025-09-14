@@ -115,7 +115,7 @@ class PaneHeaderBar(QWidget):
         return button
 
     def show_widget_type_menu(self):
-        """Show menu with available widget types."""
+        """Show menu with available widget types dynamically from AppWidgetManager."""
         menu = QMenu(self)
 
         # Apply theme to menu
@@ -150,6 +150,79 @@ class PaneHeaderBar(QWidget):
                 }}
             """)
 
+        # Try to use AppWidgetManager for dynamic menu generation
+        try:
+            from core.app_widget_manager import AppWidgetManager
+            from core.app_widget_metadata import WidgetCategory
+
+            manager = AppWidgetManager.get_instance()
+
+            # Group widgets by category
+            categories = {}
+            for widget in manager.get_menu_widgets():
+                category_name = widget.category.value
+                if category_name not in categories:
+                    categories[category_name] = []
+                categories[category_name].append(widget)
+
+            # Sort categories for consistent ordering
+            category_order = ["editor", "terminal", "viewer", "tools", "development", "system", "plugin"]
+            sorted_categories = sorted(categories.items(),
+                                     key=lambda x: category_order.index(x[0]) if x[0] in category_order else 999)
+
+            # Add widgets by category
+            for category_name, widgets in sorted_categories:
+                if widgets:
+                    # Format category name for display
+                    display_name = category_name.replace("_", " ").title()
+                    menu.addSection(display_name)
+
+                    for widget_meta in widgets:
+                        # Create action with icon and display name
+                        icon_emoji = self._get_widget_icon(widget_meta.icon)
+                        action_text = f"{icon_emoji} {widget_meta.display_name}"
+                        action = QAction(action_text, self)
+                        action.setToolTip(widget_meta.description)
+
+                        # Connect to appropriate command or type change
+                        if widget_meta.open_command:
+                            action.triggered.connect(
+                                lambda checked, cmd=widget_meta.open_command: execute_command(cmd)
+                            )
+                        else:
+                            action.triggered.connect(
+                                lambda checked, wt=widget_meta.widget_type: self._change_widget_type(wt)
+                            )
+                        menu.addAction(action)
+
+        except ImportError:
+            # Fallback to legacy hardcoded menu if AppWidgetManager not available
+            self._show_legacy_widget_menu(menu)
+        except Exception as e:
+            logger.error(f"Failed to generate dynamic menu: {e}")
+            self._show_legacy_widget_menu(menu)
+
+        # Show the menu at the button position
+        menu.exec_(self.type_button.mapToGlobal(self.type_button.rect().bottomLeft()))
+
+    def _get_widget_icon(self, icon_name: str) -> str:
+        """Get emoji icon for widget based on icon name."""
+        icon_map = {
+            "terminal": "💻",
+            "file-text": "📝",
+            "palette": "🎨",
+            "keyboard": "⌨️",
+            "folder": "📁",
+            "message-square": "📤",
+            "layout": "⬜",
+            "search": "🔍",
+            "git-branch": "🌿",
+            "settings": "⚙️",
+        }
+        return icon_map.get(icon_name, "📦")
+
+    def _show_legacy_widget_menu(self, menu):
+        """Show legacy hardcoded widget menu as fallback."""
         # Group widget types by category
         editor_types = []
         terminal_types = []
@@ -229,9 +302,6 @@ class PaneHeaderBar(QWidget):
             lambda: execute_command("settings.openKeyboardShortcuts")
         )
         menu.addAction(shortcuts_action)
-
-        # Show the menu at the button position
-        menu.exec_(self.type_button.mapToGlobal(self.type_button.rect().bottomLeft()))
 
     def _get_widget_type_display_name(self, widget_type: WidgetType) -> str:
         """Get display name for widget type."""

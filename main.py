@@ -49,7 +49,15 @@ except ImportError:
     logger.warning("Resources not compiled. Run 'make resources' to compile icons.")
     pass
 
-# Register terminal widget if available
+# Register built-in widgets with AppWidgetManager
+try:
+    from core.app_widget_registry import register_builtin_widgets
+    register_builtin_widgets()
+    logger.info("Registered built-in widgets with AppWidgetManager")
+except ImportError as e:
+    logger.warning(f"Could not register widgets with AppWidgetManager: {e}")
+
+# Also register terminal widget in legacy registry (for backward compatibility)
 try:
     from ui.terminal.terminal_factory import register_terminal_widget
     register_terminal_widget()

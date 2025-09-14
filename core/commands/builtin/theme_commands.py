@@ -20,7 +20,8 @@ try:
     def create_theme_editor_widget(widget_id: str) -> ThemeEditorAppWidget:
         return ThemeEditorAppWidget(widget_id)
 
-    # Register the factory under CUSTOM type
+    # NOTE: Widget registration now handled by AppWidgetManager in core/app_widget_registry.py
+    # This legacy registration is kept for backward compatibility but is deprecated
     widget_registry.register_factory(WidgetType.CUSTOM, create_theme_editor_widget)
 
     # Also register a config for CUSTOM type if not already present

@@ -26,9 +26,12 @@ def manager():
 
 @pytest.fixture
 def mock_widget_class():
-    """Mock AppWidget class."""
-    mock_class = MagicMock(spec=AppWidget)
-    mock_class.return_value = MagicMock(spec=AppWidget)
+    """Mock AppWidget class that behaves like real widgets."""
+    mock_class = MagicMock()
+    # Create a mock instance that will be returned
+    mock_instance = MagicMock(spec=AppWidget)
+    # Configure the class to return the instance when called with just widget_id
+    mock_class.return_value = mock_instance
     return mock_class
 
 

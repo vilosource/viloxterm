@@ -140,7 +140,8 @@ class AppWidgetManager:
             if metadata.factory:
                 widget = metadata.factory(instance_id)
             else:
-                # Direct instantiation
+                # Direct instantiation - only pass instance_id
+                # Widget classes handle their own widget_type internally
                 widget = metadata.widget_class(instance_id)
 
             logger.debug(f"Created widget instance: {widget_id} (instance: {instance_id})")

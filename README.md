@@ -9,6 +9,7 @@ A VSCode-style desktop application built with PySide6, featuring a collapsible s
 - **Split Pane Workspace**: Support for recursive splitting with tabs
 - **Status Bar**: Display status messages and cursor position
 - **State Persistence**: Remember window layout and settings between sessions
+- **AppWidget System**: Centralized widget management with rich metadata and plugin-ready architecture
 
 ## Project Structure
 
@@ -131,9 +132,75 @@ python main.py
 #### Settings Storage Locations
 - **Default**: System-specific locations (Windows Registry, Linux ~/.config, macOS ~/Library)
 - **Custom Directory**: Multiple INI files in specified directory
-- **Custom File**: Single INI file at specified path  
+- **Custom File**: Single INI file at specified path
 - **Portable**: Settings stored in `./settings/` within app directory
 - **Temporary**: Settings stored in system temp directory, deleted on exit
+
+## AppWidget System
+
+ViloxTerm features a sophisticated AppWidget management system that provides a centralized registry for all application widgets with rich metadata and plugin-ready architecture.
+
+### Key Features
+
+- **Centralized Management**: Single source of truth for all widget information
+- **Rich Metadata**: Comprehensive widget descriptions, capabilities, and requirements
+- **Dynamic Discovery**: Find widgets by category, capability, or file type support
+- **Plugin Ready**: Architecture foundation for future plugin system
+- **Type Safety**: Strong typing with metadata validation
+- **Backward Compatible**: Works alongside existing widget systems
+
+### Available Widgets
+
+| Widget | Category | Description | Capabilities |
+|--------|----------|-------------|--------------|
+| **Terminal** | Terminal | Integrated terminal emulator | Shell execution, ANSI colors |
+| **Text Editor** | Editor | Code and text editor | Syntax highlighting, file editing |
+| **Theme Editor** | Tools | Visual theme customization | Live preview, color picker |
+| **File Explorer** | Viewer | File system browser | Directory navigation, file operations |
+| **Keyboard Shortcuts** | Tools | Shortcut configuration | Key binding management |
+| **Output Panel** | Tools | Command output display | Process monitoring, log viewing |
+
+### Widget Registration
+
+Widgets are registered centrally with comprehensive metadata:
+
+```python
+from core.app_widget_manager import AppWidgetManager
+from core.app_widget_metadata import AppWidgetMetadata, WidgetCategory
+
+manager = AppWidgetManager.get_instance()
+manager.register_widget(AppWidgetMetadata(
+    widget_id="com.viloapp.terminal",
+    widget_type=WidgetType.TERMINAL,
+    display_name="Terminal",
+    description="Integrated terminal emulator",
+    icon="terminal",
+    category=WidgetCategory.TERMINAL,
+    widget_class=TerminalAppWidget,
+    open_command="file.newTerminalTab",
+    provides_capabilities=["shell_execution", "ansi_colors"]
+))
+```
+
+### Dynamic Widget Discovery
+
+Find widgets by various criteria:
+
+```python
+# Find all editor widgets
+editor_widgets = manager.get_widgets_by_category(WidgetCategory.EDITOR)
+
+# Find widgets that support Python files
+python_widgets = manager.get_widgets_for_file_type("py")
+
+# Find widgets with specific capability
+text_editors = manager.get_widgets_with_capability("text_editing")
+```
+
+### Documentation
+
+- [AppWidget Architecture](docs/architecture/app-widget-manager.md) - Detailed system architecture
+- [Widget Development Guide](docs/development/widget-development-guide.md) - How to create new widgets
 
 ## Development
 

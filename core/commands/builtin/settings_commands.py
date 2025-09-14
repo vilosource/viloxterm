@@ -21,8 +21,10 @@ def _register_shortcut_config_widget():
         def create_shortcut_config_widget(widget_id: str) -> ShortcutConfigAppWidget:
             return ShortcutConfigAppWidget(widget_id)
 
+        # NOTE: Widget registration now handled by AppWidgetManager in core/app_widget_registry.py
+        # This legacy registration is kept for backward compatibility but is deprecated
         widget_registry.register_factory(WidgetType.SETTINGS, create_shortcut_config_widget)
-        logger.debug("Registered shortcut configuration widget factory")
+        logger.debug("Registered shortcut configuration widget factory (deprecated - now handled by AppWidgetManager)")
     except ImportError as e:
         logger.error(f"Failed to register shortcut config widget: {e}")
 

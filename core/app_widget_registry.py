@@ -8,6 +8,7 @@ metadata for all built-in widgets.
 """
 
 import logging
+from typing import Optional
 from core.app_widget_manager import AppWidgetManager
 from core.app_widget_metadata import AppWidgetMetadata, WidgetCategory
 from ui.widgets.widget_registry import WidgetType
@@ -27,7 +28,6 @@ def register_builtin_widgets():
     # Register Terminal Widget
     try:
         from ui.terminal.terminal_app_widget import TerminalAppWidget
-        from ui.terminal.terminal_factory import create_terminal_widget
 
         manager.register_widget(AppWidgetMetadata(
             widget_id="com.viloapp.terminal",
@@ -37,7 +37,7 @@ def register_builtin_widgets():
             icon="terminal",
             category=WidgetCategory.TERMINAL,
             widget_class=TerminalAppWidget,
-            factory=create_terminal_widget,
+            # Note: No factory needed - TerminalAppWidget can be instantiated directly
             open_command="file.newTerminalTab",
             provides_capabilities=["shell_execution", "ansi_colors", "terminal_emulation"],
             requires_services=["terminal_service"],

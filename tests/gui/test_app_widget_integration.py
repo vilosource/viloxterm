@@ -8,7 +8,8 @@ including menu generation and widget creation in panes.
 
 import pytest
 from unittest.mock import MagicMock, patch, call
-from PySide6.QtWidgets import QApplication, QMenu, QAction
+from PySide6.QtWidgets import QApplication, QMenu
+from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtTest import QTest
 

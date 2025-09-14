@@ -94,7 +94,7 @@ class SplitPaneModel:
         
     def create_app_widget(self, widget_type: WidgetType, widget_id: str) -> AppWidget:
         """
-        Factory method to create AppWidgets.
+        Factory method to create AppWidgets using AppWidgetManager.
 
         Args:
             widget_type: Type of widget to create
@@ -105,34 +105,53 @@ class SplitPaneModel:
         """
         logger.info(f"Creating AppWidget: type={widget_type}, id={widget_id}")
 
-        # Special handling for terminal (needs signal connection)
-        if widget_type == WidgetType.TERMINAL:
-            terminal_widget = TerminalAppWidget(widget_id)
-            # Connect the terminal's pane close request signal to our handler
-            terminal_widget.pane_close_requested.connect(
-                lambda: self.on_terminal_close_requested(widget_id)
-            )
-            return terminal_widget
+        # Try to use AppWidgetManager first
+        try:
+            from core.app_widget_manager import AppWidgetManager
+            manager = AppWidgetManager.get_instance()
 
-        # Check if widget registry has a factory for this type
+            # Try to create widget through manager
+            widget = manager.create_widget_by_type(widget_type, widget_id)
+
+            if widget:
+                # Special handling for terminal (needs signal connection)
+                if widget_type == WidgetType.TERMINAL:
+                    if hasattr(widget, 'pane_close_requested'):
+                        widget.pane_close_requested.connect(
+                            lambda: self.on_terminal_close_requested(widget_id)
+                        )
+                return widget
+        except ImportError:
+            logger.warning("AppWidgetManager not available, falling back to legacy creation")
+        except Exception as e:
+            logger.error(f"Failed to create widget via AppWidgetManager: {e}")
+
+        # Legacy fallback - Try widget registry
         from ui.widgets.widget_registry import widget_registry
         config = widget_registry.get_config(widget_type)
 
         if config and config.factory:
-            # Use factory from registry
             try:
                 logger.debug(f"Using factory from registry for {widget_type}")
                 widget = config.factory(widget_id)
                 if isinstance(widget, AppWidget):
+                    # Special handling for terminal
+                    if widget_type == WidgetType.TERMINAL and hasattr(widget, 'pane_close_requested'):
+                        widget.pane_close_requested.connect(
+                            lambda: self.on_terminal_close_requested(widget_id)
+                        )
                     return widget
-                # If factory returns a QWidget, we might need to wrap it
-                # For now, log an error as factories should return AppWidget
-                logger.error(f"Factory for {widget_type} didn't return an AppWidget")
             except Exception as e:
                 logger.error(f"Factory failed for {widget_type}: {e}")
 
-        # Fallback to built-in types
-        if widget_type == WidgetType.TEXT_EDITOR:
+        # Final fallback to built-in types
+        if widget_type == WidgetType.TERMINAL:
+            terminal_widget = TerminalAppWidget(widget_id)
+            terminal_widget.pane_close_requested.connect(
+                lambda: self.on_terminal_close_requested(widget_id)
+            )
+            return terminal_widget
+        elif widget_type == WidgetType.TEXT_EDITOR:
             return EditorAppWidget(widget_id)
         elif widget_type == WidgetType.PLACEHOLDER:
             return PlaceholderAppWidget(widget_id, widget_type)

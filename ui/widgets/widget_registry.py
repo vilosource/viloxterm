@@ -309,7 +309,19 @@ class WidgetRegistry:
         self.configs[widget_type] = config
     
     def register_factory(self, widget_type: WidgetType, factory: Callable[[str], QWidget]):
-        """Register a custom factory function for a widget type."""
+        """Register a custom factory function for a widget type.
+
+        .. deprecated:: 1.0
+            Use AppWidgetManager.register_widget() with AppWidgetMetadata instead.
+            This method will be removed in a future version.
+        """
+        import warnings
+        warnings.warn(
+            "WidgetRegistry.register_factory() is deprecated. "
+            "Use AppWidgetManager.register_widget() with AppWidgetMetadata instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self.custom_factories[widget_type] = factory
         if widget_type in self.configs:
             self.configs[widget_type].factory = factory
