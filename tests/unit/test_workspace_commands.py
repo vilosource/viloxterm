@@ -115,20 +115,26 @@ class TestNewTabCommand:
         assert result.success is False
         assert "WorkspaceService not available" in result.error
 
-    @patch('core.commands.builtin.workspace_commands.get_default_widget_type')
-    def test_new_tab_unsupported_widget_type(self, mock_get_default, context,
-                                            workspace_service):
-        """Test handling of unsupported widget types."""
-        mock_get_default.return_value = "explorer"  # Not fully implemented
+    def test_new_tab_with_settings_widget(self, context, workspace_service):
+        """Test creating a Settings tab."""
+        context.args['widget_type'] = 'settings'
+        workspace_service.add_app_widget.return_value = True
+        workspace_service.get_tab_count.return_value = 3
 
         with patch.object(context, 'get_service', return_value=workspace_service):
-            with patch('core.commands.builtin.workspace_commands.logger') as mock_logger:
-                result = workspace_commands.new_tab_command._original_func(context)
+            result = workspace_commands.new_tab_command._original_func(context)
 
         assert result.success is True
-        mock_logger.warning.assert_called()
-        # Should fallback to terminal
-        workspace_service.add_terminal_tab.assert_called_once()
+        assert result.value['index'] == 2  # get_tab_count returns 3, so index is 2
+        assert result.value['widget_type'] == 'settings'
+
+        # Verify add_app_widget was called with correct parameters
+        from ui.widgets.widget_registry import WidgetType
+        workspace_service.add_app_widget.assert_called_once_with(
+            WidgetType.SETTINGS,
+            'com.viloapp.settings',
+            None
+        )
 
 
 class TestNewTabWithTypeCommand:
