@@ -310,15 +310,25 @@ class Workspace(QWidget):
 
         return index
 
-    def add_app_widget_tab(self, widget_type, widget_id: str, name: str = None) -> bool:
-        """Add a tab for a generic app widget."""
+    def add_app_widget_tab(self, widget_type, widget_id: str, name: str = None) -> int:
+        """Add a tab for a generic app widget.
+
+        Args:
+            widget_type: Type of widget to create
+            widget_id: Unique ID for the widget
+            name: Optional tab name
+
+        Returns:
+            Tab index if successful, -1 otherwise
+        """
         try:
             if not name:
                 name = f"{widget_type.value.title()} Widget"
 
-            # Create SplitPaneWidget with the specified widget type
+            # Create SplitPaneWidget with the specified widget type AND widget_id
             split_widget = SplitPaneWidget(
-                initial_widget_type=widget_type
+                initial_widget_type=widget_type,
+                initial_widget_id=widget_id  # Pass the widget_id
             )
 
             # Connect signals
@@ -338,8 +348,10 @@ class Workspace(QWidget):
             # Set up custom close button
             self._setup_tab_close_button(index)
 
-            # Store tab data
-            self.tabs[index] = WorkspaceTab(name, split_widget)
+            # Store tab data with widget_id in metadata
+            tab_data = WorkspaceTab(name, split_widget)
+            tab_data.metadata['widget_id'] = widget_id  # Store the widget_id
+            self.tabs[index] = tab_data
 
             # Switch to new tab
             self.tab_widget.setCurrentIndex(index)
@@ -347,11 +359,11 @@ class Workspace(QWidget):
             # Emit signal
             self.tab_added.emit(name)
 
-            return True
+            return index  # Return the tab index for registry tracking
 
         except Exception as e:
             logger.error(f"Failed to add app widget tab: {e}")
-            return False
+            return -1  # Return -1 on failure
 
     def close_tab(self, index: int, show_message=True):
         """Close a tab."""
@@ -364,20 +376,40 @@ class Workspace(QWidget):
                     "Cannot close the last remaining tab."
                 )
             return
-        
+
         # Get tab data
         if index in self.tabs:
             tab_data = self.tabs[index]
-            
+
+            # Get widget_id if it exists in metadata
+            widget_id = None
+            if hasattr(tab_data, 'metadata') and 'widget_id' in tab_data.metadata:
+                widget_id = tab_data.metadata['widget_id']
+
             # Clean up the split widget's terminals before removing
             if tab_data.split_widget:
                 self._cleanup_split_widget(tab_data.split_widget)
-            
+
             # Remove from tabs dict
             del self.tabs[index]
-            
+
             # Remove from tab widget
             self.tab_widget.removeTab(index)
+
+            # Notify WorkspaceService to clean up registry using commands
+            # This maintains proper architectural flow: UI → Command → Service
+            from core.commands.executor import execute_command
+            try:
+                # Update registry after tab close using proper command
+                result = execute_command(
+                    "workspace.updateRegistryAfterClose",
+                    closed_index=index,
+                    widget_id=widget_id
+                )
+                if not result.success:
+                    logger.warning(f"Failed to update widget registry: {result.error}")
+            except Exception as e:
+                logger.debug(f"Could not update widget registry: {e}")
             
             # Update indices for remaining tabs
             new_tabs = {}

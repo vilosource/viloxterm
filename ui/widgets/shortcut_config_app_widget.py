@@ -173,7 +173,8 @@ class ShortcutConfigAppWidget(AppWidget):
         self.reset_button = None
 
         self.setup_ui()
-        self.load_shortcuts()
+        # Defer loading shortcuts to avoid blocking UI
+        QTimer.singleShot(0, self.load_shortcuts)
 
     def setup_ui(self):
         """Set up the user interface."""
@@ -284,6 +285,21 @@ class ShortcutConfigAppWidget(AppWidget):
         self.tree_widget.clear()
         self.shortcut_items.clear()
         self.tree_items.clear()
+
+        # Show loading message in tree
+        loading_item = QTreeWidgetItem(self.tree_widget)
+        loading_item.setText(0, "Loading shortcuts...")
+        loading_item.setTextAlignment(0, Qt.AlignCenter)
+        self.tree_widget.addTopLevelItem(loading_item)
+
+        # Process events to show the loading message
+        # Don't pass the loading_item reference to avoid deletion issues
+        QTimer.singleShot(10, self._do_load_shortcuts)
+
+    def _do_load_shortcuts(self):
+        """Actually load the shortcuts after UI updates."""
+        # Clear the loading item
+        self.tree_widget.clear()
 
         # Get all commands
         commands = command_registry.get_all_commands()

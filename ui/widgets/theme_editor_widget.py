@@ -68,7 +68,7 @@ class ThemeEditorAppWidget(AppWidget):
 
         self._color_fields: Dict[str, ColorPickerField] = {}
         self._updating = False  # Flag to prevent recursive updates
-        self._theme_service = None  # Will be set in _load_current_theme
+        # Theme service no longer directly accessed - using commands instead
 
         self._setup_ui()
         self._load_current_theme()
@@ -429,24 +429,23 @@ class ThemeEditorAppWidget(AppWidget):
         return container
 
     def _load_current_theme(self):
-        """Load current theme and available themes."""
+        """Load current theme and available themes using commands."""
         try:
-            from services.service_locator import ServiceLocator
-            from services.theme_service import ThemeService
+            from core.commands.executor import execute_command
 
-            locator = ServiceLocator()
-            self._theme_service = locator.get(ThemeService)
-
-            if self._theme_service:
-                # Load available themes
-                themes = self._theme_service.get_available_themes()
+            # Load available themes using command
+            result = execute_command("theme.getAvailableThemes")
+            if result.success and result.value:
+                themes = result.value.get("themes", [])
                 self._theme_combo.clear()
 
                 for theme_info in themes:
                     self._theme_combo.addItem(theme_info.name, theme_info.id)
 
-                # Select current theme
-                current_theme = self._theme_service.get_current_theme()
+            # Get current theme using command
+            result = execute_command("theme.getCurrentTheme")
+            if result.success and result.value:
+                current_theme = result.value.get("theme")
                 if current_theme:
                     index = self._theme_combo.findData(current_theme.id)
                     if index >= 0:
@@ -511,12 +510,15 @@ class ThemeEditorAppWidget(AppWidget):
                         self._theme_combo.setCurrentIndex(index)
                 return
 
-        # Load selected theme
+        # Load selected theme using command
         theme_id = self._theme_combo.currentData()
-        if theme_id and self._theme_service:
-            theme = self._theme_service.get_theme(theme_id)
-            if theme:
-                self._load_theme(theme)
+        if theme_id:
+            from core.commands.executor import execute_command
+            result = execute_command("theme.getTheme", theme_id=theme_id)
+            if result.success and result.value:
+                theme = result.value.get("theme")
+                if theme:
+                    self._load_theme(theme)
 
     def _on_color_changed(self, key: str, value: str, is_preview: bool):
         """Handle color change from picker."""
@@ -546,8 +548,8 @@ class ThemeEditorAppWidget(AppWidget):
         return colors
 
     def _apply_theme(self) -> bool:
-        """Apply current theme changes."""
-        if not self._current_theme or not self._theme_service:
+        """Apply current theme changes using commands."""
+        if not self._current_theme:
             return False
 
         self._updating = True
@@ -568,14 +570,17 @@ class ThemeEditorAppWidget(AppWidget):
                 line_height=line_height
             )
 
-            # Apply theme
-            self._theme_service.apply_theme(self._current_theme.id)
+            # Apply theme using command
+            from core.commands.executor import execute_command
+            result = execute_command("theme.applyTheme", theme_id=self._current_theme.id)
 
-            self._modified = False
-            self._update_button_states()
-
-            QMessageBox.information(self, "Success", "Theme applied successfully!")
-            return True
+            if result.success:
+                self._modified = False
+                self._update_button_states()
+                QMessageBox.information(self, "Success", "Theme applied successfully!")
+                return True
+            else:
+                raise Exception(result.error or "Failed to apply theme")
 
         except Exception as e:
             logger.error(f"Failed to apply theme: {e}")
@@ -585,8 +590,8 @@ class ThemeEditorAppWidget(AppWidget):
             self._updating = False
 
     def _save_theme(self) -> bool:
-        """Save current theme changes."""
-        if not self._current_theme or not self._theme_service:
+        """Save current theme changes using commands."""
+        if not self._current_theme:
             return False
 
         try:
@@ -606,15 +611,18 @@ class ThemeEditorAppWidget(AppWidget):
                 line_height=line_height
             )
 
-            # Save theme
-            if self._theme_service.save_custom_theme(self._current_theme):
+            # Save theme using command
+            from core.commands.executor import execute_command
+            theme_data = self._current_theme.to_dict()
+            result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
+
+            if result.success:
                 self._modified = False
                 self._update_button_states()
-
                 QMessageBox.information(self, "Success", "Theme saved successfully!")
                 return True
             else:
-                QMessageBox.warning(self, "Warning", "Failed to save theme")
+                QMessageBox.warning(self, "Warning", f"Failed to save theme: {result.error}")
                 return False
 
         except Exception as e:
@@ -638,24 +646,32 @@ class ThemeEditorAppWidget(AppWidget):
             "Enter theme name:"
         )
 
-        if ok and name and self._theme_service:
+        if ok and name:
+            from core.commands.executor import execute_command
+
             # Create based on current theme
             base_id = self._current_theme.id if self._current_theme else "vscode-dark"
-            new_theme = self._theme_service.create_custom_theme(
-                base_id,
-                name,
-                f"Custom theme created from {base_id}"
+            result = execute_command(
+                "theme.createCustomTheme",
+                base_theme_id=base_id,
+                name=name,
+                description=f"Custom theme created from {base_id}"
             )
 
-            if new_theme:
-                # Save and reload themes
-                self._theme_service.save_custom_theme(new_theme)
-                self._load_current_theme()
+            if result.success and result.value:
+                new_theme = result.value.get("theme")
+                if new_theme:
+                    # Save using command
+                    theme_data = new_theme.to_dict()
+                    save_result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
 
-                # Select new theme
-                index = self._theme_combo.findData(new_theme.id)
-                if index >= 0:
-                    self._theme_combo.setCurrentIndex(index)
+                    if save_result.success:
+                        self._load_current_theme()
+
+                        # Select new theme
+                        index = self._theme_combo.findData(new_theme.id)
+                        if index >= 0:
+                            self._theme_combo.setCurrentIndex(index)
 
     def _duplicate_theme(self):
         """Duplicate current theme."""
@@ -672,20 +688,29 @@ class ThemeEditorAppWidget(AppWidget):
             text=f"{self._current_theme.name} Copy"
         )
 
-        if ok and name and self._theme_service:
-            new_theme = self._theme_service.create_custom_theme(
-                self._current_theme.id,
-                name,
-                f"Duplicate of {self._current_theme.name}"
+        if ok and name:
+            from core.commands.executor import execute_command
+
+            # Create custom theme using command
+            result = execute_command(
+                "theme.createCustomTheme",
+                base_theme_id=self._current_theme.id,
+                name=name,
+                description=f"Duplicate of {self._current_theme.name}"
             )
 
-            if new_theme:
-                # Copy current colors
-                new_theme.colors = self._get_current_colors()
+            if result.success and result.value:
+                new_theme = result.value.get("theme")
+                if new_theme:
+                    # Copy current colors
+                    new_theme.colors = self._get_current_colors()
 
-                # Save and reload
-                self._theme_service.save_custom_theme(new_theme)
-                self._load_current_theme()
+                    # Save using command
+                    theme_data = new_theme.to_dict()
+                    save_result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
+
+                    if save_result.success:
+                        self._load_current_theme()
 
                 # Select new theme
                 index = self._theme_combo.findData(new_theme.id)
@@ -693,8 +718,8 @@ class ThemeEditorAppWidget(AppWidget):
                     self._theme_combo.setCurrentIndex(index)
 
     def _delete_theme(self):
-        """Delete current theme."""
-        if not self._current_theme or not self._theme_service:
+        """Delete current theme using commands."""
+        if not self._current_theme:
             return
 
         # Confirm deletion
@@ -706,14 +731,17 @@ class ThemeEditorAppWidget(AppWidget):
         )
 
         if reply == QMessageBox.Yes:
-            if self._theme_service.delete_custom_theme(self._current_theme.id):
+            from core.commands.executor import execute_command
+            result = execute_command("theme.deleteCustomTheme", theme_id=self._current_theme.id)
+
+            if result.success:
                 QMessageBox.information(self, "Success", "Theme deleted successfully!")
                 self._load_current_theme()
             else:
-                QMessageBox.warning(self, "Warning", "Cannot delete built-in theme")
+                QMessageBox.warning(self, "Warning", result.error or "Cannot delete theme")
 
     def _import_theme(self):
-        """Import theme from file."""
+        """Import theme from file using commands."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Import Theme",
@@ -721,18 +749,22 @@ class ThemeEditorAppWidget(AppWidget):
             "JSON Files (*.json);;All Files (*)"
         )
 
-        if file_path and self._theme_service:
-            theme_id = self._theme_service.import_theme(Path(file_path))
-            if theme_id:
+        if file_path:
+            from core.commands.executor import execute_command
+            result = execute_command("theme.importTheme", file_path=file_path)
+
+            if result.success and result.value:
+                theme_id = result.value.get("theme_id")
                 QMessageBox.information(self, "Success", "Theme imported successfully!")
                 self._load_current_theme()
 
                 # Select imported theme
-                index = self._theme_combo.findData(theme_id)
-                if index >= 0:
-                    self._theme_combo.setCurrentIndex(index)
+                if theme_id:
+                    index = self._theme_combo.findData(theme_id)
+                    if index >= 0:
+                        self._theme_combo.setCurrentIndex(index)
             else:
-                QMessageBox.critical(self, "Error", "Failed to import theme")
+                QMessageBox.critical(self, "Error", result.error or "Failed to import theme")
 
     def _export_theme(self):
         """Export current theme."""
@@ -746,14 +778,21 @@ class ThemeEditorAppWidget(AppWidget):
             "JSON Files (*.json)"
         )
 
-        if file_path and self._theme_service:
+        if file_path:
             # Update theme with current colors before export
             self._current_theme.colors = self._get_current_colors()
 
-            if self._theme_service.export_theme(self._current_theme.id, Path(file_path)):
+            from core.commands.executor import execute_command
+            result = execute_command(
+                "theme.exportTheme",
+                theme_id=self._current_theme.id,
+                file_path=file_path
+            )
+
+            if result.success:
                 QMessageBox.information(self, "Success", "Theme exported successfully!")
             else:
-                QMessageBox.critical(self, "Error", "Failed to export theme")
+                QMessageBox.critical(self, "Error", result.error or "Failed to export theme")
 
     def _import_vscode_theme(self):
         """Import VSCode theme."""
@@ -766,18 +805,23 @@ class ThemeEditorAppWidget(AppWidget):
 
         if file_path:
             theme = VSCodeThemeImporter.import_from_file(Path(file_path))
-            if theme and self._theme_service:
-                # Save imported theme
-                self._theme_service._themes[theme.id] = theme
-                self._theme_service.save_custom_theme(theme)
+            if theme:
+                from core.commands.executor import execute_command
 
-                QMessageBox.information(self, "Success", "VSCode theme imported successfully!")
-                self._load_current_theme()
+                # Save imported theme using command
+                theme_data = theme.to_dict()
+                result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
 
-                # Select imported theme
-                index = self._theme_combo.findData(theme.id)
-                if index >= 0:
-                    self._theme_combo.setCurrentIndex(index)
+                if result.success:
+                    QMessageBox.information(self, "Success", "VSCode theme imported successfully!")
+                    self._load_current_theme()
+
+                    # Select imported theme
+                    index = self._theme_combo.findData(theme.id)
+                    if index >= 0:
+                        self._theme_combo.setCurrentIndex(index)
+                else:
+                    QMessageBox.critical(self, "Error", result.error or "Failed to save imported theme")
             else:
                 QMessageBox.critical(self, "Error", "Failed to import VSCode theme")
 
@@ -833,12 +877,17 @@ class ThemeEditorAppWidget(AppWidget):
             return
 
         preset = self._preset_combo.currentData()
-        if preset != "custom" and self._theme_service:
-            # Apply preset
-            self._theme_service.apply_typography_preset(preset)
+        if preset != "custom":
+            from core.commands.executor import execute_command
 
-            # Reload typography settings
-            typography = self._theme_service.get_typography()
+            # Apply preset using command
+            result = execute_command("theme.applyTypographyPreset", preset=preset)
+
+            if result.success:
+                # Reload typography settings using command
+                typo_result = execute_command("theme.getTypography")
+                if typo_result.success and typo_result.value:
+                    typography = typo_result.value.get("typography")
             self._updating = True
             try:
                 self._font_family_combo.setCurrentFont(typography.font_family.split(',')[0].strip())
@@ -852,8 +901,7 @@ class ThemeEditorAppWidget(AppWidget):
 
     def _apply_typography_preview(self):
         """Apply typography preview to the application."""
-        if not self._theme_service:
-            return
+        # Typography preview is now handled through commands
 
         from core.themes.typography import ThemeTypography
 
@@ -868,9 +916,14 @@ class ThemeEditorAppWidget(AppWidget):
             line_height=line_height
         )
 
-        # Apply preview
+        # Apply preview using command
         if self._current_theme:
-            self._theme_service.apply_theme_preview(self._current_theme.colors, typography)
+            from core.commands.executor import execute_command
+            execute_command(
+                "theme.applyThemePreview",
+                colors=self._current_theme.colors,
+                typography=typography
+            )
 
     def _update_button_states(self):
         """Update button enabled states."""
@@ -880,9 +933,9 @@ class ThemeEditorAppWidget(AppWidget):
 
     def _connect_theme_signals(self):
         """Connect to theme service signals."""
-        if self._theme_service:
-            # Listen for external theme changes
-            self._theme_service.theme_changed.connect(self._on_external_theme_change)
+        # Theme change signals are now handled through the theme provider
+        # which is available through the UI service
+        pass
 
     def _on_external_theme_change(self, colors: Dict[str, str]):
         """Handle theme changes from outside the editor."""
@@ -890,8 +943,10 @@ class ThemeEditorAppWidget(AppWidget):
             return  # Ignore if we're the ones updating
 
         # Only reload if not modified or if it's a different theme
-        if not self._modified and self._theme_service:
-            current_theme = self._theme_service.get_current_theme()
+        if not self._modified:
+            from core.commands.executor import execute_command
+            result = execute_command("theme.getCurrentTheme")
+            current_theme = result.value.get("theme") if result.success and result.value else None
             if current_theme and (not self._current_theme or current_theme.id != self._current_theme.id):
                 # Theme changed externally, reload
                 index = self._theme_combo.findData(current_theme.id)

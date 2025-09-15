@@ -11,9 +11,10 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTabWidget,
     QGroupBox, QLabel, QComboBox, QSpinBox, QCheckBox,
     QSlider, QRadioButton, QButtonGroup, QPushButton,
-    QLineEdit, QScrollArea, QFrame, QMessageBox, QFileDialog
+    QLineEdit, QScrollArea, QFrame, QMessageBox, QFileDialog,
+    QProgressBar
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QIcon
 import json
 import logging
@@ -95,12 +96,31 @@ class SettingsAppWidget(AppWidget):
         # Tab widget for different setting categories
         self._tabs = QTabWidget()
 
-        # Add setting tabs
-        self._tabs.addTab(self._create_general_tab(), "General")
-        self._tabs.addTab(self._create_appearance_tab(), "Appearance")
-        self._tabs.addTab(self._create_keyboard_tab(), "Keyboard")
-        self._tabs.addTab(self._create_terminal_tab(), "Terminal")
-        self._tabs.addTab(self._create_advanced_tab(), "Advanced")
+        # Track which tabs have been loaded
+        self._loaded_tabs = set()
+        self._tab_creators = {}
+        self._tab_placeholders = {}
+
+        # Add tab placeholders with deferred content creation
+        # Only create the General tab immediately (it's lightweight)
+        general_tab = self._create_general_tab()
+        self._tabs.addTab(general_tab, "General")
+        self._loaded_tabs.add(0)
+
+        # Add placeholders for heavy tabs
+        for idx, (name, creator) in enumerate([
+            ("Appearance", self._create_appearance_tab),
+            ("Keyboard", self._create_keyboard_tab),  # Heavy - loads all commands
+            ("Terminal", self._create_terminal_tab),
+            ("Advanced", self._create_advanced_tab)
+        ], start=1):
+            placeholder = self._create_loading_placeholder(f"Loading {name} settings...")
+            self._tabs.addTab(placeholder, name)
+            self._tab_creators[idx] = creator
+            self._tab_placeholders[idx] = placeholder
+
+        # Connect tab change signal for lazy loading
+        self._tabs.currentChanged.connect(self._on_tab_changed)
 
         layout.addWidget(self._tabs)
 
@@ -127,6 +147,80 @@ class SettingsAppWidget(AppWidget):
         layout.addLayout(button_layout)
 
         self.setLayout(layout)
+
+    def _create_loading_placeholder(self, message: str = "Loading...") -> QWidget:
+        """Create a loading placeholder widget."""
+        widget = QWidget()
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
+        # Loading message
+        label = QLabel(message)
+        label.setAlignment(Qt.AlignCenter)
+        label.setStyleSheet("QLabel { color: #888; font-size: 14px; }")
+        layout.addWidget(label)
+
+        # Progress bar (indeterminate)
+        progress = QProgressBar()
+        progress.setRange(0, 0)  # Indeterminate
+        progress.setMaximumWidth(200)
+        layout.addWidget(progress)
+
+        widget.setLayout(layout)
+        return widget
+
+    def _on_tab_changed(self, index: int):
+        """Handle tab change and load content if needed."""
+        if index in self._loaded_tabs:
+            return  # Already loaded
+
+        if index not in self._tab_creators:
+            return  # No creator for this tab (shouldn't happen)
+
+        # Load the tab content asynchronously using QTimer
+        QTimer.singleShot(0, lambda: self._load_tab_content(index))
+
+    def _load_tab_content(self, index: int):
+        """Load the actual content for a tab."""
+        try:
+            # Create the actual tab content
+            creator = self._tab_creators.get(index)
+            if not creator:
+                return
+
+            # Create the widget
+            actual_widget = creator()
+
+            # Replace the placeholder with the actual widget
+            self._tabs.removeTab(index)
+            self._tabs.insertTab(index, actual_widget, self._tabs.tabText(index))
+            self._tabs.setCurrentIndex(index)
+
+            # Mark as loaded
+            self._loaded_tabs.add(index)
+
+            # Clean up
+            if index in self._tab_placeholders:
+                placeholder = self._tab_placeholders[index]
+                placeholder.deleteLater()
+                del self._tab_placeholders[index]
+
+            # Load settings for this tab if needed
+            self._load_tab_settings(index)
+
+        except Exception as e:
+            logger.error(f"Failed to load tab {index}: {e}")
+            # Show error in the tab
+            error_widget = QLabel(f"Failed to load settings: {str(e)}")
+            error_widget.setAlignment(Qt.AlignCenter)
+            self._tabs.removeTab(index)
+            self._tabs.insertTab(index, error_widget, self._tabs.tabText(index))
+
+    def _load_tab_settings(self, index: int):
+        """Load settings for a specific tab after it's created."""
+        # This will be called after each tab is loaded
+        # We'll move the relevant parts of _load_current_settings here
+        pass
 
     def _create_general_tab(self) -> QWidget:
         """Create the general settings tab."""
@@ -442,63 +536,76 @@ class SettingsAppWidget(AppWidget):
 
     def _load_current_settings(self):
         """Load current settings into UI."""
-        # General tab
-        widget_type = get_app_default("workspace.default_new_tab_widget", "terminal")
-        index = self._default_tab_combo.findData(widget_type)
-        if index >= 0:
-            self._default_tab_combo.setCurrentIndex(index)
+        # Only load settings for tabs that have been created
+        # General tab (always created)
+        if hasattr(self, '_default_tab_combo'):
+            widget_type = get_app_default("workspace.default_new_tab_widget", "terminal")
+            index = self._default_tab_combo.findData(widget_type)
+            if index >= 0:
+                self._default_tab_combo.setCurrentIndex(index)
 
-        self._tab_naming_input.setText(
-            get_app_default("workspace.tab_auto_naming_pattern", "{type} {index}")
-        )
+        if hasattr(self, '_tab_naming_input'):
+            self._tab_naming_input.setText(
+                get_app_default("workspace.tab_auto_naming_pattern", "{type} {index}")
+            )
 
-        self._max_tabs_spin.setValue(get_app_default("workspace.max_tabs", 20))
+        if hasattr(self, '_max_tabs_spin'):
+            self._max_tabs_spin.setValue(get_app_default("workspace.max_tabs", 20))
 
-        close_behavior = get_app_default("workspace.close_last_tab_behavior", "create_default")
-        if close_behavior == "create_default":
-            self._create_default_radio.setChecked(True)
-        elif close_behavior == "close_window":
-            self._close_window_radio.setChecked(True)
-        else:
-            self._do_nothing_radio.setChecked(True)
+        if hasattr(self, '_create_default_radio'):
+            close_behavior = get_app_default("workspace.close_last_tab_behavior", "create_default")
+            if close_behavior == "create_default":
+                self._create_default_radio.setChecked(True)
+            elif close_behavior == "close_window":
+                self._close_window_radio.setChecked(True)
+            else:
+                self._do_nothing_radio.setChecked(True)
 
-        self._restore_tabs_check.setChecked(
-            get_app_default("workspace.restore_tabs_on_startup", True)
-        )
+        if hasattr(self, '_restore_tabs_check'):
+            self._restore_tabs_check.setChecked(
+                get_app_default("workspace.restore_tabs_on_startup", True)
+            )
 
         # Pane settings
-        split_dir = get_app_default("pane.default_split_direction", "horizontal")
-        if split_dir == "horizontal":
-            self._horizontal_radio.setChecked(True)
-        else:
-            self._vertical_radio.setChecked(True)
+        if hasattr(self, '_horizontal_radio'):
+            split_dir = get_app_default("pane.default_split_direction", "horizontal")
+            if split_dir == "horizontal":
+                self._horizontal_radio.setChecked(True)
+            else:
+                self._vertical_radio.setChecked(True)
 
-        split_ratio = int(get_app_default("pane.default_split_ratio", 0.5) * 100)
-        self._split_ratio_slider.setValue(split_ratio)
-        self._split_ratio_label.setText(f"{split_ratio}%")
+        if hasattr(self, '_split_ratio_slider'):
+            split_ratio = int(get_app_default("pane.default_split_ratio", 0.5) * 100)
+            self._split_ratio_slider.setValue(split_ratio)
+            self._split_ratio_label.setText(f"{split_ratio}%")
 
-        self._focus_new_pane_check.setChecked(
-            get_app_default("pane.focus_new_on_split", True)
-        )
+        if hasattr(self, '_focus_new_pane_check'):
+            self._focus_new_pane_check.setChecked(
+                get_app_default("pane.focus_new_on_split", True)
+            )
 
-        # Terminal settings
-        shell = get_app_default("terminal.default_shell", "auto")
-        index = self._shell_combo.findData(shell)
-        if index >= 0:
-            self._shell_combo.setCurrentIndex(index)
+        # Terminal settings - only load if terminal tab has been created
+        if hasattr(self, '_shell_combo'):
+            shell = get_app_default("terminal.default_shell", "auto")
+            index = self._shell_combo.findData(shell)
+            if index >= 0:
+                self._shell_combo.setCurrentIndex(index)
 
-        start_dir = get_app_default("terminal.starting_directory", "home")
-        index = self._start_dir_combo.findData(start_dir)
-        if index >= 0:
-            self._start_dir_combo.setCurrentIndex(index)
+        if hasattr(self, '_start_dir_combo'):
+            start_dir = get_app_default("terminal.starting_directory", "home")
+            index = self._start_dir_combo.findData(start_dir)
+            if index >= 0:
+                self._start_dir_combo.setCurrentIndex(index)
 
-        # Advanced settings
-        self._confirm_exit_check.setChecked(
-            get_app_default("ux.confirm_app_exit", True)
-        )
-        self._confirm_reload_check.setChecked(
-            get_app_default("ux.confirm_reload_window", True)
-        )
+        # Advanced settings - only load if advanced tab has been created
+        if hasattr(self, '_confirm_exit_check'):
+            self._confirm_exit_check.setChecked(
+                get_app_default("ux.confirm_app_exit", True)
+            )
+        if hasattr(self, '_confirm_reload_check'):
+            self._confirm_reload_check.setChecked(
+                get_app_default("ux.confirm_reload_window", True)
+            )
 
         # Clear modified settings after loading
         self._modified_settings.clear()

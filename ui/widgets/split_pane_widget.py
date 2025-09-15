@@ -281,18 +281,20 @@ class SplitPaneWidget(QWidget):
     active_pane_changed = Signal(str)  # pane_id
     layout_changed = Signal()
     
-    def __init__(self, initial_widget_type: WidgetType = WidgetType.TEXT_EDITOR, parent=None):
+    def __init__(self, initial_widget_type: WidgetType = WidgetType.TEXT_EDITOR,
+                 initial_widget_id: Optional[str] = None, parent=None):
         """
         Initialize the split pane widget.
-        
+
         Args:
             initial_widget_type: Type of widget for initial pane
+            initial_widget_id: Optional ID for the initial widget (for singleton tracking)
             parent: Parent widget
         """
         super().__init__(parent)
-        
+
         # Create the model - it owns all AppWidgets
-        self.model = SplitPaneModel(initial_widget_type)
+        self.model = SplitPaneModel(initial_widget_type, initial_widget_id)
         
         # Set up terminal auto-close callback
         self.model.set_terminal_close_callback(self.on_terminal_close_requested)

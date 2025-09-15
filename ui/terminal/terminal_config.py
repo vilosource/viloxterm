@@ -106,7 +106,7 @@ class TerminalConfig:
     
     # Appearance
     font_family: str = 'Consolas, "Courier New", monospace'
-    font_size: int = 14
+    font_size: int = 16
     line_height: float = 1.2
     cursor_style: str = "block"  # block, underline, bar
     cursor_blink: bool = True

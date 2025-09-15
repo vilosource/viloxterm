@@ -185,7 +185,7 @@ class TerminalAssetBundler:
             macOptionIsMeta: true,
             scrollback: 1000,
             fontFamily: 'Consolas, "Courier New", monospace',
-            fontSize: 14,
+            fontSize: 16,
             lineHeight: 1.2,
             // Fix for Canvas2D getImageData warning
             drawBoldTextInBrightColors: true,

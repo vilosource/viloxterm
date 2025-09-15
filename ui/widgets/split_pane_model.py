@@ -70,21 +70,35 @@ class SplitPaneModel:
     All operations go through this model.
     """
     
-    def __init__(self, initial_widget_type: WidgetType = WidgetType.PLACEHOLDER):
-        """Initialize with a single root leaf containing an AppWidget."""
-        self.root = LeafNode(widget_type=initial_widget_type)
+    def __init__(self, initial_widget_type: WidgetType = WidgetType.PLACEHOLDER,
+                 initial_widget_id: Optional[str] = None):
+        """
+        Initialize with a single root leaf containing an AppWidget.
+
+        Args:
+            initial_widget_type: Type of widget for initial pane
+            initial_widget_id: Optional ID for the initial widget (for singleton tracking)
+        """
+        # Use provided ID or generate a new one
+        widget_id = initial_widget_id or str(uuid.uuid4())[:8]
+
+        # Create root node with the specific ID
+        self.root = LeafNode(
+            widget_type=initial_widget_type,
+            id=widget_id  # Use the same ID for both leaf and widget
+        )
         self.leaves: Dict[str, LeafNode] = {self.root.id: self.root}
         self.active_pane_id: str = self.root.id
-        
+
         # Pane numbering state
         self.show_pane_numbers = False
         self.pane_indices: Dict[str, int] = {}
-        
+
         # Callback for when a terminal requests pane closure
         self.terminal_close_callback: Optional[Callable[[str], None]] = None
-        
-        # Create initial AppWidget
-        self.root.app_widget = self.create_app_widget(initial_widget_type, self.root.id)
+
+        # Create initial AppWidget with the same ID
+        self.root.app_widget = self.create_app_widget(initial_widget_type, widget_id)
         self.root.app_widget.leaf_node = self.root  # Set back-reference
         
         # Initialize pane indices

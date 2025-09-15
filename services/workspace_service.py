@@ -31,7 +31,7 @@ class WorkspaceService(Service):
     def __init__(self, workspace=None):
         """
         Initialize the workspace service.
-        
+
         Args:
             workspace: Optional workspace instance
         """
@@ -39,6 +39,8 @@ class WorkspaceService(Service):
         self._workspace = workspace
         self._tab_counter = 0
         self._pane_counter = 0
+        # Track widget IDs to tab indices for singleton support
+        self._widget_registry: Dict[str, int] = {}  # widget_id -> tab_index
     
     def get_workspace(self):
         """Get the workspace instance."""
@@ -62,8 +64,129 @@ class WorkspaceService(Service):
     def cleanup(self) -> None:
         """Cleanup service resources."""
         self._workspace = None
+        self._widget_registry.clear()
         super().cleanup()
-    
+
+    def has_widget(self, widget_id: str) -> bool:
+        """
+        Check if a widget with the given ID exists.
+
+        Args:
+            widget_id: The widget ID to check
+
+        Returns:
+            True if the widget exists, False otherwise
+        """
+        return widget_id in self._widget_registry
+
+    def focus_widget(self, widget_id: str) -> bool:
+        """
+        Focus (switch to) a widget by its ID.
+
+        Args:
+            widget_id: The widget ID to focus
+
+        Returns:
+            True if successfully focused, False otherwise
+        """
+        if widget_id not in self._widget_registry:
+            logger.warning(f"Cannot focus widget {widget_id}: not found in registry")
+            return False
+
+        tab_index = self._widget_registry[widget_id]
+
+        # Verify the tab index is still valid
+        if not self._workspace or tab_index >= self._workspace.tab_widget.count():
+            logger.warning(f"Widget {widget_id} has invalid tab index {tab_index}, removing from registry")
+            del self._widget_registry[widget_id]
+            return False
+
+        return self.switch_to_tab(tab_index)
+
+    # ============= Registry Operations =============
+
+    def register_widget(self, widget_id: str, tab_index: int) -> bool:
+        """
+        Register a widget with its tab index.
+
+        Args:
+            widget_id: The widget identifier
+            tab_index: The tab index where the widget is located
+
+        Returns:
+            True if successfully registered
+        """
+        self._widget_registry[widget_id] = tab_index
+        logger.debug(f"Registered widget {widget_id} at tab index {tab_index}")
+        return True
+
+    def unregister_widget(self, widget_id: str) -> bool:
+        """
+        Unregister a widget from the registry.
+
+        Args:
+            widget_id: The widget identifier to remove
+
+        Returns:
+            True if widget was found and removed, False otherwise
+        """
+        if widget_id in self._widget_registry:
+            del self._widget_registry[widget_id]
+            logger.debug(f"Unregistered widget {widget_id}")
+            return True
+        logger.warning(f"Widget {widget_id} not found in registry")
+        return False
+
+    def update_registry_after_tab_close(self, closed_index: int, widget_id: Optional[str] = None) -> int:
+        """
+        Update registry indices after a tab is closed.
+
+        Args:
+            closed_index: The index of the tab that was closed
+            widget_id: Optional widget ID that was closed
+
+        Returns:
+            Number of widgets whose indices were updated
+        """
+        # Remove the closed widget if specified
+        if widget_id and widget_id in self._widget_registry:
+            del self._widget_registry[widget_id]
+            logger.debug(f"Removed widget {widget_id} from registry (tab closed)")
+
+        # Update indices for remaining widgets
+        updated_count = 0
+        for wid, tab_idx in list(self._widget_registry.items()):
+            if tab_idx > closed_index:
+                self._widget_registry[wid] = tab_idx - 1
+                updated_count += 1
+                logger.debug(f"Updated widget {wid} index: {tab_idx} -> {tab_idx - 1}")
+
+        return updated_count
+
+    def get_widget_tab_index(self, widget_id: str) -> Optional[int]:
+        """
+        Get the tab index for a registered widget.
+
+        Args:
+            widget_id: The widget identifier
+
+        Returns:
+            Tab index if widget is registered, None otherwise
+        """
+        return self._widget_registry.get(widget_id)
+
+    def is_widget_registered(self, widget_id: str) -> bool:
+        """
+        Check if a widget is registered.
+
+        Args:
+            widget_id: The widget identifier
+
+        Returns:
+            True if widget is registered, False otherwise
+        """
+        return widget_id in self._widget_registry
+
     # ============= Tab Operations =============
     
     def add_editor_tab(self, name: Optional[str] = None) -> int:
@@ -165,10 +288,14 @@ class WorkspaceService(Service):
             return False
 
         try:
-            # Add the generic app widget tab
-            success = self._workspace.add_app_widget_tab(widget_type, widget_id, name)
+            # Add the generic app widget tab - returns tab index or -1 on failure
+            tab_index = self._workspace.add_app_widget_tab(widget_type, widget_id, name)
+            success = tab_index >= 0
 
             if success:
+                # Track the widget in our registry
+                self._widget_registry[widget_id] = tab_index
+
                 # Notify observers
                 self.notify('tab_added', {
                     'type': str(widget_type.value),
@@ -192,42 +319,56 @@ class WorkspaceService(Service):
     def close_tab(self, index: Optional[int] = None) -> bool:
         """
         Close a tab.
-        
+
         Args:
             index: Tab index to close, or None for current tab
-            
+
         Returns:
             True if tab was closed
         """
         self.validate_initialized()
-        
+
         if not self._workspace:
             return False
-        
+
         # Get current index if not provided
         if index is None:
             index = self._workspace.tab_widget.currentIndex()
-        
+
         if index < 0:
             return False
-        
+
         # Get tab name before closing
         tab_name = self._workspace.tab_widget.tabText(index) if self._workspace.tab_widget else None
-        
+
+        # Clean up widget registry - find and remove any widgets at this tab index
+        widgets_to_remove = []
+        for widget_id, tab_idx in self._widget_registry.items():
+            if tab_idx == index:
+                widgets_to_remove.append(widget_id)
+            elif tab_idx > index:
+                # Shift indices down for tabs after the closed one
+                self._widget_registry[widget_id] = tab_idx - 1
+
+        # Remove widgets that were in the closed tab
+        for widget_id in widgets_to_remove:
+            del self._widget_registry[widget_id]
+            logger.debug(f"Removed widget {widget_id} from registry (tab closed)")
+
         # Close the tab
         self._workspace.close_tab(index)
-        
+
         # Notify observers
         self.notify('tab_closed', {
             'index': index,
             'name': tab_name
         })
-        
+
         # Update context
         from core.context.manager import context_manager
         context_manager.set('workbench.tabs.count', self.get_tab_count())
         context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
-        
+
         logger.info(f"Closed tab at index {index}")
         return True
     

@@ -23,7 +23,8 @@ from core.commands.builtin.theme_commands import register_theme_commands
 import core.commands.builtin.ui_commands
 import core.commands.builtin.window_commands
 import core.commands.builtin.help_commands
-import core.commands.builtin.theme_commands
+import core.commands.builtin.registry_commands
+import core.commands.builtin.theme_management_commands
 
 def register_all_builtin_commands():
     """Register all built-in commands with the command registry."""
