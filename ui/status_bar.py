@@ -46,11 +46,7 @@ class AppStatusBar(QStatusBar):
 
     def apply_theme(self):
         """Apply current theme to status bar."""
-        from services.service_locator import ServiceLocator
-        from services.theme_service import ThemeService
-
-        locator = ServiceLocator.get_instance()
-        theme_service = locator.get(ThemeService)
-        theme_provider = theme_service.get_theme_provider() if theme_service else None
-        if theme_provider:
-            self.setStyleSheet(theme_provider.get_stylesheet("status_bar"))
+        # Get theme provider from parent window
+        main_window = self.window()
+        if hasattr(main_window, 'theme_provider') and main_window.theme_provider:
+            self.setStyleSheet(main_window.theme_provider.get_stylesheet("status_bar"))

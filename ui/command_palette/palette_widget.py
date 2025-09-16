@@ -205,15 +205,11 @@ class CommandListWidget(QListWidget):
 
     def apply_theme(self):
         """Apply current theme to command list widget."""
-        from services.service_locator import ServiceLocator
-        from services.theme_service import ThemeService
+        from core.commands.executor import execute_command
 
-        locator = ServiceLocator.get_instance()
-        theme_service = locator.get(ThemeService)
-        theme_provider = theme_service.get_theme_provider() if theme_service else None
-        colors = {}
-        if theme_provider:
-            colors = theme_provider._theme_service.get_colors()
+        # Get colors using command
+        result = execute_command("theme.getCurrentColors")
+        colors = result.value if result and result.success else {}
 
         self.setStyleSheet(f"""
             QListWidget {{
@@ -521,14 +517,13 @@ class CommandPaletteWidget(QDialog):
 
     def _get_theme_colors(self):
         """Get current theme colors."""
-        from services.service_locator import ServiceLocator
-        from services.theme_service import ThemeService
+        from core.commands.executor import execute_command
 
-        locator = ServiceLocator.get_instance()
-        theme_service = locator.get(ThemeService)
-        theme_provider = theme_service.get_theme_provider() if theme_service else None
-        if theme_provider:
-            return theme_provider._theme_service.get_colors()
+        # Get colors using command
+        result = execute_command("theme.getCurrentColors")
+        if result and result.success:
+            return result.value
+
         # Fallback colors
         return {
             "editor.background": "#252526",

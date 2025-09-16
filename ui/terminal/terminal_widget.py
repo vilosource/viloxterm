@@ -232,14 +232,14 @@ class TerminalWidget(QWidget):
     
     def write_to_terminal(self, text: str):
         """Write text to terminal (for programmatic input)."""
-        if self.is_ready and self.web_view:
+        if self.is_ready and self.web_view and text is not None:
             # Escape the text for JavaScript
             escaped_text = text.replace('\\', '\\\\').replace("'", "\\'").replace('\n', '\\n')
             self.web_view.page().runJavaScript(f"if (typeof term !== 'undefined') {{ term.write('{escaped_text}'); }}")
     
     def paste_to_terminal(self, text: str):
         """Paste text to terminal (sends as input)."""
-        if self.is_ready and self.web_view:
+        if self.is_ready and self.web_view and text is not None:
             # Escape the text for JavaScript
             escaped_text = text.replace('\\', '\\\\').replace("'", "\\'")
             self.web_view.page().runJavaScript(f"if (typeof term !== 'undefined') {{ term.paste('{escaped_text}'); }}")
@@ -288,5 +288,8 @@ class TerminalWidget(QWidget):
         if hasattr(self, 'session_id') and self.session_id:
             try:
                 terminal_server.destroy_session(self.session_id)
-            except:
-                pass  # Ignore errors during cleanup
+            except (AttributeError, OSError, RuntimeError) as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Failed to destroy terminal session {self.session_id}: {e}")
+                # Ignore errors during cleanup as destructor should not raise

@@ -1,17 +1,13 @@
 """Main window implementation for the VSCode-style application."""
 
-from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QSplitter, QMenuBar, QMessageBox
-from PySide6.QtCore import Qt, QSettings
-from PySide6.QtGui import QAction, QKeySequence, QKeyEvent
-from ui.activity_bar import ActivityBar
-from ui.sidebar import Sidebar
-from ui.workspace import Workspace
-from ui.status_bar import AppStatusBar
-from ui.icon_manager import get_icon_manager
+from PySide6.QtWidgets import QMainWindow
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QKeySequence, QKeyEvent
 from ui.widgets.focus_sink import FocusSinkWidget
-
-from services.theme_service import ThemeService
-from ui.qt_compat import safe_splitter_collapse_setting, log_qt_versions
+from ui.main_window_layout import MainWindowLayoutManager
+from ui.main_window_actions import MainWindowActionManager
+from ui.main_window_state import MainWindowStateManager
+from ui.qt_compat import log_qt_versions
 
 
 class MainWindow(QMainWindow):
@@ -21,6 +17,13 @@ class MainWindow(QMainWindow):
         super().__init__()
         # Log Qt version information for debugging
         log_qt_versions()
+
+        # Initialize managers
+        self.layout_manager = MainWindowLayoutManager(self)
+        self.action_manager = MainWindowActionManager(self)
+        self.state_manager = MainWindowStateManager(self)
+
+        # Setup UI and initialize components
         self.setup_ui()
         self.initialize_services()
         self.initialize_commands()
@@ -40,48 +43,13 @@ class MainWindow(QMainWindow):
 
         # Note: Theme will be applied after services are initialized
         # We need ThemeProvider to be available first
-        
-        # Create central widget and main layout
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QHBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
-        
-        # Create activity bar
-        self.activity_bar = ActivityBar()
-        self.activity_bar.view_changed.connect(self.on_activity_view_changed)
-        main_layout.addWidget(self.activity_bar)
-        
-        # Create main splitter for sidebar and workspace
-        self.main_splitter = QSplitter(Qt.Horizontal)
-        # Splitter styling will be applied with theme
-        main_layout.addWidget(self.main_splitter)
-        
-        # Create sidebar
-        self.sidebar = Sidebar()
-        self.main_splitter.addWidget(self.sidebar)
-        
-        # Create workspace
-        self.workspace = Workspace()
-        self.main_splitter.addWidget(self.workspace)
-        
-        # Set initial splitter sizes (sidebar: 250px, workspace: rest)
-        self.main_splitter.setSizes([250, 950])
-        
-        # Allow sidebar to be completely collapsed
-        safe_splitter_collapse_setting(self.main_splitter, True)
-        
-        # Create status bar
-        self.status_bar = AppStatusBar()
-        self.setStatusBar(self.status_bar)
-        
-        # Create menu bar
-        self.create_menu_bar()
-        
-        # Connect signals
-        self.activity_bar.toggle_sidebar.connect(self.toggle_sidebar)
-        
+
+        # Setup layout through layout manager
+        self.layout_manager.setup_ui_layout()
+
+        # Create menu bar through action manager
+        self.action_manager.create_menu_bar()
+
         # Note: Ctrl+Shift+M shortcut for menu bar toggle is handled by the command system
         # This ensures it works even when the menu bar is hidden
     
@@ -97,8 +65,8 @@ class MainWindow(QMainWindow):
             activity_bar=self.activity_bar
         )
         
-        # Setup theme system
-        self.setup_theme()
+        # Setup theme system through layout manager
+        self.layout_manager.setup_theme()
         
         # Log service initialization
         import logging
@@ -429,8 +397,14 @@ class MainWindow(QMainWindow):
                 context['paneCount'] = self.workspace.get_split_count()
                 context['activeTabIndex'] = self.workspace.get_current_tab_index()
                 context['hasActiveEditor'] = self.workspace.has_active_editor()
-            except:
-                pass  # Ignore errors getting workspace context
+            except (AttributeError, RuntimeError) as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Failed to get workspace context: {e}")
+                # Set safe defaults
+                context['paneCount'] = 0
+                context['activeTabIndex'] = -1
+                context['hasActiveEditor'] = False
         
         return context
     
@@ -480,459 +454,44 @@ class MainWindow(QMainWindow):
         logger = logging.getLogger(__name__)
         logger.info("Created QAction for Alt+P with ApplicationShortcut context")
         
-    def create_menu_bar(self):
-        """Create the menu bar."""
-        menubar = self.menuBar()
-        
-        # Ensure menu bar is visible by default on first run
-        # (restore_state will override this if there are saved settings)
-        menubar.setVisible(True)
-        
-        # File menu
-        file_menu = menubar.addMenu("File")
-        
-        # New tab actions (using new unified command)
-        new_tab_action = QAction("New Tab", self)
-        new_tab_action.setToolTip("Create a new tab (Ctrl+T)")
-        new_tab_action.triggered.connect(lambda: self.execute_command("workspace.newTab"))
-        file_menu.addAction(new_tab_action)
-
-        new_tab_with_type_action = QAction("New Tab (Choose Type)...", self)
-        new_tab_with_type_action.setToolTip("Create a new tab with specific type (Ctrl+Shift+T)")
-        new_tab_with_type_action.triggered.connect(lambda: self.execute_command("workspace.newTabWithType"))
-        file_menu.addAction(new_tab_with_type_action)
-
-        file_menu.addSeparator()
-
-        # Preferences/Settings menu
-        preferences_menu = file_menu.addMenu("Preferences")
-
-        # Settings action
-        settings_action = QAction("Settings...", self)
-        settings_action.setToolTip("Configure application settings and defaults (Ctrl+,)")
-        settings_action.triggered.connect(lambda: self.execute_command("settings.openSettings"))
-        preferences_menu.addAction(settings_action)
-
-        # Keyboard Shortcuts action (now using commands)
-        keyboard_shortcuts_action = QAction("Keyboard Shortcuts...", self)
-        keyboard_shortcuts_action.setToolTip("Configure keyboard shortcuts (Ctrl+K, Ctrl+S)")
-        keyboard_shortcuts_action.triggered.connect(
-            lambda: self.execute_command("settings.openKeyboardShortcuts")
-        )
-        preferences_menu.addAction(keyboard_shortcuts_action)
-
-        file_menu.addSeparator()
-
-        # About action
-        about_action = QAction("About ViloxTerm", self)
-        about_action.setToolTip("Show information about ViloxTerm")
-        about_action.triggered.connect(lambda: self.execute_command("help.about"))
-        file_menu.addAction(about_action)
-
-        # View menu
-        view_menu = menubar.addMenu("View")
-
-        # Theme selection action (now using new theme system)
-        theme_action = QAction("Select Theme", self)
-        # Shortcut handled by command system, not QAction
-        theme_action.setToolTip("Select a color theme (Ctrl+K, Ctrl+T)")
-        theme_action.triggered.connect(lambda: self.execute_command("theme.selectTheme"))
-        view_menu.addAction(theme_action)
-
-        # Theme Editor action
-        theme_editor_action = QAction("Theme Editor...", self)
-        theme_editor_action.setToolTip("Open the theme editor to customize themes (Ctrl+K, Ctrl+M)")
-        theme_editor_action.triggered.connect(lambda: self.execute_command("theme.openEditor"))
-        view_menu.addAction(theme_editor_action)
-
-        view_menu.addSeparator()
-
-        # Import VSCode Theme action
-        import_vscode_theme_action = QAction("Import VSCode Theme...", self)
-        import_vscode_theme_action.setToolTip("Import a theme from VSCode JSON format")
-        import_vscode_theme_action.triggered.connect(lambda: self.execute_command("theme.importVSCode"))
-        view_menu.addAction(import_vscode_theme_action)
-        
-        # Sidebar toggle action (now using commands)
-        sidebar_action = QAction("Toggle Sidebar", self)
-        # Shortcut handled by command system, not QAction
-        sidebar_action.setToolTip("Toggle sidebar visibility (Ctrl+B)")
-        sidebar_action.triggered.connect(lambda: self.execute_command("view.toggleSidebar"))
-        view_menu.addAction(sidebar_action)
-        
-        view_menu.addSeparator()
-        
-        # Split actions (now using commands)
-        split_horizontal_action = QAction("Split Pane Right", self)
-        # Shortcut handled by command system, not QAction
-        split_horizontal_action.setToolTip("Split the active pane horizontally (Ctrl+\\)")
-        split_horizontal_action.triggered.connect(lambda: self.execute_command("workbench.action.splitRight"))
-        view_menu.addAction(split_horizontal_action)
-        
-        split_vertical_action = QAction("Split Pane Down", self)
-        # Shortcut handled by command system, not QAction
-        split_vertical_action.setToolTip("Split the active pane vertically (Ctrl+Shift+\\)")
-        split_vertical_action.triggered.connect(lambda: self.execute_command("workbench.action.splitDown"))
-        view_menu.addAction(split_vertical_action)
-        
-        close_pane_action = QAction("Close Pane", self)
-        # Shortcut handled by command system, not QAction
-        close_pane_action.setToolTip("Close the active pane (Ctrl+W)")
-        close_pane_action.triggered.connect(lambda: self.execute_command("workbench.action.closeActivePane"))
-        view_menu.addAction(close_pane_action)
-        
-        view_menu.addSeparator()
-        
-        # Menu bar toggle action (shortcut handled by global QShortcut)
-        self.menubar_action = QAction("Toggle Menu Bar", self)
-        self.menubar_action.setToolTip("Toggle menu bar visibility (Ctrl+Shift+M)")
-        self.menubar_action.triggered.connect(lambda: self.execute_command("view.toggleMenuBar"))
-        view_menu.addAction(self.menubar_action)
-        
-        # Auto-hide menu bar option
-        self.auto_hide_menubar_action = QAction("Use Activity Bar Menu", self)
-        self.auto_hide_menubar_action.setCheckable(True)
-        self.auto_hide_menubar_action.setToolTip("Hide menu bar and use activity bar menu icon instead")
-        self.auto_hide_menubar_action.toggled.connect(self.on_auto_hide_menubar_toggled)
-        view_menu.addAction(self.auto_hide_menubar_action)
-        
-        view_menu.addSeparator()
-
-        # Frameless mode toggle
-        frameless_action = QAction("Frameless Mode", self)
-        frameless_action.setCheckable(True)
-        frameless_action.setToolTip("Use frameless window for maximum screen space (requires restart)")
-        settings = QSettings("ViloxTerm", "ViloxTerm")
-        frameless_action.setChecked(settings.value("UI/FramelessMode", False, type=bool))
-        frameless_action.triggered.connect(lambda: self.execute_command("window.toggleFrameless"))
-        view_menu.addAction(frameless_action)
-
-        # Debug menu
-        debug_menu = menubar.addMenu("Debug")
-        
-        # Reset app state action (now using commands)
-        reset_state_action = QAction("Reset App State", self)
-        # Shortcut handled by command system, not QAction
-        reset_state_action.setToolTip("Reset application to default state, clearing all saved settings (Ctrl+Shift+R)")
-        reset_state_action.triggered.connect(lambda: self.execute_command("debug.resetAppState"))
-        debug_menu.addAction(reset_state_action)
-
-        # Help menu
-        help_menu = menubar.addMenu("Help")
-
-        # Documentation action
-        docs_action = QAction("Documentation", self)
-        docs_action.setToolTip("Open ViloxTerm documentation")
-        docs_action.triggered.connect(lambda: self.execute_command("help.documentation"))
-        help_menu.addAction(docs_action)
-
-        # Report issue action
-        issue_action = QAction("Report Issue", self)
-        issue_action.setToolTip("Report an issue on GitHub")
-        issue_action.triggered.connect(lambda: self.execute_command("help.reportIssue"))
-        help_menu.addAction(issue_action)
-
-        help_menu.addSeparator()
-
-        # Check for updates action
-        updates_action = QAction("Check for Updates...", self)
-        updates_action.setToolTip("Check for ViloxTerm updates")
-        updates_action.triggered.connect(lambda: self.execute_command("help.checkForUpdates"))
-        help_menu.addAction(updates_action)
-
-        help_menu.addSeparator()
-
-        # About action (also in Help menu)
-        about_help_action = QAction("About ViloxTerm", self)
-        about_help_action.setToolTip("Show information about ViloxTerm")
-        about_help_action.triggered.connect(lambda: self.execute_command("help.about"))
-        help_menu.addAction(about_help_action)
 
     def toggle_theme(self):
-        """Toggle application theme - now routes through command system."""
-        return self.execute_command("view.toggleTheme")
+        """Toggle application theme - delegate to action manager."""
+        return self.action_manager.toggle_theme()
         
     def toggle_menu_bar(self):
-        """Toggle menu bar visibility - now routes through command system."""
-        return self.execute_command("view.toggleMenuBar")
+        """Toggle menu bar visibility - delegate to action manager."""
+        return self.action_manager.toggle_menu_bar()
         
     def on_activity_view_changed(self, view_name: str):
-        """Handle activity bar view selection."""
-        self.sidebar.set_current_view(view_name)
-        if self.sidebar.is_collapsed:
-            self.sidebar.expand()
-            # Ensure splitter sizes are updated
-            self.main_splitter.setSizes([250, self.main_splitter.width() - 250])
-            # Update activity bar to reflect that sidebar is now visible
-            self.activity_bar.set_sidebar_visible(True)
+        """Handle activity bar view selection - delegate to layout manager."""
+        self.layout_manager.on_activity_view_changed(view_name)
             
     def toggle_sidebar(self):
-        """Toggle sidebar visibility - now routes through command system for consistency."""
-        # Still handle the UI updates directly for now to maintain compatibility
-        # This can be refactored later to be fully handled by the UIService
-        self.sidebar.toggle()
-        
-        # Update splitter sizes when sidebar toggles
-        if self.sidebar.is_collapsed:
-            # Sidebar is now completely hidden (0 width)
-            self.main_splitter.setSizes([0, self.main_splitter.width()])
-            # Update activity bar to show current view as unchecked
-            self.activity_bar.set_sidebar_visible(False)
-        else:
-            # Sidebar is now expanded
-            self.main_splitter.setSizes([250, self.main_splitter.width() - 250])
-            # Update activity bar to show current view as checked
-            self.activity_bar.set_sidebar_visible(True)
+        """Toggle sidebar visibility - delegate to layout manager."""
+        self.layout_manager.toggle_sidebar()
     
     def toggle_activity_bar(self) -> bool:
-        """Toggle activity bar visibility and adjust layout."""
-        # Toggle visibility
-        is_visible = not self.activity_bar.isVisible()
-        self.activity_bar.setVisible(is_visible)
-        
-        # Adjust the main layout
-        if is_visible:
-            # Activity bar is now visible - restore normal layout
-            self.activity_bar.show()
-            # If sidebar was visible before, ensure it's properly sized
-            if not self.sidebar.is_collapsed:
-                self.main_splitter.setSizes([250, self.main_splitter.width() - 250])
-        else:
-            # Activity bar is now hidden - expand main content
-            self.activity_bar.hide()
-            # Optionally hide sidebar too when activity bar is hidden
-            if not self.sidebar.is_collapsed:
-                self.sidebar.collapse()
-                self.main_splitter.setSizes([0, self.main_splitter.width()])
-        
-        return is_visible
+        """Toggle activity bar visibility - delegate to layout manager."""
+        return self.layout_manager.toggle_activity_bar()
     
     def on_auto_hide_menubar_toggled(self, checked: bool):
-        """Handle the 'Use Activity Bar Menu' toggle."""
-        if checked:
-            # Hide menu bar when using activity bar menu
-            self.menuBar().setVisible(False)
-        else:
-            # Show menu bar when not using activity bar menu
-            self.menuBar().setVisible(True)
-        
-        # Save preference
-        settings = QSettings()
-        settings.setValue("MainWindow/useActivityBarMenu", checked)
+        """Handle the 'Use Activity Bar Menu' toggle - delegate to action manager."""
+        self.action_manager.on_auto_hide_menubar_toggled(checked)
         
     def reset_app_state(self):
-        """Reset application to default state - now routes through command system."""
-        return self.execute_command("debug.resetAppState")
+        """Reset application to default state - delegate to action manager."""
+        return self.action_manager.reset_app_state()
         
-    def reset_app_state_legacy(self):
-        """Legacy reset method - kept for reference."""
-        reply = QMessageBox.question(
-            self,
-            "Reset Application State",
-            "This will reset the application to its default state and clear all saved settings including:\n\n"
-            "• Window size and position\n"
-            "• Split pane layouts\n"
-            "• Menu bar visibility\n"
-            "• Active pane selections\n\n"
-            "The application will be restarted with default settings.\n\n"
-            "Are you sure you want to continue?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
-        
-        if reply == QMessageBox.Yes:
-            try:
-                # Clear all saved settings
-                settings = QSettings()
-                settings.clear()
-                
-                # Show success message
-                self.status_bar.set_message("Application state reset successfully", 3000)
-                
-                # Reset to default state immediately
-                self._reset_to_defaults()
-                
-            except Exception as e:
-                QMessageBox.critical(
-                    self,
-                    "Reset Failed",
-                    f"Failed to reset application state:\n{str(e)}"
-                )
-                
-    def _reset_to_defaults(self):
-        """Reset current application state to defaults without restarting."""
-        try:
-            # Reset window to default size and center it
-            self.resize(1200, 800)
-            
-            # Center window on screen
-            screen = self.screen().geometry()
-            window_geometry = self.geometry()
-            x = (screen.width() - window_geometry.width()) // 2
-            y = (screen.height() - window_geometry.height()) // 2
-            self.move(x, y)
-            
-            # Reset splitter to default sizes (sidebar: 250px, workspace: rest)
-            self.main_splitter.setSizes([250, 950])
-            
-            # Ensure menu bar is visible
-            self.menuBar().setVisible(True)
-            
-            # Ensure sidebar is visible and expanded
-            if self.sidebar.is_collapsed:
-                self.sidebar.expand()
-                
-            # Reset workspace to default single pane layout
-            self.workspace.reset_to_default_layout()
-            
-            # Reset theme to system default
-            icon_manager = get_icon_manager()
-            icon_manager.detect_system_theme()
-            
-            self.status_bar.set_message("Application reset to default state", 2000)
-            
-        except Exception as e:
-            QMessageBox.warning(
-                self,
-                "Reset Warning", 
-                f"Some settings could not be reset:\n{str(e)}"
-            )
-
-    def setup_theme(self):
-        """Setup theme system and apply initial theme."""
-        try:
-            # Get theme provider from service locator
-            theme_service = self.service_locator.get(ThemeService)
-            self.theme_provider = theme_service.get_theme_provider() if theme_service else None
-            if not self.theme_provider:
-                print("Warning: ThemeProvider not available")
-                return
-
-            # Connect to theme changes
-            self.theme_provider.style_changed.connect(self.apply_theme)
-
-            # Apply initial theme
-            self.apply_theme()
-
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.info("Theme system initialized")
-        except Exception as e:
-            print(f"Failed to setup theme: {e}")
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Failed to setup theme: {e}")
-
-    def apply_theme(self):
-        """Apply current theme to all components."""
-        if not hasattr(self, 'theme_provider'):
-            return
-
-        try:
-            # Apply main window theme
-            self.setStyleSheet(self.theme_provider.get_stylesheet("main_window") +
-                             self.theme_provider.get_stylesheet("menu"))
-
-            # Apply splitter theme
-            self.main_splitter.setStyleSheet(self.theme_provider.get_stylesheet("splitter"))
-
-            # Let each component apply its own theme
-            if hasattr(self, 'activity_bar'):
-                self.activity_bar.apply_theme()
-            if hasattr(self, 'sidebar'):
-                self.sidebar.apply_theme()
-            if hasattr(self, 'workspace'):
-                self.workspace.apply_theme()
-            if hasattr(self, 'status_bar'):
-                self.status_bar.apply_theme()
-
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.debug("Theme applied to all components")
-        except Exception as e:
-            print(f"Failed to apply theme: {e}")
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Failed to apply theme: {e}")
 
     def closeEvent(self, event):
-        """Save state and clean up resources before closing."""
-        self.save_state()
-        
-        # Clean up all terminal sessions before closing
-        from ui.terminal.terminal_server import terminal_server
-        terminal_server.cleanup_all_sessions()
-        
-        event.accept()
-        
+        """Handle close event - delegate to state manager."""
+        self.state_manager.close_event_handler(event)
+
     def save_state(self):
-        """Save window state and geometry."""
-        settings = QSettings()
-        settings.beginGroup("MainWindow")
-        settings.setValue("geometry", self.saveGeometry())
-        settings.setValue("windowState", self.saveState())
-        settings.setValue("splitterSizes", self.main_splitter.saveState())
-        settings.setValue("menuBarVisible", self.menuBar().isVisible())
-        settings.setValue("activityBarVisible", self.activity_bar.isVisible())
-        settings.endGroup()
-        
-        # Save workspace state (new tab-based workspace)
-        settings.beginGroup("Workspace")
-        workspace_state = self.workspace.save_state()
-        import json
-        settings.setValue("state", json.dumps(workspace_state))
-        settings.endGroup()
-        
+        """Save window state - delegate to state manager."""
+        self.state_manager.save_state()
+
     def restore_state(self):
-        """Restore window state and geometry."""
-        settings = QSettings()
-        settings.beginGroup("MainWindow")
-        
-        geometry = settings.value("geometry")
-        if geometry:
-            self.restoreGeometry(geometry)
-            
-        window_state = settings.value("windowState")
-        if window_state:
-            self.restoreState(window_state)
-            
-        splitter_state = settings.value("splitterSizes")
-        if splitter_state:
-            self.main_splitter.restoreState(splitter_state)
-            
-        # Allow sidebar to be completely collapsed after restoration
-        safe_splitter_collapse_setting(self.main_splitter, True)
-            
-        # Restore menu bar visibility and activity bar menu preference
-        # Fix the path - it should be under MainWindow group
-        use_activity_bar_menu = settings.value("MainWindow/useActivityBarMenu", False, type=bool)
-        if hasattr(self, 'auto_hide_menubar_action'):
-            if use_activity_bar_menu:
-                self.auto_hide_menubar_action.setChecked(True)
-                self.menuBar().setVisible(False)
-            else:
-                menu_visible = settings.value("menuBarVisible", True, type=bool)
-                self.menuBar().setVisible(menu_visible)
-        else:
-            menu_visible = settings.value("menuBarVisible", True, type=bool)
-            self.menuBar().setVisible(menu_visible)
-        
-        # Restore activity bar visibility
-        activity_bar_visible = settings.value("activityBarVisible", True, type=bool)
-        if not activity_bar_visible:
-            self.activity_bar.hide()
-            
-        settings.endGroup()
-        
-        # Restore workspace state (new tab-based workspace)
-        settings.beginGroup("Workspace")
-        workspace_state_json = settings.value("state")
-        if workspace_state_json:
-            try:
-                import json
-                workspace_state = json.loads(workspace_state_json)
-                self.workspace.restore_state(workspace_state)
-            except (json.JSONDecodeError, Exception) as e:
-                # If restoration fails, workspace will create default tab
-                print(f"Failed to restore workspace state: {e}")
-        settings.endGroup()
+        """Restore window state - delegate to state manager."""
+        self.state_manager.restore_state()

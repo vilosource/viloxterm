@@ -92,7 +92,7 @@ class TestWorkspaceMouseGUI(WorkspaceGUITestBase, MouseGUITestBase):
                         tab_rect = tab_bar.tabRect(i)
                         qtbot.mouseClick(tab_bar, Qt.MouseButton.LeftButton, 
                                        pos=tab_rect.center())
-                        QTest.qWait(50)
+                        qtbot.wait(50)
                         
                         # Verify tab changed
                         assert tab_widget.currentIndex() == i
@@ -106,7 +106,7 @@ class TestWorkspaceMouseGUI(WorkspaceGUITestBase, MouseGUITestBase):
             if current_widget:
                 # Right-click on the workspace content
                 self.right_click_widget_center(qtbot, current_widget)
-                QTest.qWait(100)
+                qtbot.wait(100)
                 
                 # Basic test - no errors should occur
                 assert current_widget.isVisible()
@@ -115,7 +115,7 @@ class TestWorkspaceMouseGUI(WorkspaceGUITestBase, MouseGUITestBase):
         """Test workspace responds to mouse focus."""
         # Click on workspace to give it focus
         self.click_widget_center(qtbot, gui_workspace)
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Workspace should be visible and responsive
         assert gui_workspace.isVisible()
@@ -135,7 +135,7 @@ class TestWorkspaceKeyboardGUI(WorkspaceGUITestBase, KeyboardGUITestBase):
     def test_workspace_keyboard_focus(self, gui_workspace, qtbot):
         """Test workspace can receive keyboard focus."""
         gui_workspace.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Workspace or its child should be focusable
         # The exact focus behavior depends on the current tab content
@@ -150,11 +150,11 @@ class TestWorkspaceKeyboardGUI(WorkspaceGUITestBase, KeyboardGUITestBase):
             
             # Focus the tab widget
             tab_widget.setFocus()
-            QTest.qWait(50)
+            qtbot.wait(50)
             
             # Try Ctrl+Tab for tab switching (if supported)
             qtbot.keyClick(tab_widget, Qt.Key.Key_Tab, Qt.KeyboardModifier.ControlModifier)
-            QTest.qWait(100)
+            qtbot.wait(100)
             
             # Basic test - tab widget should remain functional
             assert tab_widget.isVisible()
@@ -167,11 +167,11 @@ class TestWorkspaceKeyboardGUI(WorkspaceGUITestBase, KeyboardGUITestBase):
             if current_widget:
                 # Focus the content widget
                 current_widget.setFocus()
-                QTest.qWait(50)
+                qtbot.wait(50)
                 
                 # Basic keyboard interaction test
                 qtbot.keyClick(current_widget, Qt.Key.Key_Space)
-                QTest.qWait(50)
+                qtbot.wait(50)
                 
                 # Widget should remain visible and functional
                 assert current_widget.isVisible()
@@ -203,11 +203,11 @@ class TestWorkspaceIntegrationGUI(WorkspaceGUITestBase):
         
         # Focus workspace
         workspace.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Then focus sidebar
         sidebar.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Both should remain visible and functional
         assert workspace.isVisible()
@@ -215,7 +215,7 @@ class TestWorkspaceIntegrationGUI(WorkspaceGUITestBase):
         
         # Focus back to workspace
         workspace.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         assert workspace.isVisible()
     
@@ -235,7 +235,7 @@ class TestWorkspaceIntegrationGUI(WorkspaceGUITestBase):
                 new_sizes[0] -= 50
                 new_sizes[1] += 50
                 main_splitter.setSizes(new_sizes)
-                QTest.qWait(50)
+                qtbot.wait(50)
                 
                 # Workspace should adapt to new size
                 new_size = workspace.size()
@@ -258,7 +258,7 @@ class TestWorkspacePerformanceGUI(WorkspaceGUITestBase):
             for _ in range(10):  # 10 cycles
                 for i in range(tab_count):
                     tab_widget.setCurrentIndex(i)
-                    QTest.qWait(5)  # Minimal wait
+                    qtbot.wait(5)  # Minimal wait
             
             # Final state should be consistent
             final_index = tab_widget.currentIndex()
@@ -277,7 +277,7 @@ class TestWorkspacePerformanceGUI(WorkspaceGUITestBase):
                 # Test rapid updates don't cause performance issues
                 for _ in range(20):
                     current_widget.update()
-                    QTest.qWait(5)
+                    qtbot.wait(5)
                 
                 # Widget should remain functional
                 assert current_widget.isVisible()
@@ -293,17 +293,17 @@ class TestWorkspaceAccessibilityGUI(WorkspaceGUITestBase):
         """Test workspace is accessible via keyboard."""
         # Test focus management
         gui_workspace.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Test tab navigation accessibility
         tab_widget = gui_workspace.tab_widget
         if tab_widget.count() > 0:
             tab_widget.setFocus()
-            QTest.qWait(50)
+            qtbot.wait(50)
             
             # Test keyboard navigation
             qtbot.keyClick(tab_widget, Qt.Key.Key_Right)
-            QTest.qWait(50)
+            qtbot.wait(50)
             
             # Should remain functional
             assert tab_widget.isVisible()
@@ -324,7 +324,7 @@ class TestWorkspaceAccessibilityGUI(WorkspaceGUITestBase):
         """Test workspace provides clear focus indication."""
         # Test that focusing workspace provides visual feedback
         gui_workspace.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Should be able to determine focus state
         # The exact visual indication depends on styling
@@ -335,7 +335,7 @@ class TestWorkspaceAccessibilityGUI(WorkspaceGUITestBase):
             current_widget = gui_workspace.tab_widget.currentWidget()
             if current_widget:
                 current_widget.setFocus()
-                QTest.qWait(50)
+                qtbot.wait(50)
                 assert current_widget.isVisible()
 
 
@@ -378,20 +378,117 @@ class TestWorkspaceStateGUI(WorkspaceGUITestBase):
         """Test workspace state remains valid after various interactions."""
         # Click on workspace
         self.click_widget_center(qtbot, gui_workspace)
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Focus workspace
         gui_workspace.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Keyboard interaction
         qtbot.keyClick(gui_workspace, Qt.Key.Key_Space)
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # State should remain valid
         assert gui_workspace.isVisible()
         assert gui_workspace.tab_widget.count() >= 0
-        
+
         if gui_workspace.tab_widget.count() > 0:
             current_widget = gui_workspace.tab_widget.currentWidget()
             assert current_widget is not None
+
+
+@pytest.mark.gui
+@pytest.mark.signals
+class TestWorkspaceSignalGUI(WorkspaceGUITestBase):
+    """GUI tests for workspace signal behavior."""
+
+    def test_workspace_tab_changed_signal_in_gui(self, gui_workspace, qtbot):
+        """Test tab_changed signal behavior in GUI environment."""
+        # Set up signal spy
+        tab_changed_spy = qtbot.spy(gui_workspace.tab_changed)
+
+        # Add multiple tabs
+        gui_workspace.add_editor_tab("GUI Tab 1")
+        gui_workspace.add_editor_tab("GUI Tab 2")
+
+        # Clear spy to start fresh
+        tab_changed_spy.clear()
+
+        # Switch tabs using GUI method
+        gui_workspace.tab_widget.setCurrentIndex(0)
+        qtbot.wait(50)
+
+        # Verify signal was emitted
+        assert len(tab_changed_spy) >= 1, "tab_changed signal should be emitted during GUI tab switch"
+
+        # Verify signal argument
+        if tab_changed_spy:
+            signal_args = tab_changed_spy[0]
+            assert signal_args == (0,), f"Expected tab index 0 in signal, got {signal_args}"
+
+    def test_workspace_tab_close_signal_in_gui(self, gui_workspace, qtbot):
+        """Test tab_removed signal behavior when closing tabs via GUI."""
+        # Add extra tabs
+        tab_name = "GUI Tab to Close"
+        index = gui_workspace.add_editor_tab(tab_name)
+
+        # Set up signal spy
+        tab_removed_spy = qtbot.spy(gui_workspace.tab_removed)
+
+        # Close tab via GUI method
+        gui_workspace.close_tab(index, show_message=False)
+        qtbot.wait(100)
+
+        # Verify signal was emitted
+        assert len(tab_removed_spy) == 1, f"Expected 1 tab_removed signal, got {len(tab_removed_spy)}"
+
+        # Verify signal argument
+        signal_args = tab_removed_spy[0]
+        assert signal_args == (tab_name,), f"Expected tab name '{tab_name}' in signal, got {signal_args}"
+
+    def test_workspace_pane_changed_signal_propagation_in_gui(self, gui_workspace, qtbot):
+        """Test active_pane_changed signal propagation in GUI environment."""
+        # Get current tab's split widget
+        current_split = gui_workspace.get_current_split_widget()
+        if not current_split:
+            # Add a tab if none exists
+            gui_workspace.add_editor_tab("GUI Test Tab")
+            current_split = gui_workspace.get_current_split_widget()
+
+        # Set up signal spy
+        pane_changed_spy = qtbot.spy(gui_workspace.active_pane_changed)
+
+        # Create split panes
+        active_pane_id = current_split.active_pane_id
+        new_pane_id = current_split.split_horizontal(active_pane_id)
+
+        qtbot.wait(100)
+
+        # Switch active pane
+        current_split.set_active_pane(new_pane_id)
+        qtbot.wait(100)
+
+        # Verify signal propagation occurred
+        assert len(pane_changed_spy) >= 1, "active_pane_changed signal should propagate from split widget"
+
+    def test_workspace_signal_consistency_during_rapid_operations(self, gui_workspace, qtbot):
+        """Test signal consistency during rapid GUI operations."""
+        # Set up multiple signal spies
+        tab_added_spy = qtbot.spy(gui_workspace.tab_added)
+        tab_changed_spy = qtbot.spy(gui_workspace.tab_changed)
+
+        # Perform rapid tab operations
+        for i in range(3):
+            gui_workspace.add_editor_tab(f"Rapid Tab {i}")
+            qtbot.wait(10)  # Minimal wait
+
+        qtbot.wait(100)  # Final wait for all signals
+
+        # Verify signal counts
+        assert len(tab_added_spy) == 3, f"Expected 3 tab_added signals, got {len(tab_added_spy)}"
+        assert len(tab_changed_spy) >= 3, f"Expected at least 3 tab_changed signals, got {len(tab_changed_spy)}"
+
+        # Verify signal arguments are consistent
+        for i, signal_call in enumerate(tab_added_spy):
+            expected_name = f"Rapid Tab {i}"
+            assert signal_call == (expected_name,), f"Tab {i}: expected '{expected_name}', got {signal_call}"

@@ -24,7 +24,6 @@ from core.commands.registry import command_registry
 from core.commands.base import Command
 from core.keyboard.service import KeyboardService
 from core.settings.service import SettingsService
-from services.service_locator import ServiceLocator
 
 
 logger = logging.getLogger(__name__)
@@ -153,10 +152,9 @@ class ShortcutConfigAppWidget(AppWidget):
         """Initialize the shortcut configuration widget."""
         super().__init__(widget_id, WidgetType.SETTINGS, parent)
 
-        # Get services
-        self.locator = ServiceLocator.get_instance()
-        self.keyboard_service = self.locator.get(KeyboardService)
-        self.settings_service = self.locator.get(SettingsService)
+        # Services will be accessed through commands
+        self.keyboard_service = None
+        self.settings_service = None
 
         # Data storage
         self.shortcut_items: Dict[str, ShortcutItem] = {}
@@ -304,10 +302,12 @@ class ShortcutConfigAppWidget(AppWidget):
         # Get all commands
         commands = command_registry.get_all_commands()
 
-        # Get current custom shortcuts from settings
+        # Get current custom shortcuts from settings using command
+        from core.commands.executor import execute_command
         custom_shortcuts = {}
-        if self.settings_service:
-            custom_shortcuts = self.settings_service.get_keyboard_shortcuts()
+        result = execute_command("settings.showKeyboardShortcuts")
+        if result.success and result.value:
+            custom_shortcuts = result.value.get('shortcuts', {})
 
         # Group commands by category
         categories = {}
@@ -547,29 +547,22 @@ class ShortcutConfigAppWidget(AppWidget):
             if reply != QMessageBox.Yes:
                 return
 
-        # Apply changes to settings service
-        if self.settings_service:
-            for command_id, new_shortcut in self.modified_shortcuts.items():
-                self.settings_service.set_keyboard_shortcut(command_id, new_shortcut)
+        # Apply changes using commands
+        from core.commands.executor import execute_command
 
-        # Re-register shortcuts in keyboard service
-        if self.keyboard_service:
-            for command_id, new_shortcut in self.modified_shortcuts.items():
-                # Unregister old shortcut
-                self.keyboard_service.unregister_shortcut(f"command.{command_id}")
+        for command_id, new_shortcut in self.modified_shortcuts.items():
+            # Set the shortcut in settings
+            result = execute_command("settings.setKeyboardShortcut",
+                                    command_id=command_id, shortcut=new_shortcut)
+            if not result.success:
+                logger.warning(f"Failed to set shortcut for {command_id}: {result.error}")
+                continue
 
-                # Register new shortcut if not empty
-                if new_shortcut:
-                    command = command_registry.get_command(command_id)
-                    if command:
-                        self.keyboard_service.register_shortcut_from_string(
-                            shortcut_id=f"command.{command_id}",
-                            sequence_str=new_shortcut,
-                            command_id=command_id,
-                            description=command.description or command.title,
-                            source="user",
-                            priority=100  # User shortcuts have higher priority
-                        )
+            # Register the shortcut with keyboard service
+            result = execute_command("settings.registerKeyboardShortcut",
+                                    command_id=command_id, shortcut=new_shortcut)
+            if not result.success:
+                logger.warning(f"Failed to register shortcut for {command_id}: {result.error}")
 
         # Show success message
         QMessageBox.information(
@@ -636,12 +629,20 @@ class ShortcutConfigAppWidget(AppWidget):
 
     def apply_theme(self):
         """Apply current theme to shortcut config widget."""
-        from services.service_locator import ServiceLocator
-        from services.theme_service import ThemeService
+        from core.commands.executor import execute_command
 
-        locator = ServiceLocator.get_instance()
-        theme_service = locator.get(ThemeService)
-        theme_provider = theme_service.get_theme_provider() if theme_service else None
-        if theme_provider:
-            # Get the stylesheet for this widget type
-            self.setStyleSheet(theme_provider.get_stylesheet("settings_widget"))
+        # Use command to get theme information
+        result = execute_command("settings.showSettingsInfo")
+        if result.success and result.value:
+            current_theme = result.value.get('current_theme', 'dark')
+            # Apply basic theme styling based on current theme
+            if current_theme == 'light':
+                self.setStyleSheet("""
+                    QWidget { background-color: #f0f0f0; color: #333333; }
+                    QTreeWidget { background-color: #ffffff; }
+                """)
+            else:
+                self.setStyleSheet("""
+                    QWidget { background-color: #2b2b2b; color: #cccccc; }
+                    QTreeWidget { background-color: #1e1e1e; }
+                """)

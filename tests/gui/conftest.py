@@ -38,7 +38,7 @@ def gui_main_window(qtbot, mock_icon_manager):
     qtbot.waitExposed(window)
     
     # Ensure the window is fully rendered
-    QTest.qWait(100)
+    qtbot.wait(100)
     
     return window
 

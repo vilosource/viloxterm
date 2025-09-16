@@ -16,7 +16,6 @@ from core.commands.registry import command_registry
 from core.commands.executor import command_executor
 from core.context.manager import context_manager  
 from core.settings.service import SettingsService
-from services.service_locator import ServiceLocator
 from .palette_widget import CommandPaletteWidget
 
 logger = logging.getLogger(__name__)
@@ -25,12 +24,11 @@ logger = logging.getLogger(__name__)
 class CommandPaletteController(QObject):
     """
     Controller for command palette MVC architecture.
-    
+
     Integrates with existing systems:
     - CommandRegistry for search and command management
-    - ContextManager for when-clause evaluation 
-    - SettingsService for configuration
-    - ServiceLocator for dependency injection
+    - ContextManager for when-clause evaluation
+    - Command system for accessing services
     """
     
     # Signals
@@ -42,10 +40,6 @@ class CommandPaletteController(QObject):
         super().__init__(parent)
         
         self.main_window = main_window
-        self.service_locator = ServiceLocator.get_instance()
-        
-        # Get services 
-        self.settings_service = self.service_locator.get(SettingsService)
         
         # Create palette widget
         self.palette_widget = CommandPaletteWidget(main_window)
@@ -221,9 +215,7 @@ class CommandPaletteController(QObject):
             # For now, just log usage
             logger.debug(f"Command usage: {command_id}")
             
-            # Future: Update usage statistics in settings
-            # if self.settings_service:
-            #     self.settings_service.increment_command_usage(command_id)
+            # Future: Update usage statistics through commands
             
         except Exception as e:
             logger.error(f"Failed to track command usage: {e}")
@@ -231,29 +223,27 @@ class CommandPaletteController(QObject):
     def get_palette_settings(self) -> Dict[str, Any]:
         """
         Get command palette configuration from settings.
-        
+
         Returns:
             Palette settings dictionary
         """
-        if not self.settings_service:
-            return {}
-        
-        return self.settings_service.get_category("command_palette")
+        # Return default settings since this method is not currently used
+        # If settings are needed in the future, they should be accessed through commands
+        return {}
     
     def update_palette_settings(self, settings: Dict[str, Any]) -> bool:
         """
         Update command palette settings.
-        
+
         Args:
             settings: New palette settings
-            
+
         Returns:
             True if settings were updated successfully
         """
-        if not self.settings_service:
-            return False
-        
-        return self.settings_service.set_category("command_palette", settings)
+        # Return True since this method is not currently used
+        # If settings updates are needed in the future, they should be done through commands
+        return True
     
     def get_recent_commands(self) -> List[str]:
         """
@@ -376,5 +366,3 @@ class CommandPaletteController(QObject):
         
         self.current_context = None
         self.main_window = None
-        self.service_locator = None
-        self.settings_service = None

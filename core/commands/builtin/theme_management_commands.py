@@ -372,6 +372,57 @@ def apply_theme_preview_command(
 
 
 @command(
+    id="theme.getCurrentColors",
+    title="Get Current Theme Colors",
+    category="Theme",
+    description="Get the current theme's color palette",
+)
+def get_current_colors_command(context: CommandContext) -> CommandResult:
+    """Get current theme colors."""
+    theme_service = context.get_service(ThemeService)
+    if not theme_service:
+        return CommandResult(success=False, error="ThemeService not available")
+
+    try:
+        theme = theme_service.get_current_theme()
+        if theme and hasattr(theme, 'colors'):
+            colors = theme.colors
+        else:
+            # Fallback colors
+            colors = {
+                "editor.background": "#252526",
+                "editor.foreground": "#cccccc",
+                "panel.background": "#252526",
+                "statusBar.background": "#007ACC",
+                "statusBar.foreground": "#ffffff",
+                "list.hoverBackground": "#2a2d2e",
+                "activityBar.activeBorder": "#007ACC",
+                "widget.border": "#3e3e42",
+                "tab.inactiveForeground": "#969696"
+            }
+
+        return CommandResult(
+            success=True,
+            value=colors
+        )
+    except Exception as e:
+        logger.error(f"Failed to get current colors: {e}")
+        # Return fallback colors
+        fallback_colors = {
+            "editor.background": "#252526",
+            "editor.foreground": "#cccccc",
+            "panel.background": "#252526",
+            "statusBar.background": "#007ACC",
+            "statusBar.foreground": "#ffffff",
+            "list.hoverBackground": "#2a2d2e",
+            "activityBar.activeBorder": "#007ACC",
+            "widget.border": "#3e3e42",
+            "tab.inactiveForeground": "#969696"
+        }
+        return CommandResult(success=True, value=fallback_colors)
+
+
+@command(
     id="theme.updateThemeColors",
     title="Update Theme Colors",
     category="Theme",

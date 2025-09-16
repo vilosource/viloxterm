@@ -5,6 +5,7 @@ Workspace-related commands using the service layer.
 
 from core.commands.base import Command, CommandResult, CommandContext
 from core.commands.decorators import command
+from core.commands.validation import validate, ParameterSpec, Range, OneOf, Optional, Type, String
 from services.workspace_service import WorkspaceService
 from services.terminal_service import TerminalService
 from core.settings.app_defaults import get_app_default, get_default_widget_type
@@ -99,6 +100,20 @@ def new_tab_command(context: CommandContext) -> CommandResult:
     description="Create a new tab with a specific widget type",
     shortcut="ctrl+shift+t"
 )
+@validate(
+    widget_type=ParameterSpec(
+        "widget_type",
+        OneOf("terminal", "editor", "theme_editor", "explorer", "settings", "shortcuts", "output", "placeholder"),
+        required=False,
+        description="Type of widget to create in the new tab"
+    ),
+    name=ParameterSpec(
+        "name",
+        Optional(String(max_length=100, non_empty=True)),
+        required=False,
+        description="Optional name for the new tab"
+    )
+)
 def new_tab_with_type_command(context: CommandContext) -> CommandResult:
     """Create a new tab, prompting for widget type."""
     from PySide6.QtWidgets import QInputDialog
@@ -154,6 +169,14 @@ def new_tab_with_type_command(context: CommandContext) -> CommandResult:
     icon="split-horizontal",
     when="workbench.pane.canSplit"
 )
+@validate(
+    orientation=ParameterSpec(
+        "orientation",
+        Optional(OneOf("horizontal", "vertical")),
+        default="horizontal",
+        description="Split orientation - horizontal creates side-by-side panes"
+    )
+)
 def split_pane_right_command(context: CommandContext) -> CommandResult:
     """Split active pane horizontally using WorkspaceService."""
     try:
@@ -161,7 +184,8 @@ def split_pane_right_command(context: CommandContext) -> CommandResult:
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
         
-        new_pane_id = workspace_service.split_active_pane("horizontal")
+        orientation = context.args.get('orientation', 'horizontal')
+        new_pane_id = workspace_service.split_active_pane(orientation)
         
         if new_pane_id:
             return CommandResult(
@@ -362,6 +386,14 @@ def next_tab_command(context: CommandContext) -> CommandResult:
     title="Select Tab",
     category="Workspace",
     description="Switch to a specific tab by index"
+)
+@validate(
+    tab_index=ParameterSpec(
+        "tab_index",
+        Range(0, 50),
+        required=True,
+        description="Index of the tab to select (0-based)"
+    )
 )
 def select_tab_command(context: CommandContext) -> CommandResult:
     """Switch to a specific tab by index."""

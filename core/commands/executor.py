@@ -129,10 +129,25 @@ class CommandExecutor:
         
         try:
             self._executing = True
-            
+
             # Log execution
             logger.info(f"Executing command: {command_id}")
-            
+
+            # Validate command parameters if validation is configured
+            try:
+                from core.commands.validation import get_validation_spec
+                validation_spec = get_validation_spec(command)
+                if validation_spec:
+                    logger.debug(f"Validating parameters for command: {command_id}")
+                    context = validation_spec.validate_context(context)
+                    logger.debug(f"Parameter validation passed for command: {command_id}")
+            except Exception as validation_error:
+                logger.warning(f"Parameter validation failed for command {command_id}: {validation_error}")
+                return CommandResult(
+                    success=False,
+                    error=f"Parameter validation failed: {str(validation_error)}"
+                )
+
             # Execute the command
             result = command.execute(context)
             

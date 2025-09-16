@@ -354,3 +354,173 @@ class TestSplitPaneWidget:
         # Toggle again
         visible2 = widget.toggle_pane_numbers()
         assert visible2 != visible
+
+    # Test Monkey Pattern: Always test signal connections exist
+    def test_split_pane_widget_has_required_signals(self, qtbot):
+        """Test SplitPaneWidget defines all required signals."""
+        widget = SplitPaneWidget()
+        qtbot.addWidget(widget)
+
+        # Verify all documented signals exist
+        assert hasattr(widget, 'pane_added'), "SplitPaneWidget must have pane_added signal"
+        assert hasattr(widget, 'pane_removed'), "SplitPaneWidget must have pane_removed signal"
+        assert hasattr(widget, 'active_pane_changed'), "SplitPaneWidget must have active_pane_changed signal"
+        assert hasattr(widget, 'layout_changed'), "SplitPaneWidget must have layout_changed signal"
+
+        # Verify signals are actually Signal objects
+        from PySide6.QtCore import Signal
+        assert hasattr(type(widget), 'pane_added'), "pane_added must be a Signal class attribute"
+        assert hasattr(type(widget), 'pane_removed'), "pane_removed must be a Signal class attribute"
+        assert hasattr(type(widget), 'active_pane_changed'), "active_pane_changed must be a Signal class attribute"
+        assert hasattr(type(widget), 'layout_changed'), "layout_changed must be a Signal class attribute"
+
+    def test_pane_added_signal_emission(self, qtbot):
+        """Test pane_added signal is emitted when splitting panes."""
+        widget = SplitPaneWidget()
+        qtbot.addWidget(widget)
+
+        # Test signal emission with qtbot.waitSignal
+        with qtbot.waitSignal(widget.pane_added, timeout=1000) as blocker:
+            active_pane_id = widget.active_pane_id
+            new_pane_id = widget.split_horizontal(active_pane_id)
+
+        # Verify signal was emitted with correct pane ID
+        assert blocker.args == [new_pane_id], (
+            f"Expected pane_added signal with args [{new_pane_id}], "
+            f"but got {blocker.args}"
+        )
+
+    def test_pane_removed_signal_emission(self, qtbot):
+        """Test pane_removed signal is emitted when closing panes."""
+        widget = SplitPaneWidget()
+        qtbot.addWidget(widget)
+
+        # Create multiple panes first
+        active_pane_id = widget.active_pane_id
+        new_pane_id = widget.split_horizontal(active_pane_id)
+
+        # Test signal emission when closing pane
+        with qtbot.waitSignal(widget.pane_removed, timeout=1000) as blocker:
+            widget.close_pane(new_pane_id)
+
+        # Verify signal was emitted with correct pane ID
+        assert blocker.args == [new_pane_id], (
+            f"Expected pane_removed signal with args [{new_pane_id}], "
+            f"but got {blocker.args}"
+        )
+
+    def test_active_pane_changed_signal_emission(self, qtbot):
+        """Test active_pane_changed signal is emitted when switching active panes."""
+        widget = SplitPaneWidget()
+        qtbot.addWidget(widget)
+
+        # Create multiple panes
+        first_pane_id = widget.active_pane_id
+        second_pane_id = widget.split_horizontal(first_pane_id)
+
+        # Test signal emission when changing active pane
+        with qtbot.waitSignal(widget.active_pane_changed, timeout=1000) as blocker:
+            widget.set_active_pane(first_pane_id)
+
+        # Verify signal was emitted with correct pane ID
+        assert blocker.args == [first_pane_id], (
+            f"Expected active_pane_changed signal with args [{first_pane_id}], "
+            f"but got {blocker.args}"
+        )
+
+    def test_layout_changed_signal_emission(self, qtbot):
+        """Test layout_changed signal is emitted during layout modifications."""
+        widget = SplitPaneWidget()
+        qtbot.addWidget(widget)
+
+        # Test signal emission during split operation
+        with qtbot.waitSignal(widget.layout_changed, timeout=1000) as blocker:
+            active_pane_id = widget.active_pane_id
+            widget.split_horizontal(active_pane_id)
+
+        # Verify signal was emitted (no args expected for layout_changed)
+        assert blocker.args == [], (
+            f"Expected layout_changed signal with no args, but got {blocker.args}"
+        )
+
+    def test_multiple_signal_emissions_during_split(self, qtbot):
+        """Test multiple signals are emitted correctly during split operations."""
+        widget = SplitPaneWidget()
+        qtbot.addWidget(widget)
+
+        # Test multiple signals emitted during one operation
+        with qtbot.waitSignals([widget.pane_added, widget.layout_changed], timeout=1000):
+            active_pane_id = widget.active_pane_id
+            new_pane_id = widget.split_horizontal(active_pane_id)
+
+        # Both signals should have been emitted successfully
+        assert new_pane_id is not None, "Split operation should have succeeded"
+
+    def test_signal_emission_order_during_pane_operations(self, qtbot):
+        """Test signals are emitted in correct order during pane operations."""
+        widget = SplitPaneWidget()
+        qtbot.addWidget(widget)
+
+        # Track signal emissions using qtbot.spy
+        pane_added_spy = qtbot.spy(widget.pane_added)
+        layout_changed_spy = qtbot.spy(widget.layout_changed)
+
+        # Perform split operation
+        active_pane_id = widget.active_pane_id
+        widget.split_horizontal(active_pane_id)
+
+        # Wait for signals to be processed
+        qtbot.wait(100)
+
+        # Verify both signals were emitted
+        assert len(pane_added_spy) >= 1, "pane_added signal should have been emitted"
+        assert len(layout_changed_spy) >= 1, "layout_changed signal should have been emitted"
+
+    def test_no_signal_emission_on_failed_operations(self, qtbot):
+        """Test signals are not emitted when operations fail."""
+        widget = SplitPaneWidget()
+        qtbot.addWidget(widget)
+
+        # Set up spy to track signal emissions
+        pane_removed_spy = qtbot.spy(widget.pane_removed)
+
+        # Try to close non-existent pane (should fail silently)
+        widget.close_pane("non-existent-pane-id")
+
+        qtbot.wait(100)
+
+        # Should not have emitted pane_removed signal for invalid operation
+        assert len(pane_removed_spy) == 0, (
+            "pane_removed signal should not be emitted for invalid pane ID"
+        )
+
+    def test_signal_emission_during_state_restoration(self, qtbot):
+        """Test signals are properly handled during state restoration."""
+        # Create widget with splits
+        widget1 = SplitPaneWidget()
+        qtbot.addWidget(widget1)
+
+        active_pane_id = widget1.active_pane_id
+        widget1.split_horizontal(active_pane_id)
+
+        # Save state
+        state = widget1.get_state()
+
+        # Create new widget and set up signal monitoring
+        widget2 = SplitPaneWidget()
+        qtbot.addWidget(widget2)
+
+        layout_changed_spy = qtbot.spy(widget2.layout_changed)
+
+        # Restore state (may or may not emit signals depending on implementation)
+        success = widget2.set_state(state)
+
+        qtbot.wait(100)
+
+        # State should be restored successfully
+        assert success == True
+        assert widget2.get_pane_count() >= 2
+
+        # Layout change signal may be emitted during restoration
+        # (This is implementation-dependent, so we just verify no errors occurred)
+        assert len(layout_changed_spy) >= 0

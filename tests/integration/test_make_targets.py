@@ -184,7 +184,7 @@ class TestMakeTargets:
             )
             
             # Let it run for a short time to initialize
-            time.sleep(2)
+            time.sleep(2)  # Necessary for process initialization in integration test
             
             # Terminate the process
             process.terminate()
@@ -224,7 +224,7 @@ class TestMakeTargets:
             )
             
             # Let it run for a short time
-            time.sleep(2)
+            time.sleep(2)  # Necessary for process initialization in integration test
             
             # Terminate the process
             process.terminate()
@@ -254,7 +254,7 @@ class TestMakeTargets:
         )
         
         # Let it run for a short time
-        time.sleep(2)
+        time.sleep(2)  # Necessary for process initialization in integration test
         
         # Terminate the process
         process.terminate()
@@ -280,7 +280,7 @@ class TestMakeTargets:
         )
         
         # Let it run for a short time
-        time.sleep(2)
+        time.sleep(2)  # Necessary for process initialization in integration test
         
         # Terminate the process
         process.terminate()
@@ -318,7 +318,7 @@ class TestMakeTargets:
             )
             
             # Let it run for a short time
-            time.sleep(2)
+            time.sleep(2)  # Necessary for process initialization in integration test
             
             # Terminate the process
             process.terminate()

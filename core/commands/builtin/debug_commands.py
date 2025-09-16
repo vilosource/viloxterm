@@ -96,8 +96,11 @@ def show_service_info_command(context: CommandContext) -> CommandResult:
             if hasattr(service, 'get_service_info'):
                 try:
                     service_info.update(service.get_service_info())
-                except:
-                    pass
+                except (AttributeError, RuntimeError, ValueError) as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.debug(f"Failed to get service info from {service.name}: {e}")
+                    # Service info not available, continue without it
                     
             info['services'].append(service_info)
         

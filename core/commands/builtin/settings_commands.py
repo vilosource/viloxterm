@@ -445,6 +445,86 @@ def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
         return CommandResult(success=False, error=str(e))
 
 
+@command(
+    id="settings.setKeyboardShortcut",
+    title="Set Keyboard Shortcut",
+    category="Settings",
+    description="Set keyboard shortcut for a specific command"
+)
+def set_keyboard_shortcut_command(context: CommandContext) -> CommandResult:
+    """Set keyboard shortcut for a command."""
+    try:
+        command_id = context.args.get('command_id')
+        shortcut = context.args.get('shortcut')
+
+        if not command_id:
+            return CommandResult(success=False, error="command_id is required")
+
+        settings_service = context.get_service(SettingsService)
+        if not settings_service:
+            return CommandResult(success=False, error="SettingsService not available")
+
+        # Set the shortcut
+        settings_service.set_keyboard_shortcut(command_id, shortcut or "")
+
+        return CommandResult(
+            success=True,
+            value={'command_id': command_id, 'shortcut': shortcut}
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to set keyboard shortcut: {e}")
+        return CommandResult(success=False, error=str(e))
+
+
+@command(
+    id="settings.registerKeyboardShortcut",
+    title="Register Keyboard Shortcut",
+    category="Settings",
+    description="Register a keyboard shortcut with the keyboard service"
+)
+def register_keyboard_shortcut_command(context: CommandContext) -> CommandResult:
+    """Register a keyboard shortcut with the keyboard service."""
+    try:
+        from core.keyboard.service import KeyboardService
+        from core.commands.registry import command_registry
+
+        command_id = context.args.get('command_id')
+        shortcut = context.args.get('shortcut')
+
+        if not command_id:
+            return CommandResult(success=False, error="command_id is required")
+
+        keyboard_service = context.get_service(KeyboardService)
+        if not keyboard_service:
+            return CommandResult(success=False, error="KeyboardService not available")
+
+        # Unregister old shortcut first
+        keyboard_service.unregister_shortcut(f"command.{command_id}")
+
+        # Register new shortcut if provided
+        if shortcut:
+            command = command_registry.get_command(command_id)
+            if command:
+                keyboard_service.register_shortcut_from_string(
+                    shortcut_id=f"command.{command_id}",
+                    sequence_str=shortcut,
+                    command_id=command_id,
+                    description=command.description or command.title,
+                    source="user",
+                    priority=100  # User shortcuts have higher priority
+                )
+
+        return CommandResult(
+            success=True,
+            value={'command_id': command_id, 'shortcut': shortcut}
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to register keyboard shortcut: {e}")
+        return CommandResult(success=False, error=str(e))
+
+
 def register_settings_commands():
     """Register all settings commands."""
     # The @command decorator automatically registers them

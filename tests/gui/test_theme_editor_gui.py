@@ -55,7 +55,7 @@ class TestThemeEditorGUI:
         qtbot.addWidget(widget)
 
         # Check widget is created
-        assert widget is not None
+        assert isinstance(widget, ThemeEditorWidget), f"Expected ThemeEditorWidget instance, got {type(widget)}"
         assert widget.get_title() == "Theme Editor"
 
         # Show and wait for visibility
@@ -266,12 +266,12 @@ class TestColorPickerGUI:
         picker.show()
 
         # Check color button exists
-        assert picker._color_button is not None
+        assert hasattr(picker, '_color_button') and picker._color_button is not None, f"Color picker should have a color button"
         assert picker._color_button.isVisible()
 
         # Check hex input exists if enabled
         if picker._show_hex_input:
-            assert picker._hex_input is not None
+            assert hasattr(picker, '_hex_input') and picker._hex_input is not None, f"Color picker should have hex input when enabled"
             assert picker._hex_input.text() == "#FF0000"
 
     def test_hex_input_validation(self, qtbot):
@@ -311,7 +311,7 @@ class TestColorPickerGUI:
         qtbot.wait(100)
 
         # Check signal was emitted
-        assert len(signal_args) > 0
+        assert len(signal_args) >= 1, f"Expected at least 1 signal emission, got {len(signal_args)}"
         assert signal_args[-1][0] == "#FF0000"  # color value
         assert signal_args[-1][1] == False  # not preview
 
@@ -344,7 +344,7 @@ class TestColorPickerGUI:
         qtbot.wait(100)
 
         # Check signal includes key
-        assert len(signal_args) > 0
+        assert len(signal_args) >= 1, f"Expected at least 1 signal with key, got {len(signal_args)}"
         assert signal_args[-1][0] == "editor.background"  # key
         assert signal_args[-1][1] == "#FF0000"  # value
         assert signal_args[-1][2] == False  # not preview
@@ -370,13 +370,13 @@ class TestThemePreviewGUI:
         assert preview.isVisible()
 
         # Check preview components exist
-        assert preview._title_bar is not None
-        assert preview._menu_bar is not None
-        assert preview._activity_bar is not None
-        assert preview._sidebar is not None
-        assert preview._editor_area is not None
-        assert preview._panel is not None
-        assert preview._status_bar is not None
+        assert hasattr(preview, '_title_bar') and preview._title_bar.isVisible(), f"Preview should have visible title bar"
+        assert hasattr(preview, '_menu_bar') and preview._menu_bar.isVisible(), f"Preview should have visible menu bar"
+        assert hasattr(preview, '_activity_bar') and preview._activity_bar.isVisible(), f"Preview should have visible activity bar"
+        assert hasattr(preview, '_sidebar') and preview._sidebar.isVisible(), f"Preview should have visible sidebar"
+        assert hasattr(preview, '_editor_area') and preview._editor_area.isVisible(), f"Preview should have visible editor area"
+        assert hasattr(preview, '_panel') and preview._panel.isVisible(), f"Preview should have visible panel"
+        assert hasattr(preview, '_status_bar') and preview._status_bar.isVisible(), f"Preview should have visible status bar"
 
     def test_apply_colors_to_preview(self, qtbot):
         """Test applying colors updates preview."""
@@ -428,7 +428,7 @@ class TestThemeEditorCommands:
         # Get the actual command function
         registry = CommandRegistry()
         command_info = registry.get_command("theme.openEditor")
-        assert command_info is not None
+        assert command_info is not None and hasattr(command_info, 'func'), f"Expected valid command info for 'theme.openEditor', got {command_info}"
 
         # Mock workspace service
         workspace = MagicMock(spec=WorkspaceService)
@@ -468,7 +468,7 @@ class TestThemeEditorCommands:
         # Get the actual command function
         registry = CommandRegistry()
         command_info = registry.get_command("theme.importVSCode")
-        assert command_info is not None
+        assert command_info is not None and hasattr(command_info, 'func'), f"Expected valid command info for 'theme.importVSCode', got {command_info}"
 
         # Mock file dialog
         mock_file_dialog.return_value = ("/path/to/theme.json", "JSON Files (*.json)")

@@ -103,6 +103,28 @@ def command(
         
         # Store the original function for testing
         cmd._original_func = func
+
+        # Transfer validation spec if present (for stacked decorators)
+        if hasattr(func, '_validation_spec'):
+            cmd._validation_spec = func._validation_spec
+            # Re-wrap the handler with validation if needed
+            original_handler = cmd.handler
+            validation_spec = func._validation_spec
+
+            @wraps(original_handler)
+            def validated_handler(context):
+                try:
+                    validated_context = validation_spec.validate_context(context)
+                    return original_handler(validated_context)
+                except Exception as e:
+                    from core.commands.validation import ValidationError
+                    if isinstance(e, ValidationError):
+                        logger.warning(f"Validation failed for command {id}: {e}")
+                        return CommandResult(success=False, error=str(e))
+                    else:
+                        raise e
+
+            cmd.handler = validated_handler
         
         # Auto-register if requested
         if register:

@@ -2,14 +2,17 @@
 """
 Workspace service for managing tabs, panes, and layouts.
 
-This service encapsulates all workspace-related business logic,
-providing a clean interface for commands and UI components.
+This service coordinates workspace-related operations through specialized
+managers for tabs, panes, and widget registry.
 """
 
 from typing import Optional, Dict, Any, List, Tuple
 import logging
 
 from services.base import Service
+from services.workspace_widget_registry import WorkspaceWidgetRegistry
+from services.workspace_tab_manager import WorkspaceTabManager
+from services.workspace_pane_manager import WorkspacePaneManager
 from core.settings.app_defaults import (
     get_app_default,
     get_default_widget_type,
@@ -22,12 +25,12 @@ logger = logging.getLogger(__name__)
 
 class WorkspaceService(Service):
     """
-    Service for managing workspace operations.
-    
-    Handles tab management, pane splitting, layout operations,
-    and workspace state management.
+    Service for coordinating workspace operations.
+
+    Delegates to specialized managers for tabs, panes, and widget registry
+    while providing a unified interface for commands and UI components.
     """
-    
+
     def __init__(self, workspace=None):
         """
         Initialize the workspace service.
@@ -37,10 +40,11 @@ class WorkspaceService(Service):
         """
         super().__init__("WorkspaceService")
         self._workspace = workspace
-        self._tab_counter = 0
-        self._pane_counter = 0
-        # Track widget IDs to tab indices for singleton support
-        self._widget_registry: Dict[str, int] = {}  # widget_id -> tab_index
+
+        # Initialize specialized managers
+        self._widget_registry = WorkspaceWidgetRegistry()
+        self._tab_manager = WorkspaceTabManager(workspace, self._widget_registry)
+        self._pane_manager = WorkspacePaneManager(workspace)
     
     def get_workspace(self):
         """Get the workspace instance."""
@@ -49,6 +53,9 @@ class WorkspaceService(Service):
     def set_workspace(self, workspace):
         """Set the workspace instance."""
         self._workspace = workspace
+        # Update all managers with new workspace
+        self._tab_manager.set_workspace(workspace)
+        self._pane_manager.set_workspace(workspace)
         
     def initialize(self, context: Dict[str, Any]) -> None:
         """Initialize the service with application context."""
@@ -67,692 +74,271 @@ class WorkspaceService(Service):
         self._widget_registry.clear()
         super().cleanup()
 
+    # ============= Widget Registry Operations (Delegated) =============
+
     def has_widget(self, widget_id: str) -> bool:
-        """
-        Check if a widget with the given ID exists.
-
-        Args:
-            widget_id: The widget ID to check
-
-        Returns:
-            True if the widget exists, False otherwise
-        """
-        return widget_id in self._widget_registry
+        """Check if a widget with the given ID exists."""
+        return self._widget_registry.has_widget(widget_id)
 
     def focus_widget(self, widget_id: str) -> bool:
-        """
-        Focus (switch to) a widget by its ID.
-
-        Args:
-            widget_id: The widget ID to focus
-
-        Returns:
-            True if successfully focused, False otherwise
-        """
-        if widget_id not in self._widget_registry:
-            logger.warning(f"Cannot focus widget {widget_id}: not found in registry")
-            return False
-
-        tab_index = self._widget_registry[widget_id]
-
-        # Verify the tab index is still valid
-        if not self._workspace or tab_index >= self._workspace.tab_widget.count():
-            logger.warning(f"Widget {widget_id} has invalid tab index {tab_index}, removing from registry")
-            del self._widget_registry[widget_id]
-            return False
-
-        return self.switch_to_tab(tab_index)
-
-    # ============= Registry Operations =============
+        """Focus (switch to) a widget by its ID."""
+        return self._tab_manager.focus_widget(widget_id)
 
     def register_widget(self, widget_id: str, tab_index: int) -> bool:
-        """
-        Register a widget with its tab index.
-
-        Args:
-            widget_id: The widget identifier
-            tab_index: The tab index where the widget is located
-
-        Returns:
-            True if successfully registered
-        """
-        self._widget_registry[widget_id] = tab_index
-        logger.debug(f"Registered widget {widget_id} at tab index {tab_index}")
-        return True
+        """Register a widget with its tab index."""
+        return self._widget_registry.register_widget(widget_id, tab_index)
 
     def unregister_widget(self, widget_id: str) -> bool:
-        """
-        Unregister a widget from the registry.
-
-        Args:
-            widget_id: The widget identifier to remove
-
-        Returns:
-            True if widget was found and removed, False otherwise
-        """
-        if widget_id in self._widget_registry:
-            del self._widget_registry[widget_id]
-            logger.debug(f"Unregistered widget {widget_id}")
-            return True
-        logger.warning(f"Widget {widget_id} not found in registry")
-        return False
+        """Unregister a widget from the registry."""
+        return self._widget_registry.unregister_widget(widget_id)
 
     def update_registry_after_tab_close(self, closed_index: int, widget_id: Optional[str] = None) -> int:
-        """
-        Update registry indices after a tab is closed.
-
-        Args:
-            closed_index: The index of the tab that was closed
-            widget_id: Optional widget ID that was closed
-
-        Returns:
-            Number of widgets whose indices were updated
-        """
-        # Remove the closed widget if specified
-        if widget_id and widget_id in self._widget_registry:
-            del self._widget_registry[widget_id]
-            logger.debug(f"Removed widget {widget_id} from registry (tab closed)")
-
-        # Update indices for remaining widgets
-        updated_count = 0
-        for wid, tab_idx in list(self._widget_registry.items()):
-            if tab_idx > closed_index:
-                self._widget_registry[wid] = tab_idx - 1
-                updated_count += 1
-                logger.debug(f"Updated widget {wid} index: {tab_idx} -> {tab_idx - 1}")
-
-        return updated_count
+        """Update registry indices after a tab is closed."""
+        return self._widget_registry.update_registry_after_tab_close(closed_index, widget_id)
 
     def get_widget_tab_index(self, widget_id: str) -> Optional[int]:
-        """
-        Get the tab index for a registered widget.
-
-        Args:
-            widget_id: The widget identifier
-
-        Returns:
-            Tab index if widget is registered, None otherwise
-        """
-        return self._widget_registry.get(widget_id)
+        """Get the tab index for a registered widget."""
+        return self._widget_registry.get_widget_tab_index(widget_id)
 
     def is_widget_registered(self, widget_id: str) -> bool:
-        """
-        Check if a widget is registered.
+        """Check if a widget is registered."""
+        return self._widget_registry.is_widget_registered(widget_id)
 
-        Args:
-            widget_id: The widget identifier
+    # ============= Tab Operations (Delegated) =============
 
-        Returns:
-            True if widget is registered, False otherwise
-        """
-        return widget_id in self._widget_registry
-
-    # ============= Tab Operations =============
-    
     def add_editor_tab(self, name: Optional[str] = None) -> int:
-        """
-        Add a new editor tab to the workspace.
-        
-        Args:
-            name: Optional tab name, auto-generated if not provided
-            
-        Returns:
-            Index of the created tab
-            
-        Raises:
-            RuntimeError: If workspace is not available
-        """
+        """Add a new editor tab to the workspace."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            raise RuntimeError("Workspace not available")
-        
-        # Auto-generate name if not provided
-        if not name:
-            self._tab_counter += 1
-            name = f"Editor {self._tab_counter}"
-        
-        # Add the tab
-        index = self._workspace.add_editor_tab(name)
-        
+
+        # Delegate to tab manager
+        index = self._tab_manager.add_editor_tab(name)
+
         # Notify observers
         self.notify('tab_added', {
             'type': 'editor',
-            'name': name,
+            'name': name or f"Editor {index}",
             'index': index
         })
-        
+
         # Update context
         from core.context.manager import context_manager
         context_manager.set('workbench.tabs.count', self.get_tab_count())
         context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
-        
-        logger.info(f"Added editor tab '{name}' at index {index}")
+
         return index
     
     def add_terminal_tab(self, name: Optional[str] = None) -> int:
-        """
-        Add a new terminal tab to the workspace.
-        
-        Args:
-            name: Optional tab name, auto-generated if not provided
-            
-        Returns:
-            Index of the created tab
-            
-        Raises:
-            RuntimeError: If workspace is not available
-        """
+        """Add a new terminal tab to the workspace."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            raise RuntimeError("Workspace not available")
-        
-        # Auto-generate name if not provided
-        if not name:
-            self._tab_counter += 1
-            name = f"Terminal {self._tab_counter}"
-        
-        # Add the tab
-        index = self._workspace.add_terminal_tab(name)
-        
+
+        # Delegate to tab manager
+        index = self._tab_manager.add_terminal_tab(name)
+
         # Notify observers
         self.notify('tab_added', {
             'type': 'terminal',
-            'name': name,
+            'name': name or f"Terminal {index}",
             'index': index
         })
-        
+
         # Update context
         from core.context.manager import context_manager
         context_manager.set('workbench.tabs.count', self.get_tab_count())
         context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
-        
-        logger.info(f"Added terminal tab '{name}' at index {index}")
+
         return index
 
     def add_app_widget(self, widget_type, widget_id: str, name: Optional[str] = None) -> bool:
-        """
-        Add a generic app widget tab.
+        """Add a generic app widget tab."""
+        # Delegate to tab manager
+        success = self._tab_manager.add_app_widget(widget_type, widget_id, name)
 
-        Args:
-            widget_type: The WidgetType of the widget to add
-            widget_id: Unique ID for the widget
-            name: Optional tab name
+        if success:
+            # Notify observers
+            self.notify('tab_added', {
+                'type': str(widget_type.value),
+                'widget_id': widget_id,
+                'name': name
+            })
 
-        Returns:
-            bool: True if successfully added, False otherwise
-        """
-        if not self._workspace:
-            logger.error("Cannot add app widget: workspace not available")
-            return False
+            # Update context
+            from core.context.manager import context_manager
+            context_manager.set('workbench.tabs.count', self.get_tab_count())
+            context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
 
-        try:
-            # Add the generic app widget tab - returns tab index or -1 on failure
-            tab_index = self._workspace.add_app_widget_tab(widget_type, widget_id, name)
-            success = tab_index >= 0
-
-            if success:
-                # Track the widget in our registry
-                self._widget_registry[widget_id] = tab_index
-
-                # Notify observers
-                self.notify('tab_added', {
-                    'type': str(widget_type.value),
-                    'widget_id': widget_id,
-                    'name': name
-                })
-
-                # Update context
-                from core.context.manager import context_manager
-                context_manager.set('workbench.tabs.count', self.get_tab_count())
-                context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
-
-                logger.info(f"Added app widget '{name}' (type: {widget_type}) with id {widget_id}")
-
-            return success
-
-        except Exception as e:
-            logger.error(f"Failed to add app widget: {e}")
-            return False
+        return success
     
     def close_tab(self, index: Optional[int] = None) -> bool:
-        """
-        Close a tab.
-
-        Args:
-            index: Tab index to close, or None for current tab
-
-        Returns:
-            True if tab was closed
-        """
+        """Close a tab."""
         self.validate_initialized()
-
-        if not self._workspace:
-            return False
-
-        # Get current index if not provided
-        if index is None:
-            index = self._workspace.tab_widget.currentIndex()
-
-        if index < 0:
-            return False
 
         # Get tab name before closing
-        tab_name = self._workspace.tab_widget.tabText(index) if self._workspace.tab_widget else None
+        if index is None and self._workspace:
+            index = self._workspace.tab_widget.currentIndex()
 
-        # Clean up widget registry - find and remove any widgets at this tab index
-        widgets_to_remove = []
-        for widget_id, tab_idx in self._widget_registry.items():
-            if tab_idx == index:
-                widgets_to_remove.append(widget_id)
-            elif tab_idx > index:
-                # Shift indices down for tabs after the closed one
-                self._widget_registry[widget_id] = tab_idx - 1
+        tab_name = None
+        if self._workspace and index is not None and index >= 0:
+            tab_name = self._workspace.tab_widget.tabText(index)
 
-        # Remove widgets that were in the closed tab
-        for widget_id in widgets_to_remove:
-            del self._widget_registry[widget_id]
-            logger.debug(f"Removed widget {widget_id} from registry (tab closed)")
+        # Delegate to tab manager
+        success = self._tab_manager.close_tab(index)
 
-        # Close the tab
-        self._workspace.close_tab(index)
+        if success:
+            # Notify observers
+            self.notify('tab_closed', {
+                'index': index,
+                'name': tab_name
+            })
 
-        # Notify observers
-        self.notify('tab_closed', {
-            'index': index,
-            'name': tab_name
-        })
+            # Update context
+            from core.context.manager import context_manager
+            context_manager.set('workbench.tabs.count', self.get_tab_count())
+            context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
 
-        # Update context
-        from core.context.manager import context_manager
-        context_manager.set('workbench.tabs.count', self.get_tab_count())
-        context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
-
-        logger.info(f"Closed tab at index {index}")
-        return True
+        return success
     
     def get_current_tab_index(self) -> int:
-        """
-        Get the index of the current tab.
-        
-        Returns:
-            Current tab index, or -1 if no tabs
-        """
-        if not self._workspace:
-            return -1
-        return self._workspace.tab_widget.currentIndex()
+        """Get the index of the current tab."""
+        return self._tab_manager.get_current_tab_index()
     
     def get_tab_count(self) -> int:
-        """
-        Get the number of open tabs.
-        
-        Returns:
-            Number of tabs
-        """
-        if not self._workspace:
-            return 0
-        return self._workspace.tab_widget.count()
+        """Get the number of open tabs."""
+        return self._tab_manager.get_tab_count()
     
     def switch_to_tab(self, index: int) -> bool:
-        """
-        Switch to a specific tab.
-        
-        Args:
-            index: Tab index
-            
-        Returns:
-            True if switched successfully
-        """
+        """Switch to a specific tab."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            return False
-        
-        if 0 <= index < self._workspace.tab_widget.count():
-            self._workspace.tab_widget.setCurrentIndex(index)
-            
+
+        # Delegate to tab manager
+        success = self._tab_manager.switch_to_tab(index)
+
+        if success:
             self.notify('tab_switched', {'index': index})
-            return True
-        
-        return False
+
+        return success
     
-    # ============= Pane Operations =============
-    
+    # ============= Pane Operations (Delegated) =============
+
     def split_active_pane(self, orientation: Optional[str] = None) -> Optional[str]:
-        """
-        Split the active pane in the current tab.
-        
-        Args:
-            orientation: "horizontal" or "vertical"
-            
-        Returns:
-            ID of the new pane, or None if split failed
-        """
+        """Split the active pane in the current tab."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            return None
 
-        # Use default orientation if not specified
-        if orientation is None:
-            orientation = get_default_split_direction()
+        # Delegate to pane manager
+        new_id = self._pane_manager.split_active_pane(orientation)
 
-        # Get current split widget
-        widget = self._workspace.get_current_split_widget()
-        if not widget or not widget.active_pane_id:
-            logger.warning("No active pane to split")
-            return None
-
-        # Perform the split with default ratio
-        # Note: Current split methods don't support ratio parameter yet
-        # This will need to be added to SplitPaneWidget
-        if orientation == "horizontal":
-            new_id = widget.split_horizontal(widget.active_pane_id)
-        elif orientation == "vertical":
-            new_id = widget.split_vertical(widget.active_pane_id)
-        else:
-            logger.error(f"Invalid split orientation: {orientation}")
-            return None
-        
         if new_id:
-            self._pane_counter += 1
-            
             # Notify observers
+            active_pane = self._pane_manager.get_active_pane_id()
             self.notify('pane_split', {
-                'orientation': orientation,
+                'orientation': orientation or get_default_split_direction(),
                 'new_pane_id': new_id,
-                'parent_pane_id': widget.active_pane_id
+                'parent_pane_id': active_pane
             })
-            
+
             # Update context
             from core.context.manager import context_manager
             context_manager.set('workbench.pane.count', self.get_pane_count())
             context_manager.set('workbench.pane.hasMultiple', self.get_pane_count() > 1)
-            
-            logger.info(f"Split pane {orientation}ly, created pane {new_id}")
-        
+
         return new_id
     
     def close_active_pane(self) -> bool:
-        """
-        Close the active pane in the current tab.
-        
-        Returns:
-            True if pane was closed
-        """
+        """Close the active pane in the current tab."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            return False
-        
-        # Get current split widget
-        widget = self._workspace.get_current_split_widget()
-        if not widget or not widget.active_pane_id:
-            logger.warning("No active pane to close")
-            return False
-        
-        # Can't close if it's the only pane
-        if widget.get_pane_count() <= 1:
-            logger.info("Cannot close the last pane")
-            return False
-        
-        pane_id = widget.active_pane_id
-        
-        # Close the pane
-        widget.close_pane(pane_id)
-        
-        # Notify observers
-        self.notify('pane_closed', {'pane_id': pane_id})
-        
-        # Update context
-        from core.context.manager import context_manager
-        context_manager.set('workbench.pane.count', self.get_pane_count())
-        context_manager.set('workbench.pane.hasMultiple', self.get_pane_count() > 1)
-        
-        logger.info(f"Closed pane {pane_id}")
-        return True
+
+        # Get pane ID before closing
+        pane_id = self._pane_manager.get_active_pane_id()
+
+        # Delegate to pane manager
+        success = self._pane_manager.close_active_pane()
+
+        if success:
+            # Notify observers
+            self.notify('pane_closed', {'pane_id': pane_id})
+
+            # Update context
+            from core.context.manager import context_manager
+            context_manager.set('workbench.pane.count', self.get_pane_count())
+            context_manager.set('workbench.pane.hasMultiple', self.get_pane_count() > 1)
+
+        return success
     
     def focus_pane(self, pane_id: str) -> bool:
-        """
-        Focus a specific pane.
-        
-        Args:
-            pane_id: ID of the pane to focus
-            
-        Returns:
-            True if pane was focused
-        """
+        """Focus a specific pane."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            return False
-        
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            return False
-        
-        # Set the active pane AND request keyboard focus
-        widget.set_active_pane(pane_id, focus=True)
-        
-        # Notify observers
-        self.notify('pane_focused', {'pane_id': pane_id})
-        
-        return True
+
+        # Delegate to pane manager
+        success = self._pane_manager.focus_pane(pane_id)
+
+        if success:
+            # Notify observers
+            self.notify('pane_focused', {'pane_id': pane_id})
+
+        return success
     
     def toggle_pane_numbers(self) -> bool:
-        """
-        Toggle the visibility of pane identification numbers.
-        
-        Returns:
-            New visibility state (True if now visible, False if hidden)
-        """
+        """Toggle the visibility of pane identification numbers."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            logger.warning("Cannot toggle pane numbers: workspace not available")
-            return False
-        
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            logger.warning("Cannot toggle pane numbers: no current split widget")
-            return False
-        
-        # Toggle the numbers
-        visible = widget.toggle_pane_numbers()
-        
+
+        # Delegate to pane manager
+        visible = self._pane_manager.toggle_pane_numbers()
+
         # Update context for conditional commands
         from core.context.manager import context_manager
         context_manager.set('workbench.panes.numbersVisible', visible)
-        
+
         # Notify observers
         self.notify('pane_numbers_toggled', {'visible': visible})
-        
-        logger.info(f"Pane numbers {'shown' if visible else 'hidden'}")
+
         return visible
     
     def show_pane_numbers(self) -> bool:
-        """
-        Show pane identification numbers.
-        
-        Returns:
-            True if numbers are now visible
-        """
+        """Show pane identification numbers."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            return False
-        
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            return False
-        
-        # Show the numbers if not already visible
-        if hasattr(widget, 'model') and not widget.model.show_pane_numbers:
-            widget.toggle_pane_numbers()
-            logger.info("Pane numbers shown")
-            return True
-        
-        return False
+        return self._pane_manager.show_pane_numbers()
     
     def hide_pane_numbers(self) -> bool:
-        """
-        Hide pane identification numbers.
-        
-        Returns:
-            True if numbers are now hidden
-        """
+        """Hide pane identification numbers."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            return False
-        
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            return False
-        
-        # Hide the numbers if currently visible
-        if hasattr(widget, 'model') and widget.model.show_pane_numbers:
-            widget.toggle_pane_numbers()
-            logger.info("Pane numbers hidden")
-            return True
-        
-        return False
+        return self._pane_manager.hide_pane_numbers()
     
     def switch_to_pane_by_number(self, number: int) -> bool:
-        """
-        Switch to a pane by its displayed number.
-        
-        Args:
-            number: The pane number (1-9)
-            
-        Returns:
-            True if successfully switched to the pane
-        """
+        """Switch to a pane by its displayed number."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            logger.warning("Cannot switch pane: workspace not available")
-            return False
-        
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            logger.warning("Cannot switch pane: no current split widget")
-            return False
-        
-        # Find the pane ID for the given number
-        if hasattr(widget, 'model') and hasattr(widget.model, 'pane_indices'):
-            # Reverse lookup: find pane_id for the given number
-            for pane_id, pane_number in widget.model.pane_indices.items():
-                if pane_number == number:
-                    # Focus the pane
-                    if self.focus_pane(pane_id):
-                        logger.info(f"Switched to pane {number} (id: {pane_id})")
-                        return True
-                    break
-        
-        logger.warning(f"Could not find pane with number {number}")
-        return False
+        return self._pane_manager.switch_to_pane_by_number(number)
     
     def enter_pane_command_mode(self) -> bool:
-        """
-        Enter command mode for pane navigation.
-        Shows pane numbers and prepares for digit input.
-        
-        Returns:
-            True if command mode was entered successfully
-        """
+        """Enter command mode for pane navigation."""
         self.validate_initialized()
-        
-        # Show pane numbers
-        if not self.show_pane_numbers():
-            logger.warning("Could not enter pane command mode: no panes to show")
-            return False
-        
-        # Get main window and activate focus sink
-        from PySide6.QtWidgets import QApplication
-        app = QApplication.instance()
-        if app:
-            for window in app.topLevelWidgets():
-                if hasattr(window, 'focus_sink'):
-                    # Get currently focused widget to restore later
-                    current_focus = app.focusWidget()
-                    
-                    # Enter command mode with focus sink
-                    window.focus_sink.enter_command_mode(current_focus)
-                    logger.info("Entered pane command mode")
-                    return True
-        
-        logger.warning("Could not find main window with focus sink")
-        return False
+        return self._pane_manager.enter_pane_command_mode()
     
     def get_pane_count(self) -> int:
-        """
-        Get the number of panes in the current tab.
-        
-        Returns:
-            Number of panes
-        """
-        if not self._workspace:
-            return 0
-        
-        widget = self._workspace.get_current_split_widget()
-        return widget.get_pane_count() if widget else 0
+        """Get the number of panes in the current tab."""
+        return self._pane_manager.get_pane_count()
     
     def get_active_pane_id(self) -> Optional[str]:
-        """
-        Get the ID of the active pane.
-        
-        Returns:
-            Active pane ID or None
-        """
-        if not self._workspace:
-            return None
-        
-        widget = self._workspace.get_current_split_widget()
-        return widget.active_pane_id if widget else None
+        """Get the ID of the active pane."""
+        return self._pane_manager.get_active_pane_id()
     
     def navigate_in_direction(self, direction: str) -> bool:
-        """
-        Navigate to a pane in the specified direction.
-        
-        Uses tree structure and position overlap to find the most intuitive target.
-        
-        Args:
-            direction: One of "left", "right", "up", "down"
-            
-        Returns:
-            True if successfully navigated to a pane
-        """
+        """Navigate to a pane in the specified direction."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            return False
-        
-        widget = self._workspace.get_current_split_widget()
-        if not widget or not widget.active_pane_id:
-            logger.warning("No active pane to navigate from")
-            return False
-        
-        # Use the model's directional navigation
-        target_id = widget.model.find_pane_in_direction(
-            widget.active_pane_id, direction
-        )
-        
-        if target_id:
-            widget.focus_specific_pane(target_id)
-            success = True  # focus_specific_pane doesn't return a value
-            if success:
-                logger.info(f"Navigated {direction} from {widget.active_pane_id} to {target_id}")
-                self.notify('pane_navigated', {
-                    'from': widget.active_pane_id,
-                    'to': target_id,
-                    'direction': direction
-                })
-            return success
-        else:
-            logger.debug(f"No pane found in direction: {direction}")
-            return False
+
+        # Get current pane before navigation
+        from_pane = self._pane_manager.get_active_pane_id()
+
+        # Delegate to pane manager
+        success = self._pane_manager.navigate_in_direction(direction)
+
+        if success:
+            to_pane = self._pane_manager.get_active_pane_id()
+            self.notify('pane_navigated', {
+                'from': from_pane,
+                'to': to_pane,
+                'direction': direction
+            })
+
+        return success
     
     # ============= Layout Operations =============
     
@@ -796,91 +382,35 @@ class WorkspaceService(Service):
     # ============= Navigation =============
     
     def navigate_to_next_pane(self) -> bool:
-        """
-        Navigate to the next pane in the current tab.
-        
-        Returns:
-            True if navigation succeeded
-        """
+        """Navigate to the next pane in the current tab."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            return False
-        
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            return False
-        
-        # Get all pane IDs
-        panes = widget.get_all_pane_ids()
-        if len(panes) <= 1:
-            return False
-        
-        # Find current pane index
-        current_id = widget.active_pane_id
-        if current_id not in panes:
-            return False
-        
-        current_index = panes.index(current_id)
-        next_index = (current_index + 1) % len(panes)
-        
-        return self.focus_pane(panes[next_index])
+        return self._pane_manager.navigate_to_next_pane()
     
     def navigate_to_previous_pane(self) -> bool:
-        """
-        Navigate to the previous pane in the current tab.
-        
-        Returns:
-            True if navigation succeeded
-        """
+        """Navigate to the previous pane in the current tab."""
         self.validate_initialized()
-        
-        if not self._workspace:
-            return False
-        
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            return False
-        
-        # Get all pane IDs
-        panes = widget.get_all_pane_ids()
-        if len(panes) <= 1:
-            return False
-        
-        # Find current pane index
-        current_id = widget.active_pane_id
-        if current_id not in panes:
-            return False
-        
-        current_index = panes.index(current_id)
-        prev_index = (current_index - 1) % len(panes)
-        
-        return self.focus_pane(panes[prev_index])
+        return self._pane_manager.navigate_to_previous_pane()
     
     # ============= Utility Methods =============
     
     def get_workspace_info(self) -> Dict[str, Any]:
-        """
-        Get comprehensive workspace information.
-        
-        Returns:
-            Dictionary with workspace state information
-        """
+        """Get comprehensive workspace information."""
         if not self._workspace:
             return {
                 'available': False,
                 'tab_count': 0,
                 'current_tab': -1
             }
-        
-        current_index = self.get_current_tab_index()
-        widget = self._workspace.get_current_split_widget()
-        
+
+        # Combine information from all managers
+        tab_info = self._tab_manager.get_tab_info()
+        pane_info = self._pane_manager.get_pane_info()
+
         return {
             'available': True,
-            'tab_count': self.get_tab_count(),
-            'current_tab': current_index,
-            'current_tab_info': self._workspace.get_current_tab_info(),
-            'pane_count': widget.get_pane_count() if widget else 0,
-            'active_pane_id': widget.active_pane_id if widget else None
+            'tab_count': tab_info['count'],
+            'current_tab': tab_info['current'],
+            'current_tab_info': tab_info.get('current_tab_info'),
+            'pane_count': pane_info['count'],
+            'active_pane_id': pane_info['active']
         }

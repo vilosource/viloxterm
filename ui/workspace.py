@@ -93,20 +93,10 @@ class Workspace(QWidget):
     
     def _setup_theme_observer(self):
         """Set up observer for theme changes."""
-        try:
-            from services.service_locator import ServiceLocator
-            from services.ui_service import UIService
-            
-            service_locator = ServiceLocator()
-            ui_service = service_locator.get(UIService)
-            if ui_service:
-                # Subscribe to theme changes
-                ui_service.subscribe('theme_changed', self._on_theme_changed)
-        except Exception as e:
-            # If services aren't available yet, that's okay
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.debug(f"Could not set up theme observer: {e}")
+        # Theme changes should be handled through commands
+        # UI components should not directly subscribe to services
+        # The apply_theme() method will be called when needed
+        pass
     
     def _on_theme_changed(self, data):
         """Handle theme change notifications."""
@@ -687,11 +677,118 @@ class Workspace(QWidget):
 
     def apply_theme(self):
         """Apply current theme to workspace."""
-        from services.service_locator import ServiceLocator
-        from services.theme_service import ThemeService
+        # Use command pattern to get theme stylesheet
+        result = execute_command("theme.getCurrentTheme")
+        if result.success:
+            # For now, use icon manager for theme detection (consistent with other methods in this file)
+            from ui.icon_manager import get_icon_manager
+            icon_manager = get_icon_manager()
+            is_dark = icon_manager.theme == "dark"
 
-        locator = ServiceLocator.get_instance()
-        theme_service = locator.get(ThemeService)
-        theme_provider = theme_service.get_theme_provider() if theme_service else None
-        if theme_provider:
-            self.tab_widget.setStyleSheet(theme_provider.get_stylesheet("tab_widget"))
+            # Apply basic theme-aware styling for tab widget
+            # TODO: This should be replaced with proper theme provider command once available
+            if is_dark:
+                self.tab_widget.setStyleSheet(self._get_dark_tab_stylesheet())
+            else:
+                self.tab_widget.setStyleSheet(self._get_light_tab_stylesheet())
+
+    def _get_dark_tab_stylesheet(self) -> str:
+        """Get dark theme stylesheet for tab widget."""
+        return """
+            QTabWidget::pane {
+                border: 1px solid #3c3c3c;
+                background-color: #252526;
+            }
+            QTabBar::tab {
+                background-color: #2d2d30;
+                color: #cccccc;
+                padding: 8px 12px;
+                margin-right: 2px;
+            }
+            QTabBar::tab:selected {
+                background-color: #1e1e1e;
+                color: #ffffff;
+            }
+            QTabBar::tab:hover {
+                background-color: #3c3c3c;
+            }
+        """
+
+    def _get_light_tab_stylesheet(self) -> str:
+        """Get light theme stylesheet for tab widget."""
+        return """
+            QTabWidget::pane {
+                border: 1px solid #d0d0d0;
+                background-color: #ffffff;
+            }
+            QTabBar::tab {
+                background-color: #f3f3f3;
+                color: #333333;
+                padding: 8px 12px;
+                margin-right: 2px;
+            }
+            QTabBar::tab:selected {
+                background-color: #ffffff;
+                color: #000000;
+            }
+            QTabBar::tab:hover {
+                background-color: #e0e0e0;
+            }
+        """
+
+
+def get_menu_stylesheet() -> str:
+    """Get menu stylesheet using command pattern."""
+    result = execute_command("theme.getComponentStylesheet", component="menu")
+    if result.success:
+        return result.value
+
+    # Fallback to basic menu styling
+    from ui.icon_manager import get_icon_manager
+    icon_manager = get_icon_manager()
+    is_dark = icon_manager.theme == "dark"
+
+    if is_dark:
+        return """
+            QMenu {
+                background-color: #2d2d30;
+                color: #cccccc;
+                border: 1px solid #3c3c3c;
+                padding: 4px;
+            }
+            QMenu::item {
+                padding: 6px 20px;
+                border-radius: 3px;
+            }
+            QMenu::item:selected {
+                background-color: #094771;
+                color: #ffffff;
+            }
+            QMenu::separator {
+                height: 1px;
+                background-color: #3c3c3c;
+                margin: 4px 0;
+            }
+        """
+    else:
+        return """
+            QMenu {
+                background-color: #ffffff;
+                color: #333333;
+                border: 1px solid #d0d0d0;
+                padding: 4px;
+            }
+            QMenu::item {
+                padding: 6px 20px;
+                border-radius: 3px;
+            }
+            QMenu::item:selected {
+                background-color: #0078d4;
+                color: #ffffff;
+            }
+            QMenu::separator {
+                height: 1px;
+                background-color: #d0d0d0;
+                margin: 4px 0;
+            }
+        """

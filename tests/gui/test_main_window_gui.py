@@ -60,7 +60,7 @@ class TestMainWindowGUI(MainWindowGUITestBase):
         """Test main window properly manages focus between components."""
         # Main window should be able to receive focus
         gui_main_window.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Verify focus can be set (basic check)
         assert gui_main_window.isActiveWindow()
@@ -78,7 +78,7 @@ class TestMainWindowKeyboardGUI(KeyboardGUITestBase):
         
         # Simulate Ctrl+B
         qtbot.keyClick(gui_main_window, Qt.Key.Key_B, Qt.KeyboardModifier.ControlModifier)
-        QTest.qWait(100)
+        qtbot.wait(100)
         
         # Should have executed the toggle sidebar command
         gui_main_window.execute_command.assert_called_with("view.toggleSidebar")
@@ -90,7 +90,7 @@ class TestMainWindowKeyboardGUI(KeyboardGUITestBase):
         
         # Simulate Ctrl+T
         qtbot.keyClick(gui_main_window, Qt.Key.Key_T, Qt.KeyboardModifier.ControlModifier)
-        QTest.qWait(100)
+        qtbot.wait(100)
         
         # Should have executed the toggle theme command
         gui_main_window.execute_command.assert_called_with("view.toggleTheme")
@@ -103,7 +103,7 @@ class TestMainWindowKeyboardGUI(KeyboardGUITestBase):
         # Simulate Ctrl+Shift+M
         qtbot.keyClick(gui_main_window, Qt.Key.Key_M, 
                       Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
-        QTest.qWait(100)
+        qtbot.wait(100)
         
         # Should have executed the toggle menu bar command
         gui_main_window.execute_command.assert_called_with("view.toggleMenuBar")
@@ -116,7 +116,7 @@ class TestMainWindowKeyboardGUI(KeyboardGUITestBase):
         # Simulate Ctrl+Shift+R
         qtbot.keyClick(gui_main_window, Qt.Key.Key_R,
                       Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
-        QTest.qWait(100)
+        qtbot.wait(100)
         
         # Should have executed the reset app state command
         gui_main_window.execute_command.assert_called_with("debug.resetAppState")
@@ -280,7 +280,7 @@ class TestMainWindowIntegrationGUI(MainWindowGUITestBase):
         
         # Focus should be manageable
         workspace.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Basic focus test
         assert gui_main_window.isActiveWindow()

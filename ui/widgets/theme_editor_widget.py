@@ -20,11 +20,10 @@ import json
 import logging
 
 from ui.widgets.app_widget import AppWidget
-from ui.widgets.color_picker_widget import ColorPickerField
 from ui.widgets.theme_preview_widget import ThemePreviewWidget
-from core.themes.property_categories import ThemePropertyCategories
+from ui.widgets.theme_editor_controls import ThemeControlsWidget
+from ui.widgets.theme_persistence import ThemePersistenceManager
 from core.themes.theme import Theme
-from core.themes.importers import VSCodeThemeImporter
 
 logger = logging.getLogger(__name__)
 
@@ -66,11 +65,15 @@ class ThemeEditorAppWidget(AppWidget):
         self._preview_timer.setSingleShot(True)
         self._preview_timer.timeout.connect(self._apply_preview)
 
-        self._color_fields: Dict[str, ColorPickerField] = {}
         self._updating = False  # Flag to prevent recursive updates
-        # Theme service no longer directly accessed - using commands instead
+
+        # Initialize components
+        self._controls_widget: Optional[ThemeControlsWidget] = None
+        self._preview_widget: Optional[ThemePreviewWidget] = None
+        self._persistence_manager: Optional[ThemePersistenceManager] = None
 
         self._setup_ui()
+        self._setup_components()
         self._load_current_theme()
         self._connect_theme_signals()
 
@@ -132,14 +135,10 @@ class ThemeEditorAppWidget(AppWidget):
         # Main content splitter
         splitter = QSplitter(Qt.Horizontal)
 
-        # Left: Property editor
-        property_widget = self._create_property_editor()
-
-        # Set minimum width for property editor based on Typography tab content
-        # This ensures controls are always visible and usable
-        property_widget.setMinimumWidth(400)  # Minimum width for typography controls
-
-        splitter.addWidget(property_widget)
+        # Left: Controls (will be set up in _setup_components)
+        self._controls_placeholder = QFrame()
+        self._controls_placeholder.setMinimumWidth(400)
+        splitter.addWidget(self._controls_placeholder)
 
         # Right: Preview
         preview_container = QFrame()
@@ -150,8 +149,9 @@ class ThemeEditorAppWidget(AppWidget):
         preview_label.setStyleSheet("font-weight: bold; font-size: 14px;")
         preview_layout.addWidget(preview_label)
 
-        self._preview_widget = ThemePreviewWidget()
-        preview_layout.addWidget(self._preview_widget, 1)
+        # Preview (will be set up in _setup_components)
+        self._preview_placeholder = QFrame()
+        preview_layout.addWidget(self._preview_placeholder, 1)
 
         preview_container.setLayout(preview_layout)
         splitter.addWidget(preview_container)
@@ -187,6 +187,52 @@ class ThemeEditorAppWidget(AppWidget):
 
         self.setLayout(layout)
 
+    def _setup_components(self):
+        """Set up the component widgets after UI is created."""
+        # Initialize persistence manager
+        self._persistence_manager = ThemePersistenceManager(self)
+        self._connect_persistence_signals()
+
+        # Create and setup controls widget
+        self._controls_widget = ThemeControlsWidget()
+        self._connect_controls_signals()
+
+        # Replace placeholder with actual controls
+        layout = self._controls_placeholder.parent().layout()
+        if layout:
+            index = layout.indexOf(self._controls_placeholder)
+            layout.removeWidget(self._controls_placeholder)
+            self._controls_placeholder.deleteLater()
+            layout.insertWidget(index, self._controls_widget)
+
+        # Create and setup preview widget
+        self._preview_widget = ThemePreviewWidget()
+
+        # Replace placeholder with actual preview
+        parent = self._preview_placeholder.parent()
+        parent_layout = parent.layout()
+        if parent_layout:
+            index = parent_layout.indexOf(self._preview_placeholder)
+            parent_layout.removeWidget(self._preview_placeholder)
+            self._preview_placeholder.deleteLater()
+            parent_layout.insertWidget(index, self._preview_widget, 1)
+
+    def _connect_controls_signals(self):
+        """Connect signals from controls widget."""
+        if self._controls_widget:
+            self._controls_widget.color_changed.connect(self._on_color_changed)
+            self._controls_widget.typography_changed.connect(self._on_typography_changed)
+            self._controls_widget.preset_changed.connect(self._on_preset_changed)
+
+    def _connect_persistence_signals(self):
+        """Connect signals from persistence manager."""
+        if self._persistence_manager:
+            self._persistence_manager.theme_imported.connect(self._on_theme_imported)
+            self._persistence_manager.theme_saved.connect(self._on_theme_saved)
+            self._persistence_manager.theme_created.connect(self._on_theme_created)
+            self._persistence_manager.theme_deleted.connect(self._on_theme_deleted)
+            self._persistence_manager.operation_failed.connect(self._on_operation_failed)
+
     def _create_toolbar(self) -> QToolBar:
         """Create editor toolbar."""
         toolbar = QToolBar()
@@ -194,7 +240,7 @@ class ThemeEditorAppWidget(AppWidget):
         # Import action
         import_action = QAction("Import", self)
         import_action.setToolTip("Import theme from file")
-        import_action.triggered.connect(self._import_theme)
+        import_action.triggered.connect(lambda: self._persistence_manager.import_theme() if self._persistence_manager else None)
         toolbar.addAction(import_action)
 
         # Export action
@@ -208,7 +254,7 @@ class ThemeEditorAppWidget(AppWidget):
         # Import VSCode action
         vscode_action = QAction("Import VSCode", self)
         vscode_action.setToolTip("Import VSCode theme")
-        vscode_action.triggered.connect(self._import_vscode_theme)
+        vscode_action.triggered.connect(lambda: self._persistence_manager.import_vscode_theme() if self._persistence_manager else None)
         toolbar.addAction(vscode_action)
 
         toolbar.addSeparator()
@@ -220,213 +266,6 @@ class ThemeEditorAppWidget(AppWidget):
         toolbar.addAction(delete_action)
 
         return toolbar
-
-    def _create_property_editor(self) -> QWidget:
-        """Create property editor with categorized color pickers and typography controls."""
-        container = QFrame()
-        layout = QVBoxLayout()
-        layout.setContentsMargins(8, 8, 8, 8)
-
-        # Tab widget for colors and typography
-        self._property_tabs = QTabWidget()
-
-        # Colors tab
-        colors_tab = self._create_colors_tab()
-        self._property_tabs.addTab(colors_tab, "Colors")
-
-        # Typography tab
-        typography_tab = self._create_typography_tab()
-        self._property_tabs.addTab(typography_tab, "Typography")
-
-        layout.addWidget(self._property_tabs)
-
-        container.setLayout(layout)
-        return container
-
-    def _create_colors_tab(self) -> QWidget:
-        """Create the colors property editor tab."""
-        container = QWidget()
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        # Search/filter
-        search_layout = QHBoxLayout()
-        search_layout.addWidget(QLabel("Search:"))
-
-        self._search_input = QLineEdit()
-        self._search_input.setPlaceholderText("Filter properties...")
-        self._search_input.textChanged.connect(self._filter_properties)
-        search_layout.addWidget(self._search_input)
-
-        layout.addLayout(search_layout)
-
-        # Scrollable property area
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
-        # Property container
-        property_container = QWidget()
-        self._property_layout = QVBoxLayout()
-        self._property_layout.setSpacing(8)
-
-        # Create categorized property editors
-        categories = ThemePropertyCategories.get_categories()
-
-        for category_name, subcategories in categories.items():
-            # Category group box
-            category_box = QGroupBox(category_name)
-            category_layout = QVBoxLayout()
-
-            for subcategory_name, properties in subcategories.items():
-                # Subcategory label
-                if len(subcategories) > 1:  # Only show subcategory if multiple
-                    subcat_label = QLabel(subcategory_name)
-                    subcat_label.setStyleSheet("font-weight: bold; margin-top: 8px;")
-                    category_layout.addWidget(subcat_label)
-
-                # Property fields
-                for prop_key, description in properties:
-                    field = ColorPickerField(
-                        key=prop_key,
-                        label=description,
-                        initial_color="#000000",
-                        description=prop_key  # Show key as tooltip
-                    )
-                    field.color_changed.connect(self._on_color_changed)
-
-                    self._color_fields[prop_key] = field
-                    category_layout.addWidget(field)
-
-            category_box.setLayout(category_layout)
-            self._property_layout.addWidget(category_box)
-
-        self._property_layout.addStretch()
-        property_container.setLayout(self._property_layout)
-
-        scroll_area.setWidget(property_container)
-        layout.addWidget(scroll_area, 1)
-
-        container.setLayout(layout)
-        return container
-
-    def _create_typography_tab(self) -> QWidget:
-        """Create the typography settings tab."""
-        container = QWidget()
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        # Typography presets
-        preset_layout = QHBoxLayout()
-        preset_layout.addWidget(QLabel("Preset:"))
-
-        self._preset_combo = QComboBox()
-        self._preset_combo.addItem("Custom", "custom")
-        self._preset_combo.addItem("Compact", "compact")
-        self._preset_combo.addItem("Default", "default")
-        self._preset_combo.addItem("Comfortable", "comfortable")
-        self._preset_combo.addItem("Large", "large")
-        self._preset_combo.currentIndexChanged.connect(self._on_preset_changed)
-        preset_layout.addWidget(self._preset_combo, 1)
-
-        layout.addLayout(preset_layout)
-
-        # Scrollable typography controls
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
-        typography_container = QWidget()
-        typography_layout = QVBoxLayout()
-        typography_layout.setSpacing(8)
-
-        # Font family
-        font_group = QGroupBox("Font Settings")
-        font_layout = QVBoxLayout()
-
-        family_layout = QHBoxLayout()
-        family_layout.addWidget(QLabel("Font Family:"))
-        self._font_family_combo = QFontComboBox()
-        self._font_family_combo.setCurrentFont("Fira Code")
-        self._font_family_combo.currentFontChanged.connect(self._on_typography_changed)
-        family_layout.addWidget(self._font_family_combo, 1)
-        font_layout.addLayout(family_layout)
-
-        # Base font size
-        size_layout = QHBoxLayout()
-        size_layout.addWidget(QLabel("Base Font Size:"))
-        self._font_size_spin = QSpinBox()
-        self._font_size_spin.setRange(8, 32)
-        self._font_size_spin.setValue(14)
-        self._font_size_spin.setSuffix(" px")
-        self._font_size_spin.valueChanged.connect(self._on_typography_changed)
-        size_layout.addWidget(self._font_size_spin)
-
-        self._font_size_slider = QSlider(Qt.Horizontal)
-        self._font_size_slider.setRange(8, 32)
-        self._font_size_slider.setValue(14)
-        self._font_size_slider.valueChanged.connect(self._font_size_spin.setValue)
-        self._font_size_spin.valueChanged.connect(self._font_size_slider.setValue)
-        size_layout.addWidget(self._font_size_slider, 1)
-        font_layout.addLayout(size_layout)
-
-        # Line height
-        line_height_layout = QHBoxLayout()
-        line_height_layout.addWidget(QLabel("Line Height:"))
-        self._line_height_spin = QSpinBox()
-        self._line_height_spin.setRange(100, 300)
-        self._line_height_spin.setValue(150)
-        self._line_height_spin.setSuffix(" %")
-        self._line_height_spin.valueChanged.connect(self._on_typography_changed)
-        line_height_layout.addWidget(self._line_height_spin)
-
-        self._line_height_slider = QSlider(Qt.Horizontal)
-        self._line_height_slider.setRange(100, 300)
-        self._line_height_slider.setValue(150)
-        self._line_height_slider.valueChanged.connect(self._line_height_spin.setValue)
-        self._line_height_spin.valueChanged.connect(self._line_height_slider.setValue)
-        line_height_layout.addWidget(self._line_height_slider, 1)
-        font_layout.addLayout(line_height_layout)
-
-        font_group.setLayout(font_layout)
-        typography_layout.addWidget(font_group)
-
-        # Size scale preview
-        scale_group = QGroupBox("Size Scale Preview")
-        scale_layout = QVBoxLayout()
-
-        scale_sizes = [
-            ("Extra Small (xs)", "xs"),
-            ("Small (sm)", "sm"),
-            ("Base", "base"),
-            ("Large (lg)", "lg"),
-            ("Extra Large (xl)", "xl"),
-            ("2X Large (2xl)", "2xl"),
-            ("3X Large (3xl)", "3xl"),
-        ]
-
-        for label, scale in scale_sizes:
-            scale_row = QHBoxLayout()
-            scale_label = QLabel(label)
-            scale_label.setMinimumWidth(120)
-            scale_row.addWidget(scale_label)
-
-            self._scale_label = QLabel("Sample Text")
-            scale_row.addWidget(self._scale_label, 1)
-
-            scale_layout.addLayout(scale_row)
-
-        scale_group.setLayout(scale_layout)
-        typography_layout.addWidget(scale_group)
-
-        typography_layout.addStretch()
-        typography_container.setLayout(typography_layout)
-
-        scroll_area.setWidget(typography_container)
-        layout.addWidget(scroll_area, 1)
-
-        container.setLayout(layout)
-        return container
 
     def _load_current_theme(self):
         """Load current theme and available themes using commands."""
@@ -464,27 +303,29 @@ class ThemeEditorAppWidget(AppWidget):
         try:
             self._current_theme = theme
 
-            # Update color fields
-            for prop_key, field in self._color_fields.items():
-                color = theme.get_color(prop_key, "#000000")
-                field.set_color(color)
+            # Update controls widget
+            if self._controls_widget:
+                # Load colors
+                self._controls_widget.load_colors(theme.colors)
 
-            # Update typography settings
-            if theme.typography:
-                typography = theme.typography
-                self._font_family_combo.setCurrentFont(typography.font_family.split(',')[0].strip())
-                self._font_size_spin.setValue(typography.font_size_base)
-                self._line_height_spin.setValue(int(typography.line_height * 100))
-                self._preset_combo.setCurrentIndex(0)  # Set to custom
-            else:
-                # Use defaults
-                self._font_family_combo.setCurrentFont("Fira Code")
-                self._font_size_spin.setValue(14)
-                self._line_height_spin.setValue(150)
-                self._preset_combo.setCurrentIndex(2)  # Set to default
+                # Load typography settings
+                if theme.typography:
+                    typography = theme.typography
+                    self._controls_widget.load_typography_settings(
+                        typography.font_family.split(',')[0].strip(),
+                        typography.font_size_base,
+                        typography.line_height,
+                        "custom"
+                    )
+                else:
+                    # Use defaults
+                    self._controls_widget.load_typography_settings(
+                        "Fira Code", 14, 1.5, "default"
+                    )
 
             # Update preview
-            self._preview_widget.apply_theme_colors(theme.colors)
+            if self._preview_widget:
+                self._preview_widget.apply_theme_colors(theme.colors)
 
             # Reset modified state
             self._modified = False
@@ -541,94 +382,38 @@ class ThemeEditorAppWidget(AppWidget):
         self._preview_widget.apply_theme_colors(colors)
 
     def _get_current_colors(self) -> Dict[str, str]:
-        """Get current colors from all fields."""
-        colors = {}
-        for prop_key, field in self._color_fields.items():
-            colors[prop_key] = field.get_color()
-        return colors
+        """Get current colors from controls widget."""
+        if self._controls_widget:
+            return self._controls_widget.get_current_colors()
+        return {}
 
     def _apply_theme(self) -> bool:
-        """Apply current theme changes using commands."""
-        if not self._current_theme:
+        """Apply current theme changes using persistence manager."""
+        if not self._persistence_manager or not self._current_theme:
             return False
 
-        self._updating = True
-        try:
-            # Update theme colors
-            colors = self._get_current_colors()
-            self._current_theme.colors = colors
+        colors = self._get_current_colors()
+        typography_data = self._controls_widget.get_typography_settings() if self._controls_widget else {}
 
-            # Update theme typography
-            from core.themes.typography import ThemeTypography
-            font_family = self._font_family_combo.currentFont().family()
-            font_size_base = self._font_size_spin.value()
-            line_height = self._line_height_spin.value() / 100.0
-
-            self._current_theme.typography = ThemeTypography(
-                font_family=f"{font_family}, monospace",
-                font_size_base=font_size_base,
-                line_height=line_height
-            )
-
-            # Apply theme using command
-            from core.commands.executor import execute_command
-            result = execute_command("theme.applyTheme", theme_id=self._current_theme.id)
-
-            if result.success:
-                self._modified = False
-                self._update_button_states()
-                QMessageBox.information(self, "Success", "Theme applied successfully!")
-                return True
-            else:
-                raise Exception(result.error or "Failed to apply theme")
-
-        except Exception as e:
-            logger.error(f"Failed to apply theme: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to apply theme: {e}")
-            return False
-        finally:
-            self._updating = False
+        success = self._persistence_manager.apply_theme(self._current_theme, colors, typography_data)
+        if success:
+            self._modified = False
+            self._update_button_states()
+        return success
 
     def _save_theme(self) -> bool:
-        """Save current theme changes using commands."""
-        if not self._current_theme:
+        """Save current theme changes using persistence manager."""
+        if not self._persistence_manager or not self._current_theme:
             return False
 
-        try:
-            # Update theme colors
-            colors = self._get_current_colors()
-            self._current_theme.colors = colors
+        colors = self._get_current_colors()
+        typography_data = self._controls_widget.get_typography_settings() if self._controls_widget else {}
 
-            # Update theme typography
-            from core.themes.typography import ThemeTypography
-            font_family = self._font_family_combo.currentFont().family()
-            font_size_base = self._font_size_spin.value()
-            line_height = self._line_height_spin.value() / 100.0
-
-            self._current_theme.typography = ThemeTypography(
-                font_family=f"{font_family}, monospace",
-                font_size_base=font_size_base,
-                line_height=line_height
-            )
-
-            # Save theme using command
-            from core.commands.executor import execute_command
-            theme_data = self._current_theme.to_dict()
-            result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
-
-            if result.success:
-                self._modified = False
-                self._update_button_states()
-                QMessageBox.information(self, "Success", "Theme saved successfully!")
-                return True
-            else:
-                QMessageBox.warning(self, "Warning", f"Failed to save theme: {result.error}")
-                return False
-
-        except Exception as e:
-            logger.error(f"Failed to save theme: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to save theme: {e}")
-            return False
+        success = self._persistence_manager.save_theme(self._current_theme, colors, typography_data)
+        if success:
+            self._modified = False
+            self._update_button_states()
+        return success
 
     def _reset_changes(self):
         """Reset all changes to original theme."""
@@ -636,294 +421,91 @@ class ThemeEditorAppWidget(AppWidget):
             self._load_theme(self._current_theme)
 
     def _create_new_theme(self):
-        """Create a new theme."""
-        # Get name from user
-        from PySide6.QtWidgets import QInputDialog
-
-        name, ok = QInputDialog.getText(
-            self,
-            "New Theme",
-            "Enter theme name:"
-        )
-
-        if ok and name:
-            from core.commands.executor import execute_command
-
-            # Create based on current theme
-            base_id = self._current_theme.id if self._current_theme else "vscode-dark"
-            result = execute_command(
-                "theme.createCustomTheme",
-                base_theme_id=base_id,
-                name=name,
-                description=f"Custom theme created from {base_id}"
-            )
-
-            if result.success and result.value:
-                new_theme = result.value.get("theme")
-                if new_theme:
-                    # Save using command
-                    theme_data = new_theme.to_dict()
-                    save_result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
-
-                    if save_result.success:
-                        self._load_current_theme()
-
-                        # Select new theme
-                        index = self._theme_combo.findData(new_theme.id)
-                        if index >= 0:
-                            self._theme_combo.setCurrentIndex(index)
+        """Create a new theme using persistence manager."""
+        if self._persistence_manager:
+            theme_id = self._persistence_manager.create_new_theme(self._current_theme)
+            if theme_id:
+                self._load_current_theme()
+                # Select new theme
+                index = self._theme_combo.findData(theme_id)
+                if index >= 0:
+                    self._theme_combo.setCurrentIndex(index)
 
     def _duplicate_theme(self):
-        """Duplicate current theme."""
-        if not self._current_theme:
-            return
-
-        # Get name from user
-        from PySide6.QtWidgets import QInputDialog
-
-        name, ok = QInputDialog.getText(
-            self,
-            "Duplicate Theme",
-            "Enter theme name:",
-            text=f"{self._current_theme.name} Copy"
-        )
-
-        if ok and name:
-            from core.commands.executor import execute_command
-
-            # Create custom theme using command
-            result = execute_command(
-                "theme.createCustomTheme",
-                base_theme_id=self._current_theme.id,
-                name=name,
-                description=f"Duplicate of {self._current_theme.name}"
-            )
-
-            if result.success and result.value:
-                new_theme = result.value.get("theme")
-                if new_theme:
-                    # Copy current colors
-                    new_theme.colors = self._get_current_colors()
-
-                    # Save using command
-                    theme_data = new_theme.to_dict()
-                    save_result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
-
-                    if save_result.success:
-                        self._load_current_theme()
-
+        """Duplicate current theme using persistence manager."""
+        if self._persistence_manager and self._current_theme:
+            colors = self._get_current_colors()
+            theme_id = self._persistence_manager.duplicate_theme(self._current_theme, colors)
+            if theme_id:
+                self._load_current_theme()
                 # Select new theme
-                index = self._theme_combo.findData(new_theme.id)
+                index = self._theme_combo.findData(theme_id)
                 if index >= 0:
                     self._theme_combo.setCurrentIndex(index)
 
     def _delete_theme(self):
-        """Delete current theme using commands."""
-        if not self._current_theme:
-            return
-
-        # Confirm deletion
-        reply = QMessageBox.question(
-            self,
-            "Delete Theme",
-            f"Are you sure you want to delete '{self._current_theme.name}'?",
-            QMessageBox.Yes | QMessageBox.No
-        )
-
-        if reply == QMessageBox.Yes:
-            from core.commands.executor import execute_command
-            result = execute_command("theme.deleteCustomTheme", theme_id=self._current_theme.id)
-
-            if result.success:
-                QMessageBox.information(self, "Success", "Theme deleted successfully!")
+        """Delete current theme using persistence manager."""
+        if self._persistence_manager and self._current_theme:
+            if self._persistence_manager.delete_theme(self._current_theme):
                 self._load_current_theme()
-            else:
-                QMessageBox.warning(self, "Warning", result.error or "Cannot delete theme")
-
-    def _import_theme(self):
-        """Import theme from file using commands."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Import Theme",
-            "",
-            "JSON Files (*.json);;All Files (*)"
-        )
-
-        if file_path:
-            from core.commands.executor import execute_command
-            result = execute_command("theme.importTheme", file_path=file_path)
-
-            if result.success and result.value:
-                theme_id = result.value.get("theme_id")
-                QMessageBox.information(self, "Success", "Theme imported successfully!")
-                self._load_current_theme()
-
-                # Select imported theme
-                if theme_id:
-                    index = self._theme_combo.findData(theme_id)
-                    if index >= 0:
-                        self._theme_combo.setCurrentIndex(index)
-            else:
-                QMessageBox.critical(self, "Error", result.error or "Failed to import theme")
 
     def _export_theme(self):
-        """Export current theme."""
-        if not self._current_theme:
-            return
+        """Export current theme using persistence manager."""
+        if self._persistence_manager and self._current_theme:
+            colors = self._get_current_colors()
+            self._persistence_manager.export_theme(self._current_theme, colors)
 
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Export Theme",
-            f"{self._current_theme.id}.json",
-            "JSON Files (*.json)"
-        )
+    def _on_theme_imported(self, theme_id: str):
+        """Handle theme imported signal."""
+        self._load_current_theme()
+        # Select imported theme
+        index = self._theme_combo.findData(theme_id)
+        if index >= 0:
+            self._theme_combo.setCurrentIndex(index)
 
-        if file_path:
-            # Update theme with current colors before export
-            self._current_theme.colors = self._get_current_colors()
+    def _on_theme_saved(self, theme_id: str):
+        """Handle theme saved signal."""
+        self._modified = False
+        self._update_button_states()
 
-            from core.commands.executor import execute_command
-            result = execute_command(
-                "theme.exportTheme",
-                theme_id=self._current_theme.id,
-                file_path=file_path
-            )
+    def _on_theme_created(self, theme_id: str):
+        """Handle theme created signal."""
+        self._load_current_theme()
+        # Select new theme
+        index = self._theme_combo.findData(theme_id)
+        if index >= 0:
+            self._theme_combo.setCurrentIndex(index)
 
-            if result.success:
-                QMessageBox.information(self, "Success", "Theme exported successfully!")
-            else:
-                QMessageBox.critical(self, "Error", result.error or "Failed to export theme")
+    def _on_theme_deleted(self, theme_id: str):
+        """Handle theme deleted signal."""
+        self._load_current_theme()
 
-    def _import_vscode_theme(self):
-        """Import VSCode theme."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Import VSCode Theme",
-            "",
-            "JSON Files (*.json);;All Files (*)"
-        )
-
-        if file_path:
-            theme = VSCodeThemeImporter.import_from_file(Path(file_path))
-            if theme:
-                from core.commands.executor import execute_command
-
-                # Save imported theme using command
-                theme_data = theme.to_dict()
-                result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
-
-                if result.success:
-                    QMessageBox.information(self, "Success", "VSCode theme imported successfully!")
-                    self._load_current_theme()
-
-                    # Select imported theme
-                    index = self._theme_combo.findData(theme.id)
-                    if index >= 0:
-                        self._theme_combo.setCurrentIndex(index)
-                else:
-                    QMessageBox.critical(self, "Error", result.error or "Failed to save imported theme")
-            else:
-                QMessageBox.critical(self, "Error", "Failed to import VSCode theme")
-
-    def _filter_properties(self, text: str):
-        """Filter visible properties based on search text."""
-        search_text = text.lower()
-
-        for prop_key, field in self._color_fields.items():
-            # Check if key or label contains search text
-            visible = (search_text in prop_key.lower() or
-                      search_text in field._label.lower())
-            field.setVisible(visible)
-
-        # Hide empty category boxes
-        for i in range(self._property_layout.count()):
-            item = self._property_layout.itemAt(i)
-            if item and item.widget():
-                widget = item.widget()
-                if isinstance(widget, QGroupBox):
-                    # Check if any child is visible
-                    has_visible = False
-                    layout = widget.layout()
-                    if layout:
-                        for j in range(layout.count()):
-                            child_item = layout.itemAt(j)
-                            if child_item and child_item.widget():
-                                if child_item.widget().isVisible():
-                                    has_visible = True
-                                    break
-
-                    widget.setVisible(has_visible or not search_text)
+    def _on_operation_failed(self, error_message: str):
+        """Handle operation failed signal."""
+        QMessageBox.critical(self, "Error", error_message)
 
     def _on_typography_changed(self):
-        """Handle typography settings change."""
+        """Handle typography settings change from controls widget."""
         if self._updating:
             return
 
         self._modified = True
         self._update_button_states()
 
-        # Update preset combo to "Custom" if user manually changed settings
-        if self._preset_combo.currentData() != "custom":
-            self._preset_combo.blockSignals(True)
-            self._preset_combo.setCurrentIndex(0)  # Custom
-            self._preset_combo.blockSignals(False)
+        # Apply preview to the preview widget
+        self._apply_preview()
 
-        # Apply preview
-        self._apply_typography_preview()
-
-    def _on_preset_changed(self):
-        """Handle typography preset selection."""
+    def _on_preset_changed(self, preset: str):
+        """Handle typography preset change from controls widget."""
         if self._updating:
             return
 
-        preset = self._preset_combo.currentData()
-        if preset != "custom":
-            from core.commands.executor import execute_command
+        self._modified = True
+        self._update_button_states()
 
-            # Apply preset using command
-            result = execute_command("theme.applyTypographyPreset", preset=preset)
+        # Apply preview
+        self._apply_preview()
 
-            if result.success:
-                # Reload typography settings using command
-                typo_result = execute_command("theme.getTypography")
-                if typo_result.success and typo_result.value:
-                    typography = typo_result.value.get("typography")
-            self._updating = True
-            try:
-                self._font_family_combo.setCurrentFont(typography.font_family.split(',')[0].strip())
-                self._font_size_spin.setValue(typography.font_size_base)
-                self._line_height_spin.setValue(int(typography.line_height * 100))
-            finally:
-                self._updating = False
-
-            self._modified = True
-            self._update_button_states()
-
-    def _apply_typography_preview(self):
-        """Apply typography preview to the application."""
-        # Typography preview is now handled through commands
-
-        from core.themes.typography import ThemeTypography
-
-        # Create typography from current settings
-        font_family = self._font_family_combo.currentFont().family()
-        font_size_base = self._font_size_spin.value()
-        line_height = self._line_height_spin.value() / 100.0
-
-        typography = ThemeTypography(
-            font_family=f"{font_family}, monospace",
-            font_size_base=font_size_base,
-            line_height=line_height
-        )
-
-        # Apply preview using command
-        if self._current_theme:
-            from core.commands.executor import execute_command
-            execute_command(
-                "theme.applyThemePreview",
-                colors=self._current_theme.colors,
-                typography=typography
-            )
 
     def _update_button_states(self):
         """Update button enabled states."""

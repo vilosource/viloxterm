@@ -215,5 +215,8 @@ class CustomTitleBar(QWidget):
             # Disconnect the clicked signal if menu is attached
             try:
                 self.menu_button.clicked.disconnect(self.on_menu_clicked)
-            except:
-                pass
+            except (TypeError, RuntimeError) as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Signal was not connected: {e}")
+                # Signal was not connected, which is fine

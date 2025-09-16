@@ -53,14 +53,7 @@ grep -r "ServiceLocator" ui/widgets/ --include="*.py"  # Should be none
 
 #### For Each Change
 1. **Write** - Max 10 lines
-2. **Test** - Verify app starts:
-   ```bash
-   .direnv/python-3.12.3/bin/python main.py &
-   PID=$!
-   sleep 3
-   ps -p $PID > /dev/null && echo "✅ OK" || echo "❌ FAILED"
-   kill $PID 2>/dev/null
-   ```
+2. **Test** - Use appropriate testing method (see Testing Requirements section)
 3. **Verify** - Check no violations introduced
 
 ### Step 4: Command Pattern Implementation
@@ -109,18 +102,35 @@ When implementing from FIX_IMPLEMENTATION_PLAN.md:
 
 ## Testing Requirements
 
-### After Every Change
+### Use the Test Script - It's Already Set Up!
+
+The project has a test script at `scripts/test_app_starts.sh` that handles all testing without hanging:
+
 ```bash
-# Quick syntax check
-.direnv/python-3.12.3/bin/python -m py_compile changed_file.py
+# Quick import test (FASTEST - use this most often)
+./scripts/test_app_starts.sh import
 
-# Run app test
-.direnv/python-3.12.3/bin/python main.py &
-# ... (test sequence)
+# Headless GUI test (for UI changes)
+./scripts/test_app_starts.sh headless
 
-# Run unit tests if they exist
-.direnv/python-3.12.3/bin/pytest tests/unit/test_*[feature]*.py -v
+# Syntax check for specific file
+./scripts/test_app_starts.sh syntax ui/workspace.py
+
+# Full app test with timeout (rarely needed)
+./scripts/test_app_starts.sh full
 ```
+
+### Choose Testing Method Based on Change Type
+- **ServiceLocator removal**: Use `import` test
+- **UI component changes**: Use `headless` test
+- **Command/service changes**: Use `import` test
+- **After refactoring**: Use `headless` test
+- **Simple syntax fixes**: Use `syntax` test
+
+### Testing Strategy
+1. After EVERY change (max 10 lines), run appropriate test
+2. If test fails, revert the change immediately
+3. Never proceed to next change if current test fails
 
 ## Progress Tracking
 

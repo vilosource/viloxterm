@@ -43,7 +43,7 @@ class TestThemeService:
         themes = initialized_theme_service.get_available_themes()
 
         # Should have loaded built-in themes
-        assert len(themes) > 0
+        assert len(themes) >= 4, f"Expected at least 4 built-in themes, got {len(themes)}"
 
         # Check for expected themes
         theme_ids = [t.id for t in themes]

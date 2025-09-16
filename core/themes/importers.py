@@ -352,7 +352,10 @@ class VSCodeThemeImporter:
 
             # Convert back to hex
             return f"#{r:02x}{g:02x}{b:02x}"
-        except:
+        except (ValueError, IndexError, TypeError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to adjust color brightness for '{color}': {e}")
             return color  # Return original if adjustment fails
 
 
@@ -396,5 +399,8 @@ class ThemeImporter:
             # Check for other formats here...
 
             return "unknown"
-        except:
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to detect theme format for '{file_path}': {e}")
             return "unknown"

@@ -185,11 +185,11 @@ class TestActivityBarKeyboardGUI(ActivityBarGUITestBase):
         """Test activity bar supports keyboard navigation."""
         # Focus the activity bar
         gui_activity_bar.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Test Tab navigation through buttons
         qtbot.keyClick(gui_activity_bar, Qt.Key.Key_Tab)
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Verify focus is manageable (basic test)
         # Detailed keyboard navigation depends on QToolBar implementation
@@ -249,7 +249,7 @@ class TestActivityBarIntegrationGUI(ActivityBarGUITestBase):
         
         # Workspace should still be functional
         workspace.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Basic integration test - both components should coexist
         assert activity_bar.isVisible()
@@ -274,7 +274,7 @@ class TestActivityBarAnimationGUI(ActivityBarGUITestBase, MouseGUITestBase):
                 if button_widget:
                     # Simulate hover
                     self.hover_widget(qtbot, button_widget)
-                    QTest.qWait(100)
+                    qtbot.wait(100)
                     
                     # Basic test - widget should still be valid after hover
                     assert button_widget.isVisible()
@@ -313,7 +313,7 @@ class TestActivityBarPerformanceGUI(ActivityBarGUITestBase):
             for _ in range(3):  # 3 cycles
                 for view in views:
                     self.click_activity_button(qtbot, gui_activity_bar, view)
-                    QTest.qWait(10)  # Minimal wait
+                    qtbot.wait(10)  # Minimal wait
             
             # Verify final state is consistent
             final_view = gui_activity_bar.current_view
@@ -333,4 +333,4 @@ class TestActivityBarPerformanceGUI(ActivityBarGUITestBase):
             # Verify icons were updated efficiently
             assert mock_icon_manager.get_icon.call_count == 4  # 4 icons
             
-            QTest.qWait(10)  # Brief pause between updates
+            qtbot.wait(10)  # Brief pause between updates

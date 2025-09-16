@@ -184,13 +184,13 @@ class TestWorkspaceService:
         
         # Valid tab index
         success = service.switch_to_tab(1)
-        assert success
+        assert success is True, f"Failed to switch to valid tab index 1"
         mock_workspace.tab_widget.setCurrentIndex.assert_called_with(1)
         
         # Invalid tab index
         mock_workspace.tab_widget.setCurrentIndex.reset_mock()
         success = service.switch_to_tab(10)
-        assert not success
+        assert success is False, f"Expected failure when switching to invalid tab index 10"
         mock_workspace.tab_widget.setCurrentIndex.assert_not_called()
 
 
@@ -230,12 +230,12 @@ class TestUIService:
         
         # Valid view
         success = service.set_sidebar_view("explorer")
-        assert success
+        assert success is True, f"Failed to set sidebar view to 'explorer'"
         mock_main_window.sidebar.set_current_view.assert_called_with("explorer")
         
         # Invalid view
         success = service.set_sidebar_view("invalid_view")
-        assert not success
+        assert success is False, f"Expected failure when setting invalid sidebar view"
     
     def test_toggle_fullscreen(self, ui_service):
         """Test fullscreen toggling."""
@@ -244,13 +244,13 @@ class TestUIService:
         # Enter fullscreen
         mock_main_window.isFullScreen.return_value = False
         is_fullscreen = service.toggle_fullscreen()
-        assert is_fullscreen
+        assert is_fullscreen is True, f"Expected fullscreen mode to be enabled"
         mock_main_window.showFullScreen.assert_called_once()
         
         # Exit fullscreen
         mock_main_window.isFullScreen.return_value = True
         is_fullscreen = service.toggle_fullscreen()
-        assert not is_fullscreen
+        assert is_fullscreen is False, f"Expected fullscreen mode to be disabled"
         mock_main_window.showNormal.assert_called_once()
 
 
@@ -274,7 +274,7 @@ class TestTerminalService:
         
         # Start server
         success = service.start_server()
-        assert success
+        assert success is True, f"Failed to start terminal server"
         service._terminal_server.start_server.assert_called_once()
     
     def test_create_session(self, terminal_service):
@@ -284,7 +284,7 @@ class TestTerminalService:
         
         # Create session
         session_id = service.create_session(command="bash")
-        assert session_id is not None
+        assert isinstance(session_id, str) and len(session_id) > 0, f"Expected valid session ID string, got {session_id}"
         assert session_id in service._sessions
         
         # Check session info
@@ -302,7 +302,7 @@ class TestTerminalService:
         assert session_id in service._sessions
         
         success = service.close_session(session_id)
-        assert success
+        assert success is True, f"Failed to close terminal session {session_id}"
         assert session_id not in service._sessions
 
 
@@ -350,12 +350,12 @@ class TestEditorService:
         
         # Set text
         success = service.set_text("new content")
-        assert success
+        assert success is True, f"Failed to set editor text"
         mock_editor.setPlainText.assert_called_with("new content")
         
         # Insert text
         success = service.insert_text("inserted")
-        assert success
+        assert success is True, f"Failed to insert text into editor"
         mock_editor.insertPlainText.assert_called_with("inserted")
     
     def test_clipboard_operations(self, editor_service):
@@ -364,17 +364,17 @@ class TestEditorService:
         
         # Cut
         success = service.cut()
-        assert success
+        assert success is True, f"Failed to cut text from editor"
         mock_editor.cut.assert_called_once()
         
         # Copy
         success = service.copy()
-        assert success
+        assert success is True, f"Failed to copy text from editor"
         mock_editor.copy.assert_called_once()
         
         # Paste
         success = service.paste()
-        assert success
+        assert success is True, f"Failed to paste text into editor"
         mock_editor.paste.assert_called_once()
     
     def test_undo_redo(self, editor_service):
@@ -383,12 +383,12 @@ class TestEditorService:
         
         # Undo
         success = service.undo()
-        assert success
+        assert success is True, f"Failed to undo in editor"
         mock_editor.undo.assert_called_once()
         
         # Redo
         success = service.redo()
-        assert success
+        assert success is True, f"Failed to redo in editor"
         mock_editor.redo.assert_called_once()
 
 

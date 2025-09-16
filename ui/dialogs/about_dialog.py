@@ -347,16 +347,26 @@ SOFTWARE."""
 
     def apply_theme(self):
         """Apply current theme to about dialog."""
-        from services.service_locator import ServiceLocator
-        from services.theme_service import ThemeService
+        from core.commands.executor import execute_command
 
-        locator = ServiceLocator.get_instance()
-        theme_service = locator.get(ThemeService)
-        theme_provider = theme_service.get_theme_provider() if theme_service else None
-        if theme_provider:
-            colors = theme_provider._theme_service.get_colors()
+        # Get theme colors through command pattern
+        result = execute_command("theme.getCurrentColors")
+        if result and result.success:
+            colors = result.value
+        else:
+            # Fallback colors
+            colors = {
+                "editor.background": "#252526",
+                "editor.foreground": "#cccccc",
+                "tab.inactiveBackground": "#2d2d30",
+                "tab.activeBackground": "#1e1e1e",
+                "button.background": "#0e639c",
+                "button.foreground": "#ffffff",
+                "button.hoverBackground": "#1177bb",
+                "sideBar.background": "#252526"
+            }
 
-            self.setStyleSheet(f"""
+        self.setStyleSheet(f"""
                 QDialog {{
                     background-color: {colors.get("editor.background", "#252526")};
                     color: {colors.get("editor.foreground", "#cccccc")};

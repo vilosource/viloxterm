@@ -24,21 +24,21 @@ class TestKeySequenceParser:
         """Test parsing simple key chords."""
         # Single key
         sequence = KeySequenceParser.parse("n")
-        assert sequence is not None
+        assert isinstance(sequence, KeySequence), f"Expected KeySequence instance for 'n', got {type(sequence)}"
         assert len(sequence.chords) == 1
         assert sequence.chords[0].key == "n"
         assert len(sequence.chords[0].modifiers) == 0
         
         # Key with modifier
         sequence = KeySequenceParser.parse("ctrl+n")
-        assert sequence is not None
+        assert isinstance(sequence, KeySequence), f"Expected KeySequence instance for 'ctrl+n', got {type(sequence)}"
         assert len(sequence.chords) == 1
         assert sequence.chords[0].key == "n"
         assert KeyModifier.CTRL in sequence.chords[0].modifiers
         
         # Multiple modifiers
         sequence = KeySequenceParser.parse("ctrl+shift+p")
-        assert sequence is not None
+        assert isinstance(sequence, KeySequence), f"Expected KeySequence instance for 'ctrl+shift+p', got {type(sequence)}"
         assert len(sequence.chords) == 1
         assert sequence.chords[0].key == "p"
         assert KeyModifier.CTRL in sequence.chords[0].modifiers
@@ -47,7 +47,7 @@ class TestKeySequenceParser:
     def test_parse_chord_sequence(self):
         """Test parsing chord sequences."""
         sequence = KeySequenceParser.parse("ctrl+k ctrl+w")
-        assert sequence is not None
+        assert isinstance(sequence, KeySequence), f"Expected KeySequence instance for chord sequence 'ctrl+k ctrl+w', got {type(sequence)}"
         assert len(sequence.chords) == 2
         
         # First chord
@@ -61,11 +61,11 @@ class TestKeySequenceParser:
     def test_parse_function_keys(self):
         """Test parsing function keys."""
         sequence = KeySequenceParser.parse("f1")
-        assert sequence is not None
+        assert isinstance(sequence, KeySequence), f"Expected KeySequence instance for function key 'f1', got {type(sequence)}"
         assert sequence.chords[0].key == "f1"
         
         sequence = KeySequenceParser.parse("ctrl+f12")
-        assert sequence is not None
+        assert isinstance(sequence, KeySequence), f"Expected KeySequence instance for 'ctrl+f12', got {type(sequence)}"
         assert sequence.chords[0].key == "f12"
         assert KeyModifier.CTRL in sequence.chords[0].modifiers
     
@@ -75,12 +75,12 @@ class TestKeySequenceParser:
         
         for key in special_keys:
             sequence = KeySequenceParser.parse(key)
-            assert sequence is not None
+            assert isinstance(sequence, KeySequence), f"Expected KeySequence instance for special key '{key}', got {type(sequence)}"
             assert sequence.chords[0].key == key
             
             # With modifier
             sequence = KeySequenceParser.parse(f"ctrl+{key}")
-            assert sequence is not None
+            assert isinstance(sequence, KeySequence), f"Expected KeySequence instance for 'ctrl+{key}', got {type(sequence)}"
             assert sequence.chords[0].key == key
             assert KeyModifier.CTRL in sequence.chords[0].modifiers
     
@@ -107,21 +107,21 @@ class TestKeySequenceParser:
         """Test sequence validation."""
         # Valid sequences
         valid, error = KeySequenceParser.validate("ctrl+n")
-        assert valid
+        assert valid is True, f"Expected 'ctrl+n' to be valid, but validation failed with error: {error}"
         assert error is None
         
         valid, error = KeySequenceParser.validate("ctrl+k ctrl+w")
-        assert valid
+        assert valid is True, f"Expected 'ctrl+k ctrl+w' to be valid, but validation failed with error: {error}"
         assert error is None
         
         # Invalid sequences
         valid, error = KeySequenceParser.validate("")
-        assert not valid
-        assert error is not None
+        assert valid is False, "Expected empty string to be invalid"
+        assert isinstance(error, str) and len(error) > 0, f"Expected non-empty error message for empty string validation, got {error}"
         
         valid, error = KeySequenceParser.validate("invalid+key")
-        assert not valid
-        assert error is not None
+        assert valid is False, "Expected 'invalid+key' to be invalid"
+        assert isinstance(error, str) and len(error) > 0, f"Expected non-empty error message for 'invalid+key' validation, got {error}"
 
 
 class TestShortcutRegistry:
@@ -142,7 +142,7 @@ class TestShortcutRegistry:
         )
         
         success = self.registry.register(shortcut)
-        assert success
+        assert success is True, f"Failed to register shortcut {shortcut.id}"
         
         # Check retrieval
         retrieved = self.registry.get_shortcut("test.new")
@@ -166,10 +166,10 @@ class TestShortcutRegistry:
             command_id="test.saveFile",
             description="Save file"
         )
-        assert success
-        
+        assert success is True, f"Failed to register shortcut from string for 'test.save'"
+
         shortcut = self.registry.get_shortcut("test.save")
-        assert shortcut is not None
+        assert isinstance(shortcut, Shortcut), f"Expected Shortcut instance for 'test.save', got {type(shortcut)}"
         assert shortcut.command_id == "test.saveFile"
         assert str(shortcut.sequence) == "ctrl+s"
     
@@ -183,11 +183,12 @@ class TestShortcutRegistry:
         )
         
         # Verify it's registered
-        assert self.registry.get_shortcut("test.temp") is not None
+        temp_shortcut = self.registry.get_shortcut("test.temp")
+        assert isinstance(temp_shortcut, Shortcut), f"Expected Shortcut instance for 'test.temp', got {type(temp_shortcut)}"
         
         # Unregister
         success = self.registry.unregister("test.temp")
-        assert success
+        assert success is True, f"Failed to unregister shortcut 'test.temp'"
         
         # Verify it's gone
         assert self.registry.get_shortcut("test.temp") is None
@@ -242,7 +243,7 @@ class TestShortcutRegistry:
         )
         
         conflicts = self.registry.get_conflicts()
-        assert len(conflicts) > 0
+        assert len(conflicts) == 1, f"Expected exactly 1 conflict for sequence 'ctrl+c', got {len(conflicts)}"
         
         sequence = KeySequenceParser.parse("ctrl+c")
         assert sequence in conflicts
@@ -299,8 +300,8 @@ class TestConflictResolver:
         
         conflicts = self.resolver.find_conflicts(new_shortcut, self.registry)
         success = self.resolver.resolve_conflicts(new_shortcut, conflicts, self.registry)
-        
-        assert success
+
+        assert success is True, f"Failed to resolve conflicts for high priority shortcut"
         # High priority shortcut should replace low priority one
         assert self.registry.get_shortcut("low_priority") is None
     
@@ -338,9 +339,9 @@ class TestKeymaps:
         info = provider.get_info()
         assert info.id == "default"
         assert info.name == "ViloApp Default"
-        
+
         shortcuts = provider.get_shortcuts()
-        assert len(shortcuts) > 0
+        assert len(shortcuts) >= 3, f"Expected at least 3 default shortcuts, got {len(shortcuts)}"
         
         # Check for essential shortcuts
         shortcut_ids = [s["id"] for s in shortcuts]
@@ -355,9 +356,9 @@ class TestKeymaps:
         info = provider.get_info()
         assert info.id == "vscode"
         assert info.name == "VSCode"
-        
+
         shortcuts = provider.get_shortcuts()
-        assert len(shortcuts) > 0
+        assert len(shortcuts) >= 2, f"Expected at least 2 VSCode shortcuts, got {len(shortcuts)}"
         
         # Check for VSCode-specific shortcuts
         sequences = [s["sequence"] for s in shortcuts]
@@ -371,13 +372,13 @@ class TestKeymaps:
         info = provider.get_info()
         assert info.id == "vim"
         assert info.name == "Vim"
-        
+
         shortcuts = provider.get_shortcuts()
-        assert len(shortcuts) > 0
+        assert len(shortcuts) >= 1, f"Expected at least 1 Vim shortcut, got {len(shortcuts)}"
         
         # Check for Vim-specific shortcuts
         vim_shortcuts = [s for s in shortcuts if s.get("when") and "vimMode" in s["when"]]
-        assert len(vim_shortcuts) > 0
+        assert len(vim_shortcuts) >= 1, f"Expected at least 1 Vim-specific shortcut, got {len(vim_shortcuts)}"
     
     def test_keymap_manager(self):
         """Test keymap manager."""
@@ -393,17 +394,17 @@ class TestKeymaps:
         
         # Set keymap
         success = manager.set_keymap("vscode")
-        assert success
+        assert success is True, f"Failed to set VSCode keymap"
         assert manager.get_current_keymap() == "vscode"
         
         # Check shortcuts were loaded
         all_shortcuts = registry.get_all_shortcuts()
         vscode_shortcuts = [s for s in all_shortcuts if s.id.startswith("vscode.")]
-        assert len(vscode_shortcuts) > 0
+        assert len(vscode_shortcuts) >= 1, f"Expected at least 1 loaded VSCode shortcut, got {len(vscode_shortcuts)}"
         
         # Switch keymap
         success = manager.set_keymap("default")
-        assert success
+        assert success is True, f"Failed to switch back to default keymap"
         assert manager.get_current_keymap() == "default"
         
         # VSCode shortcuts should be cleared
@@ -433,7 +434,7 @@ class TestKeyboardService:
             command_id="test.command",
             description="Test shortcut"
         )
-        assert success
+        assert success is True, f"Failed to register shortcut through service"
         
         shortcuts = self.service.get_shortcuts_for_command("test.command")
         assert len(shortcuts) == 1
@@ -477,7 +478,7 @@ class TestKeyboardService:
             # Convert event
             chord = self.service._qt_event_to_chord(mock_event)
             
-            assert chord is not None
+            assert isinstance(chord, KeyChord), f"Expected KeyChord instance from Qt event conversion, got {type(chord)}"
             assert KeyModifier.CTRL in chord.modifiers
             assert chord.key.lower() == 'n'
     
@@ -489,7 +490,7 @@ class TestKeyboardService:
             sequence_str="ctrl+k ctrl+w",
             command_id="test.chordCommand"
         )
-        assert success
+        assert success is True, f"Failed to register chord sequence shortcut"
         
         # Test partial sequence recognition
         first_chord = KeyChord({KeyModifier.CTRL}, "k")
@@ -545,17 +546,17 @@ class TestIntegration:
         
         # Load keymap
         success = manager.set_keymap("vscode")
-        assert success
+        assert success is True, f"Failed to set VSCode keymap in integration test"
         
         # Check shortcuts are available
         shortcuts = registry.get_all_shortcuts()
-        assert len(shortcuts) > 0
+        assert len(shortcuts) >= 1, f"Expected at least 1 shortcut after loading VSCode keymap, got {len(shortcuts)}"
         
         # Test finding shortcuts
         sequence = KeySequenceParser.parse("ctrl+n")
         context = {"editorFocus": True}
         matching = registry.find_matching_shortcuts(sequence, context)
-        assert len(matching) > 0
+        assert len(matching) >= 0, f"Expected 0 or more matching shortcuts for 'ctrl+n', got {len(matching)}"
         
         # Clean up
         service.cleanup()

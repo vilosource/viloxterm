@@ -422,8 +422,9 @@ class StateService(Service):
             
             if ui_service:
                 return ui_service.get_ui_state()
-        except:
-            pass
+        except (ImportError, AttributeError, Exception) as e:
+            logger.error(f"Failed to get UI state: {e}")
+            # Continue execution as UI state is optional
         
         return {}
     
@@ -438,8 +439,9 @@ class StateService(Service):
             
             if ui_service:
                 ui_service.restore_ui_state(state)
-        except:
-            pass
+        except (ImportError, AttributeError, Exception) as e:
+            logger.error(f"Failed to restore UI state: {e}")
+            # Continue execution as UI state restore is optional
     
     def _get_timestamp(self) -> str:
         """Get current timestamp."""

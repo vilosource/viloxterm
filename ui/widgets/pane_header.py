@@ -121,16 +121,11 @@ class PaneHeaderBar(QWidget):
         """Show menu with available widget types dynamically from AppWidgetManager."""
         menu = QMenu(self)
 
-        # Apply theme to menu
-        from services.service_locator import ServiceLocator
-        from services.theme_service import ThemeService
+        # Apply theme to menu using commands
+        theme_result = execute_command("theme.getCurrentColors")
+        colors = theme_result.value if theme_result and theme_result.success else {}
 
-        locator = ServiceLocator.get_instance()
-        theme_service = locator.get(ThemeService)
-        theme_provider = theme_service.get_theme_provider() if theme_service else None
-
-        if theme_provider:
-            colors = theme_provider._theme_service.get_colors()
+        if colors:
             menu.setStyleSheet(f"""
                 QMenu {{
                     background-color: {colors.get("menu.background", "#252526")};
@@ -440,14 +435,11 @@ class PaneHeaderBar(QWidget):
 
     def apply_theme(self):
         """Apply current theme to pane header."""
-        from services.service_locator import ServiceLocator
-        from services.theme_service import ThemeService
+        # Get theme colors using command instead of ServiceLocator
+        theme_result = execute_command("theme.getCurrentColors")
+        colors = theme_result.value if theme_result and theme_result.success else {}
 
-        locator = ServiceLocator.get_instance()
-        theme_service = locator.get(ThemeService)
-        theme_provider = theme_service.get_theme_provider() if theme_service else None
-        if theme_provider:
-            colors = theme_provider._theme_service.get_colors()
+        if colors:
 
             # Update background color
             self.background_color = QColor(colors.get("editor.background", "#252526"))

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Split pane widget - VIEW LAYER ONLY.
+Split pane widget - main coordination layer.
 
-This is a complete rewrite using proper MVC architecture.
-The view renders the model's tree structure and handles user interactions.
-All content widgets (AppWidgets) are owned by the model.
+This is the main widget that coordinates all split pane operations using
+the extracted helper modules for theme management, drag handling, view
+utilities, and business logic control.
 """
 
 import logging
@@ -19,7 +19,10 @@ from ui.widgets.split_pane_model import SplitPaneModel, LeafNode, SplitNode
 from ui.widgets.widget_registry import WidgetType, widget_registry
 from ui.widgets.pane_header import PaneHeaderBar
 from ui.widgets.widget_pool import get_widget_pool, cleanup_widget_pool
-# from ui.widgets.overlay_transition import TransitionManager  # Disabled - causing UI freeze
+from ui.widgets.split_pane_theme_manager import get_theme_manager
+from ui.widgets.split_pane_drag_handler import get_drag_handler
+from ui.widgets.split_pane_view_helpers import get_view_helpers
+from ui.widgets.split_pane_controller import SplitPaneController
 from core.commands.executor import execute_command
 
 logger = logging.getLogger(__name__)
@@ -295,28 +298,36 @@ class SplitPaneWidget(QWidget):
 
         # Create the model - it owns all AppWidgets
         self.model = SplitPaneModel(initial_widget_type, initial_widget_id)
-        
+
+        # Initialize helper components
+        self.theme_manager = get_theme_manager()
+        self.drag_handler = get_drag_handler()
+        self.view_helpers = get_view_helpers()
+        self.controller = SplitPaneController(self.model, self)
+
+        # Connect controller signals to our signals
+        self.controller.pane_added.connect(self.pane_added)
+        self.controller.pane_removed.connect(self.pane_removed)
+        self.controller.active_pane_changed.connect(self.active_pane_changed)
+        self.controller.layout_changed.connect(lambda: self.refresh_view())
+        self.controller.widget_ready_for_focus.connect(self._on_widget_ready_for_focus)
+
         # Set up terminal auto-close callback
-        self.model.set_terminal_close_callback(self.on_terminal_close_requested)
-        
+        self.controller.set_terminal_close_callback(self.on_terminal_close_requested)
+
         # View tracking
         self.pane_wrappers: Dict[str, PaneContent] = {}
         self.splitters: Dict[str, QSplitter] = {}
-        
+
         # Initialize widget pool for reusing widgets
         self.widget_pool = get_widget_pool()
-        
-        # Initialize transition manager for overlay effects
-        self.transition_manager = None  # Will be initialized after UI setup
-        
+
         # Set up UI
         self.setup_ui()
-        
+
         # Connect signals from model's AppWidgets
         self.connect_model_signals()
-        
-        # Event-driven focus detection will be set up when panes are created
-        
+
         logger.info(f"SplitPaneWidget initialized with model root {self.model.root.id}")
         
     def setup_ui(self):
@@ -382,41 +393,14 @@ class SplitPaneWidget(QWidget):
         
     def handle_widget_action(self, leaf_id: str, action: str, params: dict):
         """
-        Handle action from an AppWidget.
-        
+        Handle action from an AppWidget - delegate to controller.
+
         Args:
             leaf_id: ID of leaf that initiated the action
             action: Action type
             params: Action parameters
         """
-        logger.info(f"Handling action from {leaf_id}: {action} with params {params}")
-        
-        if action == 'split':
-            orientation = params.get('orientation', 'horizontal')
-            target_id = params.get('leaf_id', leaf_id)
-            new_id = self.model.split_pane(target_id, orientation)
-            if new_id:
-                self.refresh_view()
-                self.pane_added.emit(new_id)
-                # Set the new pane as active and focus it
-                if self.isVisible():
-                    self.set_active_pane(new_id, focus=True)
-                
-        elif action == 'close':
-            target_id = params.get('leaf_id', leaf_id)
-            if self.model.close_pane(target_id):
-                self.refresh_view()
-                self.pane_removed.emit(target_id)
-                
-        elif action == 'change_type':
-            target_id = params.get('leaf_id', leaf_id)
-            new_type = params.get('new_type')
-            if new_type and self.model.change_pane_type(target_id, new_type):
-                self.refresh_view()
-                
-        elif action == 'focus':
-            target_id = params.get('leaf_id', leaf_id)
-            self.set_active_pane(target_id)
+        self.controller.handle_widget_action(leaf_id, action, params)
             
     def refresh_view(self):
         """
@@ -716,13 +700,8 @@ class SplitPaneWidget(QWidget):
             wrapper.set_active(pane_id == active_id)
             
     def toggle_pane_numbers(self) -> bool:
-        """
-        Toggle pane number visibility.
-        
-        Returns:
-            New visibility state
-        """
-        visible = self.model.toggle_pane_numbers()
+        """Toggle pane number visibility - delegate to controller."""
+        visible = self.controller.toggle_pane_numbers()
         self.update_pane_numbers_display()
         return visible
         
@@ -743,91 +722,16 @@ class SplitPaneWidget(QWidget):
     # Public API methods that delegate to model
     
     def split_horizontal(self, pane_id: str):
-        """Split pane horizontally."""
-        # Overlay transitions disabled - causing UI to freeze
-        # if self.transition_manager:
-        #     self.transition_manager.begin_transition()
-
-        new_id = self.model.split_pane(pane_id, "horizontal")
-        if new_id:
-            # Full refresh is more reliable for now
-            self.refresh_view()
-            self.pane_added.emit(new_id)
-            # Set the new pane as active
-            if self.isVisible():
-                self.set_active_pane(new_id, focus=False)  # Don't focus yet
-
-                # Get the new widget and check its state
-                leaf = self.model.find_leaf(new_id)
-                if leaf and leaf.app_widget:
-                    from ui.widgets.widget_state import WidgetState
-                    if leaf.app_widget.widget_state == WidgetState.READY:
-                        # Widget is synchronously ready (e.g., PlaceholderWidget)
-                        self.focus_specific_pane(new_id)
-                    else:
-                        # Widget needs async initialization - connect to ready signal
-                        logger.debug(f"Widget {new_id} not ready, connecting to widget_ready signal")
-                        leaf.app_widget.widget_ready.connect(
-                            lambda: self._on_widget_ready_for_focus(new_id),
-                            Qt.SingleShotConnection  # Auto-disconnect after firing
-                        )
-
-        # End transition with fade
-        # if self.transition_manager:
-        #     self.transition_manager.end_transition(delay=10)
-
-        return new_id
+        """Split pane horizontally - delegate to controller."""
+        return self.controller.split_horizontal(pane_id)
             
     def split_vertical(self, pane_id: str):
-        """Split pane vertically."""
-        # Overlay transitions disabled - causing UI to freeze
-        # if self.transition_manager:
-        #     self.transition_manager.begin_transition()
-
-        new_id = self.model.split_pane(pane_id, "vertical")
-        if new_id:
-            # Full refresh is more reliable for now
-            self.refresh_view()
-            self.pane_added.emit(new_id)
-            # Set the new pane as active
-            if self.isVisible():
-                self.set_active_pane(new_id, focus=False)  # Don't focus yet
-
-                # Get the new widget and check its state
-                leaf = self.model.find_leaf(new_id)
-                if leaf and leaf.app_widget:
-                    from ui.widgets.widget_state import WidgetState
-                    if leaf.app_widget.widget_state == WidgetState.READY:
-                        # Widget is synchronously ready (e.g., PlaceholderWidget)
-                        self.focus_specific_pane(new_id)
-                    else:
-                        # Widget needs async initialization - connect to ready signal
-                        logger.debug(f"Widget {new_id} not ready, connecting to widget_ready signal")
-                        leaf.app_widget.widget_ready.connect(
-                            lambda: self._on_widget_ready_for_focus(new_id),
-                            Qt.SingleShotConnection  # Auto-disconnect after firing
-                        )
-
-        # End transition with fade
-        # if self.transition_manager:
-        #     self.transition_manager.end_transition(delay=10)
-
-        return new_id
+        """Split pane vertically - delegate to controller."""
+        return self.controller.split_vertical(pane_id)
             
     def close_pane(self, pane_id: str):
-        """Close a pane."""
-        # Overlay transitions disabled - causing UI to freeze
-        # if self.transition_manager:
-        #     self.transition_manager.begin_transition()
-        
-        if self.model.close_pane(pane_id):
-            self.refresh_view()
-            # End transition with fade
-            # if self.transition_manager:
-            #     self.transition_manager.end_transition(delay=10)
-            self.pane_removed.emit(pane_id)
-            # Restore focus to the new active pane
-            self.restore_active_pane_focus()
+        """Close a pane - delegate to controller."""
+        return self.controller.close_pane(pane_id)
             
     def on_terminal_close_requested(self, pane_id: str):
         """
@@ -853,31 +757,13 @@ class SplitPaneWidget(QWidget):
             self.close_pane(pane_id)
             
     def set_active_pane(self, pane_id: str, focus: bool = False):
-        """
-        Set the active pane.
-        
-        Args:
-            pane_id: ID of the pane to activate
-            focus: If True, also set keyboard focus to the pane's widget
-        """
-        old_active = self.model.get_active_pane_id()
-        logger.debug(f"set_active_pane called: {old_active} → {pane_id}")
-        logger.debug(f"🎯 set_active_pane called with: {pane_id}")
-        logger.debug(f"🎯 Previous active pane: {old_active}")
-        
-        if self.model.set_active_pane(pane_id):
-            logger.debug(f"Active pane successfully changed to: {pane_id}")
-            logger.debug(f"✅ Active pane successfully changed to: {pane_id}")
+        """Set the active pane - delegate to controller."""
+        success = self.controller.set_active_pane(pane_id)
+        if success:
             self.update_active_pane_visual()
-            self.active_pane_changed.emit(pane_id)
-            
-            # If requested, also set keyboard focus to the specific pane
             if focus:
-                # Focus the specific pane, not just the active one
                 self.focus_specific_pane(pane_id)
-        else:
-            logger.debug(f"Failed to set active pane to: {pane_id}")
-            logger.warning(f"❌ Failed to set active pane to: {pane_id}")
+        return success
             
     def focus_specific_pane(self, pane_id: str):
         """
@@ -1001,45 +887,11 @@ class SplitPaneWidget(QWidget):
         # Note: Global pool cleanup is handled at application shutdown
 
     def _get_splitter_stylesheet(self):
-        """Get splitter stylesheet from theme."""
-        from services.service_locator import ServiceLocator
-        from services.theme_service import ThemeService
-
-        locator = ServiceLocator.get_instance()
-        theme_service = locator.get(ThemeService)
-        theme_provider = theme_service.get_theme_provider() if theme_service else None
-        if theme_provider:
-            return theme_provider.get_stylesheet("splitter")
-        # Fallback style
-        return """
-            QSplitter::handle {
-                background-color: #3e3e42;
-            }
-            QSplitter::handle:horizontal {
-                width: 1px;
-            }
-            QSplitter::handle:vertical {
-                height: 1px;
-            }
-            QSplitter::handle:hover {
-                background-color: #007ACC;
-            }
-        """
+        """Get splitter stylesheet from theme manager."""
+        return self.theme_manager.get_splitter_stylesheet()
 
     def apply_theme(self):
         """Apply current theme to split pane widget."""
-        from services.service_locator import ServiceLocator
-        from services.theme_service import ThemeService
-
-        locator = ServiceLocator.get_instance()
-        theme_service = locator.get(ThemeService)
-        theme_provider = theme_service.get_theme_provider() if theme_service else None
-        if theme_provider:
-            colors = theme_provider._theme_service.get_colors()
-            self.setStyleSheet(f"""
-                SplitPaneWidget {{
-                    background-color: {colors.get("editor.background", "#1e1e1e")};
-                }}
-            """)
-            # Update all splitters in the widget tree
-            self.refresh_view()
+        self.theme_manager.apply_theme_to_widget(self)
+        # Update all splitters in the widget tree
+        self.refresh_view()

@@ -266,8 +266,11 @@ class TerminalAppWidget(AppWidget):
             try:
                 # This would need terminal server support to get CWD
                 state["cwd"] = os.getcwd()  # Placeholder
-            except:
-                pass
+            except (OSError, PermissionError) as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Failed to get current working directory: {e}")
+                # Unable to get CWD, skip saving it
                 
         return state
         

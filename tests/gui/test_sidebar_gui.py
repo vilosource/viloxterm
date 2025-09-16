@@ -145,7 +145,7 @@ class TestSidebarAnimationGUI(SidebarGUITestBase, AnimationGUITestBase):
         # Test animation doesn't interfere with rapid operations
         for _ in range(3):
             gui_sidebar.toggle()
-            QTest.qWait(50)  # Don't wait for full animation
+            qtbot.wait(50)  # Don't wait for full animation
         
         # Wait for final animation to complete
         self.wait_for_sidebar_animation(qtbot, gui_sidebar, timeout=1000)
@@ -159,7 +159,7 @@ class TestSidebarAnimationGUI(SidebarGUITestBase, AnimationGUITestBase):
         gui_sidebar.collapse()
         
         # Immediately expand (interrupt the collapse)
-        QTest.qWait(50)  # Brief wait to let animation start
+        qtbot.wait(50)  # Brief wait to let animation start
         gui_sidebar.expand()
         
         # Wait for final animation to complete
@@ -190,7 +190,7 @@ class TestSidebarThemeGUI(SidebarGUITestBase, ThemeGUITestBase):
         
         for view_name in views:
             gui_sidebar.set_current_view(view_name)
-            QTest.qWait(50)
+            qtbot.wait(50)
             
             # Get current view widget
             current_widget = gui_sidebar.stack.currentWidget()
@@ -205,7 +205,7 @@ class TestSidebarThemeGUI(SidebarGUITestBase, ThemeGUITestBase):
         gui_sidebar.toggle()
         
         # Check styling during animation
-        QTest.qWait(100)  # Mid-animation
+        qtbot.wait(100)  # Mid-animation
         assert gui_sidebar.styleSheet() == initial_style
         
         # Wait for animation to complete
@@ -263,17 +263,17 @@ class TestSidebarIntegrationGUI(SidebarGUITestBase):
         
         # Test focus can be set to sidebar
         sidebar.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Test focus on views
         for view_name in self.get_sidebar_views(sidebar):
             sidebar.set_current_view(view_name)
-            QTest.qWait(50)
+            qtbot.wait(50)
             
             current_view = sidebar.stack.currentWidget()
             if current_view:
                 current_view.setFocus()
-                QTest.qWait(50)
+                qtbot.wait(50)
                 
                 # Basic focus test - widget should accept focus
                 assert current_view.isVisible()
@@ -292,7 +292,7 @@ class TestSidebarPerformanceGUI(SidebarGUITestBase):
         for _ in range(10):  # 10 cycles
             for view_name in views:
                 gui_sidebar.set_current_view(view_name)
-                QTest.qWait(5)  # Minimal wait
+                qtbot.wait(5)  # Minimal wait
         
         # Verify final state is consistent
         final_index = gui_sidebar.stack.currentIndex()
@@ -309,7 +309,7 @@ class TestSidebarPerformanceGUI(SidebarGUITestBase):
         # Rapid toggling
         for _ in range(5):
             gui_sidebar.toggle()
-            QTest.qWait(20)  # Brief wait, shorter than animation
+            qtbot.wait(20)  # Brief wait, shorter than animation
         
         # Wait for all animations to complete
         self.wait_for_sidebar_animation(qtbot, gui_sidebar, timeout=3000)
@@ -342,11 +342,11 @@ class TestSidebarAccessibilityGUI(SidebarGUITestBase):
         """Test sidebar is accessible via keyboard."""
         # Focus sidebar
         gui_sidebar.setFocus()
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Test tab navigation
         qtbot.keyClick(gui_sidebar, Qt.Key.Key_Tab)
-        QTest.qWait(50)
+        qtbot.wait(50)
         
         # Basic accessibility - sidebar should be focusable
         assert gui_sidebar.focusPolicy() != Qt.FocusPolicy.NoFocus or True  # May vary
@@ -365,7 +365,7 @@ class TestSidebarAccessibilityGUI(SidebarGUITestBase):
                 
                 # Test view can receive focus
                 current_widget.setFocus()
-                QTest.qWait(50)
+                qtbot.wait(50)
     
     def test_sidebar_screen_reader_compatibility(self, gui_sidebar, qtbot):
         """Test sidebar has proper attributes for screen readers."""

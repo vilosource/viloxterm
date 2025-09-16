@@ -192,8 +192,11 @@ class WidgetPool:
         # Clear any signals/slots (if needed)
         try:
             widget.disconnect()
-        except:
-            pass  # No connections to disconnect
+        except (TypeError, RuntimeError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"No connections to disconnect for widget: {e}")
+            # No connections to disconnect, which is fine
         
         # Reset common properties
         widget.setEnabled(True)

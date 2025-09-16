@@ -26,7 +26,7 @@ class TestPaneOperationsGUI:
             while len(split_widget.model.get_all_app_widgets()) > 1:
                 # Pass show_message=False to avoid dialog boxes during tests
                 self.workspace.close_active_pane(show_message=False)
-                QTest.qWait(50)
+                self.qtbot.wait(50)
         
     def get_current_pane_count(self):
         """Get the current number of panes in the active tab."""
@@ -43,9 +43,9 @@ class TestPaneOperationsGUI:
         # Execute split command
         result = execute_command("workbench.action.splitPaneHorizontal")
         assert result.success, f"Split command failed: {result.error}"
-        
+
         # Wait for UI update
-        QTest.qWait(100)
+        self.qtbot.waitUntil(lambda: self.get_current_pane_count() == initial_count + 1, timeout=1000)
         
         # Verify pane was split
         final_count = self.get_current_pane_count()
@@ -59,9 +59,9 @@ class TestPaneOperationsGUI:
         # Execute split command
         result = execute_command("workbench.action.splitPaneVertical")
         assert result.success, f"Split command failed: {result.error}"
-        
+
         # Wait for UI update
-        QTest.qWait(100)
+        self.qtbot.waitUntil(lambda: self.get_current_pane_count() == initial_count + 1, timeout=1000)
         
         # Verify pane was split
         final_count = self.get_current_pane_count()
@@ -72,18 +72,18 @@ class TestPaneOperationsGUI:
         # First split to have multiple panes
         result = execute_command("workbench.action.splitPaneHorizontal")
         assert result.success, "Failed to split pane"
-        QTest.qWait(100)
+        self.qtbot.waitUntil(lambda: self.get_current_pane_count() > 1, timeout=1000)
         
         initial_count = self.get_current_pane_count()
         assert initial_count > 1, "Need multiple panes for test"
         
         # Use Ctrl+Shift+W to close pane
         self.qtbot.keyClick(
-            self.workspace, 
-            Qt.Key.Key_W, 
+            self.workspace,
+            Qt.Key.Key_W,
             Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier
         )
-        QTest.qWait(100)
+        self.qtbot.waitUntil(lambda: self.get_current_pane_count() == initial_count - 1, timeout=1000)
         
         # Verify pane was closed
         final_count = self.get_current_pane_count()
@@ -94,7 +94,7 @@ class TestPaneOperationsGUI:
         # First split to have multiple panes
         result = execute_command("workbench.action.splitPaneHorizontal")
         assert result.success, "Failed to split pane"
-        QTest.qWait(100)
+        self.qtbot.waitUntil(lambda: self.get_current_pane_count() > 1, timeout=1000)
         
         initial_count = self.get_current_pane_count()
         assert initial_count > 1, "Need multiple panes for test"
@@ -102,9 +102,9 @@ class TestPaneOperationsGUI:
         # Execute close command
         result = execute_command("workbench.action.closePane")
         assert result.success, f"Close command failed: {result.error}"
-        
+
         # Wait for UI update
-        QTest.qWait(100)
+        self.qtbot.waitUntil(lambda: self.get_current_pane_count() == initial_count - 1, timeout=1000)
         
         # Verify pane was closed
         final_count = self.get_current_pane_count()
@@ -115,7 +115,7 @@ class TestPaneOperationsGUI:
         # First split to have multiple panes
         result = execute_command("workbench.action.splitPaneHorizontal")
         assert result.success, "Failed to split pane"
-        QTest.qWait(100)
+        self.qtbot.waitUntil(lambda: self.get_current_pane_count() > 1, timeout=1000)
         
         initial_count = self.get_current_pane_count()
         assert initial_count > 1, "Need multiple panes for test"
@@ -135,7 +135,7 @@ class TestPaneOperationsGUI:
         
         # Click the close button
         self.qtbot.mouseClick(close_button, Qt.MouseButton.LeftButton)
-        QTest.qWait(100)
+        self.qtbot.waitUntil(lambda: self.get_current_pane_count() == initial_count - 1, timeout=1000)
         
         # Verify pane was closed
         final_count = self.get_current_pane_count()
@@ -164,7 +164,7 @@ class TestPaneOperationsGUI:
         """Test maximizing and restoring a pane."""
         # Split to have multiple panes
         execute_command("workbench.action.splitPaneHorizontal")
-        QTest.qWait(100)
+        self.qtbot.wait(100)
         
         # Execute maximize command
         result = execute_command("workbench.action.maximizePane")
@@ -178,7 +178,7 @@ class TestPaneOperationsGUI:
         # Create multiple panes
         execute_command("workbench.action.splitPaneHorizontal")
         execute_command("workbench.action.splitPaneVertical")
-        QTest.qWait(100)
+        self.qtbot.wait(100)
         
         # Test focus navigation commands
         commands = [
@@ -202,7 +202,7 @@ class TestPaneOperationsGUI:
         # First split to have multiple panes
         result = execute_command("workbench.action.splitPaneHorizontal")
         assert result.success, "Failed to split pane"
-        QTest.qWait(100)
+        self.qtbot.waitUntil(lambda: self.get_current_pane_count() > 1, timeout=1000)
         
         initial_count = self.get_current_pane_count()
         assert initial_count > 1, "Need multiple panes for test"
@@ -214,7 +214,7 @@ class TestPaneOperationsGUI:
             Qt.Key.Key_K,
             Qt.KeyboardModifier.ControlModifier
         )
-        QTest.qWait(50)  # Small wait for chord to register
+        self.qtbot.wait(50)  # Small wait for chord to register
         
         # Then send W (complete chord)
         self.qtbot.keyClick(
@@ -222,8 +222,8 @@ class TestPaneOperationsGUI:
             Qt.Key.Key_W,
             Qt.KeyboardModifier.NoModifier  # No modifiers for second key in chord
         )
-        QTest.qWait(100)
-        
+        self.qtbot.waitUntil(lambda: self.get_current_pane_count() == initial_count - 1, timeout=1000)
+
         # Verify pane was closed
         final_count = self.get_current_pane_count()
         assert final_count == initial_count - 1, "Pane should have been closed by Ctrl+K W chord"
@@ -283,7 +283,7 @@ class TestPaneServiceIntegration:
         """Test that clicking close button triggers the correct command."""
         # Split to have multiple panes
         execute_command("workbench.action.splitPaneHorizontal")
-        QTest.qWait(100)
+        self.qtbot.wait(100)
         
         # Mock the execute_command to track calls
         with patch('core.commands.executor.execute_command') as mock_execute:

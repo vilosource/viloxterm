@@ -29,7 +29,6 @@ from core.settings.app_defaults import (
     set_app_default,
     AppDefaultsValidator
 )
-from services.service_locator import ServiceLocator
 
 logger = logging.getLogger(__name__)
 

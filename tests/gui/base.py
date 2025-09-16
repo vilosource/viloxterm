@@ -15,7 +15,7 @@ class GUITestBase:
     def wait_for_animation(self, qtbot, timeout=2000):
         """Wait for animations to complete."""
         # Use a small delay to allow animations to finish
-        QTest.qWait(timeout // 10)  # Usually animations are much shorter
+        qtbot.wait(timeout // 10)  # Usually animations are much shorter
         
     def wait_for_widget_visible(self, qtbot, widget, timeout=5000):
         """Wait for a widget to become visible."""
@@ -58,11 +58,11 @@ class MainWindowGUITestBase(GUITestBase):
         
     def verify_main_window_components(self, main_window):
         """Verify all main window components are present."""
-        assert main_window.activity_bar is not None
-        assert main_window.sidebar is not None
-        assert main_window.workspace is not None
-        assert main_window.status_bar is not None
-        assert main_window.main_splitter is not None
+        assert hasattr(main_window, 'activity_bar') and main_window.activity_bar is not None, f"Main window should have activity_bar component"
+        assert hasattr(main_window, 'sidebar') and main_window.sidebar is not None, f"Main window should have sidebar component"
+        assert hasattr(main_window, 'workspace') and main_window.workspace is not None, f"Main window should have workspace component"
+        assert hasattr(main_window, 'status_bar') and main_window.status_bar is not None, f"Main window should have status_bar component"
+        assert hasattr(main_window, 'main_splitter') and main_window.main_splitter is not None, f"Main window should have main_splitter component"
         
     def verify_component_visibility(self, main_window):
         """Verify component visibility states."""
@@ -102,7 +102,7 @@ class ActivityBarGUITestBase(GUITestBase):
         
         # Trigger the button action directly since it's a QAction
         button.trigger()
-        QTest.qWait(50)  # Small delay for signal processing
+        qtbot.wait(50)  # Small delay for signal processing
 
 
 class SidebarGUITestBase(GUITestBase):
@@ -133,7 +133,7 @@ class WorkspaceGUITestBase(GUITestBase):
     
     def verify_workspace_initialized(self, workspace):
         """Verify workspace is properly initialized."""
-        assert workspace is not None
+        assert workspace is not None and hasattr(workspace, 'isVisible'), f"Expected valid workspace widget, got {workspace}"
         assert workspace.isVisible()
         
     def count_active_panes(self, workspace):
@@ -145,7 +145,7 @@ class WorkspaceGUITestBase(GUITestBase):
     def verify_pane_exists(self, workspace, pane_index=0):
         """Verify a pane exists at the given index."""
         # Implementation will depend on workspace structure
-        assert workspace is not None
+        assert workspace is not None and hasattr(workspace, 'isVisible'), f"Expected valid workspace widget for pane verification, got {workspace}"
 
 
 class ThemeGUITestBase(GUITestBase):
@@ -159,7 +159,7 @@ class ThemeGUITestBase(GUITestBase):
     def trigger_theme_toggle(self, qtbot, main_window):
         """Trigger theme toggle using the keyboard shortcut."""
         simulate_key_sequence(qtbot, main_window, "Ctrl+T")
-        QTest.qWait(100)  # Wait for theme change to propagate
+        qtbot.wait(100)  # Wait for theme change to propagate
         
     def verify_theme_change_propagated(self, main_window, mock_icon_manager):
         """Verify theme change propagated to all components."""
@@ -189,7 +189,7 @@ class KeyboardGUITestBase(GUITestBase):
         
         # Simulate the keyboard shortcut
         simulate_key_sequence(qtbot, main_window, shortcut)
-        QTest.qWait(100)  # Wait for action to complete
+        qtbot.wait(100)  # Wait for action to complete
         
         # Verify expected action occurred
         expected_action()

@@ -177,23 +177,34 @@ class ColorPickerWidget(QWidget):
         if len(text) == 7 and text.startswith("#"):
             try:
                 # Validate it's a valid color
-                QColor(text)
-                self._color = text
-                self._update_button_color(text)
-                self.color_changed.emit(text, True)  # Preview while typing
-            except:
-                pass  # Invalid color, ignore
+                color = QColor(text)
+                if color.isValid():
+                    self._color = text
+                    self._update_button_color(text)
+                    self.color_changed.emit(text, True)  # Preview while typing
+            except (TypeError, ValueError) as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Invalid color format '{text}': {e}")
+                # Invalid color, ignore
 
     def _on_hex_input_finished(self):
         """Handle hex input editing finished."""
         text = self._hex_input.text()
         if len(text) == 7 and text.startswith("#"):
             try:
-                QColor(text)
-                self._color = text
-                self._update_button_color(text)
-                self.color_changed.emit(text, False)  # Final value
-            except:
+                color = QColor(text)
+                if color.isValid():
+                    self._color = text
+                    self._update_button_color(text)
+                    self.color_changed.emit(text, False)  # Final value
+                else:
+                    # Revert to current color
+                    self._hex_input.setText(self._color)
+            except (TypeError, ValueError) as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Invalid color format '{text}': {e}")
                 # Revert to current color
                 self._hex_input.setText(self._color)
         else:
@@ -203,24 +214,28 @@ class ColorPickerWidget(QWidget):
     def _add_theme_colors_to_dialog(self, dialog: QColorDialog):
         """Add current theme colors as custom colors in dialog."""
         try:
-            from services.service_locator import ServiceLocator
-            from services.theme_service import ThemeService
+            from core.commands.executor import execute_command
 
-            locator = ServiceLocator()
-            theme_service = locator.get(ThemeService)
+            # Get current theme via command pattern
+            result = execute_command("theme.getCurrentTheme")
+            theme = result.value.get("theme") if result.success else None
 
-            if theme_service and theme_service.get_current_theme():
-                theme = theme_service.get_current_theme()
+            if theme and hasattr(theme, 'colors'):
                 colors = theme.colors
 
                 # Add up to 16 custom colors (QColorDialog limit)
                 custom_index = 0
                 for color_value in list(colors.values())[:16]:
                     try:
-                        dialog.setCustomColor(custom_index, QColor(color_value))
-                        custom_index += 1
-                    except:
-                        pass  # Skip invalid colors
+                        color = QColor(color_value)
+                        if color.isValid():
+                            dialog.setCustomColor(custom_index, color)
+                            custom_index += 1
+                    except (TypeError, ValueError) as e:
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.debug(f"Invalid color value '{color_value}': {e}")
+                        # Skip invalid colors
         except Exception as e:
             logger.debug(f"Could not add theme colors to dialog: {e}")
 

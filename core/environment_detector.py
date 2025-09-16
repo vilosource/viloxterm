@@ -61,7 +61,8 @@ class EnvironmentDetector:
             with open('/proc/version', 'r') as f:
                 version = f.read().lower()
                 return 'microsoft' in version or 'wsl' in version
-        except:
+        except (FileNotFoundError, PermissionError, IOError) as e:
+            logger.debug(f"Cannot read /proc/version: {e}")
             pass
             
         # Check for WSL environment variable
@@ -78,7 +79,8 @@ class EnvironmentDetector:
         try:
             with open('/proc/1/cgroup', 'r') as f:
                 return 'docker' in f.read()
-        except:
+        except (FileNotFoundError, PermissionError, IOError) as e:
+            logger.debug(f"Cannot read /proc/1/cgroup: {e}")
             return False
     
     @staticmethod
@@ -108,31 +110,33 @@ class EnvironmentDetector:
         """Check if GPU acceleration is available."""
         try:
             # Try to run glxinfo
-            result = subprocess.run(['glxinfo'], 
-                                  capture_output=True, 
-                                  text=True, 
+            result = subprocess.run(['glxinfo'],
+                                  capture_output=True,
+                                  text=True,
                                   timeout=2)
             return 'direct rendering: Yes' in result.stdout
-        except:
+        except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
+            logger.debug(f"Cannot run glxinfo to check GPU: {e}")
             return False
     
     @staticmethod
     def _detect_gpu_vendor() -> Optional[str]:
         """Detect GPU vendor."""
         try:
-            result = subprocess.run(['glxinfo'], 
-                                  capture_output=True, 
-                                  text=True, 
+            result = subprocess.run(['glxinfo'],
+                                  capture_output=True,
+                                  text=True,
                                   timeout=2)
             output = result.stdout.lower()
-            
+
             if 'nvidia' in output:
                 return 'nvidia'
             elif 'amd' in output or 'radeon' in output:
                 return 'amd'
             elif 'intel' in output:
                 return 'intel'
-        except:
+        except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
+            logger.debug(f"Cannot run glxinfo to detect GPU vendor: {e}")
             pass
         
         return None

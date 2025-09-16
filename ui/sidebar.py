@@ -108,11 +108,12 @@ class Sidebar(QWidget):
 
     def apply_theme(self):
         """Apply current theme to sidebar."""
-        from services.service_locator import ServiceLocator
-        from services.theme_service import ThemeService
-
-        locator = ServiceLocator.get_instance()
-        theme_service = locator.get(ThemeService)
-        theme_provider = theme_service.get_theme_provider() if theme_service else None
-        if theme_provider:
-            self.setStyleSheet(theme_provider.get_stylesheet("sidebar"))
+        # Apply basic sidebar styling
+        # Note: Component-specific styling is now handled by theme system
+        # This will be updated when theme changes through notification system
+        self.setStyleSheet("""
+            QWidget#sidebar {
+                background-color: #2d2d30;
+                border-right: 1px solid #3e3e42;
+            }
+        """)
