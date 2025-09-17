@@ -33,7 +33,9 @@ class MainWindowLayoutManager:
 
         # Create activity bar
         self.activity_bar = ActivityBar()
-        self.activity_bar.view_changed.connect(self.main_window.on_activity_view_changed)
+        self.activity_bar.view_changed.connect(
+            self.main_window.on_activity_view_changed
+        )
         main_layout.addWidget(self.activity_bar)
 
         # Create main splitter for sidebar and workspace
@@ -124,7 +126,9 @@ class MainWindowLayoutManager:
 
             # Get theme provider from service locator
             theme_service = self.main_window.service_locator.get(ThemeService)
-            self.main_window.theme_provider = theme_service.get_theme_provider() if theme_service else None
+            self.main_window.theme_provider = (
+                theme_service.get_theme_provider() if theme_service else None
+            )
             if not self.main_window.theme_provider:
                 print("Warning: ThemeProvider not available")
                 return
@@ -136,24 +140,26 @@ class MainWindowLayoutManager:
             self.apply_theme()
 
             import logging
+
             logger = logging.getLogger(__name__)
             logger.info("Theme system initialized")
         except Exception as e:
             print(f"Failed to setup theme: {e}")
             import logging
+
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to setup theme: {e}")
 
     def apply_theme(self):
         """Apply current theme to all components."""
-        if not hasattr(self.main_window, 'theme_provider'):
+        if not hasattr(self.main_window, "theme_provider"):
             return
 
         try:
             # Apply main window theme
             self.main_window.setStyleSheet(
-                self.main_window.theme_provider.get_stylesheet("main_window") +
-                self.main_window.theme_provider.get_stylesheet("menu")
+                self.main_window.theme_provider.get_stylesheet("main_window")
+                + self.main_window.theme_provider.get_stylesheet("menu")
             )
 
             # Apply splitter theme
@@ -172,10 +178,12 @@ class MainWindowLayoutManager:
                 self.status_bar.apply_theme()
 
             import logging
+
             logger = logging.getLogger(__name__)
             logger.debug("Theme applied to all components")
         except Exception as e:
             print(f"Failed to apply theme: {e}")
             import logging
+
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to apply theme: {e}")

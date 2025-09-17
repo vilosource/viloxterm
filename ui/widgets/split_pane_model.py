@@ -28,11 +28,12 @@ class LeafNode:
     The AppWidget is the actual content (terminal, editor, etc.).
     This node owns the widget and manages its lifecycle.
     """
+
     type: str = "leaf"
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     widget_type: WidgetType = WidgetType.PLACEHOLDER
     app_widget: Optional[AppWidget] = None  # The actual content widget
-    parent: Optional['SplitNode'] = None
+    parent: Optional["SplitNode"] = None
 
     def cleanup(self):
         """Clean up the AppWidget."""
@@ -49,13 +50,14 @@ class SplitNode:
 
     Pure data structure - no view widgets here.
     """
+
     type: str = "split"
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     orientation: str = "horizontal"  # "horizontal" or "vertical"
     ratio: float = 0.5
-    first: Optional[Union[LeafNode, 'SplitNode']] = None
-    second: Optional[Union[LeafNode, 'SplitNode']] = None
-    parent: Optional['SplitNode'] = None
+    first: Optional[Union[LeafNode, "SplitNode"]] = None
+    second: Optional[Union[LeafNode, "SplitNode"]] = None
+    parent: Optional["SplitNode"] = None
 
 
 class SplitPaneModel:
@@ -70,8 +72,11 @@ class SplitPaneModel:
     All operations go through this model.
     """
 
-    def __init__(self, initial_widget_type: WidgetType = WidgetType.PLACEHOLDER,
-                 initial_widget_id: Optional[str] = None):
+    def __init__(
+        self,
+        initial_widget_type: WidgetType = WidgetType.PLACEHOLDER,
+        initial_widget_id: Optional[str] = None,
+    ):
         """
         Initialize with a single root leaf containing an AppWidget.
 
@@ -85,7 +90,7 @@ class SplitPaneModel:
         # Create root node with the specific ID
         self.root = LeafNode(
             widget_type=initial_widget_type,
-            id=widget_id  # Use the same ID for both leaf and widget
+            id=widget_id,  # Use the same ID for both leaf and widget
         )
         self.leaves: dict[str, LeafNode] = {self.root.id: self.root}
         self.active_pane_id: str = self.root.id
@@ -122,6 +127,7 @@ class SplitPaneModel:
         # Try to use AppWidgetManager first
         try:
             from core.app_widget_manager import AppWidgetManager
+
             manager = AppWidgetManager.get_instance()
 
             # Try to create widget through manager
@@ -130,18 +136,21 @@ class SplitPaneModel:
             if widget:
                 # Special handling for terminal (needs signal connection)
                 if widget_type == WidgetType.TERMINAL:
-                    if hasattr(widget, 'pane_close_requested'):
+                    if hasattr(widget, "pane_close_requested"):
                         widget.pane_close_requested.connect(
                             lambda: self.on_terminal_close_requested(widget_id)
                         )
                 return widget
         except ImportError:
-            logger.warning("AppWidgetManager not available, falling back to legacy creation")
+            logger.warning(
+                "AppWidgetManager not available, falling back to legacy creation"
+            )
         except Exception as e:
             logger.error(f"Failed to create widget via AppWidgetManager: {e}")
 
         # Legacy fallback - Try widget registry
         from ui.widgets.widget_registry import widget_registry
+
         config = widget_registry.get_config(widget_type)
 
         if config and config.factory:
@@ -150,7 +159,9 @@ class SplitPaneModel:
                 widget = config.factory(widget_id)
                 if isinstance(widget, AppWidget):
                     # Special handling for terminal
-                    if widget_type == WidgetType.TERMINAL and hasattr(widget, 'pane_close_requested'):
+                    if widget_type == WidgetType.TERMINAL and hasattr(
+                        widget, "pane_close_requested"
+                    ):
                         widget.pane_close_requested.connect(
                             lambda: self.on_terminal_close_requested(widget_id)
                         )
@@ -171,7 +182,9 @@ class SplitPaneModel:
             return PlaceholderAppWidget(widget_id, widget_type)
         else:
             # Default fallback
-            logger.warning(f"No handler for widget type {widget_type}, using placeholder")
+            logger.warning(
+                f"No handler for widget type {widget_type}, using placeholder"
+            )
             return PlaceholderAppWidget(widget_id, widget_type)
 
     def set_terminal_close_callback(self, callback: Callable[[str], None]):
@@ -194,10 +207,15 @@ class SplitPaneModel:
         if self.terminal_close_callback:
             self.terminal_close_callback(pane_id)
         else:
-            logger.warning(f"No terminal close callback set - cannot close pane {pane_id}")
+            logger.warning(
+                f"No terminal close callback set - cannot close pane {pane_id}"
+            )
 
-    def traverse_tree(self, node: Optional[Union[LeafNode, SplitNode]] = None,
-                      callback: Optional[Callable[[LeafNode], None]] = None) -> list[LeafNode]:
+    def traverse_tree(
+        self,
+        node: Optional[Union[LeafNode, SplitNode]] = None,
+        callback: Optional[Callable[[LeafNode], None]] = None,
+    ) -> list[LeafNode]:
         """
         Traverse the tree and optionally apply a callback to each leaf.
 
@@ -239,7 +257,10 @@ class SplitPaneModel:
         Returns:
             Node if found, None otherwise
         """
-        def search(node: Optional[Union[LeafNode, SplitNode]]) -> Optional[Union[LeafNode, SplitNode]]:
+
+        def search(
+            node: Optional[Union[LeafNode, SplitNode]],
+        ) -> Optional[Union[LeafNode, SplitNode]]:
             if not node:
                 return None
             if node.id == node_id:
@@ -282,10 +303,7 @@ class SplitPaneModel:
         new_leaf.app_widget.leaf_node = new_leaf  # Set back-reference
 
         # Create split node
-        split = SplitNode(
-            orientation=orientation,
-            ratio=0.5
-        )
+        split = SplitNode(orientation=orientation, ratio=0.5)
 
         # Set up the tree structure
         split.first = leaf
@@ -468,7 +486,9 @@ class SplitPaneModel:
         if not leaf:
             return False
 
-        logger.info(f"Changing pane {pane_id} type from {leaf.widget_type} to {new_type}")
+        logger.info(
+            f"Changing pane {pane_id} type from {leaf.widget_type} to {new_type}"
+        )
 
         # Clean up old widget
         leaf.cleanup()
@@ -537,7 +557,10 @@ class SplitPaneModel:
         logger.info(f"Moving widget from {from_pane_id} to {to_pane_id}")
 
         # Swap AppWidgets
-        from_leaf.app_widget, to_leaf.app_widget = to_leaf.app_widget, from_leaf.app_widget
+        from_leaf.app_widget, to_leaf.app_widget = (
+            to_leaf.app_widget,
+            from_leaf.app_widget,
+        )
 
         # Update back-references
         if from_leaf.app_widget:
@@ -546,7 +569,10 @@ class SplitPaneModel:
             to_leaf.app_widget.leaf_node = to_leaf
 
         # Swap widget types
-        from_leaf.widget_type, to_leaf.widget_type = to_leaf.widget_type, from_leaf.widget_type
+        from_leaf.widget_type, to_leaf.widget_type = (
+            to_leaf.widget_type,
+            from_leaf.widget_type,
+        )
 
         return True
 
@@ -557,13 +583,16 @@ class SplitPaneModel:
         Returns:
             Dictionary representation of the model
         """
+
         def node_to_dict(node):
             if isinstance(node, LeafNode):
                 return {
                     "type": "leaf",
                     "id": node.id,
                     "widget_type": node.widget_type.value,
-                    "widget_state": node.app_widget.get_state() if node.app_widget else {}
+                    "widget_state": (
+                        node.app_widget.get_state() if node.app_widget else {}
+                    ),
                 }
             elif isinstance(node, SplitNode):
                 return {
@@ -572,14 +601,14 @@ class SplitPaneModel:
                     "orientation": node.orientation,
                     "ratio": node.ratio,
                     "first": node_to_dict(node.first) if node.first else None,
-                    "second": node_to_dict(node.second) if node.second else None
+                    "second": node_to_dict(node.second) if node.second else None,
                 }
             return None
 
         return {
             "root": node_to_dict(self.root),
             "active_pane_id": self.active_pane_id,
-            "show_pane_numbers": self.show_pane_numbers
+            "show_pane_numbers": self.show_pane_numbers,
         }
 
     def from_dict(self, data: dict):
@@ -608,31 +637,45 @@ class SplitPaneModel:
                     leaf = LeafNode(
                         id=node_dict["id"],
                         widget_type=WidgetType(node_dict["widget_type"]),
-                        parent=parent
+                        parent=parent,
                     )
 
                     # Create AppWidget
-                    logger.debug(f"Creating AppWidget for leaf {leaf.id} of type {leaf.widget_type}")
+                    logger.debug(
+                        f"Creating AppWidget for leaf {leaf.id} of type {leaf.widget_type}"
+                    )
                     leaf.app_widget = self.create_app_widget(leaf.widget_type, leaf.id)
                     if not leaf.app_widget:
-                        logger.error(f"Failed to create widget for leaf {leaf.id} of type {leaf.widget_type}")
+                        logger.error(
+                            f"Failed to create widget for leaf {leaf.id} of type {leaf.widget_type}"
+                        )
                         # Create a placeholder editor widget as fallback
                         leaf.widget_type = WidgetType.TEXT_EDITOR
-                        logger.info(f"Attempting fallback to TEXT_EDITOR for leaf {leaf.id}")
-                        leaf.app_widget = self.create_app_widget(leaf.widget_type, leaf.id)
+                        logger.info(
+                            f"Attempting fallback to TEXT_EDITOR for leaf {leaf.id}"
+                        )
+                        leaf.app_widget = self.create_app_widget(
+                            leaf.widget_type, leaf.id
+                        )
                         if not leaf.app_widget:
-                            logger.critical(f"Even fallback widget creation failed for leaf {leaf.id}")
+                            logger.critical(
+                                f"Even fallback widget creation failed for leaf {leaf.id}"
+                            )
 
                     if leaf.app_widget:
                         leaf.app_widget.leaf_node = leaf
-                        logger.debug(f"Successfully created AppWidget {leaf.app_widget.widget_id} for leaf {leaf.id}")
+                        logger.debug(
+                            f"Successfully created AppWidget {leaf.app_widget.widget_id} for leaf {leaf.id}"
+                        )
 
                     # Restore widget state
                     if "widget_state" in node_dict and leaf.app_widget:
                         try:
                             leaf.app_widget.set_state(node_dict["widget_state"])
                         except Exception as e:
-                            logger.warning(f"Failed to restore widget state for {leaf.id}: {e}")
+                            logger.warning(
+                                f"Failed to restore widget state for {leaf.id}: {e}"
+                            )
 
                     self.leaves[leaf.id] = leaf
                     return leaf
@@ -642,7 +685,7 @@ class SplitPaneModel:
                         id=node_dict["id"],
                         orientation=node_dict["orientation"],
                         ratio=node_dict.get("ratio", 0.5),
-                        parent=parent
+                        parent=parent,
                     )
                     split.first = dict_to_node(node_dict.get("first"), split)
                     split.second = dict_to_node(node_dict.get("second"), split)
@@ -662,7 +705,7 @@ class SplitPaneModel:
                     leaf = LeafNode(
                         id=fallback_id,
                         widget_type=WidgetType.TEXT_EDITOR,
-                        parent=parent
+                        parent=parent,
                     )
                     leaf.app_widget = self.create_app_widget(leaf.widget_type, leaf.id)
                     leaf.app_widget.leaf_node = leaf
@@ -680,7 +723,9 @@ class SplitPaneModel:
             logger.error("Failed to restore root node, creating default")
             default_id = f"default_{uuid.uuid4().hex[:8]}"
             self.root = LeafNode(id=default_id, widget_type=WidgetType.TEXT_EDITOR)
-            self.root.app_widget = self.create_app_widget(self.root.widget_type, default_id)
+            self.root.app_widget = self.create_app_widget(
+                self.root.widget_type, default_id
+            )
             self.root.app_widget.leaf_node = self.root
             self.leaves[default_id] = self.root
 
@@ -689,15 +734,20 @@ class SplitPaneModel:
         # Validate active pane
         if self.active_pane_id not in self.leaves and self.leaves:
             self.active_pane_id = next(iter(self.leaves.keys()))
-            logger.warning(f"Active pane {self.active_pane_id} not found, using {self.active_pane_id}")
+            logger.warning(
+                f"Active pane {self.active_pane_id} not found, using {self.active_pane_id}"
+            )
 
         # Restore pane numbering state
         self.show_pane_numbers = data.get("show_pane_numbers", False)
         self.update_pane_indices()
 
-    def calculate_pane_bounds(self, pane_id: str,
-                            node: Optional[Union[LeafNode, SplitNode]] = None,
-                            bounds: tuple[float, float, float, float] = (0.0, 0.0, 1.0, 1.0)) -> Optional[tuple[float, float, float, float]]:
+    def calculate_pane_bounds(
+        self,
+        pane_id: str,
+        node: Optional[Union[LeafNode, SplitNode]] = None,
+        bounds: tuple[float, float, float, float] = (0.0, 0.0, 1.0, 1.0),
+    ) -> Optional[tuple[float, float, float, float]]:
         """
         Calculate the normalized bounds [x1, y1, x2, y2] of a pane.
 
@@ -754,7 +804,9 @@ class SplitPaneModel:
 
         return None
 
-    def find_pane_in_direction(self, from_pane_id: str, direction: str) -> Optional[str]:
+    def find_pane_in_direction(
+        self, from_pane_id: str, direction: str
+    ) -> Optional[str]:
         """
         Find the best pane to navigate to in the given direction.
 
@@ -817,43 +869,48 @@ class SplitPaneModel:
                     # Distance in the movement direction
                     distance = abs(target_center_y - source_center_y)
 
-                candidates.append({
-                    'id': leaf_id,
-                    'overlap': overlap,
-                    'distance': distance,
-                    'center_x': target_center_x,
-                    'center_y': target_center_y
-                })
+                candidates.append(
+                    {
+                        "id": leaf_id,
+                        "overlap": overlap,
+                        "distance": distance,
+                        "center_x": target_center_x,
+                        "center_y": target_center_y,
+                    }
+                )
 
         if not candidates:
             return None
 
         # Sort candidates by overlap (descending) then distance (ascending)
         # Prefer maximum overlap, then minimum distance
-        candidates.sort(key=lambda c: (-c['overlap'], c['distance']))
+        candidates.sort(key=lambda c: (-c["overlap"], c["distance"]))
 
         # If there's a tie in overlap and distance, use position as tiebreaker
         if len(candidates) > 1:
             first = candidates[0]
-            tied = [c for c in candidates
-                   if c['overlap'] == first['overlap'] and
-                      abs(c['distance'] - first['distance']) < 0.001]
+            tied = [
+                c
+                for c in candidates
+                if c["overlap"] == first["overlap"]
+                and abs(c["distance"] - first["distance"]) < 0.001
+            ]
 
             if len(tied) > 1:
                 # Apply directional tiebreaker
                 if direction == "left":
                     # Prefer rightmost of tied candidates
-                    tied.sort(key=lambda c: -c['center_x'])
+                    tied.sort(key=lambda c: -c["center_x"])
                 elif direction == "right":
                     # Prefer leftmost of tied candidates
-                    tied.sort(key=lambda c: c['center_x'])
+                    tied.sort(key=lambda c: c["center_x"])
                 elif direction == "up":
                     # Prefer bottommost of tied candidates
-                    tied.sort(key=lambda c: -c['center_y'])
+                    tied.sort(key=lambda c: -c["center_y"])
                 elif direction == "down":
                     # Prefer topmost of tied candidates
-                    tied.sort(key=lambda c: c['center_y'])
+                    tied.sort(key=lambda c: c["center_y"])
 
-                return tied[0]['id']
+                return tied[0]["id"]
 
-        return candidates[0]['id']
+        return candidates[0]["id"]

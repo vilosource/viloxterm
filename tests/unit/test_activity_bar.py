@@ -15,7 +15,7 @@ class TestActivityBar:
 
     def test_activity_bar_initialization(self, qtbot):
         """Test activity bar initializes correctly."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch("ui.activity_bar.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_icon = QIcon()  # Use real QIcon instead of Mock
             mock_manager.get_icon.return_value = mock_icon
@@ -33,7 +33,7 @@ class TestActivityBar:
 
     def test_ui_setup(self, qtbot):
         """Test UI setup is correct."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch("ui.activity_bar.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon
@@ -47,7 +47,7 @@ class TestActivityBar:
 
     def test_actions_created(self, qtbot):
         """Test all actions are created."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch("ui.activity_bar.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon
@@ -57,15 +57,17 @@ class TestActivityBar:
             qtbot.addWidget(activity_bar)
 
             # Check actions exist
-            assert hasattr(activity_bar, 'explorer_action')
-            assert hasattr(activity_bar, 'search_action')
-            assert hasattr(activity_bar, 'git_action')
-            assert hasattr(activity_bar, 'settings_action')
-            assert hasattr(activity_bar, 'menu_action')  # Check menu action exists
+            assert hasattr(activity_bar, "explorer_action")
+            assert hasattr(activity_bar, "search_action")
+            assert hasattr(activity_bar, "git_action")
+            assert hasattr(activity_bar, "settings_action")
+            assert hasattr(activity_bar, "menu_action")  # Check menu action exists
 
             # Check actions are added to toolbar
             actions = activity_bar.actions()
-            action_texts = [action.text() for action in actions if not action.isSeparator()]
+            action_texts = [
+                action.text() for action in actions if not action.isSeparator()
+            ]
             assert "Explorer" in action_texts
             assert "Search" in action_texts
             assert "Git" in action_texts
@@ -74,8 +76,10 @@ class TestActivityBar:
 
     def test_on_view_selected_new_view(self, qtbot):
         """Test selecting a new view."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager, \
-             patch('ui.activity_bar.execute_command') as mock_execute:
+        with (
+            patch("ui.activity_bar.get_icon_manager") as mock_get_manager,
+            patch("ui.activity_bar.execute_command") as mock_execute,
+        ):
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon
@@ -105,8 +109,10 @@ class TestActivityBar:
 
     def test_on_view_selected_same_view(self, qtbot):
         """Test selecting the same view toggles sidebar."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager, \
-             patch('ui.activity_bar.execute_command'):
+        with (
+            patch("ui.activity_bar.get_icon_manager") as mock_get_manager,
+            patch("ui.activity_bar.execute_command"),
+        ):
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon
@@ -121,7 +127,7 @@ class TestActivityBar:
 
     def test_update_icons_on_theme_change(self, qtbot):
         """Test icons are updated when theme changes."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch("ui.activity_bar.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon

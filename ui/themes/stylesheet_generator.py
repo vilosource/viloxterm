@@ -83,9 +83,15 @@ class StylesheetGenerator:
 
         # Check if in dev mode for special styling
         dev_mode = app_config.dev_mode
-        menu_bar_bg = "#8B0000" if dev_mode else self._get_color("titleBar.activeBackground")
-        menu_bar_fg = "#FFFFFF" if dev_mode else self._get_color("titleBar.activeForeground")
-        menu_bar_hover = "#A52A2A" if dev_mode else self._get_color("button.secondaryBackground")
+        menu_bar_bg = (
+            "#8B0000" if dev_mode else self._get_color("titleBar.activeBackground")
+        )
+        menu_bar_fg = (
+            "#FFFFFF" if dev_mode else self._get_color("titleBar.activeForeground")
+        )
+        menu_bar_hover = (
+            "#A52A2A" if dev_mode else self._get_color("button.secondaryBackground")
+        )
 
         return f"""
             QMainWindow {{

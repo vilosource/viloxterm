@@ -19,12 +19,7 @@ class TestReviewer:
     def __init__(self, base_ref: str = "HEAD~1"):
         self.base_ref = base_ref
         self.project_root = Path.cwd()
-        self.issues = {
-            "critical": [],
-            "warning": [],
-            "info": [],
-            "suggestion": []
-        }
+        self.issues = {"critical": [], "warning": [], "info": [], "suggestion": []}
 
     def get_changed_files(self) -> list[Path]:
         """Get list of changed Python files using git diff."""
@@ -33,12 +28,12 @@ class TestReviewer:
                 ["git", "diff", "--name-only", self.base_ref],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             changed_files = []
-            for file in result.stdout.strip().split('\n'):
-                if file and file.endswith('.py') and not file.startswith('tests/'):
+            for file in result.stdout.strip().split("\n"):
+                if file and file.endswith(".py") and not file.startswith("tests/"):
                     changed_files.append(Path(file))
 
             return changed_files
@@ -57,7 +52,7 @@ class TestReviewer:
             f"tests/gui/test_{base_name}.py",
             f"tests/integration/test_{base_name}.py",
             f"tests/test_{base_name}.py",
-            f"tests/{source_file.parent}/test_{base_name}.py"
+            f"tests/{source_file.parent}/test_{base_name}.py",
         ]
 
         for pattern in test_patterns:
@@ -74,7 +69,7 @@ class TestReviewer:
                 ["git", "diff", self.base_ref, "--", str(test_file)],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return bool(result.stdout.strip())
         except subprocess.CalledProcessError:
@@ -88,17 +83,17 @@ class TestReviewer:
                 "qtbot_usage": 0,
                 "signal_tests": 0,
                 "wait_usage": 0,
-                "process_events": 0  # Anti-pattern
+                "process_events": 0,  # Anti-pattern
             },
             "assertions": {
                 "total": 0,
                 "weak": 0,  # is not None, is None, etc.
-                "strong": 0
+                "strong": 0,
             },
             "anti_patterns": [],
             "edge_cases": 0,
             "mocking": 0,
-            "parametrized": 0
+            "parametrized": 0,
         }
 
         try:
@@ -108,44 +103,60 @@ class TestReviewer:
 
             for node in ast.walk(tree):
                 # Count test functions
-                if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
+                if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
                     metrics["total_tests"] += 1
 
                     # Check for Qt patterns
-                    func_source = ast.unparse(node) if hasattr(ast, 'unparse') else ""
+                    func_source = ast.unparse(node) if hasattr(ast, "unparse") else ""
 
-                    if 'qtbot' in func_source:
+                    if "qtbot" in func_source:
                         metrics["qt_patterns"]["qtbot_usage"] += 1
-                    if 'wait_signal' in func_source or 'wait_until' in func_source:
+                    if "wait_signal" in func_source or "wait_until" in func_source:
                         metrics["qt_patterns"]["wait_usage"] += 1
-                    if 'processEvents' in func_source:
+                    if "processEvents" in func_source:
                         metrics["qt_patterns"]["process_events"] += 1
-                        metrics["anti_patterns"].append(f"{node.name}: Uses processEvents()")
+                        metrics["anti_patterns"].append(
+                            f"{node.name}: Uses processEvents()"
+                        )
 
                     # Check for weak assertions
                     for stmt in ast.walk(node):
                         if isinstance(stmt, ast.Assert):
                             metrics["assertions"]["total"] += 1
-                            assertion_str = ast.unparse(stmt.test) if hasattr(ast, 'unparse') else ""
+                            assertion_str = (
+                                ast.unparse(stmt.test)
+                                if hasattr(ast, "unparse")
+                                else ""
+                            )
 
-                            if 'is not None' in assertion_str or 'is None' in assertion_str:
+                            if (
+                                "is not None" in assertion_str
+                                or "is None" in assertion_str
+                            ):
                                 metrics["assertions"]["weak"] += 1
                             else:
                                 metrics["assertions"]["strong"] += 1
 
                     # Check for parametrized tests
                     for decorator in node.decorator_list:
-                        if hasattr(decorator, 'func'):
-                            if hasattr(decorator.func, 'attr') and decorator.func.attr == 'parametrize':
+                        if hasattr(decorator, "func"):
+                            if (
+                                hasattr(decorator.func, "attr")
+                                and decorator.func.attr == "parametrize"
+                            ):
                                 metrics["parametrized"] += 1
                                 metrics["edge_cases"] += 1
 
             # Check for signal testing
-            if 'wait_signal' in content or 'QSignalSpy' in content:
-                metrics["qt_patterns"]["signal_tests"] += content.count('wait_signal') + content.count('QSignalSpy')
+            if "wait_signal" in content or "QSignalSpy" in content:
+                metrics["qt_patterns"]["signal_tests"] += content.count(
+                    "wait_signal"
+                ) + content.count("QSignalSpy")
 
             # Check for mocking
-            metrics["mocking"] = content.count('mock') + content.count('Mock') + content.count('patch')
+            metrics["mocking"] = (
+                content.count("mock") + content.count("Mock") + content.count("patch")
+            )
 
         except Exception as e:
             print(f"Error analyzing {test_file}: {e}")
@@ -161,18 +172,20 @@ class TestReviewer:
                 content = f.read()
 
             # Check for missing qtbot.addWidget()
-            if 'qtbot' in content:
-                widget_creations = re.findall(r'(\w+)\s*=\s*\w+Widget\(', content)
+            if "qtbot" in content:
+                widget_creations = re.findall(r"(\w+)\s*=\s*\w+Widget\(", content)
                 for widget_var in widget_creations:
-                    if f'qtbot.addWidget({widget_var})' not in content:
-                        issues.append(f"Widget '{widget_var}' created without qtbot.addWidget()")
+                    if f"qtbot.addWidget({widget_var})" not in content:
+                        issues.append(
+                            f"Widget '{widget_var}' created without qtbot.addWidget()"
+                        )
 
             # Check for hardcoded delays
-            if 'time.sleep' in content or 'QTest.qWait' in content:
+            if "time.sleep" in content or "QTest.qWait" in content:
                 issues.append("Uses hardcoded delays instead of wait conditions")
 
             # Check for direct exec() on dialogs
-            if '.exec()' in content and 'mock' not in content.lower():
+            if ".exec()" in content and "mock" not in content.lower():
                 issues.append("Modal dialog exec() not mocked")
 
         except Exception as e:
@@ -209,7 +222,9 @@ class TestReviewer:
 
             # Check if test was updated
             if not self.check_test_updated(test_file):
-                self.issues["warning"].append(f"Test file {test_file.name} not updated with source changes")
+                self.issues["warning"].append(
+                    f"Test file {test_file.name} not updated with source changes"
+                )
                 report.append("  ⚠️  Test file not updated with source changes")
 
             # Analyze test quality
@@ -217,22 +232,34 @@ class TestReviewer:
 
             report.append("  📊 Test Metrics:")
             report.append(f"     - Total tests: {metrics['total_tests']}")
-            report.append(f"     - Assertions: {metrics['assertions']['total']} "
-                         f"(strong: {metrics['assertions']['strong']}, "
-                         f"weak: {metrics['assertions']['weak']})")
+            report.append(
+                f"     - Assertions: {metrics['assertions']['total']} "
+                f"(strong: {metrics['assertions']['strong']}, "
+                f"weak: {metrics['assertions']['weak']})"
+            )
 
-            if metrics['assertions']['weak'] > metrics['assertions']['strong']:
-                self.issues["warning"].append(f"{test_file.name} has mostly weak assertions")
+            if metrics["assertions"]["weak"] > metrics["assertions"]["strong"]:
+                self.issues["warning"].append(
+                    f"{test_file.name} has mostly weak assertions"
+                )
 
             # Qt patterns
-            if test_file.parent.name == 'gui' or 'widget' in str(test_file).lower():
+            if test_file.parent.name == "gui" or "widget" in str(test_file).lower():
                 report.append("  🎯 Qt/PySide6 Patterns:")
-                report.append(f"     - qtbot usage: {metrics['qt_patterns']['qtbot_usage']}")
-                report.append(f"     - Signal tests: {metrics['qt_patterns']['signal_tests']}")
-                report.append(f"     - Wait patterns: {metrics['qt_patterns']['wait_usage']}")
+                report.append(
+                    f"     - qtbot usage: {metrics['qt_patterns']['qtbot_usage']}"
+                )
+                report.append(
+                    f"     - Signal tests: {metrics['qt_patterns']['signal_tests']}"
+                )
+                report.append(
+                    f"     - Wait patterns: {metrics['qt_patterns']['wait_usage']}"
+                )
 
-                if metrics['qt_patterns']['process_events'] > 0:
-                    report.append(f"     - ❌ processEvents() calls: {metrics['qt_patterns']['process_events']}")
+                if metrics["qt_patterns"]["process_events"] > 0:
+                    report.append(
+                        f"     - ❌ processEvents() calls: {metrics['qt_patterns']['process_events']}"
+                    )
 
                 # Check Qt compliance
                 qt_issues = self.check_qt_compliance(test_file)
@@ -243,15 +270,15 @@ class TestReviewer:
                         self.issues["warning"].append(f"{test_file.name}: {issue}")
 
             # Other metrics
-            if metrics['parametrized'] > 0:
+            if metrics["parametrized"] > 0:
                 report.append(f"  ✅ Parametrized tests: {metrics['parametrized']}")
-            if metrics['mocking'] > 0:
+            if metrics["mocking"] > 0:
                 report.append(f"  🎭 Mocking usage: {metrics['mocking']}")
 
             # Anti-patterns
-            if metrics['anti_patterns']:
+            if metrics["anti_patterns"]:
                 report.append("  ❌ Anti-patterns detected:")
-                for pattern in metrics['anti_patterns']:
+                for pattern in metrics["anti_patterns"]:
                     report.append(f"     - {pattern}")
                     self.issues["critical"].append(pattern)
 
@@ -262,7 +289,9 @@ class TestReviewer:
 
         if changed_files:
             coverage_pct = (files_with_tests / len(changed_files)) * 100
-            report.append(f"Test Coverage: {coverage_pct:.1f}% of changed files have tests")
+            report.append(
+                f"Test Coverage: {coverage_pct:.1f}% of changed files have tests"
+            )
 
         # Issues summary
         if self.issues["critical"]:
@@ -330,8 +359,12 @@ def main():
     """Main entry point."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Review test coverage and quality for changed files")
-    parser.add_argument("--since", default="HEAD~1", help="Git ref to compare against (default: HEAD~1)")
+    parser = argparse.ArgumentParser(
+        description="Review test coverage and quality for changed files"
+    )
+    parser.add_argument(
+        "--since", default="HEAD~1", help="Git ref to compare against (default: HEAD~1)"
+    )
     parser.add_argument("--json", action="store_true", help="Output results as JSON")
 
     args = parser.parse_args()
@@ -343,7 +376,7 @@ def main():
         result = {
             "changed_files": [str(f) for f in reviewer.get_changed_files()],
             "issues": reviewer.issues,
-            "grade": reviewer.calculate_grade(reviewer.get_changed_files(), 0)
+            "grade": reviewer.calculate_grade(reviewer.get_changed_files(), 0),
         }
         print(json.dumps(result, indent=2))
         return 0

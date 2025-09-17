@@ -12,14 +12,7 @@ class ThemeSchema:
     @staticmethod
     def get_required_fields() -> list[str]:
         """Get list of required top-level fields."""
-        return [
-            "id",
-            "name",
-            "description",
-            "version",
-            "author",
-            "colors"
-        ]
+        return ["id", "name", "description", "version", "author", "colors"]
 
     @staticmethod
     def get_required_colors() -> list[str]:

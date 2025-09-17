@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
     category="View",
     description="Switch between light and dark theme",
     shortcut="ctrl+t",
-    icon="sun"
+    icon="sun",
 )
 def toggle_theme_command(context: CommandContext) -> CommandResult:
     """Toggle between light and dark theme using UIService."""
@@ -29,10 +29,7 @@ def toggle_theme_command(context: CommandContext) -> CommandResult:
 
         new_theme = ui_service.toggle_theme()
 
-        return CommandResult(
-            success=True,
-            value={'theme': new_theme}
-        )
+        return CommandResult(success=True, value={"theme": new_theme})
     except Exception as e:
         logger.error(f"Failed to toggle theme: {e}")
         return CommandResult(success=False, error=str(e))
@@ -44,7 +41,7 @@ def toggle_theme_command(context: CommandContext) -> CommandResult:
     category="View",
     description="Show or hide the sidebar",
     shortcut="ctrl+b",
-    icon="sidebar"
+    icon="sidebar",
 )
 def toggle_sidebar_command(context: CommandContext) -> CommandResult:
     """Toggle sidebar visibility using UIService."""
@@ -55,10 +52,7 @@ def toggle_sidebar_command(context: CommandContext) -> CommandResult:
 
         visible = ui_service.toggle_sidebar()
 
-        return CommandResult(
-            success=True,
-            value={'visible': visible}
-        )
+        return CommandResult(success=True, value={"visible": visible})
     except Exception as e:
         logger.error(f"Failed to toggle sidebar: {e}")
         return CommandResult(success=False, error=str(e))
@@ -70,7 +64,7 @@ def toggle_sidebar_command(context: CommandContext) -> CommandResult:
     category="View",
     description="Show or hide the activity bar",
     shortcut="ctrl+shift+b",
-    icon="menu"
+    icon="menu",
 )
 def toggle_activity_bar_command(context: CommandContext) -> CommandResult:
     """Toggle activity bar visibility."""
@@ -81,10 +75,7 @@ def toggle_activity_bar_command(context: CommandContext) -> CommandResult:
 
         visible = ui_service.toggle_activity_bar()
 
-        return CommandResult(
-            success=True,
-            value={'visible': visible}
-        )
+        return CommandResult(success=True, value={"visible": visible})
     except Exception as e:
         logger.error(f"Failed to toggle activity bar: {e}")
         return CommandResult(success=False, error=str(e))
@@ -96,7 +87,7 @@ def toggle_activity_bar_command(context: CommandContext) -> CommandResult:
     category="View",
     description="Show or hide the menu bar",
     shortcut="ctrl+shift+m",
-    icon="menu"
+    icon="menu",
 )
 def toggle_menu_bar_command(context: CommandContext) -> CommandResult:
     """Toggle menu bar visibility using UIService."""
@@ -107,10 +98,7 @@ def toggle_menu_bar_command(context: CommandContext) -> CommandResult:
 
         visible = ui_service.toggle_menu_bar()
 
-        return CommandResult(
-            success=True,
-            value={'visible': visible}
-        )
+        return CommandResult(success=True, value={"visible": visible})
     except Exception as e:
         logger.error(f"Failed to toggle menu bar: {e}")
         return CommandResult(success=False, error=str(e))
@@ -122,7 +110,7 @@ def toggle_menu_bar_command(context: CommandContext) -> CommandResult:
     category="View",
     description="Show the Explorer in the sidebar",
     shortcut="ctrl+shift+e",
-    icon="folder"
+    icon="folder",
 )
 def show_explorer_command(context: CommandContext) -> CommandResult:
     """Show Explorer view in sidebar using UIService."""
@@ -145,7 +133,7 @@ def show_explorer_command(context: CommandContext) -> CommandResult:
     category="View",
     description="Show the Search in the sidebar",
     shortcut="ctrl+shift+f",
-    icon="search"
+    icon="search",
 )
 def show_search_command(context: CommandContext) -> CommandResult:
     """Show Search view in sidebar using UIService."""
@@ -168,7 +156,7 @@ def show_search_command(context: CommandContext) -> CommandResult:
     category="View",
     description="Show the Git view in the sidebar",
     shortcut="ctrl+shift+g",
-    icon="git-branch"
+    icon="git-branch",
 )
 def show_git_command(context: CommandContext) -> CommandResult:
     """Show Git view in sidebar using UIService."""
@@ -190,7 +178,7 @@ def show_git_command(context: CommandContext) -> CommandResult:
     title="Show Settings",
     category="View",
     description="Show the Settings in the sidebar",
-    icon="settings"
+    icon="settings",
 )
 def show_settings_command(context: CommandContext) -> CommandResult:
     """Show Settings view in sidebar using UIService."""
@@ -213,7 +201,7 @@ def show_settings_command(context: CommandContext) -> CommandResult:
     category="View",
     description="Enter or exit full screen mode",
     shortcut="f11",
-    icon="maximize"
+    icon="maximize",
 )
 def toggle_fullscreen_command(context: CommandContext) -> CommandResult:
     """Toggle fullscreen mode using UIService."""
@@ -224,10 +212,7 @@ def toggle_fullscreen_command(context: CommandContext) -> CommandResult:
 
         is_fullscreen = ui_service.toggle_fullscreen()
 
-        return CommandResult(
-            success=True,
-            value={'fullscreen': is_fullscreen}
-        )
+        return CommandResult(success=True, value={"fullscreen": is_fullscreen})
     except Exception as e:
         logger.error(f"Failed to toggle fullscreen: {e}")
         return CommandResult(success=False, error=str(e))
@@ -238,7 +223,7 @@ def toggle_fullscreen_command(context: CommandContext) -> CommandResult:
     title="Reset Layout",
     category="View",
     description="Reset the UI layout to defaults",
-    icon="layout"
+    icon="layout",
 )
 def reset_layout_command(context: CommandContext) -> CommandResult:
     """Reset UI layout to defaults using UIService."""
@@ -250,7 +235,7 @@ def reset_layout_command(context: CommandContext) -> CommandResult:
         ui_service.reset_layout()
 
         # Show status message
-        if context.main_window and hasattr(context.main_window, 'status_bar'):
+        if context.main_window and hasattr(context.main_window, "status_bar"):
             context.main_window.status_bar.set_message("Layout reset to defaults", 2000)
 
         return CommandResult(success=True)

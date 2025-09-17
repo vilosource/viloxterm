@@ -94,7 +94,9 @@ class WorkspaceTabManager:
         logger.info(f"Added terminal tab '{name}' at index {index}")
         return index
 
-    def add_app_widget(self, widget_type, widget_id: str, name: Optional[str] = None) -> bool:
+    def add_app_widget(
+        self, widget_type, widget_id: str, name: Optional[str] = None
+    ) -> bool:
         """
         Add a generic app widget tab.
 
@@ -118,7 +120,9 @@ class WorkspaceTabManager:
             if success and self._widget_registry:
                 # Track the widget in our registry
                 self._widget_registry.register_widget(widget_id, tab_index)
-                logger.info(f"Added app widget '{name}' (type: {widget_type}) with id {widget_id}")
+                logger.info(
+                    f"Added app widget '{name}' (type: {widget_type}) with id {widget_id}"
+                )
 
             return success
 
@@ -147,7 +151,11 @@ class WorkspaceTabManager:
             return False
 
         # Get tab name before closing
-        tab_name = self._workspace.tab_widget.tabText(index) if self._workspace.tab_widget else None
+        tab_name = (
+            self._workspace.tab_widget.tabText(index)
+            if self._workspace.tab_widget
+            else None
+        )
 
         # Clean up widget registry if available
         if self._widget_registry:
@@ -236,7 +244,9 @@ class WorkspaceTabManager:
 
         # Verify the tab index is still valid
         if not self._workspace or tab_index >= self._workspace.tab_widget.count():
-            logger.warning(f"Widget {widget_id} has invalid tab index {tab_index}, removing from registry")
+            logger.warning(
+                f"Widget {widget_id} has invalid tab index {tab_index}, removing from registry"
+            )
             self._widget_registry.unregister_widget(widget_id)
             return False
 
@@ -250,15 +260,15 @@ class WorkspaceTabManager:
             Dictionary with tab information
         """
         if not self._workspace:
-            return {
-                'count': 0,
-                'current': -1,
-                'available': False
-            }
+            return {"count": 0, "current": -1, "available": False}
 
         return {
-            'count': self.get_tab_count(),
-            'current': self.get_current_tab_index(),
-            'available': True,
-            'current_tab_info': self._workspace.get_current_tab_info() if hasattr(self._workspace, 'get_current_tab_info') else None
+            "count": self.get_tab_count(),
+            "current": self.get_current_tab_index(),
+            "available": True,
+            "current_tab_info": (
+                self._workspace.get_current_tab_info()
+                if hasattr(self._workspace, "get_current_tab_info")
+                else None
+            ),
         }

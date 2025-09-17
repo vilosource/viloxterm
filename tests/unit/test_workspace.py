@@ -20,7 +20,7 @@ class TestWorkspace:
         qtbot.addWidget(workspace)
 
         assert workspace.objectName() == "workspace"
-        assert hasattr(workspace, 'tab_widget')
+        assert hasattr(workspace, "tab_widget")
         assert isinstance(workspace.tab_widget, QTabWidget)
 
         # Should have at least one tab created by default
@@ -100,7 +100,7 @@ class TestWorkspace:
         # Should have one less tab
         assert workspace.get_tab_count() == initial_count - 1
 
-    @patch('ui.workspace.QMessageBox.information')
+    @patch("ui.workspace.QMessageBox.information")
     def test_close_last_tab_prevented(self, mock_msgbox, qtbot):
         """Test that closing the last tab is prevented."""
         workspace = Workspace()
@@ -188,7 +188,7 @@ class TestWorkspace:
         # Should have fewer panes
         assert split_widget.get_pane_count() < initial_count
 
-    @patch('ui.workspace.QMessageBox.information')
+    @patch("ui.workspace.QMessageBox.information")
     def test_close_last_pane_prevented(self, mock_msgbox, qtbot):
         """Test that closing last pane in tab is prevented."""
         workspace = Workspace()
@@ -288,7 +288,7 @@ class TestWorkspace:
         workspace = Workspace()
         qtbot.addWidget(workspace)
 
-        assert hasattr(workspace, 'tab_widget')
+        assert hasattr(workspace, "tab_widget")
         assert isinstance(workspace.tab_widget, QTabWidget)
 
         # Check it's added to the layout
@@ -355,18 +355,36 @@ class TestWorkspace:
         qtbot.addWidget(workspace)
 
         # Verify all documented signals exist
-        assert hasattr(workspace, 'tab_changed'), "Workspace must have tab_changed signal"
-        assert hasattr(workspace, 'tab_added'), "Workspace must have tab_added signal"
-        assert hasattr(workspace, 'tab_removed'), "Workspace must have tab_removed signal"
-        assert hasattr(workspace, 'active_pane_changed'), "Workspace must have active_pane_changed signal"
-        assert hasattr(workspace, 'layout_changed'), "Workspace must have layout_changed signal"
+        assert hasattr(
+            workspace, "tab_changed"
+        ), "Workspace must have tab_changed signal"
+        assert hasattr(workspace, "tab_added"), "Workspace must have tab_added signal"
+        assert hasattr(
+            workspace, "tab_removed"
+        ), "Workspace must have tab_removed signal"
+        assert hasattr(
+            workspace, "active_pane_changed"
+        ), "Workspace must have active_pane_changed signal"
+        assert hasattr(
+            workspace, "layout_changed"
+        ), "Workspace must have layout_changed signal"
 
         # Verify signals are actually Signal class attributes
-        assert hasattr(type(workspace), 'tab_changed'), "tab_changed must be a Signal class attribute"
-        assert hasattr(type(workspace), 'tab_added'), "tab_added must be a Signal class attribute"
-        assert hasattr(type(workspace), 'tab_removed'), "tab_removed must be a Signal class attribute"
-        assert hasattr(type(workspace), 'active_pane_changed'), "active_pane_changed must be a Signal class attribute"
-        assert hasattr(type(workspace), 'layout_changed'), "layout_changed must be a Signal class attribute"
+        assert hasattr(
+            type(workspace), "tab_changed"
+        ), "tab_changed must be a Signal class attribute"
+        assert hasattr(
+            type(workspace), "tab_added"
+        ), "tab_added must be a Signal class attribute"
+        assert hasattr(
+            type(workspace), "tab_removed"
+        ), "tab_removed must be a Signal class attribute"
+        assert hasattr(
+            type(workspace), "active_pane_changed"
+        ), "active_pane_changed must be a Signal class attribute"
+        assert hasattr(
+            type(workspace), "layout_changed"
+        ), "layout_changed must be a Signal class attribute"
 
     def test_tab_added_signal_emission(self, qtbot):
         """Test tab_added signal is emitted when adding tabs."""
@@ -432,8 +450,7 @@ class TestWorkspace:
 
         # Verify signal was emitted with correct tab index
         assert blocker.args == [0], (
-            f"Expected tab_changed signal with args [0], "
-            f"but got {blocker.args}"
+            f"Expected tab_changed signal with args [0], " f"but got {blocker.args}"
         )
 
     def test_active_pane_changed_signal_emission(self, qtbot):
@@ -459,8 +476,12 @@ class TestWorkspace:
                 split_widget.set_active_pane(different_pane_id)
 
         # Verify signal was emitted with correct tab name and pane ID
-        assert len(blocker.args) == 2, f"Expected 2 args (tab_name, pane_id), got {len(blocker.args)}"
-        assert blocker.args[0] == tab_name, f"Expected tab name '{tab_name}', got '{blocker.args[0]}'"
+        assert (
+            len(blocker.args) == 2
+        ), f"Expected 2 args (tab_name, pane_id), got {len(blocker.args)}"
+        assert (
+            blocker.args[0] == tab_name
+        ), f"Expected tab name '{tab_name}', got '{blocker.args[0]}'"
 
     def test_layout_changed_signal_forwarding(self, qtbot):
         """Test layout_changed signal is forwarded from split widgets."""
@@ -496,7 +517,9 @@ class TestWorkspace:
         qtbot.wait(100)  # Allow signals to be processed
 
         # Verify multiple tab_added signals were emitted
-        assert len(tab_added_spy) == 3, f"Expected 3 tab_added signals, got {len(tab_added_spy)}"
+        assert (
+            len(tab_added_spy) == 3
+        ), f"Expected 3 tab_added signals, got {len(tab_added_spy)}"
 
         # Verify tab names in signal emissions
         emitted_names = [call[0] for call in tab_added_spy]
@@ -505,7 +528,9 @@ class TestWorkspace:
         assert "Tab 3" in emitted_names, "Tab 3 should have been added"
 
         # tab_changed should also have been emitted for each new current tab
-        assert len(tab_changed_spy) >= 3, f"Expected at least 3 tab_changed signals, got {len(tab_changed_spy)}"
+        assert (
+            len(tab_changed_spy) >= 3
+        ), f"Expected at least 3 tab_changed signals, got {len(tab_changed_spy)}"
 
     def test_no_signal_emission_on_invalid_operations(self, qtbot):
         """Test signals are not emitted for invalid operations."""
@@ -553,9 +578,9 @@ class TestWorkspace:
         qtbot.wait(100)
 
         # Should have emitted tab_removed signals for closed tabs
-        assert len(tab_removed_spy) >= 2, (
-            f"Expected at least 2 tab_removed signals, got {len(tab_removed_spy)}"
-        )
+        assert (
+            len(tab_removed_spy) >= 2
+        ), f"Expected at least 2 tab_removed signals, got {len(tab_removed_spy)}"
 
     def test_signal_connections_persist_after_state_restoration(self, qtbot):
         """Test signal connections remain valid after state save/restore."""
@@ -577,9 +602,9 @@ class TestWorkspace:
             workspace2.add_terminal_tab("New Terminal After Restore")
 
         # Signal should still be emitted correctly
-        assert blocker.args == ["New Terminal After Restore"], (
-            f"Expected tab_added signal after restore, got {blocker.args}"
-        )
+        assert blocker.args == [
+            "New Terminal After Restore"
+        ], f"Expected tab_added signal after restore, got {blocker.args}"
 
     def test_signal_emission_edge_cases(self, qtbot):
         """Test signal emission in edge cases and boundary conditions."""
@@ -604,4 +629,6 @@ class TestWorkspace:
         with qtbot.waitSignal(workspace.tab_added, timeout=1000) as blocker:
             workspace.add_editor_tab(special_name)
 
-        assert blocker.args == [special_name], "Should emit signal for tab names with special characters"
+        assert blocker.args == [
+            special_name
+        ], "Should emit signal for tab names with special characters"

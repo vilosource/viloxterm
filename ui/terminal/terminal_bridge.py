@@ -81,5 +81,7 @@ class TerminalBridge(QObject):
         This is called after Qt sets focus to the QWebEngineView.
         """
         if web_view and web_view.page():
-            web_view.page().runJavaScript("if (window.focusTerminal) window.focusTerminal();")
+            web_view.page().runJavaScript(
+                "if (window.focusTerminal) window.focusTerminal();"
+            )
             logger.debug("Requested terminal element focus via JavaScript")

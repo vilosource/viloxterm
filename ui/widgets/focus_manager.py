@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class FocusPriority(Enum):
     """Focus priority levels."""
+
     LOW = 0
     NORMAL = 1
     HIGH = 2
@@ -30,8 +31,13 @@ class FocusPriority(Enum):
 class FocusRequest:
     """Represents a focus request with metadata."""
 
-    def __init__(self, widget_id: str, priority: FocusPriority = FocusPriority.NORMAL,
-                 callback: Optional[Callable] = None, reason: str = ""):
+    def __init__(
+        self,
+        widget_id: str,
+        priority: FocusPriority = FocusPriority.NORMAL,
+        callback: Optional[Callable] = None,
+        reason: str = "",
+    ):
         """
         Initialize a focus request.
 
@@ -62,8 +68,8 @@ class FocusManager(QObject):
 
     # Signals
     focus_changed = Signal(str, str)  # old_widget_id, new_widget_id
-    focus_restored = Signal(str)      # widget_id
-    focus_lost = Signal(str)          # widget_id
+    focus_restored = Signal(str)  # widget_id
+    focus_lost = Signal(str)  # widget_id
 
     def __init__(self, parent=None):
         """
@@ -94,14 +100,18 @@ class FocusManager(QObject):
 
         # Statistics
         self._stats = {
-            'focus_changes': 0,
-            'focus_requests': 0,
-            'focus_restored': 0,
-            'focus_denied': 0
+            "focus_changes": 0,
+            "focus_requests": 0,
+            "focus_restored": 0,
+            "focus_denied": 0,
         }
 
-    def register_widget(self, widget: AppWidget, group: Optional[str] = None,
-                       policy: Optional[dict[str, Any]] = None):
+    def register_widget(
+        self,
+        widget: AppWidget,
+        group: Optional[str] = None,
+        policy: Optional[dict[str, Any]] = None,
+    ):
         """
         Register a widget with the focus manager.
 
@@ -148,8 +158,7 @@ class FocusManager(QObject):
 
         # Remove from history
         self._focus_history = deque(
-            [wid for wid in self._focus_history if wid != widget_id],
-            maxlen=50
+            [wid for wid in self._focus_history if wid != widget_id], maxlen=50
         )
 
         # Remove from queue
@@ -164,8 +173,13 @@ class FocusManager(QObject):
 
         logger.debug(f"Unregistered widget {widget_id} from FocusManager")
 
-    def request_focus(self, widget_id: str, priority: FocusPriority = FocusPriority.NORMAL,
-                     callback: Optional[Callable] = None, reason: str = "") -> bool:
+    def request_focus(
+        self,
+        widget_id: str,
+        priority: FocusPriority = FocusPriority.NORMAL,
+        callback: Optional[Callable] = None,
+        reason: str = "",
+    ) -> bool:
         """
         Request focus for a widget.
 
@@ -178,12 +192,12 @@ class FocusManager(QObject):
         Returns:
             True if focus was set or queued, False if denied
         """
-        self._stats['focus_requests'] += 1
+        self._stats["focus_requests"] += 1
 
         # Check if widget exists
         if widget_id not in self._widgets:
             logger.warning(f"Unknown widget {widget_id} requesting focus")
-            self._stats['focus_denied'] += 1
+            self._stats["focus_denied"] += 1
             return False
 
         widget = self._widgets[widget_id]
@@ -191,7 +205,7 @@ class FocusManager(QObject):
         # Check focus policy
         if not self._check_focus_policy(widget_id):
             logger.debug(f"Focus denied for {widget_id} by policy")
-            self._stats['focus_denied'] += 1
+            self._stats["focus_denied"] += 1
             return False
 
         # Check widget state
@@ -205,8 +219,10 @@ class FocusManager(QObject):
             return True
         else:
             # Cannot focus (ERROR, DESTROYING, DESTROYED)
-            logger.debug(f"Cannot focus widget {widget_id} in state {widget.widget_state.value}")
-            self._stats['focus_denied'] += 1
+            logger.debug(
+                f"Cannot focus widget {widget_id} in state {widget.widget_state.value}"
+            )
+            self._stats["focus_denied"] += 1
             return False
 
     def _set_focus(self, widget_id: str, reason: str = "") -> bool:
@@ -231,7 +247,7 @@ class FocusManager(QObject):
         # Set new focus
         if widget.focus_widget():
             self._current_focus = widget_id
-            self._stats['focus_changes'] += 1
+            self._stats["focus_changes"] += 1
 
             # Update history
             if old_focus and old_focus != widget_id:
@@ -240,7 +256,9 @@ class FocusManager(QObject):
             # Emit signal
             self.focus_changed.emit(old_focus or "", widget_id)
 
-            logger.info(f"Focus changed from {old_focus} to {widget_id} (reason: {reason})")
+            logger.info(
+                f"Focus changed from {old_focus} to {widget_id} (reason: {reason})"
+            )
             return True
 
         return False
@@ -267,10 +285,12 @@ class FocusManager(QObject):
         widget = self._widgets[request.widget_id]
         widget.widget_ready.connect(
             lambda: self._process_queued_request(request.widget_id),
-            type=Qt.SingleShotConnection
+            type=Qt.SingleShotConnection,
         )
 
-        logger.debug(f"Queued focus request for {request.widget_id} with priority {request.priority.value}")
+        logger.debug(
+            f"Queued focus request for {request.widget_id} with priority {request.priority.value}"
+        )
 
     def _process_queued_request(self, widget_id: str):
         """
@@ -313,18 +333,18 @@ class FocusManager(QObject):
         policy = self._focus_policies[widget_id]
 
         # Check various policy conditions
-        if 'enabled' in policy and not policy['enabled']:
+        if "enabled" in policy and not policy["enabled"]:
             return False
 
-        if 'max_focus_count' in policy:
+        if "max_focus_count" in policy:
             # Count how many times this widget has had focus
             focus_count = self._focus_history.count(widget_id)
             if self._current_focus == widget_id:
                 focus_count += 1
-            if focus_count >= policy['max_focus_count']:
+            if focus_count >= policy["max_focus_count"]:
                 return False
 
-        if 'requires_permission' in policy and policy['requires_permission']:
+        if "requires_permission" in policy and policy["requires_permission"]:
             # Would need to implement permission check
             pass
 
@@ -349,7 +369,7 @@ class FocusManager(QObject):
             widget = self._widgets[prev_widget_id]
             if widget.widget_state == WidgetState.READY:
                 if self._set_focus(prev_widget_id, "restore"):
-                    self._stats['focus_restored'] += 1
+                    self._stats["focus_restored"] += 1
                     self.focus_restored.emit(prev_widget_id)
                     return True
 
@@ -372,7 +392,8 @@ class FocusManager(QObject):
         else:
             # All ready widgets
             widget_ids = [
-                wid for wid, w in self._widgets.items()
+                wid
+                for wid, w in self._widgets.items()
                 if w.widget_state == WidgetState.READY
             ]
 
@@ -454,7 +475,9 @@ class FocusManager(QObject):
             widget_ids: List of widget IDs in the group
         """
         self._focus_groups[group_name] = widget_ids
-        logger.debug(f"Created focus group '{group_name}' with {len(widget_ids)} widgets")
+        logger.debug(
+            f"Created focus group '{group_name}' with {len(widget_ids)} widgets"
+        )
 
     def _on_focus_requested(self, widget_id: str):
         """

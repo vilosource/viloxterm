@@ -54,6 +54,7 @@ class CustomTitleBar(QWidget):
 
         # Application title with dev mode indicator
         from core.app_config import app_config
+
         title_text = "ViloxTerm [DEV]" if app_config.dev_mode else "ViloxTerm"
         self.title_label = QLabel(title_text, self)
         self.title_label.setObjectName("titleLabel")
@@ -93,7 +94,9 @@ class CustomTitleBar(QWidget):
 
         # Use red background for dev mode
         title_bar_bg = "#8B0000" if app_config.dev_mode else "#2d2d30"
-        logger.info(f"CustomTitleBar: dev_mode={app_config.dev_mode}, bg_color={title_bar_bg}")
+        logger.info(
+            f"CustomTitleBar: dev_mode={app_config.dev_mode}, bg_color={title_bar_bg}"
+        )
 
         # Set background using palette
         self.setAutoFillBackground(True)
@@ -101,7 +104,8 @@ class CustomTitleBar(QWidget):
         palette.setColor(QPalette.Window, QColor(title_bar_bg))
         self.setPalette(palette)
 
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
 
             /* Title label */
             #titleLabel {
@@ -135,7 +139,8 @@ class CustomTitleBar(QWidget):
                 font-size: 16px;
                 padding: 4px 6px;
             }
-        """)
+        """
+        )
 
     def on_menu_clicked(self):
         """Handle menu button click."""
@@ -187,7 +192,7 @@ class CustomTitleBar(QWidget):
 
     def mouseMoveEvent(self, event):
         """Handle mouse move for fallback dragging."""
-        if hasattr(self, 'drag_start_position') and event.buttons() == Qt.LeftButton:
+        if hasattr(self, "drag_start_position") and event.buttons() == Qt.LeftButton:
             # Fallback dragging for systems without startSystemMove
             delta = event.globalPosition().toPoint() - self.drag_start_position
             self.window().move(self.window().pos() + delta)
@@ -198,7 +203,7 @@ class CustomTitleBar(QWidget):
 
     def mouseReleaseEvent(self, event):
         """Handle mouse release."""
-        if hasattr(self, 'drag_start_position'):
+        if hasattr(self, "drag_start_position"):
             del self.drag_start_position
         super().mouseReleaseEvent(event)
 
@@ -222,6 +227,7 @@ class CustomTitleBar(QWidget):
                 self.menu_button.clicked.disconnect(self.on_menu_clicked)
             except (TypeError, RuntimeError) as e:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.debug(f"Signal was not connected: {e}")
                 # Signal was not connected, which is fine

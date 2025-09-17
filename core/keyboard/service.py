@@ -26,7 +26,7 @@ class KeyboardService(Service):
 
     # Signals
     shortcut_triggered = Signal(str, dict)  # command_id, context
-    chord_sequence_started = Signal(str)    # sequence_str
+    chord_sequence_started = Signal(str)  # sequence_str
     chord_sequence_cancelled = Signal()
 
     def __init__(self, name: str = "KeyboardService"):
@@ -85,7 +85,9 @@ class KeyboardService(Service):
         if conflicts:
             logger.warning(f"Shortcut conflicts detected for {shortcut}: {conflicts}")
             # Let conflict resolver decide how to handle
-            if not self._conflict_resolver.resolve_conflicts(shortcut, conflicts, self._registry):
+            if not self._conflict_resolver.resolve_conflicts(
+                shortcut, conflicts, self._registry
+            ):
                 return False
 
         success = self._registry.register(shortcut)
@@ -94,14 +96,16 @@ class KeyboardService(Service):
 
         return success
 
-    def register_shortcut_from_string(self,
-                                    shortcut_id: str,
-                                    sequence_str: str,
-                                    command_id: str,
-                                    when: Optional[str] = None,
-                                    description: Optional[str] = None,
-                                    source: str = "user",
-                                    priority: int = 100) -> bool:
+    def register_shortcut_from_string(
+        self,
+        shortcut_id: str,
+        sequence_str: str,
+        command_id: str,
+        when: Optional[str] = None,
+        description: Optional[str] = None,
+        source: str = "user",
+        priority: int = 100,
+    ) -> bool:
         """
         Register a shortcut from string representation.
 
@@ -124,7 +128,7 @@ class KeyboardService(Service):
             when=when,
             description=description,
             source=source,
-            priority=priority
+            priority=priority,
         )
 
     def unregister_shortcut(self, shortcut_id: str) -> bool:
@@ -240,17 +244,21 @@ class KeyboardService(Service):
             self._cancel_chord_sequence()
             return False
 
-    def _check_chord_sequence_start(self, chord: KeyChord, context: dict[str, Any]) -> bool:
+    def _check_chord_sequence_start(
+        self, chord: KeyChord, context: dict[str, Any]
+    ) -> bool:
         """Check if a chord could start a chord sequence."""
         # Create sequence with just this chord
         KeySequence([chord])
 
         # Check if any registered shortcuts start with this chord
         for shortcut in self._registry.get_all_shortcuts():
-            if (shortcut.sequence.chords and
-                shortcut.sequence.chords[0] == chord and
-                len(shortcut.sequence.chords) > 1 and
-                shortcut.matches_context(context)):
+            if (
+                shortcut.sequence.chords
+                and shortcut.sequence.chords[0] == chord
+                and len(shortcut.sequence.chords) > 1
+                and shortcut.matches_context(context)
+            ):
 
                 # Start chord sequence
                 self._start_chord_sequence(chord)
@@ -258,15 +266,19 @@ class KeyboardService(Service):
 
         return False
 
-    def _has_potential_chord_matches(self, partial_sequence: KeySequence, context: dict[str, Any]) -> bool:
+    def _has_potential_chord_matches(
+        self, partial_sequence: KeySequence, context: dict[str, Any]
+    ) -> bool:
         """Check if a partial sequence could match any shortcuts."""
         partial_chords = partial_sequence.chords
         partial_len = len(partial_chords)
 
         for shortcut in self._registry.get_all_shortcuts():
-            if (len(shortcut.sequence.chords) > partial_len and
-                shortcut.sequence.chords[:partial_len] == partial_chords and
-                shortcut.matches_context(context)):
+            if (
+                len(shortcut.sequence.chords) > partial_len
+                and shortcut.sequence.chords[:partial_len] == partial_chords
+                and shortcut.matches_context(context)
+            ):
                 return True
 
         return False
@@ -410,6 +422,7 @@ class KeyboardService(Service):
 
     def _register_builtin_context_providers(self) -> None:
         """Register built-in context providers."""
+
         # Add basic application context
         def app_context():
             app = QApplication.instance()
@@ -417,9 +430,11 @@ class KeyboardService(Service):
                 return {}
 
             from PySide6.QtCore import Qt
+
             return {
                 "platform": app.platformName(),
-                "applicationActive": app.applicationState() == Qt.ApplicationState.ApplicationActive
+                "applicationActive": app.applicationState()
+                == Qt.ApplicationState.ApplicationActive,
             }
 
         self.add_context_provider(app_context)

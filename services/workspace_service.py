@@ -58,7 +58,7 @@ class WorkspaceService(Service):
 
         # Get workspace from context if not provided
         if not self._workspace:
-            self._workspace = context.get('workspace')
+            self._workspace = context.get("workspace")
 
         if not self._workspace:
             logger.warning("WorkspaceService initialized without workspace reference")
@@ -87,9 +87,13 @@ class WorkspaceService(Service):
         """Unregister a widget from the registry."""
         return self._widget_registry.unregister_widget(widget_id)
 
-    def update_registry_after_tab_close(self, closed_index: int, widget_id: Optional[str] = None) -> int:
+    def update_registry_after_tab_close(
+        self, closed_index: int, widget_id: Optional[str] = None
+    ) -> int:
         """Update registry indices after a tab is closed."""
-        return self._widget_registry.update_registry_after_tab_close(closed_index, widget_id)
+        return self._widget_registry.update_registry_after_tab_close(
+            closed_index, widget_id
+        )
 
     def get_widget_tab_index(self, widget_id: str) -> Optional[int]:
         """Get the tab index for a registered widget."""
@@ -109,16 +113,16 @@ class WorkspaceService(Service):
         index = self._tab_manager.add_editor_tab(name)
 
         # Notify observers
-        self.notify('tab_added', {
-            'type': 'editor',
-            'name': name or f"Editor {index}",
-            'index': index
-        })
+        self.notify(
+            "tab_added",
+            {"type": "editor", "name": name or f"Editor {index}", "index": index},
+        )
 
         # Update context
         from core.context.manager import context_manager
-        context_manager.set('workbench.tabs.count', self.get_tab_count())
-        context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
+
+        context_manager.set("workbench.tabs.count", self.get_tab_count())
+        context_manager.set("workbench.tabs.hasMultiple", self.get_tab_count() > 1)
 
         return index
 
@@ -130,36 +134,38 @@ class WorkspaceService(Service):
         index = self._tab_manager.add_terminal_tab(name)
 
         # Notify observers
-        self.notify('tab_added', {
-            'type': 'terminal',
-            'name': name or f"Terminal {index}",
-            'index': index
-        })
+        self.notify(
+            "tab_added",
+            {"type": "terminal", "name": name or f"Terminal {index}", "index": index},
+        )
 
         # Update context
         from core.context.manager import context_manager
-        context_manager.set('workbench.tabs.count', self.get_tab_count())
-        context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
+
+        context_manager.set("workbench.tabs.count", self.get_tab_count())
+        context_manager.set("workbench.tabs.hasMultiple", self.get_tab_count() > 1)
 
         return index
 
-    def add_app_widget(self, widget_type, widget_id: str, name: Optional[str] = None) -> bool:
+    def add_app_widget(
+        self, widget_type, widget_id: str, name: Optional[str] = None
+    ) -> bool:
         """Add a generic app widget tab."""
         # Delegate to tab manager
         success = self._tab_manager.add_app_widget(widget_type, widget_id, name)
 
         if success:
             # Notify observers
-            self.notify('tab_added', {
-                'type': str(widget_type.value),
-                'widget_id': widget_id,
-                'name': name
-            })
+            self.notify(
+                "tab_added",
+                {"type": str(widget_type.value), "widget_id": widget_id, "name": name},
+            )
 
             # Update context
             from core.context.manager import context_manager
-            context_manager.set('workbench.tabs.count', self.get_tab_count())
-            context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
+
+            context_manager.set("workbench.tabs.count", self.get_tab_count())
+            context_manager.set("workbench.tabs.hasMultiple", self.get_tab_count() > 1)
 
         return success
 
@@ -180,15 +186,13 @@ class WorkspaceService(Service):
 
         if success:
             # Notify observers
-            self.notify('tab_closed', {
-                'index': index,
-                'name': tab_name
-            })
+            self.notify("tab_closed", {"index": index, "name": tab_name})
 
             # Update context
             from core.context.manager import context_manager
-            context_manager.set('workbench.tabs.count', self.get_tab_count())
-            context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
+
+            context_manager.set("workbench.tabs.count", self.get_tab_count())
+            context_manager.set("workbench.tabs.hasMultiple", self.get_tab_count() > 1)
 
         return success
 
@@ -208,7 +212,7 @@ class WorkspaceService(Service):
         success = self._tab_manager.switch_to_tab(index)
 
         if success:
-            self.notify('tab_switched', {'index': index})
+            self.notify("tab_switched", {"index": index})
 
         return success
 
@@ -224,16 +228,20 @@ class WorkspaceService(Service):
         if new_id:
             # Notify observers
             active_pane = self._pane_manager.get_active_pane_id()
-            self.notify('pane_split', {
-                'orientation': orientation or get_default_split_direction(),
-                'new_pane_id': new_id,
-                'parent_pane_id': active_pane
-            })
+            self.notify(
+                "pane_split",
+                {
+                    "orientation": orientation or get_default_split_direction(),
+                    "new_pane_id": new_id,
+                    "parent_pane_id": active_pane,
+                },
+            )
 
             # Update context
             from core.context.manager import context_manager
-            context_manager.set('workbench.pane.count', self.get_pane_count())
-            context_manager.set('workbench.pane.hasMultiple', self.get_pane_count() > 1)
+
+            context_manager.set("workbench.pane.count", self.get_pane_count())
+            context_manager.set("workbench.pane.hasMultiple", self.get_pane_count() > 1)
 
         return new_id
 
@@ -249,12 +257,13 @@ class WorkspaceService(Service):
 
         if success:
             # Notify observers
-            self.notify('pane_closed', {'pane_id': pane_id})
+            self.notify("pane_closed", {"pane_id": pane_id})
 
             # Update context
             from core.context.manager import context_manager
-            context_manager.set('workbench.pane.count', self.get_pane_count())
-            context_manager.set('workbench.pane.hasMultiple', self.get_pane_count() > 1)
+
+            context_manager.set("workbench.pane.count", self.get_pane_count())
+            context_manager.set("workbench.pane.hasMultiple", self.get_pane_count() > 1)
 
         return success
 
@@ -267,7 +276,7 @@ class WorkspaceService(Service):
 
         if success:
             # Notify observers
-            self.notify('pane_focused', {'pane_id': pane_id})
+            self.notify("pane_focused", {"pane_id": pane_id})
 
         return success
 
@@ -280,10 +289,11 @@ class WorkspaceService(Service):
 
         # Update context for conditional commands
         from core.context.manager import context_manager
-        context_manager.set('workbench.panes.numbersVisible', visible)
+
+        context_manager.set("workbench.panes.numbersVisible", visible)
 
         # Notify observers
-        self.notify('pane_numbers_toggled', {'visible': visible})
+        self.notify("pane_numbers_toggled", {"visible": visible})
 
         return visible
 
@@ -327,11 +337,10 @@ class WorkspaceService(Service):
 
         if success:
             to_pane = self._pane_manager.get_active_pane_id()
-            self.notify('pane_navigated', {
-                'from': from_pane,
-                'to': to_pane,
-                'direction': direction
-            })
+            self.notify(
+                "pane_navigated",
+                {"from": from_pane, "to": to_pane, "direction": direction},
+            )
 
         return success
 
@@ -367,7 +376,7 @@ class WorkspaceService(Service):
         try:
             self._workspace.set_state(state)
 
-            self.notify('layout_restored', {'state': state})
+            self.notify("layout_restored", {"state": state})
             return True
 
         except Exception as e:
@@ -391,21 +400,17 @@ class WorkspaceService(Service):
     def get_workspace_info(self) -> dict[str, Any]:
         """Get comprehensive workspace information."""
         if not self._workspace:
-            return {
-                'available': False,
-                'tab_count': 0,
-                'current_tab': -1
-            }
+            return {"available": False, "tab_count": 0, "current_tab": -1}
 
         # Combine information from all managers
         tab_info = self._tab_manager.get_tab_info()
         pane_info = self._pane_manager.get_pane_info()
 
         return {
-            'available': True,
-            'tab_count': tab_info['count'],
-            'current_tab': tab_info['current'],
-            'current_tab_info': tab_info.get('current_tab_info'),
-            'pane_count': pane_info['count'],
-            'active_pane_id': pane_info['active']
+            "available": True,
+            "tab_count": tab_info["count"],
+            "current_tab": tab_info["current"],
+            "current_tab_info": tab_info.get("current_tab_info"),
+            "pane_count": pane_info["count"],
+            "active_pane_id": pane_info["active"],
         }

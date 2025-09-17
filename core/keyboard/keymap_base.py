@@ -24,46 +24,131 @@ class BaseKeymapShortcuts:
         """
         return [
             # ========== File Operations ==========
-            {"id": "file.new_terminal", "sequence": "ctrl+n", "command_id": "file.newTerminalTab"},
-            {"id": "file.new_editor", "sequence": "ctrl+shift+n", "command_id": "file.newEditorTab"},
-            {"id": "file.open", "sequence": "ctrl+o", "command_id": CommandID.File.OPEN},
-            {"id": "file.save", "sequence": "ctrl+s", "command_id": CommandID.File.SAVE},
-            {"id": "file.save_as", "sequence": "ctrl+shift+s", "command_id": CommandID.File.SAVE_AS},
+            {
+                "id": "file.new_terminal",
+                "sequence": "ctrl+n",
+                "command_id": "file.newTerminalTab",
+            },
+            {
+                "id": "file.new_editor",
+                "sequence": "ctrl+shift+n",
+                "command_id": "file.newEditorTab",
+            },
+            {
+                "id": "file.open",
+                "sequence": "ctrl+o",
+                "command_id": CommandID.File.OPEN,
+            },
+            {
+                "id": "file.save",
+                "sequence": "ctrl+s",
+                "command_id": CommandID.File.SAVE,
+            },
+            {
+                "id": "file.save_as",
+                "sequence": "ctrl+shift+s",
+                "command_id": CommandID.File.SAVE_AS,
+            },
             {"id": "file.close", "sequence": "ctrl+w", "command_id": "file.closeTab"},
-
             # ========== Edit Operations ==========
             {"id": "edit.cut", "sequence": "ctrl+x", "command_id": CommandID.Edit.CUT},
-            {"id": "edit.copy", "sequence": "ctrl+c", "command_id": CommandID.Edit.COPY},
-            {"id": "edit.paste", "sequence": "ctrl+v", "command_id": CommandID.Edit.PASTE},
-            {"id": "edit.undo", "sequence": "ctrl+z", "command_id": CommandID.Edit.UNDO},
-            {"id": "edit.select_all", "sequence": "ctrl+a", "command_id": CommandID.Edit.SELECT_ALL},
-
+            {
+                "id": "edit.copy",
+                "sequence": "ctrl+c",
+                "command_id": CommandID.Edit.COPY,
+            },
+            {
+                "id": "edit.paste",
+                "sequence": "ctrl+v",
+                "command_id": CommandID.Edit.PASTE,
+            },
+            {
+                "id": "edit.undo",
+                "sequence": "ctrl+z",
+                "command_id": CommandID.Edit.UNDO,
+            },
+            {
+                "id": "edit.select_all",
+                "sequence": "ctrl+a",
+                "command_id": CommandID.Edit.SELECT_ALL,
+            },
             # ========== View Operations ==========
-            {"id": "view.sidebar", "sequence": "ctrl+b", "command_id": CommandID.View.TOGGLE_SIDEBAR},
-            {"id": "view.terminal", "sequence": "ctrl+`", "command_id": CommandID.View.TOGGLE_TERMINAL},
-            {"id": "view.fullscreen", "sequence": "f11", "command_id": CommandID.View.TOGGLE_FULLSCREEN},
-            {"id": "view.theme", "sequence": "ctrl+t", "command_id": CommandID.View.TOGGLE_THEME},
-            {"id": "view.command_palette", "sequence": "ctrl+shift+p", "command_id": CommandID.CommandPalette.SHOW},
-
+            {
+                "id": "view.sidebar",
+                "sequence": "ctrl+b",
+                "command_id": CommandID.View.TOGGLE_SIDEBAR,
+            },
+            {
+                "id": "view.terminal",
+                "sequence": "ctrl+`",
+                "command_id": CommandID.View.TOGGLE_TERMINAL,
+            },
+            {
+                "id": "view.fullscreen",
+                "sequence": "f11",
+                "command_id": CommandID.View.TOGGLE_FULLSCREEN,
+            },
+            {
+                "id": "view.theme",
+                "sequence": "ctrl+t",
+                "command_id": CommandID.View.TOGGLE_THEME,
+            },
+            {
+                "id": "view.command_palette",
+                "sequence": "ctrl+shift+p",
+                "command_id": CommandID.CommandPalette.SHOW,
+            },
             # ========== Workspace Operations ==========
-            {"id": "workspace.split_horizontal", "sequence": "ctrl+\\", "command_id": "workbench.action.splitRight"},
-            {"id": "workspace.split_vertical", "sequence": "ctrl+shift+\\", "command_id": "workbench.action.splitDown"},
-
+            {
+                "id": "workspace.split_horizontal",
+                "sequence": "ctrl+\\",
+                "command_id": "workbench.action.splitRight",
+            },
+            {
+                "id": "workspace.split_vertical",
+                "sequence": "ctrl+shift+\\",
+                "command_id": "workbench.action.splitDown",
+            },
             # ========== Terminal Operations ==========
-            {"id": "terminal.new", "sequence": "ctrl+shift+`", "command_id": "file.newTerminalTab"},
-            {"id": "terminal.clear", "sequence": "ctrl+l", "command_id": "terminal.clear"},
-
+            {
+                "id": "terminal.new",
+                "sequence": "ctrl+shift+`",
+                "command_id": "file.newTerminalTab",
+            },
+            {
+                "id": "terminal.clear",
+                "sequence": "ctrl+l",
+                "command_id": "terminal.clear",
+            },
             # ========== Navigation ==========
-            {"id": "nav.next_tab", "sequence": "ctrl+tab", "command_id": "workbench.action.nextTab"},
-            {"id": "nav.prev_tab", "sequence": "ctrl+shift+tab", "command_id": "workbench.action.previousTab"},
-
+            {
+                "id": "nav.next_tab",
+                "sequence": "ctrl+tab",
+                "command_id": "workbench.action.nextTab",
+            },
+            {
+                "id": "nav.prev_tab",
+                "sequence": "ctrl+shift+tab",
+                "command_id": "workbench.action.previousTab",
+            },
             # ========== Focus Navigation ==========
-            {"id": "focus.next_group", "sequence": "f6", "command_id": "workbench.action.focusNextGroup"},
-            {"id": "focus.prev_group", "sequence": "shift+f6", "command_id": "workbench.action.focusPreviousGroup"},
-
+            {
+                "id": "focus.next_group",
+                "sequence": "f6",
+                "command_id": "workbench.action.focusNextGroup",
+            },
+            {
+                "id": "focus.prev_group",
+                "sequence": "shift+f6",
+                "command_id": "workbench.action.focusPreviousGroup",
+            },
             # ========== Help ==========
             {"id": "help.about", "sequence": "f1", "command_id": "help.about"},
-            {"id": "help.shortcuts", "sequence": "ctrl+k ctrl+s", "command_id": "help.keyboardShortcuts"},
+            {
+                "id": "help.shortcuts",
+                "sequence": "ctrl+k ctrl+s",
+                "command_id": "help.keyboardShortcuts",
+            },
         ]
 
     @staticmethod
@@ -72,8 +157,16 @@ class BaseKeymapShortcuts:
         return [
             # Default ViloApp specific shortcuts
             {"id": "edit.redo", "sequence": "ctrl+y", "command_id": "editor.redo"},
-            {"id": "workspace.next_pane", "sequence": "ctrl+k ctrl+right", "command_id": "workbench.action.focusNextPane"},
-            {"id": "workspace.prev_pane", "sequence": "ctrl+k ctrl+left", "command_id": "workbench.action.focusPreviousPane"},
+            {
+                "id": "workspace.next_pane",
+                "sequence": "ctrl+k ctrl+right",
+                "command_id": "workbench.action.focusNextPane",
+            },
+            {
+                "id": "workspace.prev_pane",
+                "sequence": "ctrl+k ctrl+left",
+                "command_id": "workbench.action.focusPreviousPane",
+            },
         ]
 
     @staticmethod
@@ -81,28 +174,108 @@ class BaseKeymapShortcuts:
         """Get VSCode-specific extensions to the base shortcuts."""
         return [
             # VSCode specific overrides and additions
-            {"id": "edit.redo", "sequence": "ctrl+shift+z", "command_id": "editor.redo"},
-            {"id": "file.close_all", "sequence": "ctrl+k ctrl+w", "command_id": "file.closeAllTabs"},
-            {"id": "file.reopen", "sequence": "ctrl+shift+t", "command_id": "file.reopenClosedTab"},
-            {"id": "workspace.close_group", "sequence": "ctrl+k w", "command_id": "workbench.action.closeActivePane"},
-            {"id": "workspace.focus_left", "sequence": "ctrl+k ctrl+left", "command_id": "workbench.action.focusPreviousPane"},
-            {"id": "workspace.focus_right", "sequence": "ctrl+k ctrl+right", "command_id": "workbench.action.focusNextPane"},
-            {"id": "nav.quick_open", "sequence": "ctrl+p", "command_id": "quickOpen.show"},
-            {"id": "nav.go_to_line", "sequence": "ctrl+g", "command_id": "editor.goToLine"},
-            {"id": "settings.open", "sequence": "ctrl+,", "command_id": "settings.open"},
+            {
+                "id": "edit.redo",
+                "sequence": "ctrl+shift+z",
+                "command_id": "editor.redo",
+            },
+            {
+                "id": "file.close_all",
+                "sequence": "ctrl+k ctrl+w",
+                "command_id": "file.closeAllTabs",
+            },
+            {
+                "id": "file.reopen",
+                "sequence": "ctrl+shift+t",
+                "command_id": "file.reopenClosedTab",
+            },
+            {
+                "id": "workspace.close_group",
+                "sequence": "ctrl+k w",
+                "command_id": "workbench.action.closeActivePane",
+            },
+            {
+                "id": "workspace.focus_left",
+                "sequence": "ctrl+k ctrl+left",
+                "command_id": "workbench.action.focusPreviousPane",
+            },
+            {
+                "id": "workspace.focus_right",
+                "sequence": "ctrl+k ctrl+right",
+                "command_id": "workbench.action.focusNextPane",
+            },
+            {
+                "id": "nav.quick_open",
+                "sequence": "ctrl+p",
+                "command_id": "quickOpen.show",
+            },
+            {
+                "id": "nav.go_to_line",
+                "sequence": "ctrl+g",
+                "command_id": "editor.goToLine",
+            },
+            {
+                "id": "settings.open",
+                "sequence": "ctrl+,",
+                "command_id": "settings.open",
+            },
             # Tab navigation by number
-            {"id": "nav.tab_1", "sequence": "ctrl+1", "command_id": "workbench.action.openEditorAtIndex1"},
-            {"id": "nav.tab_2", "sequence": "ctrl+2", "command_id": "workbench.action.openEditorAtIndex2"},
-            {"id": "nav.tab_3", "sequence": "ctrl+3", "command_id": "workbench.action.openEditorAtIndex3"},
-            {"id": "nav.tab_4", "sequence": "ctrl+4", "command_id": "workbench.action.openEditorAtIndex4"},
-            {"id": "nav.tab_5", "sequence": "ctrl+5", "command_id": "workbench.action.openEditorAtIndex5"},
-            {"id": "nav.tab_6", "sequence": "ctrl+6", "command_id": "workbench.action.openEditorAtIndex6"},
-            {"id": "nav.tab_7", "sequence": "ctrl+7", "command_id": "workbench.action.openEditorAtIndex7"},
-            {"id": "nav.tab_8", "sequence": "ctrl+8", "command_id": "workbench.action.openEditorAtIndex8"},
-            {"id": "nav.tab_9", "sequence": "ctrl+9", "command_id": "workbench.action.openEditorAtIndex9"},
+            {
+                "id": "nav.tab_1",
+                "sequence": "ctrl+1",
+                "command_id": "workbench.action.openEditorAtIndex1",
+            },
+            {
+                "id": "nav.tab_2",
+                "sequence": "ctrl+2",
+                "command_id": "workbench.action.openEditorAtIndex2",
+            },
+            {
+                "id": "nav.tab_3",
+                "sequence": "ctrl+3",
+                "command_id": "workbench.action.openEditorAtIndex3",
+            },
+            {
+                "id": "nav.tab_4",
+                "sequence": "ctrl+4",
+                "command_id": "workbench.action.openEditorAtIndex4",
+            },
+            {
+                "id": "nav.tab_5",
+                "sequence": "ctrl+5",
+                "command_id": "workbench.action.openEditorAtIndex5",
+            },
+            {
+                "id": "nav.tab_6",
+                "sequence": "ctrl+6",
+                "command_id": "workbench.action.openEditorAtIndex6",
+            },
+            {
+                "id": "nav.tab_7",
+                "sequence": "ctrl+7",
+                "command_id": "workbench.action.openEditorAtIndex7",
+            },
+            {
+                "id": "nav.tab_8",
+                "sequence": "ctrl+8",
+                "command_id": "workbench.action.openEditorAtIndex8",
+            },
+            {
+                "id": "nav.tab_9",
+                "sequence": "ctrl+9",
+                "command_id": "workbench.action.openEditorAtIndex9",
+            },
             # Focus navigation
-            {"id": "focus.next_group", "sequence": "f6", "command_id": "workbench.action.focusNextGroup"},
-            {"id": "focus.prev_group", "sequence": "shift+f6", "command_id": "workbench.action.focusPreviousGroup"},
+            {
+                "id": "focus.next_group",
+                "sequence": "f6",
+                "command_id": "workbench.action.focusNextGroup",
+            },
+            {
+                "id": "focus.prev_group",
+                "sequence": "shift+f6",
+                "command_id": "workbench.action.focusPreviousGroup",
+            },
         ]
 
     @staticmethod
@@ -114,16 +287,76 @@ class BaseKeymapShortcuts:
         """
         return [
             # Vim mode specific (with when clauses)
-            {"id": "file.save_vim", "sequence": "space w", "command_id": "file.save", "when": "vimMode"},
-            {"id": "file.quit", "sequence": "space q", "command_id": "file.closeActiveTab", "when": "vimMode"},
-            {"id": "edit.undo_vim", "sequence": "u", "command_id": "editor.undo", "when": "vimMode && vimNormalMode"},
-            {"id": "edit.redo_vim", "sequence": "ctrl+r", "command_id": "editor.redo", "when": "vimMode && vimNormalMode"},
-            {"id": "view.sidebar_vim", "sequence": "space e", "command_id": "view.toggleSidebar", "when": "vimMode"},
-            {"id": "view.terminal_vim", "sequence": "space t", "command_id": "view.toggleTerminal", "when": "vimMode"},
-            {"id": "workspace.split_h_vim", "sequence": "space s", "command_id": "workbench.action.splitRight", "when": "vimMode"},
-            {"id": "workspace.split_v_vim", "sequence": "space v", "command_id": "workbench.action.splitDown", "when": "vimMode"},
-            {"id": "workspace.focus_left_vim", "sequence": "space h", "command_id": "workbench.action.focusPreviousPane", "when": "vimMode"},
-            {"id": "workspace.focus_right_vim", "sequence": "space l", "command_id": "workbench.action.focusNextPane", "when": "vimMode"},
-            {"id": "nav.next_buffer", "sequence": "space b n", "command_id": "workbench.action.nextTab", "when": "vimMode"},
-            {"id": "nav.prev_buffer", "sequence": "space b p", "command_id": "workbench.action.previousTab", "when": "vimMode"},
+            {
+                "id": "file.save_vim",
+                "sequence": "space w",
+                "command_id": "file.save",
+                "when": "vimMode",
+            },
+            {
+                "id": "file.quit",
+                "sequence": "space q",
+                "command_id": "file.closeActiveTab",
+                "when": "vimMode",
+            },
+            {
+                "id": "edit.undo_vim",
+                "sequence": "u",
+                "command_id": "editor.undo",
+                "when": "vimMode && vimNormalMode",
+            },
+            {
+                "id": "edit.redo_vim",
+                "sequence": "ctrl+r",
+                "command_id": "editor.redo",
+                "when": "vimMode && vimNormalMode",
+            },
+            {
+                "id": "view.sidebar_vim",
+                "sequence": "space e",
+                "command_id": "view.toggleSidebar",
+                "when": "vimMode",
+            },
+            {
+                "id": "view.terminal_vim",
+                "sequence": "space t",
+                "command_id": "view.toggleTerminal",
+                "when": "vimMode",
+            },
+            {
+                "id": "workspace.split_h_vim",
+                "sequence": "space s",
+                "command_id": "workbench.action.splitRight",
+                "when": "vimMode",
+            },
+            {
+                "id": "workspace.split_v_vim",
+                "sequence": "space v",
+                "command_id": "workbench.action.splitDown",
+                "when": "vimMode",
+            },
+            {
+                "id": "workspace.focus_left_vim",
+                "sequence": "space h",
+                "command_id": "workbench.action.focusPreviousPane",
+                "when": "vimMode",
+            },
+            {
+                "id": "workspace.focus_right_vim",
+                "sequence": "space l",
+                "command_id": "workbench.action.focusNextPane",
+                "when": "vimMode",
+            },
+            {
+                "id": "nav.next_buffer",
+                "sequence": "space b n",
+                "command_id": "workbench.action.nextTab",
+                "when": "vimMode",
+            },
+            {
+                "id": "nav.prev_buffer",
+                "sequence": "space b p",
+                "command_id": "workbench.action.previousTab",
+                "when": "vimMode",
+            },
         ]

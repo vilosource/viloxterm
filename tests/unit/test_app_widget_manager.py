@@ -51,7 +51,7 @@ def sample_metadata(mock_widget_class):
         open_command="test.open",
         provides_capabilities=["test_capability"],
         requires_services=["test_service"],
-        source="test"  # Prevent auto-prefixing
+        source="test",  # Prevent auto-prefixing
     )
 
 
@@ -122,7 +122,9 @@ class TestWidgetRegistration:
 class TestWidgetCreation:
     """Test widget creation functionality."""
 
-    def test_create_widget_with_class(self, manager, sample_metadata, mock_widget_class):
+    def test_create_widget_with_class(
+        self, manager, sample_metadata, mock_widget_class
+    ):
         """Test creating widget using widget class."""
         manager.register_widget(sample_metadata)
 
@@ -143,7 +145,7 @@ class TestWidgetCreation:
             icon="factory",
             category=WidgetCategory.TOOLS,
             widget_class=mock_widget_class,
-            factory=mock_factory
+            factory=mock_factory,
         )
 
         manager.register_widget(metadata)
@@ -178,7 +180,7 @@ class TestWidgetCreation:
             description="Widget that fails",
             icon="error",
             category=WidgetCategory.TOOLS,
-            widget_class=mock_widget_class
+            widget_class=mock_widget_class,
         )
 
         manager.register_widget(metadata)
@@ -202,7 +204,7 @@ class TestWidgetQuerying:
                 icon=f"icon_{i}",
                 category=WidgetCategory.TOOLS,
                 widget_class=MagicMock(),
-                source="test"
+                source="test",
             )
             manager.register_widget(metadata)
 
@@ -221,7 +223,7 @@ class TestWidgetQuerying:
                 description=f"Description {i}",
                 icon=f"icon_{i}",
                 category=category,
-                widget_class=mock_widget_class
+                widget_class=mock_widget_class,
             )
             manager.register_widget(metadata)
 
@@ -242,7 +244,7 @@ class TestWidgetQuerying:
             icon="builtin",
             category=WidgetCategory.TOOLS,
             widget_class=mock_widget_class,
-            source="builtin"
+            source="builtin",
         )
         manager.register_widget(builtin)
 
@@ -255,7 +257,7 @@ class TestWidgetQuerying:
             icon="plugin",
             category=WidgetCategory.TOOLS,
             widget_class=mock_widget_class,
-            source="plugin"
+            source="plugin",
         )
         manager.register_widget(plugin)
 
@@ -278,7 +280,7 @@ class TestWidgetQuerying:
             icon="icon1",
             category=WidgetCategory.TOOLS,
             widget_class=mock_widget_class,
-            provides_capabilities=["editing", "preview"]
+            provides_capabilities=["editing", "preview"],
         )
         manager.register_widget(metadata1)
 
@@ -290,7 +292,7 @@ class TestWidgetQuerying:
             icon="icon2",
             category=WidgetCategory.TOOLS,
             widget_class=mock_widget_class,
-            provides_capabilities=["preview", "export"]
+            provides_capabilities=["preview", "export"],
         )
         manager.register_widget(metadata2)
 
@@ -311,7 +313,7 @@ class TestWidgetQuerying:
             icon="edit",
             category=WidgetCategory.EDITOR,
             widget_class=mock_widget_class,
-            supported_file_types=["txt", "py", "js"]
+            supported_file_types=["txt", "py", "js"],
         )
         manager.register_widget(metadata)
 
@@ -339,7 +341,7 @@ class TestWidgetQuerying:
             icon="shown",
             category=WidgetCategory.TOOLS,
             widget_class=mock_widget_class,
-            show_in_menu=True
+            show_in_menu=True,
         )
         manager.register_widget(shown)
 
@@ -352,7 +354,7 @@ class TestWidgetQuerying:
             icon="hidden",
             category=WidgetCategory.TOOLS,
             widget_class=mock_widget_class,
-            show_in_menu=False
+            show_in_menu=False,
         )
         manager.register_widget(hidden)
 
@@ -374,7 +376,7 @@ class TestBackwardCompatibility:
             description="Backward compatible",
             icon="compat",
             category=WidgetCategory.TERMINAL,
-            widget_class=mock_widget_class
+            widget_class=mock_widget_class,
         )
         manager.register_widget(metadata)
 
@@ -421,7 +423,7 @@ class TestUtilityMethods:
                 icon=f"icon_{i}",
                 category=WidgetCategory.TOOLS,
                 widget_class=MagicMock(),
-                source="test"
+                source="test",
             )
             manager.register_widget(metadata)
 

@@ -168,13 +168,13 @@ def validate_command_id(command_id: str) -> bool:
         return False
 
     # Command IDs should be in format: category.action or category.subcategory.action
-    parts = command_id.split('.')
+    parts = command_id.split(".")
     if len(parts) < 2 or len(parts) > 4:
         return False
 
     # Each part should be non-empty and contain only alphanumeric characters
     for part in parts:
-        if not part or not part.replace('_', '').replace('-', '').isalnum():
+        if not part or not part.replace("_", "").replace("-", "").isalnum():
             return False
 
     return True
@@ -193,4 +193,4 @@ def get_command_category(command_id: str) -> str:
     if not validate_command_id(command_id):
         return ""
 
-    return command_id.split('.')[0]
+    return command_id.split(".")[0]

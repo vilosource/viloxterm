@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EnvironmentInfo:
     """Information about the detected environment."""
+
     os_type: str  # 'Linux', 'Darwin', 'Windows'
     is_wsl: bool
     is_docker: bool
@@ -46,38 +47,38 @@ class EnvironmentDetector:
             is_remote_desktop=EnvironmentDetector._is_remote_desktop(),
             display_server=EnvironmentDetector._detect_display_server(),
             gpu_available=EnvironmentDetector._check_gpu_available(),
-            gpu_vendor=EnvironmentDetector._detect_gpu_vendor()
+            gpu_vendor=EnvironmentDetector._detect_gpu_vendor(),
         )
 
     @staticmethod
     def _is_wsl() -> bool:
         """Check if running in WSL."""
-        if platform.system() != 'Linux':
+        if platform.system() != "Linux":
             return False
 
         # Check for WSL-specific indicators
         try:
-            with open('/proc/version') as f:
+            with open("/proc/version") as f:
                 version = f.read().lower()
-                return 'microsoft' in version or 'wsl' in version
+                return "microsoft" in version or "wsl" in version
         except (OSError, FileNotFoundError, PermissionError) as e:
             logger.debug(f"Cannot read /proc/version: {e}")
             pass
 
         # Check for WSL environment variable
-        return 'WSL_DISTRO_NAME' in os.environ or 'WSL_INTEROP' in os.environ
+        return "WSL_DISTRO_NAME" in os.environ or "WSL_INTEROP" in os.environ
 
     @staticmethod
     def _is_docker() -> bool:
         """Check if running in Docker container."""
         # Check for .dockerenv file
-        if os.path.exists('/.dockerenv'):
+        if os.path.exists("/.dockerenv"):
             return True
 
         # Check cgroup for docker
         try:
-            with open('/proc/1/cgroup') as f:
-                return 'docker' in f.read()
+            with open("/proc/1/cgroup") as f:
+                return "docker" in f.read()
         except (OSError, FileNotFoundError, PermissionError) as e:
             logger.debug(f"Cannot read /proc/1/cgroup: {e}")
             return False
@@ -85,23 +86,23 @@ class EnvironmentDetector:
     @staticmethod
     def _is_ssh() -> bool:
         """Check if running over SSH."""
-        return 'SSH_CLIENT' in os.environ or 'SSH_TTY' in os.environ
+        return "SSH_CLIENT" in os.environ or "SSH_TTY" in os.environ
 
     @staticmethod
     def _is_remote_desktop() -> bool:
         """Check if running in remote desktop session."""
-        return 'REMOTE_DESKTOP_SESSION' in os.environ or 'RDP_SESSION' in os.environ
+        return "REMOTE_DESKTOP_SESSION" in os.environ or "RDP_SESSION" in os.environ
 
     @staticmethod
     def _detect_display_server() -> Optional[str]:
         """Detect the display server type."""
-        if 'WAYLAND_DISPLAY' in os.environ:
-            return 'wayland'
-        elif 'DISPLAY' in os.environ:
+        if "WAYLAND_DISPLAY" in os.environ:
+            return "wayland"
+        elif "DISPLAY" in os.environ:
             # Check if WSLg
-            if os.environ.get('WSL_DISTRO_NAME'):
-                return 'wslg'
-            return 'x11'
+            if os.environ.get("WSL_DISTRO_NAME"):
+                return "wslg"
+            return "x11"
         return None
 
     @staticmethod
@@ -109,11 +110,10 @@ class EnvironmentDetector:
         """Check if GPU acceleration is available."""
         try:
             # Try to run glxinfo
-            result = subprocess.run(['glxinfo'],
-                                  capture_output=True,
-                                  text=True,
-                                  timeout=2)
-            return 'direct rendering: Yes' in result.stdout
+            result = subprocess.run(
+                ["glxinfo"], capture_output=True, text=True, timeout=2
+            )
+            return "direct rendering: Yes" in result.stdout
         except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
             logger.debug(f"Cannot run glxinfo to check GPU: {e}")
             return False
@@ -122,18 +122,17 @@ class EnvironmentDetector:
     def _detect_gpu_vendor() -> Optional[str]:
         """Detect GPU vendor."""
         try:
-            result = subprocess.run(['glxinfo'],
-                                  capture_output=True,
-                                  text=True,
-                                  timeout=2)
+            result = subprocess.run(
+                ["glxinfo"], capture_output=True, text=True, timeout=2
+            )
             output = result.stdout.lower()
 
-            if 'nvidia' in output:
-                return 'nvidia'
-            elif 'amd' in output or 'radeon' in output:
-                return 'amd'
-            elif 'intel' in output:
-                return 'intel'
+            if "nvidia" in output:
+                return "nvidia"
+            elif "amd" in output or "radeon" in output:
+                return "amd"
+            elif "intel" in output:
+                return "intel"
         except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
             logger.debug(f"Cannot run glxinfo to detect GPU vendor: {e}")
             pass
@@ -182,28 +181,29 @@ class WSLStrategy(EnvironmentStrategy):
         """Configure for WSL environment."""
         env_vars = {
             # Core settings for WSL compatibility
-            'LIBGL_ALWAYS_SOFTWARE': '1',  # Force software rendering
-            'QTWEBENGINE_DISABLE_SANDBOX': '1',  # Sandbox doesn't work well in WSL
-            'QTWEBENGINE_CHROMIUM_FLAGS': '--disable-gpu --no-sandbox --disable-dev-shm-usage',
-
+            "LIBGL_ALWAYS_SOFTWARE": "1",  # Force software rendering
+            "QTWEBENGINE_DISABLE_SANDBOX": "1",  # Sandbox doesn't work well in WSL
+            "QTWEBENGINE_CHROMIUM_FLAGS": "--disable-gpu --no-sandbox --disable-dev-shm-usage",
             # Let Qt choose the best backend, but use software
-            'QT_QUICK_BACKEND': 'software',
+            "QT_QUICK_BACKEND": "software",
         }
 
         # Don't force a specific platform - let Qt auto-detect
         # WSLg can use either Wayland or X11 depending on setup
 
-        if not os.environ.get('DISPLAY') and not os.environ.get('WAYLAND_DISPLAY'):
-            logger.warning("No DISPLAY or WAYLAND_DISPLAY set - application may not show")
+        if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
+            logger.warning(
+                "No DISPLAY or WAYLAND_DISPLAY set - application may not show"
+            )
 
         return env_vars
 
     def get_qt_flags(self) -> dict[str, str]:
         """Get Qt flags for WSL."""
         return {
-            'QT_SCALE_FACTOR': '1',
-            'QT_AUTO_SCREEN_SCALE_FACTOR': '0',
-            'QT_ENABLE_HIGHDPI_SCALING': '1'
+            "QT_SCALE_FACTOR": "1",
+            "QT_AUTO_SCREEN_SCALE_FACTOR": "0",
+            "QT_ENABLE_HIGHDPI_SCALING": "1",
         }
 
     def get_recommendations(self) -> str:
@@ -229,20 +229,18 @@ class NativeLinuxStrategy(EnvironmentStrategy):
 
         # Only disable GPU if it's not available
         if not self.env_info.gpu_available:
-            env_vars['QT_QUICK_BACKEND'] = 'software'
-            env_vars['LIBGL_ALWAYS_SOFTWARE'] = '1'
+            env_vars["QT_QUICK_BACKEND"] = "software"
+            env_vars["LIBGL_ALWAYS_SOFTWARE"] = "1"
 
         # Wayland-specific settings
-        if self.env_info.display_server == 'wayland':
-            env_vars['QT_QPA_PLATFORM'] = 'wayland'
+        if self.env_info.display_server == "wayland":
+            env_vars["QT_QPA_PLATFORM"] = "wayland"
 
         return env_vars
 
     def get_qt_flags(self) -> dict[str, str]:
         """Get Qt flags for native Linux."""
-        return {
-            'QT_AUTO_SCREEN_SCALE_FACTOR': '1'
-        }
+        return {"QT_AUTO_SCREEN_SCALE_FACTOR": "1"}
 
     def get_recommendations(self) -> str:
         """Get native Linux recommendations."""
@@ -260,15 +258,11 @@ class MacOSStrategy(EnvironmentStrategy):
 
     def configure(self) -> dict[str, str]:
         """Configure for macOS."""
-        return {
-            'QT_MAC_WANTS_LAYER': '1'
-        }
+        return {"QT_MAC_WANTS_LAYER": "1"}
 
     def get_qt_flags(self) -> dict[str, str]:
         """Get Qt flags for macOS."""
-        return {
-            'QT_AUTO_SCREEN_SCALE_FACTOR': '1'
-        }
+        return {"QT_AUTO_SCREEN_SCALE_FACTOR": "1"}
 
     def get_recommendations(self) -> str:
         """Get macOS recommendations."""
@@ -284,16 +278,11 @@ class WindowsStrategy(EnvironmentStrategy):
 
     def configure(self) -> dict[str, str]:
         """Configure for Windows."""
-        return {
-            'QT_OPENGL': 'angle'  # Use ANGLE for better compatibility
-        }
+        return {"QT_OPENGL": "angle"}  # Use ANGLE for better compatibility
 
     def get_qt_flags(self) -> dict[str, str]:
         """Get Qt flags for Windows."""
-        return {
-            'QT_AUTO_SCREEN_SCALE_FACTOR': '1',
-            'QT_ENABLE_HIGHDPI_SCALING': '1'
-        }
+        return {"QT_AUTO_SCREEN_SCALE_FACTOR": "1", "QT_ENABLE_HIGHDPI_SCALING": "1"}
 
     def get_recommendations(self) -> str:
         """Get Windows recommendations."""
@@ -311,17 +300,15 @@ class DockerStrategy(EnvironmentStrategy):
     def configure(self) -> dict[str, str]:
         """Configure for Docker."""
         return {
-            'QT_QUICK_BACKEND': 'software',
-            'QT_XCB_GL_INTEGRATION': 'none',
-            'LIBGL_ALWAYS_SOFTWARE': '1',
-            'QTWEBENGINE_DISABLE_SANDBOX': '1'
+            "QT_QUICK_BACKEND": "software",
+            "QT_XCB_GL_INTEGRATION": "none",
+            "LIBGL_ALWAYS_SOFTWARE": "1",
+            "QTWEBENGINE_DISABLE_SANDBOX": "1",
         }
 
     def get_qt_flags(self) -> dict[str, str]:
         """Get Qt flags for Docker."""
-        return {
-            'QT_X11_NO_MITSHM': '1'  # Disable shared memory for X11
-        }
+        return {"QT_X11_NO_MITSHM": "1"}  # Disable shared memory for X11
 
     def get_recommendations(self) -> str:
         """Get Docker recommendations."""
@@ -338,16 +325,11 @@ class SSHStrategy(EnvironmentStrategy):
 
     def configure(self) -> dict[str, str]:
         """Configure for SSH."""
-        return {
-            'QT_QUICK_BACKEND': 'software',
-            'LIBGL_ALWAYS_SOFTWARE': '1'
-        }
+        return {"QT_QUICK_BACKEND": "software", "LIBGL_ALWAYS_SOFTWARE": "1"}
 
     def get_qt_flags(self) -> dict[str, str]:
         """Get Qt flags for SSH."""
-        return {
-            'QT_X11_NO_MITSHM': '1'
-        }
+        return {"QT_X11_NO_MITSHM": "1"}
 
     def get_recommendations(self) -> str:
         """Get SSH recommendations."""
@@ -382,15 +364,15 @@ class EnvironmentConfigurator:
             logger.info("WSL environment detected")
             return WSLStrategy()
 
-        if self.env_info.os_type == 'Linux':
+        if self.env_info.os_type == "Linux":
             logger.info("Native Linux environment detected")
             return NativeLinuxStrategy(self.env_info)
 
-        if self.env_info.os_type == 'Darwin':
+        if self.env_info.os_type == "Darwin":
             logger.info("macOS environment detected")
             return MacOSStrategy()
 
-        if self.env_info.os_type == 'Windows':
+        if self.env_info.os_type == "Windows":
             logger.info("Windows environment detected")
             return WindowsStrategy()
 

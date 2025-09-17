@@ -20,6 +20,7 @@ class TestServiceBase:
 
     def test_service_initialization(self):
         """Test service initialization."""
+
         # Create a concrete service class for testing
         class TestService(Service):
             def initialize(self, context):
@@ -44,6 +45,7 @@ class TestServiceBase:
 
     def test_service_event_notification(self):
         """Test service event notification."""
+
         class TestService(Service):
             def initialize(self, context):
                 super().initialize(context)
@@ -55,6 +57,7 @@ class TestServiceBase:
 
         # Add observer
         received_events = []
+
         def observer(event):
             received_events.append(event)
 
@@ -191,7 +194,9 @@ class TestWorkspaceService:
         # Invalid tab index
         mock_workspace.tab_widget.setCurrentIndex.reset_mock()
         success = service.switch_to_tab(10)
-        assert success is False, "Expected failure when switching to invalid tab index 10"
+        assert (
+            success is False
+        ), "Expected failure when switching to invalid tab index 10"
         mock_workspace.tab_widget.setCurrentIndex.assert_not_called()
 
 
@@ -210,7 +215,7 @@ class TestUIService:
         service.initialize({})
         return service, mock_main_window
 
-    @patch('ui.icon_manager.get_icon_manager')
+    @patch("ui.icon_manager.get_icon_manager")
     def test_toggle_theme(self, mock_get_icon_manager, ui_service):
         """Test theme toggling."""
         service, mock_main_window = ui_service
@@ -285,13 +290,15 @@ class TestTerminalService:
 
         # Create session
         session_id = service.create_session(command="bash")
-        assert isinstance(session_id, str) and len(session_id) > 0, f"Expected valid session ID string, got {session_id}"
+        assert (
+            isinstance(session_id, str) and len(session_id) > 0
+        ), f"Expected valid session ID string, got {session_id}"
         assert session_id in service._sessions
 
         # Check session info
         info = service.get_session_info(session_id)
-        assert info['command'] == "bash"
-        assert info['active']
+        assert info["command"] == "bash"
+        assert info["active"]
 
     def test_close_session(self, terminal_service):
         """Test closing terminal session."""
@@ -404,7 +411,7 @@ class TestServiceIntegration:
         context = CommandContext()
 
         # Mock ServiceLocator
-        with patch('services.service_locator.ServiceLocator') as MockServiceLocator:
+        with patch("services.service_locator.ServiceLocator") as MockServiceLocator:
             mock_locator = Mock()
             MockServiceLocator.get_instance.return_value = mock_locator
 

@@ -10,6 +10,7 @@ from ui.widgets.signal_manager import SignalManager
 
 class MockSignalEmitter(QObject):
     """Mock object with signals for testing."""
+
     test_signal = Signal()
     test_signal_with_arg = Signal(str)
     test_signal_with_args = Signal(int, str)
@@ -62,9 +63,7 @@ class TestSignalManager:
 
         # Connect signal
         connection = manager.connect(
-            emitter.test_signal,
-            receiver.slot_no_args,
-            description="Test connection"
+            emitter.test_signal, receiver.slot_no_args, description="Test connection"
         )
 
         assert connection is not None
@@ -84,20 +83,14 @@ class TestSignalManager:
         manager = SignalManager(owner)
 
         # Connect signal with one arg
-        manager.connect(
-            emitter.test_signal_with_arg,
-            receiver.slot_one_arg
-        )
+        manager.connect(emitter.test_signal_with_arg, receiver.slot_one_arg)
 
         emitter.test_signal_with_arg.emit("test_value")
         assert receiver.call_count == 1
         assert receiver.last_value == "test_value"
 
         # Connect signal with two args
-        manager.connect(
-            emitter.test_signal_with_args,
-            receiver.slot_two_args
-        )
+        manager.connect(emitter.test_signal_with_args, receiver.slot_two_args)
 
         emitter.test_signal_with_args.emit(42, "hello")
         assert receiver.call_count == 2
@@ -112,10 +105,7 @@ class TestSignalManager:
         manager = SignalManager(owner)
 
         # Connect and verify it works
-        connection = manager.connect(
-            emitter.test_signal,
-            receiver.slot_no_args
-        )
+        connection = manager.connect(emitter.test_signal, receiver.slot_no_args)
 
         emitter.test_signal.emit()
         assert receiver.call_count == 1
@@ -168,12 +158,12 @@ class TestSignalManager:
             manager.connect(
                 emitter.test_signal,
                 receiver.slot_no_args,
-                connection_type=Qt.AutoConnection
+                connection_type=Qt.AutoConnection,
             ),
             manager.connect(
                 emitter.test_signal_with_arg,
                 receiver.slot_one_arg,
-                connection_type=Qt.DirectConnection
+                connection_type=Qt.DirectConnection,
             ),
         ]
 
@@ -232,7 +222,7 @@ class TestSignalManager:
         manager.connect(
             emitter.test_signal_with_arg,
             lambda x: lambda_called.append(x),
-            description="Lambda connection"
+            description="Lambda connection",
         )
 
         # Emit signal
@@ -251,7 +241,7 @@ class TestSignalManager:
         connection = manager.connect(
             emitter.test_signal,
             receiver.slot_no_args,
-            description="Test connection for info"
+            description="Test connection for info",
         )
 
         assert connection.description == "Test connection for info"
@@ -273,19 +263,19 @@ class TestSignalManager:
             emitter1.test_signal,
             receiver.slot_no_args,
             description="Group A signal 1",
-            group="groupA"
+            group="groupA",
         )
         conn2 = manager.connect(
             emitter2.test_signal,
             receiver.slot_no_args,
             description="Group A signal 2",
-            group="groupA"
+            group="groupA",
         )
         manager.connect(
             emitter1.test_signal_with_arg,
             receiver.slot_one_arg,
             description="Group B signal",
-            group="groupB"
+            group="groupB",
         )
 
         # Test group listing
@@ -328,7 +318,7 @@ class TestSignalManager:
             emitter.test_signal,
             receiver.slot_no_args,
             description="Test signal",
-            group="test_group"
+            group="test_group",
         )
 
         # Test initial state - should be connected

@@ -28,9 +28,13 @@ class GUITestBase:
     def assert_widget_geometry(self, widget, expected_width=None, expected_height=None):
         """Assert widget has expected dimensions."""
         if expected_width is not None:
-            assert widget.width() == expected_width, f"Expected width {expected_width}, got {widget.width()}"
+            assert (
+                widget.width() == expected_width
+            ), f"Expected width {expected_width}, got {widget.width()}"
         if expected_height is not None:
-            assert widget.height() == expected_height, f"Expected height {expected_height}, got {widget.height()}"
+            assert (
+                widget.height() == expected_height
+            ), f"Expected height {expected_height}, got {widget.height()}"
 
     def click_widget_center(self, qtbot, widget):
         """Click the center of a widget."""
@@ -58,11 +62,23 @@ class MainWindowGUITestBase(GUITestBase):
 
     def verify_main_window_components(self, main_window):
         """Verify all main window components are present."""
-        assert hasattr(main_window, 'activity_bar') and main_window.activity_bar is not None, "Main window should have activity_bar component"
-        assert hasattr(main_window, 'sidebar') and main_window.sidebar is not None, "Main window should have sidebar component"
-        assert hasattr(main_window, 'workspace') and main_window.workspace is not None, "Main window should have workspace component"
-        assert hasattr(main_window, 'status_bar') and main_window.status_bar is not None, "Main window should have status_bar component"
-        assert hasattr(main_window, 'main_splitter') and main_window.main_splitter is not None, "Main window should have main_splitter component"
+        assert (
+            hasattr(main_window, "activity_bar")
+            and main_window.activity_bar is not None
+        ), "Main window should have activity_bar component"
+        assert (
+            hasattr(main_window, "sidebar") and main_window.sidebar is not None
+        ), "Main window should have sidebar component"
+        assert (
+            hasattr(main_window, "workspace") and main_window.workspace is not None
+        ), "Main window should have workspace component"
+        assert (
+            hasattr(main_window, "status_bar") and main_window.status_bar is not None
+        ), "Main window should have status_bar component"
+        assert (
+            hasattr(main_window, "main_splitter")
+            and main_window.main_splitter is not None
+        ), "Main window should have main_splitter component"
 
     def verify_component_visibility(self, main_window):
         """Verify component visibility states."""
@@ -78,10 +94,10 @@ class ActivityBarGUITestBase(GUITestBase):
     def get_activity_buttons(self, activity_bar):
         """Get all activity buttons from the activity bar."""
         return {
-            'explorer': activity_bar.explorer_action,
-            'search': activity_bar.search_action,
-            'git': activity_bar.git_action,
-            'settings': activity_bar.settings_action
+            "explorer": activity_bar.explorer_action,
+            "search": activity_bar.search_action,
+            "git": activity_bar.git_action,
+            "settings": activity_bar.settings_action,
         }
 
     def verify_button_states(self, activity_bar, expected_active_view):
@@ -92,7 +108,9 @@ class ActivityBarGUITestBase(GUITestBase):
             if view_name == expected_active_view:
                 assert button.isChecked(), f"{view_name} button should be checked"
             else:
-                assert not button.isChecked(), f"{view_name} button should not be checked"
+                assert (
+                    not button.isChecked()
+                ), f"{view_name} button should not be checked"
 
     def click_activity_button(self, qtbot, activity_bar, view_name):
         """Click an activity button by view name."""
@@ -125,7 +143,7 @@ class SidebarGUITestBase(GUITestBase):
 
     def get_sidebar_views(self, sidebar):
         """Get available sidebar views."""
-        return ['explorer', 'search', 'git', 'settings']
+        return ["explorer", "search", "git", "settings"]
 
 
 class WorkspaceGUITestBase(GUITestBase):
@@ -133,7 +151,9 @@ class WorkspaceGUITestBase(GUITestBase):
 
     def verify_workspace_initialized(self, workspace):
         """Verify workspace is properly initialized."""
-        assert workspace is not None and hasattr(workspace, 'isVisible'), f"Expected valid workspace widget, got {workspace}"
+        assert workspace is not None and hasattr(
+            workspace, "isVisible"
+        ), f"Expected valid workspace widget, got {workspace}"
         assert workspace.isVisible()
 
     def count_active_panes(self, workspace):
@@ -145,7 +165,9 @@ class WorkspaceGUITestBase(GUITestBase):
     def verify_pane_exists(self, workspace, pane_index=0):
         """Verify a pane exists at the given index."""
         # Implementation will depend on workspace structure
-        assert workspace is not None and hasattr(workspace, 'isVisible'), f"Expected valid workspace widget for pane verification, got {workspace}"
+        assert workspace is not None and hasattr(
+            workspace, "isVisible"
+        ), f"Expected valid workspace widget for pane verification, got {workspace}"
 
 
 class ThemeGUITestBase(GUITestBase):
@@ -175,10 +197,10 @@ class KeyboardGUITestBase(GUITestBase):
     def get_common_shortcuts(self):
         """Get dictionary of common keyboard shortcuts."""
         return {
-            'toggle_theme': 'Ctrl+T',
-            'toggle_sidebar': 'Ctrl+B',
-            'toggle_menu_bar': 'Ctrl+Shift+M',
-            'reset_app_state': 'Ctrl+Shift+R'
+            "toggle_theme": "Ctrl+T",
+            "toggle_sidebar": "Ctrl+B",
+            "toggle_menu_bar": "Ctrl+Shift+M",
+            "reset_app_state": "Ctrl+Shift+R",
         }
 
     def verify_shortcut(self, qtbot, main_window, shortcut_name, expected_action):

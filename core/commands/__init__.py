@@ -18,14 +18,14 @@ from core.commands.executor import command_executor
 from core.commands.registry import command_registry
 
 __all__ = [
-    'Command',
-    'CommandContext',
-    'CommandResult',
-    'CommandCategory',
-    'command_registry',
-    'command_executor',
-    'command',
-    'command_handler',
-    'batch_register',
-    'create_command_group',
+    "Command",
+    "CommandContext",
+    "CommandResult",
+    "CommandCategory",
+    "command_registry",
+    "command_executor",
+    "command",
+    "command_handler",
+    "batch_register",
+    "create_command_group",
 ]

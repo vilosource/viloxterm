@@ -39,12 +39,12 @@ class AppConfig:
             is_production = self._is_production_build()
 
             self._config: dict[str, Any] = {
-                'show_confirmations': True,  # Show confirmation dialogs
-                'test_mode': False,          # Running in test mode
-                'debug_mode': False,         # Debug logging enabled
-                'dev_mode': not is_production,  # Dev mode by default unless production build
-                'production_mode': is_production,  # Explicitly track production mode
-                'reset_theme': False,        # Whether to reset theme to default
+                "show_confirmations": True,  # Show confirmation dialogs
+                "test_mode": False,  # Running in test mode
+                "debug_mode": False,  # Debug logging enabled
+                "dev_mode": not is_production,  # Dev mode by default unless production build
+                "production_mode": is_production,  # Explicitly track production mode
+                "reset_theme": False,  # Whether to reset theme to default
             }
             self._initialized = True
             self._load_from_environment()
@@ -59,22 +59,22 @@ class AppConfig:
         import sys
 
         # Check for AppImage environment variable
-        if os.environ.get('APPIMAGE'):
+        if os.environ.get("APPIMAGE"):
             logger.info("Running from AppImage (production mode)")
             return True
 
         # Check for production environment variable (set by build system)
-        if os.environ.get('VILOAPP_PRODUCTION', '').lower() in ('1', 'true', 'yes'):
+        if os.environ.get("VILOAPP_PRODUCTION", "").lower() in ("1", "true", "yes"):
             logger.info("Production mode set via environment variable")
             return True
 
         # Check if running from a frozen executable (PyInstaller/Nuitka)
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, "frozen", False):
             logger.info("Running from frozen executable (production mode)")
             return True
 
         # Check if running from .dist directory (Nuitka output)
-        if '.dist' in sys.executable or 'ViloxTerm.dist' in sys.executable:
+        if ".dist" in sys.executable or "ViloxTerm.dist" in sys.executable:
             logger.info("Running from Nuitka dist (production mode)")
             return True
 
@@ -84,31 +84,31 @@ class AppConfig:
     def _load_from_environment(self):
         """Load configuration from environment variables."""
         # Check for test mode
-        if os.environ.get('VILOAPP_TEST_MODE', '').lower() in ('1', 'true', 'yes'):
-            self._config['test_mode'] = True
-            self._config['show_confirmations'] = False
+        if os.environ.get("VILOAPP_TEST_MODE", "").lower() in ("1", "true", "yes"):
+            self._config["test_mode"] = True
+            self._config["show_confirmations"] = False
             logger.info("Test mode enabled via environment variable")
 
         # Check for confirmation dialogs
-        show_confirm = os.environ.get('VILOAPP_SHOW_CONFIRMATIONS', '').lower()
-        if show_confirm in ('0', 'false', 'no'):
-            self._config['show_confirmations'] = False
-        elif show_confirm in ('1', 'true', 'yes'):
-            self._config['show_confirmations'] = True
+        show_confirm = os.environ.get("VILOAPP_SHOW_CONFIRMATIONS", "").lower()
+        if show_confirm in ("0", "false", "no"):
+            self._config["show_confirmations"] = False
+        elif show_confirm in ("1", "true", "yes"):
+            self._config["show_confirmations"] = True
 
         # Check for debug mode
-        if os.environ.get('VILOAPP_DEBUG', '').lower() in ('1', 'true', 'yes'):
-            self._config['debug_mode'] = True
+        if os.environ.get("VILOAPP_DEBUG", "").lower() in ("1", "true", "yes"):
+            self._config["debug_mode"] = True
 
         # Check for dev mode override (environment variable overrides auto-detection)
-        dev_env = os.environ.get('VILOAPP_DEV', '').lower()
-        if dev_env in ('1', 'true', 'yes'):
-            self._config['dev_mode'] = True
-            self._config['production_mode'] = False
+        dev_env = os.environ.get("VILOAPP_DEV", "").lower()
+        if dev_env in ("1", "true", "yes"):
+            self._config["dev_mode"] = True
+            self._config["production_mode"] = False
             logger.info("Dev mode forced via environment variable")
-        elif dev_env in ('0', 'false', 'no'):
-            self._config['dev_mode'] = False
-            self._config['production_mode'] = True
+        elif dev_env in ("0", "false", "no"):
+            self._config["dev_mode"] = False
+            self._config["production_mode"] = True
             logger.info("Production mode forced via environment variable")
 
     def parse_args(self, args: Optional[list] = None):
@@ -119,43 +119,42 @@ class AppConfig:
             args: List of command-line arguments (for testing)
         """
         parser = argparse.ArgumentParser(
-            description='ViloxTerm - Modern Terminal Application',
-            add_help=True
+            description="ViloxTerm - Modern Terminal Application", add_help=True
         )
 
         parser.add_argument(
-            '--no-confirm',
-            action='store_false',
-            dest='show_confirmations',
-            help='Disable confirmation dialogs (useful for testing)'
+            "--no-confirm",
+            action="store_false",
+            dest="show_confirmations",
+            help="Disable confirmation dialogs (useful for testing)",
         )
 
         parser.add_argument(
-            '--test-mode',
-            action='store_true',
-            dest='test_mode',
-            help='Run in test mode (disables confirmations, enables test features)'
+            "--test-mode",
+            action="store_true",
+            dest="test_mode",
+            help="Run in test mode (disables confirmations, enables test features)",
         )
 
         parser.add_argument(
-            '--debug',
-            action='store_true',
-            dest='debug_mode',
-            help='Enable debug logging'
+            "--debug",
+            action="store_true",
+            dest="debug_mode",
+            help="Enable debug logging",
         )
 
         parser.add_argument(
-            '--dev',
-            action='store_true',
-            dest='dev_mode',
-            help='Enable development mode features'
+            "--dev",
+            action="store_true",
+            dest="dev_mode",
+            help="Enable development mode features",
         )
 
         parser.add_argument(
-            '--reset-theme',
-            action='store_true',
-            dest='reset_theme',
-            help='Reset theme to default VS Code theme (vscode-dark)'
+            "--reset-theme",
+            action="store_true",
+            dest="reset_theme",
+            help="Reset theme to default VS Code theme (vscode-dark)",
         )
 
         # Parse arguments
@@ -163,25 +162,25 @@ class AppConfig:
 
         # Update configuration from parsed arguments
         if parsed_args.test_mode:
-            self._config['test_mode'] = True
-            self._config['show_confirmations'] = False
+            self._config["test_mode"] = True
+            self._config["show_confirmations"] = False
             logger.info("Test mode enabled via command line")
 
         if not parsed_args.show_confirmations:
-            self._config['show_confirmations'] = False
+            self._config["show_confirmations"] = False
             logger.info("Confirmations disabled via command line")
 
         if parsed_args.debug_mode:
-            self._config['debug_mode'] = True
+            self._config["debug_mode"] = True
             logging.getLogger().setLevel(logging.DEBUG)
             logger.info("Debug mode enabled")
 
         if parsed_args.dev_mode:
-            self._config['dev_mode'] = True
+            self._config["dev_mode"] = True
             logger.info("Development mode enabled")
 
         if parsed_args.reset_theme:
-            self._config['reset_theme'] = True
+            self._config["reset_theme"] = True
             logger.info("Theme reset requested")
 
         return parsed_args
@@ -189,32 +188,32 @@ class AppConfig:
     @property
     def show_confirmations(self) -> bool:
         """Check if confirmation dialogs should be shown."""
-        return self._config['show_confirmations']
+        return self._config["show_confirmations"]
 
     @property
     def test_mode(self) -> bool:
         """Check if running in test mode."""
-        return self._config['test_mode']
+        return self._config["test_mode"]
 
     @property
     def debug_mode(self) -> bool:
         """Check if debug mode is enabled."""
-        return self._config['debug_mode']
+        return self._config["debug_mode"]
 
     @property
     def dev_mode(self) -> bool:
         """Check if development mode is enabled."""
-        return self._config['dev_mode']
+        return self._config["dev_mode"]
 
     @property
     def production_mode(self) -> bool:
         """Check if running in production mode."""
-        return self._config.get('production_mode', False)
+        return self._config.get("production_mode", False)
 
     @property
     def reset_theme(self) -> bool:
         """Check if theme reset was requested."""
-        return self._config.get('reset_theme', False)
+        return self._config.get("reset_theme", False)
 
     def set_test_mode(self, enabled: bool = True):
         """
@@ -223,9 +222,9 @@ class AppConfig:
         Args:
             enabled: Whether to enable test mode
         """
-        self._config['test_mode'] = enabled
+        self._config["test_mode"] = enabled
         if enabled:
-            self._config['show_confirmations'] = False
+            self._config["show_confirmations"] = False
             logger.info("Test mode %s", "enabled" if enabled else "disabled")
 
     def set_show_confirmations(self, show: bool):
@@ -235,7 +234,7 @@ class AppConfig:
         Args:
             show: Whether to show confirmation dialogs
         """
-        self._config['show_confirmations'] = show
+        self._config["show_confirmations"] = show
         logger.info("Confirmations %s", "enabled" if show else "disabled")
 
     def get_config(self) -> dict[str, Any]:

@@ -32,7 +32,10 @@ class ThemePropertyCategories:
                     (ThemeColors.EDITOR_CURSOR, "Cursor color"),
                     (ThemeColors.EDITOR_WHITESPACE, "Whitespace characters"),
                     (ThemeColors.EDITOR_INDENT_GUIDE, "Indentation guides"),
-                    (ThemeColors.EDITOR_INDENT_GUIDE_ACTIVE, "Active indentation guide"),
+                    (
+                        ThemeColors.EDITOR_INDENT_GUIDE_ACTIVE,
+                        "Active indentation guide",
+                    ),
                 ],
             },
             "Activity Bar": {
@@ -40,11 +43,17 @@ class ThemePropertyCategories:
                     (ThemeColors.ACTIVITY_BAR_BACKGROUND, "Activity bar background"),
                     (ThemeColors.ACTIVITY_BAR_BORDER, "Activity bar border"),
                     (ThemeColors.ACTIVITY_BAR_ACTIVE_BORDER, "Active item border"),
-                    (ThemeColors.ACTIVITY_BAR_ACTIVE_BACKGROUND, "Active item background"),
+                    (
+                        ThemeColors.ACTIVITY_BAR_ACTIVE_BACKGROUND,
+                        "Active item background",
+                    ),
                 ],
                 "Foreground": [
                     (ThemeColors.ACTIVITY_BAR_FOREGROUND, "Icon color"),
-                    (ThemeColors.ACTIVITY_BAR_INACTIVE_FOREGROUND, "Inactive icon color"),
+                    (
+                        ThemeColors.ACTIVITY_BAR_INACTIVE_FOREGROUND,
+                        "Inactive icon color",
+                    ),
                 ],
             },
             "Sidebar": {
@@ -54,8 +63,14 @@ class ThemePropertyCategories:
                     (ThemeColors.SIDEBAR_BORDER, "Sidebar border"),
                 ],
                 "Section Headers": [
-                    (ThemeColors.SIDEBAR_SECTION_HEADER_BACKGROUND, "Section header background"),
-                    (ThemeColors.SIDEBAR_SECTION_HEADER_FOREGROUND, "Section header text"),
+                    (
+                        ThemeColors.SIDEBAR_SECTION_HEADER_BACKGROUND,
+                        "Section header background",
+                    ),
+                    (
+                        ThemeColors.SIDEBAR_SECTION_HEADER_FOREGROUND,
+                        "Section header text",
+                    ),
                 ],
             },
             "Status Bar": {
@@ -65,19 +80,34 @@ class ThemePropertyCategories:
                     (ThemeColors.STATUS_BAR_BORDER, "Status bar border"),
                 ],
                 "Special States": [
-                    (ThemeColors.STATUS_BAR_NO_FOLDER_BACKGROUND, "No folder background"),
+                    (
+                        ThemeColors.STATUS_BAR_NO_FOLDER_BACKGROUND,
+                        "No folder background",
+                    ),
                     (ThemeColors.STATUS_BAR_DEBUG_BACKGROUND, "Debug mode background"),
                     (ThemeColors.STATUS_BAR_DEBUG_FOREGROUND, "Debug mode text"),
                 ],
             },
             "Title Bar": {
                 "Active Window": [
-                    (ThemeColors.TITLE_BAR_ACTIVE_BACKGROUND, "Active window title bar"),
-                    (ThemeColors.TITLE_BAR_ACTIVE_FOREGROUND, "Active window title text"),
+                    (
+                        ThemeColors.TITLE_BAR_ACTIVE_BACKGROUND,
+                        "Active window title bar",
+                    ),
+                    (
+                        ThemeColors.TITLE_BAR_ACTIVE_FOREGROUND,
+                        "Active window title text",
+                    ),
                 ],
                 "Inactive Window": [
-                    (ThemeColors.TITLE_BAR_INACTIVE_BACKGROUND, "Inactive window title bar"),
-                    (ThemeColors.TITLE_BAR_INACTIVE_FOREGROUND, "Inactive window title text"),
+                    (
+                        ThemeColors.TITLE_BAR_INACTIVE_BACKGROUND,
+                        "Inactive window title bar",
+                    ),
+                    (
+                        ThemeColors.TITLE_BAR_INACTIVE_FOREGROUND,
+                        "Inactive window title text",
+                    ),
                 ],
                 "Border": [
                     (ThemeColors.TITLE_BAR_BORDER, "Title bar border"),
@@ -104,9 +134,18 @@ class ThemePropertyCategories:
                     (ThemeColors.PANEL_BORDER, "Panel border"),
                 ],
                 "Title": [
-                    (ThemeColors.PANEL_TITLE_ACTIVE_BORDER, "Active panel title border"),
-                    (ThemeColors.PANEL_TITLE_ACTIVE_FOREGROUND, "Active panel title text"),
-                    (ThemeColors.PANEL_TITLE_INACTIVE_FOREGROUND, "Inactive panel title text"),
+                    (
+                        ThemeColors.PANEL_TITLE_ACTIVE_BORDER,
+                        "Active panel title border",
+                    ),
+                    (
+                        ThemeColors.PANEL_TITLE_ACTIVE_FOREGROUND,
+                        "Active panel title text",
+                    ),
+                    (
+                        ThemeColors.PANEL_TITLE_INACTIVE_FOREGROUND,
+                        "Inactive panel title text",
+                    ),
                 ],
             },
             "Input Controls": {
@@ -128,7 +167,10 @@ class ThemePropertyCategories:
                     (ThemeColors.BUTTON_BORDER, "Button border"),
                 ],
                 "Secondary Button": [
-                    (ThemeColors.BUTTON_SECONDARY_BACKGROUND, "Secondary button background"),
+                    (
+                        ThemeColors.BUTTON_SECONDARY_BACKGROUND,
+                        "Secondary button background",
+                    ),
                     (ThemeColors.BUTTON_SECONDARY_FOREGROUND, "Secondary button text"),
                 ],
             },
@@ -141,10 +183,22 @@ class ThemePropertyCategories:
             },
             "Lists & Trees": {
                 "Selection": [
-                    (ThemeColors.LIST_ACTIVE_SELECTION_BACKGROUND, "Active selection background"),
-                    (ThemeColors.LIST_ACTIVE_SELECTION_FOREGROUND, "Active selection text"),
-                    (ThemeColors.LIST_INACTIVE_SELECTION_BACKGROUND, "Inactive selection background"),
-                    (ThemeColors.LIST_INACTIVE_SELECTION_FOREGROUND, "Inactive selection text"),
+                    (
+                        ThemeColors.LIST_ACTIVE_SELECTION_BACKGROUND,
+                        "Active selection background",
+                    ),
+                    (
+                        ThemeColors.LIST_ACTIVE_SELECTION_FOREGROUND,
+                        "Active selection text",
+                    ),
+                    (
+                        ThemeColors.LIST_INACTIVE_SELECTION_BACKGROUND,
+                        "Inactive selection background",
+                    ),
+                    (
+                        ThemeColors.LIST_INACTIVE_SELECTION_FOREGROUND,
+                        "Inactive selection text",
+                    ),
                 ],
                 "Hover": [
                     (ThemeColors.LIST_HOVER_BACKGROUND, "Hover background"),
@@ -154,8 +208,14 @@ class ThemePropertyCategories:
             "Scrollbar": {
                 "General": [
                     (ThemeColors.SCROLLBAR_SLIDER_BACKGROUND, "Scrollbar thumb"),
-                    (ThemeColors.SCROLLBAR_SLIDER_HOVER_BACKGROUND, "Scrollbar thumb hover"),
-                    (ThemeColors.SCROLLBAR_SLIDER_ACTIVE_BACKGROUND, "Scrollbar thumb active"),
+                    (
+                        ThemeColors.SCROLLBAR_SLIDER_HOVER_BACKGROUND,
+                        "Scrollbar thumb hover",
+                    ),
+                    (
+                        ThemeColors.SCROLLBAR_SLIDER_ACTIVE_BACKGROUND,
+                        "Scrollbar thumb active",
+                    ),
                 ],
             },
             "Menu": {
@@ -219,7 +279,10 @@ class ThemePropertyCategories:
                 ],
                 "Foreground": [
                     (ThemeColors.PANE_HEADER_FOREGROUND, "Pane header text"),
-                    (ThemeColors.PANE_HEADER_ACTIVE_FOREGROUND, "Active pane header text"),
+                    (
+                        ThemeColors.PANE_HEADER_ACTIVE_FOREGROUND,
+                        "Active pane header text",
+                    ),
                 ],
                 "Interactive": [
                     (ThemeColors.PANE_HEADER_BORDER, "Pane header border"),
@@ -260,7 +323,9 @@ class ThemePropertyCategories:
         return result
 
     @staticmethod
-    def get_properties_by_category(category: str, subcategory: str = None) -> list[tuple[str, str]]:
+    def get_properties_by_category(
+        category: str, subcategory: str = None
+    ) -> list[tuple[str, str]]:
         """
         Get properties for a specific category/subcategory.
 
@@ -299,7 +364,12 @@ class ThemePropertyCategories:
         query = query.lower()
         result = []
 
-        for prop_key, description, category, subcategory in ThemePropertyCategories.get_all_properties():
+        for (
+            prop_key,
+            description,
+            category,
+            subcategory,
+        ) in ThemePropertyCategories.get_all_properties():
             if query in prop_key.lower() or query in description.lower():
                 result.append((prop_key, description, category, subcategory))
 

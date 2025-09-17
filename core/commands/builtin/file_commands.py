@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     category="File",
     description="Create a new editor tab",
     shortcut="ctrl+shift+n",
-    icon="file-plus"
+    icon="file-plus",
 )
 def new_editor_tab_command(context: CommandContext) -> CommandResult:
     """Create a new editor tab using WorkspaceService."""
@@ -29,12 +29,11 @@ def new_editor_tab_command(context: CommandContext) -> CommandResult:
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
 
-        name = context.args.get('name')
+        name = context.args.get("name")
         index = workspace_service.add_editor_tab(name)
 
         return CommandResult(
-            success=True,
-            value={'index': index, 'name': name or f"Editor {index + 1}"}
+            success=True, value={"index": index, "name": name or f"Editor {index + 1}"}
         )
     except Exception as e:
         logger.error(f"Failed to create editor tab: {e}")
@@ -47,7 +46,7 @@ def new_editor_tab_command(context: CommandContext) -> CommandResult:
     category="File",
     description="Create a new terminal tab",
     shortcut="ctrl+n",
-    icon="terminal"
+    icon="terminal",
 )
 def new_terminal_tab_command(context: CommandContext) -> CommandResult:
     """Create a new terminal tab using WorkspaceService and TerminalService."""
@@ -62,7 +61,7 @@ def new_terminal_tab_command(context: CommandContext) -> CommandResult:
         if terminal_service and not terminal_service.is_server_running():
             terminal_service.start_server()
 
-        name = context.args.get('name')
+        name = context.args.get("name")
         index = workspace_service.add_terminal_tab(name)
 
         # Create a terminal session for this tab
@@ -72,7 +71,7 @@ def new_terminal_tab_command(context: CommandContext) -> CommandResult:
 
         return CommandResult(
             success=True,
-            value={'index': index, 'name': name or f"Terminal {index + 1}"}
+            value={"index": index, "name": name or f"Terminal {index + 1}"},
         )
     except Exception as e:
         logger.error(f"Failed to create terminal tab: {e}")
@@ -85,7 +84,7 @@ def new_terminal_tab_command(context: CommandContext) -> CommandResult:
     category="Terminal",
     description="Create a new terminal tab",
     shortcut="ctrl+`",
-    icon="terminal"
+    icon="terminal",
 )
 def new_terminal_command(context: CommandContext) -> CommandResult:
     """Alias for new_terminal_tab_command with backtick shortcut."""
@@ -98,7 +97,7 @@ def new_terminal_command(context: CommandContext) -> CommandResult:
     category="File",
     description="Close the current tab",
     shortcut="ctrl+w",
-    when="workbench.tabs.count > 0"
+    when="workbench.tabs.count > 0",
 )
 def close_tab_command(context: CommandContext) -> CommandResult:
     """Close the current tab using WorkspaceService."""
@@ -107,7 +106,7 @@ def close_tab_command(context: CommandContext) -> CommandResult:
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
 
-        index = context.args.get('index')  # Optional specific tab index
+        index = context.args.get("index")  # Optional specific tab index
         success = workspace_service.close_tab(index)
 
         if success:
@@ -125,7 +124,7 @@ def close_tab_command(context: CommandContext) -> CommandResult:
     title="Save Application State",
     category="File",
     description="Save the current application state",
-    shortcut="ctrl+s"
+    shortcut="ctrl+s",
 )
 def save_state_command(context: CommandContext) -> CommandResult:
     """Save application state using StateService."""
@@ -137,7 +136,7 @@ def save_state_command(context: CommandContext) -> CommandResult:
         state_service.save_all_state()
 
         # Show status message
-        if context.main_window and hasattr(context.main_window, 'status_bar'):
+        if context.main_window and hasattr(context.main_window, "status_bar"):
             context.main_window.status_bar.set_message("State saved", 2000)
 
         return CommandResult(success=True)
@@ -151,7 +150,7 @@ def save_state_command(context: CommandContext) -> CommandResult:
     id="file.restoreState",
     title="Restore Application State",
     category="File",
-    description="Restore the saved application state"
+    description="Restore the saved application state",
 )
 def restore_state_command(context: CommandContext) -> CommandResult:
     """Restore application state using StateService."""
@@ -164,7 +163,7 @@ def restore_state_command(context: CommandContext) -> CommandResult:
 
         if success:
             # Show status message
-            if context.main_window and hasattr(context.main_window, 'status_bar'):
+            if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message("State restored", 2000)
 
             return CommandResult(success=True)
@@ -180,7 +179,7 @@ def restore_state_command(context: CommandContext) -> CommandResult:
     id="file.replaceWithTerminal",
     title="Replace Pane with Terminal",
     category="File",
-    description="Replace current pane content with terminal"
+    description="Replace current pane content with terminal",
 )
 def replace_with_terminal_command(context: CommandContext) -> CommandResult:
     """Replace current pane with terminal."""
@@ -192,8 +191,8 @@ def replace_with_terminal_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="WorkspaceService not available")
 
         # Get the pane and pane_id from context
-        pane = context.args.get('pane')
-        pane_id = context.args.get('pane_id')
+        pane = context.args.get("pane")
+        pane_id = context.args.get("pane_id")
 
         # Get workspace
         workspace = workspace_service.get_workspace()
@@ -202,14 +201,14 @@ def replace_with_terminal_command(context: CommandContext) -> CommandResult:
 
         # Get current tab's split widget
         current_tab = workspace.tab_widget.currentWidget()
-        if not current_tab or not hasattr(current_tab, 'model'):
+        if not current_tab or not hasattr(current_tab, "model"):
             return CommandResult(success=False, error="No split widget available")
 
         split_widget = current_tab
 
         # Try to get pane_id if not provided
         if not pane_id:
-            if pane and hasattr(pane, 'leaf_node') and hasattr(pane.leaf_node, 'id'):
+            if pane and hasattr(pane, "leaf_node") and hasattr(pane.leaf_node, "id"):
                 pane_id = pane.leaf_node.id
 
         if pane_id:
@@ -221,8 +220,7 @@ def replace_with_terminal_command(context: CommandContext) -> CommandResult:
                 return CommandResult(success=True)
 
         return CommandResult(
-            success=False,
-            error="Could not identify pane for replacement"
+            success=False, error="Could not identify pane for replacement"
         )
 
     except Exception as e:
@@ -234,7 +232,7 @@ def replace_with_terminal_command(context: CommandContext) -> CommandResult:
     id="file.replaceWithEditor",
     title="Replace Pane with Editor",
     category="File",
-    description="Replace current pane content with text editor"
+    description="Replace current pane content with text editor",
 )
 def replace_with_editor_command(context: CommandContext) -> CommandResult:
     """Replace current pane with text editor."""
@@ -246,8 +244,8 @@ def replace_with_editor_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="WorkspaceService not available")
 
         # Get the pane and pane_id from context
-        pane = context.args.get('pane')
-        pane_id = context.args.get('pane_id')
+        pane = context.args.get("pane")
+        pane_id = context.args.get("pane_id")
 
         # Get workspace
         workspace = workspace_service.get_workspace()
@@ -256,27 +254,28 @@ def replace_with_editor_command(context: CommandContext) -> CommandResult:
 
         # Get current tab's split widget
         current_tab = workspace.tab_widget.currentWidget()
-        if not current_tab or not hasattr(current_tab, 'model'):
+        if not current_tab or not hasattr(current_tab, "model"):
             return CommandResult(success=False, error="No split widget available")
 
         split_widget = current_tab
 
         # Try to get pane_id if not provided
         if not pane_id:
-            if pane and hasattr(pane, 'leaf_node') and hasattr(pane.leaf_node, 'id'):
+            if pane and hasattr(pane, "leaf_node") and hasattr(pane.leaf_node, "id"):
                 pane_id = pane.leaf_node.id
 
         if pane_id:
             # Change the pane type directly to TEXT_EDITOR
-            success = split_widget.model.change_pane_type(pane_id, WidgetType.TEXT_EDITOR)
+            success = split_widget.model.change_pane_type(
+                pane_id, WidgetType.TEXT_EDITOR
+            )
             if success:
                 split_widget.refresh_view()
                 logger.info(f"Replaced pane {pane_id} with text editor")
                 return CommandResult(success=True)
 
         return CommandResult(
-            success=False,
-            error="Could not identify pane for replacement"
+            success=False, error="Could not identify pane for replacement"
         )
 
     except Exception as e:

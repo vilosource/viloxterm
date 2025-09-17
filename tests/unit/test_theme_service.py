@@ -29,7 +29,7 @@ class TestThemeService:
     def initialized_theme_service(self, theme_service):
         """Create an initialized ThemeService with test themes."""
         # Initialize with empty context to load themes
-        context = {'main_window': None}
+        context = {"main_window": None}
         theme_service.initialize(context)
         return theme_service
 
@@ -43,7 +43,9 @@ class TestThemeService:
         themes = initialized_theme_service.get_available_themes()
 
         # Should have loaded built-in themes
-        assert len(themes) >= 4, f"Expected at least 4 built-in themes, got {len(themes)}"
+        assert (
+            len(themes) >= 4
+        ), f"Expected at least 4 built-in themes, got {len(themes)}"
 
         # Check for expected themes
         theme_ids = [t.id for t in themes]
@@ -66,7 +68,7 @@ class TestThemeService:
 
     def test_apply_theme(self, initialized_theme_service):
         """Test applying a theme."""
-        with patch.object(initialized_theme_service.theme_changed, 'emit') as mock_emit:
+        with patch.object(initialized_theme_service.theme_changed, "emit") as mock_emit:
             result = initialized_theme_service.apply_theme("vscode-dark")
 
             assert result is True
@@ -139,7 +141,7 @@ class TestThemeService:
         custom_theme = initialized_theme_service.create_custom_theme(
             base_theme_id="vscode-dark",
             name="My Custom Theme",
-            description="A custom theme"
+            description="A custom theme",
         )
 
         assert custom_theme is not None
@@ -150,7 +152,9 @@ class TestThemeService:
 
     def test_export_theme(self, initialized_theme_service):
         """Test exporting a theme."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as tmp_file:
             tmp_path = Path(tmp_file.name)
 
         try:
@@ -170,7 +174,9 @@ class TestThemeService:
 
     def test_export_nonexistent_theme(self, initialized_theme_service):
         """Test exporting non-existent theme."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as tmp_file:
             tmp_path = Path(tmp_file.name)
 
         try:
@@ -188,13 +194,12 @@ class TestThemeService:
             "description": "A test theme for import testing",
             "version": "1.0.0",
             "author": "Test Author",
-            "colors": {
-                "editor.background": "#123456",
-                "editor.foreground": "#abcdef"
-            }
+            "colors": {"editor.background": "#123456", "editor.foreground": "#abcdef"},
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as tmp_file:
             json.dump(test_theme_data, tmp_file)
             tmp_path = Path(tmp_file.name)
 
@@ -211,7 +216,9 @@ class TestThemeService:
 
     def test_import_invalid_theme(self, initialized_theme_service):
         """Test importing invalid theme file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as tmp_file:
             tmp_file.write("invalid json content")
             tmp_path = Path(tmp_file.name)
 
@@ -232,7 +239,7 @@ class TestThemeService:
     def test_theme_changed_signal(self, initialized_theme_service):
         """Test that theme_changed signal exists and is emitted."""
         # Verify signal exists
-        assert hasattr(initialized_theme_service, 'theme_changed')
+        assert hasattr(initialized_theme_service, "theme_changed")
 
         # Connect mock slot
         mock_slot = Mock()
@@ -269,7 +276,7 @@ class TestThemeService:
         custom_theme = initialized_theme_service.create_custom_theme(
             base_theme_id="vscode-dark",
             name="Dark Plus Custom",
-            description="Custom dark theme"
+            description="Custom dark theme",
         )
 
         # Apply the custom theme
@@ -293,8 +300,8 @@ class TestThemeService:
         initialized_theme_service.apply_theme("monokai")
 
         # Test save/load preference methods exist (even if mocked)
-        assert hasattr(initialized_theme_service, '_save_theme_preference')
-        assert hasattr(initialized_theme_service, '_load_theme_preference')
+        assert hasattr(initialized_theme_service, "_save_theme_preference")
+        assert hasattr(initialized_theme_service, "_load_theme_preference")
 
         # These methods should be callable
         try:
@@ -304,7 +311,9 @@ class TestThemeService:
             # In test environment, QSettings might not work, which is OK
             pass
 
-    @pytest.mark.parametrize("theme_id", ["vscode-dark", "vscode-light", "monokai", "solarized-dark"])
+    @pytest.mark.parametrize(
+        "theme_id", ["vscode-dark", "vscode-light", "monokai", "solarized-dark"]
+    )
     def test_specific_theme_application(self, initialized_theme_service, theme_id):
         """Parametrized test for applying specific themes."""
         result = initialized_theme_service.apply_theme(theme_id)
@@ -318,5 +327,5 @@ class TestThemeService:
         assert len(colors) > 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

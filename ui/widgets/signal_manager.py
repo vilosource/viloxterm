@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SignalConnection:
     """Represents a tracked signal connection."""
+
     signal: Any  # Qt signal object
     slot: Any  # Slot (callable) connected to signal
     connection_type: Qt.ConnectionType
@@ -44,10 +45,14 @@ class SignalManager:
         self.connections: list[SignalConnection] = []
         self._enabled = True
 
-    def connect(self, signal: Any, slot: Any,
-                connection_type: Qt.ConnectionType = Qt.AutoConnection,
-                description: Optional[str] = None,
-                group: Optional[str] = None) -> SignalConnection:
+    def connect(
+        self,
+        signal: Any,
+        slot: Any,
+        connection_type: Qt.ConnectionType = Qt.AutoConnection,
+        description: Optional[str] = None,
+        group: Optional[str] = None,
+    ) -> SignalConnection:
         """
         Connect a signal with tracking.
 
@@ -75,12 +80,14 @@ class SignalManager:
                 slot=slot,
                 connection_type=connection_type,
                 description=description,
-                group=group
+                group=group,
             )
             self.connections.append(connection)
 
-            logger.debug(f"Connected signal for {self.owner}: {description or 'unnamed'}" +
-                        (f" (group: {group})" if group else ""))
+            logger.debug(
+                f"Connected signal for {self.owner}: {description or 'unnamed'}"
+                + (f" (group: {group})" if group else "")
+            )
             return connection
 
         except Exception as e:
@@ -103,8 +110,10 @@ class SignalManager:
         try:
             connection.signal.disconnect(connection.slot)
             self.connections.remove(connection)
-            logger.debug(f"Disconnected signal for {self.owner}: "
-                        f"{connection.description or 'unnamed'}")
+            logger.debug(
+                f"Disconnected signal for {self.owner}: "
+                f"{connection.description or 'unnamed'}"
+            )
             return True
 
         except RuntimeError:
@@ -178,7 +187,9 @@ class SignalManager:
                 count += 1
 
         if count > 0:
-            logger.info(f"Disconnected {count} signals in group '{group}' for {self.owner}")
+            logger.info(
+                f"Disconnected {count} signals in group '{group}' for {self.owner}"
+            )
 
         return count
 
@@ -232,7 +243,9 @@ class SignalManager:
                 logger.error(f"Error enabling connection in group '{group}': {e}")
 
         if count > 0:
-            logger.debug(f"Enabled {count} connections in group '{group}' for {self.owner}")
+            logger.debug(
+                f"Enabled {count} connections in group '{group}' for {self.owner}"
+            )
 
         return count
 
@@ -260,13 +273,17 @@ class SignalManager:
                 logger.error(f"Error disabling connection in group '{group}': {e}")
 
         if count > 0:
-            logger.debug(f"Disabled {count} connections in group '{group}' for {self.owner}")
+            logger.debug(
+                f"Disabled {count} connections in group '{group}' for {self.owner}"
+            )
 
         return count
 
     def __del__(self):
         """Cleanup on deletion."""
         if self.has_connections():
-            logger.warning(f"SignalManager for {self.owner} being deleted with "
-                          f"{self.get_connection_count()} active connections")
+            logger.warning(
+                f"SignalManager for {self.owner} being deleted with "
+                f"{self.get_connection_count()} active connections"
+            )
             self.disconnect_all()

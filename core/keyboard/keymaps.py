@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class KeymapInfo:
     """Information about a keymap."""
+
     id: str
     name: str
     description: str
@@ -56,7 +57,7 @@ class DefaultKeymapProvider(KeymapProvider):
             id="default",
             name="ViloApp Default",
             description="Default keyboard shortcuts for ViloApp",
-            version="1.0"
+            version="1.0",
         )
 
     def get_shortcuts(self) -> list[dict[str, Any]]:
@@ -76,7 +77,7 @@ class VSCodeKeymapProvider(KeymapProvider):
             id="vscode",
             name="VSCode",
             description="VSCode-style keyboard shortcuts",
-            version="1.0"
+            version="1.0",
         )
 
     def get_shortcuts(self) -> list[dict[str, Any]]:
@@ -96,7 +97,7 @@ class VimKeymapProvider(KeymapProvider):
             id="vim",
             name="Vim",
             description="Vim-style keyboard shortcuts",
-            version="1.0"
+            version="1.0",
         )
 
     def get_shortcuts(self) -> list[dict[str, Any]]:
@@ -171,28 +172,30 @@ class KeymapManager:
 
                 success = self._registry.register_from_string(
                     shortcut_id=shortcut_id,
-                    sequence_str=shortcut_data['sequence'],
-                    command_id=shortcut_data['command_id'],
-                    when=shortcut_data.get('when'),
-                    description=shortcut_data.get('description'),
+                    sequence_str=shortcut_data["sequence"],
+                    command_id=shortcut_data["command_id"],
+                    when=shortcut_data.get("when"),
+                    description=shortcut_data.get("description"),
                     source="keymap",
-                    priority=50  # Default priority for keymap shortcuts
+                    priority=50,  # Default priority for keymap shortcuts
                 )
 
                 if success:
                     success_count += 1
                     # Set args if provided
-                    if 'args' in shortcut_data:
+                    if "args" in shortcut_data:
                         shortcut = self._registry.get_shortcut(shortcut_id)
                         if shortcut:
                             # Store args in shortcut for later use
-                            shortcut._args = shortcut_data['args']
+                            shortcut._args = shortcut_data["args"]
 
             except Exception as e:
                 logger.error(f"Failed to register shortcut {shortcut_data}: {e}")
 
         self._current_keymap = keymap_id
-        logger.info(f"Activated keymap '{keymap_id}' with {success_count}/{len(shortcuts)} shortcuts")
+        logger.info(
+            f"Activated keymap '{keymap_id}' with {success_count}/{len(shortcuts)} shortcuts"
+        )
 
         return success_count > 0
 
@@ -207,7 +210,9 @@ class KeymapManager:
         for shortcut_id in shortcuts_to_remove:
             self._registry.unregister(shortcut_id)
 
-        logger.debug(f"Cleared {len(shortcuts_to_remove)} shortcuts from keymap '{keymap_id}'")
+        logger.debug(
+            f"Cleared {len(shortcuts_to_remove)} shortcuts from keymap '{keymap_id}'"
+        )
 
     def export_keymap(self, keymap_id: str) -> Optional[dict[str, Any]]:
         """
@@ -232,9 +237,9 @@ class KeymapManager:
                 "name": info.name,
                 "description": info.description,
                 "version": info.version,
-                "author": info.author
+                "author": info.author,
             },
-            "shortcuts": shortcuts
+            "shortcuts": shortcuts,
         }
 
     def import_keymap_from_dict(self, keymap_data: dict[str, Any]) -> bool:
@@ -258,7 +263,7 @@ class KeymapManager:
                 description=info_data.get("description", ""),
                 version=info_data.get("version", "1.0"),
                 author=info_data.get("author", "Unknown"),
-                shortcuts=shortcuts_data
+                shortcuts=shortcuts_data,
             )
 
             # Create custom provider
@@ -294,7 +299,7 @@ class KeymapManager:
             True if loaded successfully
         """
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 keymap_data = json.load(f)
 
             return self.import_keymap_from_dict(keymap_data)
@@ -319,7 +324,7 @@ class KeymapManager:
             if not keymap_data:
                 return False
 
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(keymap_data, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Saved keymap '{keymap_id}' to {file_path}")

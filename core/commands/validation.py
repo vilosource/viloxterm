@@ -60,9 +60,7 @@ class Validator(ABC):
     def _raise_error(self, message: str, parameter_name: str = None, value: Any = None):
         """Helper to raise a validation error."""
         raise ValidationError(
-            message=self.error_message or message,
-            parameter=parameter_name,
-            value=value
+            message=self.error_message or message, parameter=parameter_name, value=value
         )
 
 
@@ -78,7 +76,7 @@ class TypeValidator(Validator):
             self._raise_error(
                 f"Expected {self.expected_type.__name__}, got {type(value).__name__}",
                 parameter_name,
-                value
+                value,
             )
         return True
 
@@ -86,8 +84,13 @@ class TypeValidator(Validator):
 class RangeValidator(Validator):
     """Validates that a numeric value is within a specified range."""
 
-    def __init__(self, min_value: int | float = None, max_value: int | float = None,
-                 inclusive: bool = True, error_message: str = None):
+    def __init__(
+        self,
+        min_value: int | float = None,
+        max_value: int | float = None,
+        inclusive: bool = True,
+        error_message: str = None,
+    ):
         self.min_value = min_value
         self.max_value = max_value
         self.inclusive = inclusive
@@ -98,7 +101,7 @@ class RangeValidator(Validator):
             self._raise_error(
                 f"Expected numeric value, got {type(value).__name__}",
                 parameter_name,
-                value
+                value,
             )
 
         if self.min_value is not None:
@@ -106,13 +109,13 @@ class RangeValidator(Validator):
                 self._raise_error(
                     f"Value {value} is less than minimum {self.min_value}",
                     parameter_name,
-                    value
+                    value,
                 )
             elif not self.inclusive and value <= self.min_value:
                 self._raise_error(
                     f"Value {value} must be greater than {self.min_value}",
                     parameter_name,
-                    value
+                    value,
                 )
 
         if self.max_value is not None:
@@ -120,13 +123,13 @@ class RangeValidator(Validator):
                 self._raise_error(
                     f"Value {value} is greater than maximum {self.max_value}",
                     parameter_name,
-                    value
+                    value,
                 )
             elif not self.inclusive and value >= self.max_value:
                 self._raise_error(
                     f"Value {value} must be less than {self.max_value}",
                     parameter_name,
-                    value
+                    value,
                 )
 
         return True
@@ -141,11 +144,13 @@ class OneOfValidator(Validator):
 
     def validate(self, value: Any, parameter_name: str = None) -> bool:
         if value not in self.allowed_values:
-            allowed_str = ", ".join(repr(v) for v in sorted(self.allowed_values, key=str))
+            allowed_str = ", ".join(
+                repr(v) for v in sorted(self.allowed_values, key=str)
+            )
             self._raise_error(
                 f"Value {value!r} not in allowed values: {allowed_str}",
                 parameter_name,
-                value
+                value,
             )
         return True
 
@@ -153,8 +158,14 @@ class OneOfValidator(Validator):
 class StringValidator(Validator):
     """Validates string properties like length, pattern, etc."""
 
-    def __init__(self, min_length: int = None, max_length: int = None,
-                 pattern: str = None, non_empty: bool = False, error_message: str = None):
+    def __init__(
+        self,
+        min_length: int = None,
+        max_length: int = None,
+        pattern: str = None,
+        non_empty: bool = False,
+        error_message: str = None,
+    ):
         self.min_length = min_length
         self.max_length = max_length
         self.pattern = re.compile(pattern) if pattern else None
@@ -164,37 +175,29 @@ class StringValidator(Validator):
     def validate(self, value: Any, parameter_name: str = None) -> bool:
         if not isinstance(value, str):
             self._raise_error(
-                f"Expected string, got {type(value).__name__}",
-                parameter_name,
-                value
+                f"Expected string, got {type(value).__name__}", parameter_name, value
             )
 
         if self.non_empty and not value.strip():
-            self._raise_error(
-                "String cannot be empty",
-                parameter_name,
-                value
-            )
+            self._raise_error("String cannot be empty", parameter_name, value)
 
         if self.min_length is not None and len(value) < self.min_length:
             self._raise_error(
                 f"String length {len(value)} is less than minimum {self.min_length}",
                 parameter_name,
-                value
+                value,
             )
 
         if self.max_length is not None and len(value) > self.max_length:
             self._raise_error(
                 f"String length {len(value)} is greater than maximum {self.max_length}",
                 parameter_name,
-                value
+                value,
             )
 
         if self.pattern and not self.pattern.match(value):
             self._raise_error(
-                "String does not match required pattern",
-                parameter_name,
-                value
+                "String does not match required pattern", parameter_name, value
             )
 
         return True
@@ -203,8 +206,13 @@ class StringValidator(Validator):
 class ListValidator(Validator):
     """Validates list properties like length and element validation."""
 
-    def __init__(self, min_length: int = None, max_length: int = None,
-                 element_validator: Validator = None, error_message: str = None):
+    def __init__(
+        self,
+        min_length: int = None,
+        max_length: int = None,
+        element_validator: Validator = None,
+        error_message: str = None,
+    ):
         self.min_length = min_length
         self.max_length = max_length
         self.element_validator = element_validator
@@ -215,21 +223,21 @@ class ListValidator(Validator):
             self._raise_error(
                 f"Expected list or tuple, got {type(value).__name__}",
                 parameter_name,
-                value
+                value,
             )
 
         if self.min_length is not None and len(value) < self.min_length:
             self._raise_error(
                 f"List length {len(value)} is less than minimum {self.min_length}",
                 parameter_name,
-                value
+                value,
             )
 
         if self.max_length is not None and len(value) > self.max_length:
             self._raise_error(
                 f"List length {len(value)} is greater than maximum {self.max_length}",
                 parameter_name,
-                value
+                value,
             )
 
         if self.element_validator:
@@ -239,9 +247,7 @@ class ListValidator(Validator):
                 except ValidationError as e:
                     # Re-raise with context
                     raise ValidationError(
-                        f"Element {i}: {e.message}",
-                        parameter_name,
-                        value
+                        f"Element {i}: {e.message}", parameter_name, value
                     )
 
         return True
@@ -260,14 +266,10 @@ class CustomValidator(Validator):
                 self._raise_error(
                     self.error_message or "Custom validation failed",
                     parameter_name,
-                    value
+                    value,
                 )
         except Exception as e:
-            self._raise_error(
-                f"Custom validation error: {e}",
-                parameter_name,
-                value
-            )
+            self._raise_error(f"Custom validation error: {e}", parameter_name, value)
         return True
 
 
@@ -298,14 +300,19 @@ class CompositeValidator(Validator):
 
 
 # Convenience factory functions
-def String(min_length: int = None, max_length: int = None, pattern: str = None,
-           non_empty: bool = False) -> StringValidator:
+def String(
+    min_length: int = None,
+    max_length: int = None,
+    pattern: str = None,
+    non_empty: bool = False,
+) -> StringValidator:
     """Create a string validator."""
     return StringValidator(min_length, max_length, pattern, non_empty)
 
 
-def Range(min_value: int | float = None, max_value: int | float = None,
-          inclusive: bool = True) -> RangeValidator:
+def Range(
+    min_value: int | float = None, max_value: int | float = None, inclusive: bool = True
+) -> RangeValidator:
     """Create a range validator."""
     return RangeValidator(min_value, max_value, inclusive)
 
@@ -320,8 +327,9 @@ def Optional(validator: Validator) -> OptionalValidator:
     return OptionalValidator(validator)
 
 
-def List(min_length: int = None, max_length: int = None,
-         element_validator: Validator = None) -> ListValidator:
+def List(
+    min_length: int = None, max_length: int = None, element_validator: Validator = None
+) -> ListValidator:
     """Create a list validator."""
     return ListValidator(min_length, max_length, element_validator)
 
@@ -331,7 +339,9 @@ def Type(expected_type: Type) -> TypeValidator:
     return TypeValidator(expected_type)
 
 
-def Custom(validator_func: Callable[[Any], bool], error_message: str) -> CustomValidator:
+def Custom(
+    validator_func: Callable[[Any], bool], error_message: str
+) -> CustomValidator:
     """Create a custom validator."""
     return CustomValidator(validator_func, error_message)
 
@@ -344,9 +354,14 @@ def All(*validators: Validator) -> CompositeValidator:
 class ParameterSpec:
     """Specification for a command parameter."""
 
-    def __init__(self, name: str, validator: Validator = None,
-                 required: bool = False, default: Any = None,
-                 description: str = None):
+    def __init__(
+        self,
+        name: str,
+        validator: Validator = None,
+        required: bool = False,
+        default: Any = None,
+        description: str = None,
+    ):
         self.name = name
         self.validator = validator
         self.required = required
@@ -370,8 +385,12 @@ class ParameterSpec:
 class CommandValidationSpec:
     """Complete validation specification for a command."""
 
-    def __init__(self, parameters: dict[str, ParameterSpec] = None,
-                 min_args: int = None, max_args: int = None):
+    def __init__(
+        self,
+        parameters: dict[str, ParameterSpec] = None,
+        min_args: int = None,
+        max_args: int = None,
+    ):
         self.parameters = parameters or {}
         self.min_args = min_args
         self.max_args = max_args
@@ -393,10 +412,14 @@ class CommandValidationSpec:
 
         # Check argument count constraints
         if self.min_args is not None and len(context.args) < self.min_args:
-            raise ValidationError(f"Command requires at least {self.min_args} arguments, got {len(context.args)}")
+            raise ValidationError(
+                f"Command requires at least {self.min_args} arguments, got {len(context.args)}"
+            )
 
         if self.max_args is not None and len(context.args) > self.max_args:
-            raise ValidationError(f"Command accepts at most {self.max_args} arguments, got {len(context.args)}")
+            raise ValidationError(
+                f"Command accepts at most {self.max_args} arguments, got {len(context.args)}"
+            )
 
         # Validate each parameter
         for param_name, param_spec in self.parameters.items():
@@ -418,7 +441,7 @@ class CommandValidationSpec:
             workspace=context.workspace,
             active_widget=context.active_widget,
             services=context.services,
-            args=validated_args
+            args=validated_args,
         )
         new_context._service_locator = context._service_locator
 
@@ -449,6 +472,7 @@ def validate(**parameter_specs) -> Callable:
             # Parameters are guaranteed to be valid here
             return CommandResult(success=True)
     """
+
     def decorator(func_or_command):
         # Convert simple validators to ParameterSpec
         specs = {}
@@ -458,12 +482,14 @@ def validate(**parameter_specs) -> Callable:
             elif isinstance(spec, ParameterSpec):
                 specs[name] = spec
             else:
-                raise ValueError(f"Parameter spec for '{name}' must be a Validator or ParameterSpec")
+                raise ValueError(
+                    f"Parameter spec for '{name}' must be a Validator or ParameterSpec"
+                )
 
         validation_spec = CommandValidationSpec(specs)
 
         # Check if this is already a Command object (from @command decorator)
-        if hasattr(func_or_command, 'handler') and hasattr(func_or_command, 'id'):
+        if hasattr(func_or_command, "handler") and hasattr(func_or_command, "id"):
             # This is a Command object, wrap its handler
             command = func_or_command
             original_handler = command.handler
@@ -514,7 +540,7 @@ def get_validation_spec(command_or_func) -> Optional[CommandValidationSpec]:
     Returns:
         CommandValidationSpec if validation is configured, None otherwise
     """
-    if hasattr(command_or_func, '_validation_spec'):
+    if hasattr(command_or_func, "_validation_spec"):
         return command_or_func._validation_spec
     return None
 

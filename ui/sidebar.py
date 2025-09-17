@@ -65,12 +65,7 @@ class Sidebar(QWidget):
         self.stack.addWidget(self.settings_view)
 
         # Map view names to indices
-        self.view_indices = {
-            "explorer": 0,
-            "search": 1,
-            "git": 2,
-            "settings": 3
-        }
+        self.view_indices = {"explorer": 0, "search": 1, "git": 2, "settings": 3}
 
     def setup_animation(self):
         """Setup collapse/expand animation."""
@@ -111,9 +106,11 @@ class Sidebar(QWidget):
         # Apply basic sidebar styling
         # Note: Component-specific styling is now handled by theme system
         # This will be updated when theme changes through notification system
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QWidget#sidebar {
                 background-color: #2d2d30;
                 border-right: 1px solid #3e3e42;
             }
-        """)
+        """
+        )

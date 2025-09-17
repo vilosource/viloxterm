@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def get_pyside_version():
     """Get PySide6 version as a tuple of integers."""
     try:
-        parts = pyside_version.split('.')
+        parts = pyside_version.split(".")
         return tuple(int(p) for p in parts[:3])
     except Exception as e:
         logger.warning(f"Failed to parse PySide6 version: {e}")
@@ -34,7 +34,7 @@ def check_signal_receivers(signal: Signal) -> bool:
     # But we can verify the signal is valid and connectable
     try:
         # Check if signal has the connect method
-        return hasattr(signal, 'connect') and callable(signal.connect)
+        return hasattr(signal, "connect") and callable(signal.connect)
     except Exception as e:
         logger.warning(f"Failed to check signal receivers: {e}")
         return False
@@ -54,7 +54,7 @@ def safe_key_sequence_to_key(key_sequence_str: str):
     """
     from PySide6.QtCore import Qt
 
-    parts = key_sequence_str.split('+')
+    parts = key_sequence_str.split("+")
     if not parts:
         raise ValueError(f"Invalid key sequence: {key_sequence_str}")
 
@@ -64,13 +64,13 @@ def safe_key_sequence_to_key(key_sequence_str: str):
 
     for part in parts:
         part = part.strip().lower()
-        if part in ('ctrl', 'control'):
+        if part in ("ctrl", "control"):
             modifiers |= Qt.KeyboardModifier.ControlModifier
-        elif part == 'alt':
+        elif part == "alt":
             modifiers |= Qt.KeyboardModifier.AltModifier
-        elif part == 'shift':
+        elif part == "shift":
             modifiers |= Qt.KeyboardModifier.ShiftModifier
-        elif part in ('meta', 'cmd', 'command'):
+        elif part in ("meta", "cmd", "command"):
             modifiers |= Qt.KeyboardModifier.MetaModifier
         else:
             # This should be the actual key
@@ -124,23 +124,27 @@ def get_qt_version_info():
     from PySide6.QtCore import qVersion
 
     return {
-        'pyside_version': pyside_version,
-        'pyside_tuple': get_pyside_version(),
-        'qt_runtime': qVersion(),
-        'qt_compiled': QObject.staticMetaObject.className()  # Just to verify Qt is loaded
+        "pyside_version": pyside_version,
+        "pyside_tuple": get_pyside_version(),
+        "qt_runtime": qVersion(),
+        "qt_compiled": QObject.staticMetaObject.className(),  # Just to verify Qt is loaded
     }
 
 
 # Version-specific feature flags
 FEATURES = {
-    'signal_receivers': get_pyside_version() < (6, 0, 0),  # Not available in PySide6
-    'key_sequence_combined': get_pyside_version() < (6, 5, 0),  # Overflow issues in some versions
-    'splitter_restore_respect': get_pyside_version() >= (6, 2, 0),  # Better state restoration
+    "signal_receivers": get_pyside_version() < (6, 0, 0),  # Not available in PySide6
+    "key_sequence_combined": get_pyside_version()
+    < (6, 5, 0),  # Overflow issues in some versions
+    "splitter_restore_respect": get_pyside_version()
+    >= (6, 2, 0),  # Better state restoration
 }
 
 
 def log_qt_versions():
     """Log Qt/PySide6 version information for debugging."""
     info = get_qt_version_info()
-    logger.info(f"Qt/PySide6 versions - PySide: {info['pyside_version']}, Qt Runtime: {info['qt_runtime']}")
+    logger.info(
+        f"Qt/PySide6 versions - PySide: {info['pyside_version']}, Qt Runtime: {info['qt_runtime']}"
+    )
     logger.debug(f"Feature flags: {FEATURES}")

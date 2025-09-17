@@ -14,7 +14,7 @@ class TestIconManager:
     def test_icon_manager_initialization(self, qtbot):
         """Test icon manager initializes correctly."""
         manager = IconManager()
-        #qtbot.addWidget(manager)  # For proper cleanup
+        # qtbot.addWidget(manager)  # For proper cleanup
 
         assert manager.theme == "dark"
         assert isinstance(manager._icon_cache, dict)
@@ -23,7 +23,7 @@ class TestIconManager:
     def test_theme_property_getter(self, qtbot):
         """Test theme property getter."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
         assert manager.theme == "dark"
 
@@ -34,7 +34,7 @@ class TestIconManager:
     def test_theme_property_setter_valid_values(self, qtbot):
         """Test theme property setter with valid values."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
         # First set to light to have a different starting state
         manager.theme = "light"
@@ -50,7 +50,7 @@ class TestIconManager:
     def test_theme_property_setter_invalid_values(self, qtbot):
         """Test theme property setter with invalid values."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
         initial_theme = manager.theme
 
@@ -67,7 +67,7 @@ class TestIconManager:
     def test_theme_property_setter_same_value(self, qtbot):
         """Test theme property setter with same value doesn't emit signal."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
         # Set same theme (should not emit signal)
         manager.theme = "dark"
@@ -79,10 +79,10 @@ class TestIconManager:
     def test_get_icon_caches_icons(self, qtbot):
         """Test get_icon caches icons properly."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
         # Mock QIcon to avoid resource loading issues
-        with patch('ui.icon_manager.QIcon') as mock_qicon:
+        with patch("ui.icon_manager.QIcon") as mock_qicon:
             mock_icon = Mock()
             mock_qicon.return_value = mock_icon
 
@@ -99,9 +99,9 @@ class TestIconManager:
     def test_get_icon_different_themes(self, qtbot):
         """Test get_icon returns different icons for different themes."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
-        with patch('ui.icon_manager.QIcon') as mock_qicon:
+        with patch("ui.icon_manager.QIcon") as mock_qicon:
             # Create different mock instances for each call
             mock_icon1 = Mock()
             mock_icon2 = Mock()
@@ -122,9 +122,9 @@ class TestIconManager:
     def test_get_icon_creates_proper_pixmaps(self, qtbot):
         """Test get_icon creates pixmaps for different states."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
-        with patch('ui.icon_manager.QIcon') as mock_qicon:
+        with patch("ui.icon_manager.QIcon") as mock_qicon:
             mock_icon = Mock()
             mock_qicon.return_value = mock_icon
 
@@ -145,9 +145,9 @@ class TestIconManager:
     def test_get_icon_with_states(self, qtbot):
         """Test get_icon_with_states creates icon with multiple states."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
-        with patch('ui.icon_manager.QIcon') as mock_qicon:
+        with patch("ui.icon_manager.QIcon") as mock_qicon:
             mock_icon = Mock()
             mock_qicon.return_value = mock_icon
 
@@ -156,7 +156,9 @@ class TestIconManager:
 
             # Check addPixmap was called multiple times for different states
             calls = mock_icon.addPixmap.call_args_list
-            assert len(calls) == 3  # Normal, Active, Selected (as per actual implementation)
+            assert (
+                len(calls) == 3
+            )  # Normal, Active, Selected (as per actual implementation)
 
             # get_icon_with_states now just calls get_icon, so they should be the same
             regular_icon = manager.get_icon("settings")
@@ -165,7 +167,7 @@ class TestIconManager:
     def test_detect_system_theme(self, qtbot):
         """Test detect_system_theme sets theme to light."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
         # Set theme to dark first
         manager._theme = "dark"
@@ -179,7 +181,7 @@ class TestIconManager:
     def test_toggle_theme_light_to_dark(self, qtbot):
         """Test toggle_theme switches from light to dark."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
         # Start with light theme
         manager._theme = "light"
@@ -194,7 +196,7 @@ class TestIconManager:
     def test_toggle_theme_dark_to_light(self, qtbot):
         """Test toggle_theme switches from dark to light."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
         # Start with dark theme
         manager._theme = "dark"
@@ -209,9 +211,9 @@ class TestIconManager:
     def test_cache_clearing_on_theme_change(self, qtbot):
         """Test cache is cleared when theme changes."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
-        with patch('ui.icon_manager.QIcon') as mock_qicon:
+        with patch("ui.icon_manager.QIcon") as mock_qicon:
             mock_icon = Mock()
             mock_qicon.return_value = mock_icon
 
@@ -228,9 +230,9 @@ class TestIconManager:
     def test_theme_changed_signal_defined(self, qtbot):
         """Test theme_changed signal is properly defined."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
-        assert hasattr(manager, 'theme_changed')
+        assert hasattr(manager, "theme_changed")
         # Signal should be connectable
         mock_slot = Mock()
         manager.theme_changed.connect(mock_slot)
@@ -238,9 +240,9 @@ class TestIconManager:
     def test_icon_cache_keys(self, qtbot):
         """Test icon cache uses correct keys."""
         manager = IconManager()
-        #qtbot.addWidget(manager)
+        # qtbot.addWidget(manager)
 
-        with patch('ui.icon_manager.QIcon') as mock_qicon:
+        with patch("ui.icon_manager.QIcon") as mock_qicon:
             mock_icon = Mock()
             mock_qicon.return_value = mock_icon
 
@@ -268,6 +270,7 @@ class TestGetIconManager:
         """Test get_icon_manager returns singleton instance."""
         # Clear global instance for test
         import ui.icon_manager
+
         ui.icon_manager._icon_manager = None
 
         # Get instance
@@ -282,6 +285,7 @@ class TestGetIconManager:
         """Test get_icon_manager creates instance if none exists."""
         # Clear global instance
         import ui.icon_manager
+
         ui.icon_manager._icon_manager = None
 
         # Get instance
@@ -295,6 +299,7 @@ class TestGetIconManager:
         """Test get_icon_manager preserves existing instance."""
         # Create instance directly
         import ui.icon_manager
+
         original_manager = IconManager()
         ui.icon_manager._icon_manager = original_manager
 

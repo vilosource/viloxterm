@@ -47,5 +47,5 @@ class AppStatusBar(QStatusBar):
         """Apply current theme to status bar."""
         # Get theme provider from parent window
         main_window = self.window()
-        if hasattr(main_window, 'theme_provider') and main_window.theme_provider:
+        if hasattr(main_window, "theme_provider") and main_window.theme_provider:
             self.setStyleSheet(main_window.theme_provider.get_stylesheet("status_bar"))

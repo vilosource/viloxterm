@@ -14,7 +14,7 @@ from services.base import Service
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T', bound=Service)
+T = TypeVar("T", bound=Service)
 
 
 class ServiceLocator:
@@ -25,10 +25,10 @@ class ServiceLocator:
     and service discovery throughout the application.
     """
 
-    _instance: Optional['ServiceLocator'] = None
+    _instance: Optional["ServiceLocator"] = None
     _lock = Lock()
 
-    def __new__(cls) -> 'ServiceLocator':
+    def __new__(cls) -> "ServiceLocator":
         """Ensure singleton pattern."""
         if cls._instance is None:
             with cls._lock:
@@ -50,7 +50,7 @@ class ServiceLocator:
         logger.info("ServiceLocator initialized")
 
     @classmethod
-    def get_instance(cls) -> 'ServiceLocator':
+    def get_instance(cls) -> "ServiceLocator":
         """
         Get the singleton instance of ServiceLocator.
 
@@ -166,9 +166,11 @@ class ServiceLocator:
         Returns:
             List of all service instances
         """
-        return [self._services[service_type]
-                for service_type in self._initialization_order
-                if service_type in self._services]
+        return [
+            self._services[service_type]
+            for service_type in self._initialization_order
+            if service_type in self._services
+        ]
 
     def get_all_of_type(self, base_type: type[T]) -> list[T]:
         """
@@ -180,8 +182,11 @@ class ServiceLocator:
         Returns:
             List of services that are instances of base_type
         """
-        return [service for service in self._services.values()
-                if isinstance(service, base_type)]
+        return [
+            service
+            for service in self._services.values()
+            if isinstance(service, base_type)
+        ]
 
     def has_service(self, service_type: type[Service]) -> bool:
         """

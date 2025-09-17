@@ -6,4 +6,4 @@ from .terminal_server import TerminalServerManager
 # Note: TerminalWidget (old implementation) is deprecated
 # Use TerminalAppWidget which properly extends AppWidget
 
-__all__ = ['TerminalAppWidget', 'TerminalServerManager']
+__all__ = ["TerminalAppWidget", "TerminalServerManager"]

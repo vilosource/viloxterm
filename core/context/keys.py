@@ -7,7 +7,6 @@ to evaluate when clauses for commands and keyboard shortcuts.
 """
 
 
-
 class ContextKey:
     """
     Standard context keys for the application.
@@ -98,7 +97,7 @@ class ContextKey:
         """
         keys = set()
         for name, value in cls.__dict__.items():
-            if not name.startswith('_') and isinstance(value, str):
+            if not name.startswith("_") and isinstance(value, str):
                 keys.add(value)
         return keys
 

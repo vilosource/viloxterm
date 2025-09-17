@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
     category="Settings",
     description="Open application settings dialog",
     shortcut="ctrl+,",
-    icon="settings"
+    icon="settings",
 )
 def open_settings_command(context: CommandContext) -> CommandResult:
     """Open the settings dialog."""
@@ -43,15 +43,24 @@ def open_settings_command(context: CommandContext) -> CommandResult:
         # Check for existing Settings instance
         if workspace_service.has_widget(widget_id):
             workspace_service.focus_widget(widget_id)
-            return CommandResult(success=True, value={'widget_id': widget_id, 'action': 'focused_existing'})
+            return CommandResult(
+                success=True,
+                value={"widget_id": widget_id, "action": "focused_existing"},
+            )
 
         # Add a Settings tab using the proper WidgetType
-        success = workspace_service.add_app_widget(WidgetType.SETTINGS, widget_id, "Settings")
+        success = workspace_service.add_app_widget(
+            WidgetType.SETTINGS, widget_id, "Settings"
+        )
 
         if success:
-            return CommandResult(success=True, value={'widget_id': widget_id, 'action': 'created_new'})
+            return CommandResult(
+                success=True, value={"widget_id": widget_id, "action": "created_new"}
+            )
         else:
-            return CommandResult(success=False, error="Failed to add Settings to workspace")
+            return CommandResult(
+                success=False, error="Failed to add Settings to workspace"
+            )
 
     except Exception as e:
         logger.error(f"Failed to open settings: {e}")
@@ -63,7 +72,7 @@ def open_settings_command(context: CommandContext) -> CommandResult:
     title="Reset All Settings",
     category="Settings",
     description="Reset all settings to default values",
-    icon="refresh"
+    icon="refresh",
 )
 def reset_settings_command(context: CommandContext) -> CommandResult:
     """Reset all settings to defaults."""
@@ -80,7 +89,7 @@ def reset_settings_command(context: CommandContext) -> CommandResult:
                 "This will reset all settings to their default values.\n\n"
                 "Are you sure you want to continue?",
                 QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
+                QMessageBox.No,
             )
 
             if reply != QMessageBox.Yes:
@@ -91,7 +100,7 @@ def reset_settings_command(context: CommandContext) -> CommandResult:
 
         if success:
             message = "All settings reset to defaults"
-            if context.main_window and hasattr(context.main_window, 'status_bar'):
+            if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message(message, 3000)
 
             return CommandResult(success=True, message=message)
@@ -108,7 +117,7 @@ def reset_settings_command(context: CommandContext) -> CommandResult:
     title="Show Settings Information",
     category="Settings",
     description="Display current settings information",
-    icon="info"
+    icon="info",
 )
 def show_settings_info_command(context: CommandContext) -> CommandResult:
     """Show information about current settings."""
@@ -122,18 +131,19 @@ def show_settings_info_command(context: CommandContext) -> CommandResult:
         all_settings = settings_service.get_all()
 
         info = {
-            'service_info': service_info,
-            'categories': list(all_settings.keys()),
-            'current_theme': settings_service.get_theme(),
-            'current_font_size': settings_service.get_font_size(),
+            "service_info": service_info,
+            "categories": list(all_settings.keys()),
+            "current_theme": settings_service.get_theme(),
+            "current_font_size": settings_service.get_font_size(),
         }
 
         # Show in status bar
-        if context.main_window and hasattr(context.main_window, 'status_bar'):
-            categories = len(service_info.get('categories', []))
-            total_settings = service_info.get('total_settings', 0)
+        if context.main_window and hasattr(context.main_window, "status_bar"):
+            categories = len(service_info.get("categories", []))
+            total_settings = service_info.get("total_settings", 0)
             context.main_window.status_bar.set_message(
-                f"Settings: {categories} categories, {total_settings} total settings", 3000
+                f"Settings: {categories} categories, {total_settings} total settings",
+                3000,
             )
 
         return CommandResult(success=True, value=info)
@@ -149,7 +159,7 @@ def show_settings_info_command(context: CommandContext) -> CommandResult:
     category="Settings",
     description="Toggle between light and dark themes",
     # Removed ctrl+t to avoid conflict with view.toggleTheme
-    icon="sun"
+    icon="sun",
 )
 def toggle_theme_command(context: CommandContext) -> CommandResult:
     """Toggle between light and dark themes."""
@@ -169,10 +179,12 @@ def toggle_theme_command(context: CommandContext) -> CommandResult:
             message = f"Theme changed to {new_theme}"
 
             # Show in status bar
-            if context.main_window and hasattr(context.main_window, 'status_bar'):
+            if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message(message, 2000)
 
-            return CommandResult(success=True, message=message, value={'theme': new_theme})
+            return CommandResult(
+                success=True, message=message, value={"theme": new_theme}
+            )
         else:
             return CommandResult(success=False, error="Failed to toggle theme")
 
@@ -186,7 +198,7 @@ def toggle_theme_command(context: CommandContext) -> CommandResult:
     title="Change Font Size",
     category="Settings",
     description="Change the application font size",
-    icon="type"
+    icon="type",
 )
 def change_font_size_command(context: CommandContext) -> CommandResult:
     """Change the application font size."""
@@ -206,14 +218,14 @@ def change_font_size_command(context: CommandContext) -> CommandResult:
                 "Enter new font size:",
                 current_size,
                 8,  # minimum
-                72  # maximum
+                72,  # maximum
             )
 
             if not ok:
                 return CommandResult(success=False, error="User cancelled")
         else:
             # If no main window, use provided size or increment
-            new_size = context.args.get('size', current_size + 1)
+            new_size = context.args.get("size", current_size + 1)
 
         # Update font size
         success = settings_service.set("theme", "font_size", new_size)
@@ -222,10 +234,12 @@ def change_font_size_command(context: CommandContext) -> CommandResult:
             message = f"Font size changed to {new_size}px"
 
             # Show in status bar
-            if context.main_window and hasattr(context.main_window, 'status_bar'):
+            if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message(message, 2000)
 
-            return CommandResult(success=True, message=message, value={'font_size': new_size})
+            return CommandResult(
+                success=True, message=message, value={"font_size": new_size}
+            )
         else:
             return CommandResult(success=False, error="Failed to change font size")
 
@@ -239,7 +253,7 @@ def change_font_size_command(context: CommandContext) -> CommandResult:
     title="Reset Keyboard Shortcuts",
     category="Settings",
     description="Reset all keyboard shortcuts to defaults",
-    icon="keyboard"
+    icon="keyboard",
 )
 def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     """Reset keyboard shortcuts to defaults."""
@@ -256,7 +270,7 @@ def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
                 "This will reset all keyboard shortcuts to their default values.\n\n"
                 "Are you sure you want to continue?",
                 QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
+                QMessageBox.No,
             )
 
             if reply != QMessageBox.Yes:
@@ -269,12 +283,14 @@ def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
             message = "Keyboard shortcuts reset to defaults"
 
             # Show in status bar
-            if context.main_window and hasattr(context.main_window, 'status_bar'):
+            if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message(message, 3000)
 
             return CommandResult(success=True, message=message)
         else:
-            return CommandResult(success=False, error="Failed to reset keyboard shortcuts")
+            return CommandResult(
+                success=False, error="Failed to reset keyboard shortcuts"
+            )
 
     except Exception as e:
         logger.error(f"Failed to reset keyboard shortcuts: {e}")
@@ -287,7 +303,7 @@ def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     category="Settings",
     description="Open keyboard shortcuts configuration",
     shortcut="ctrl+k ctrl+s",  # This is a chord, not conflicting with ctrl+s
-    icon="keyboard"
+    icon="keyboard",
 )
 def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     """Open keyboard shortcuts configuration widget."""
@@ -308,20 +324,32 @@ def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
             workspace_service.focus_widget(widget_id)
             return CommandResult(
                 success=True,
-                value={'widget_id': widget_id, 'message': 'Focused existing keyboard shortcuts configuration', 'action': 'focused_existing'}
+                value={
+                    "widget_id": widget_id,
+                    "message": "Focused existing keyboard shortcuts configuration",
+                    "action": "focused_existing",
+                },
             )
 
         # Create and add shortcut configuration widget in a new tab
         # The factory is already registered at module load time
-        success = workspace_service.add_app_widget(WidgetType.SETTINGS, widget_id, "Keyboard Shortcuts")
+        success = workspace_service.add_app_widget(
+            WidgetType.SETTINGS, widget_id, "Keyboard Shortcuts"
+        )
 
         if success:
             return CommandResult(
                 success=True,
-                value={'widget_id': widget_id, 'message': 'Opened keyboard shortcuts configuration', 'action': 'created_new'}
+                value={
+                    "widget_id": widget_id,
+                    "message": "Opened keyboard shortcuts configuration",
+                    "action": "created_new",
+                },
             )
         else:
-            return CommandResult(success=False, error="Failed to create shortcuts configuration tab")
+            return CommandResult(
+                success=False, error="Failed to create shortcuts configuration tab"
+            )
 
     except Exception as e:
         logger.error(f"Failed to open keyboard shortcuts configuration: {e}")
@@ -332,7 +360,7 @@ def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     id="settings.replaceWithKeyboardShortcuts",
     title="Replace Pane with Keyboard Shortcuts",
     category="Settings",
-    description="Replace current pane content with keyboard shortcuts editor"
+    description="Replace current pane content with keyboard shortcuts editor",
 )
 def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     """Replace current pane with keyboard shortcuts editor."""
@@ -341,8 +369,8 @@ def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandR
         from ui.widgets.widget_registry import WidgetType
 
         # Get the pane and pane_id from context
-        pane = context.args.get('pane')
-        pane_id = context.args.get('pane_id')
+        pane = context.args.get("pane")
+        pane_id = context.args.get("pane_id")
 
         # Get workspace service
         workspace_service = context.get_service(WorkspaceService)
@@ -356,14 +384,14 @@ def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandR
 
         # Get current tab's split widget
         current_tab = workspace.tab_widget.currentWidget()
-        if not current_tab or not hasattr(current_tab, 'model'):
+        if not current_tab or not hasattr(current_tab, "model"):
             return CommandResult(success=False, error="No split widget available")
 
         split_widget = current_tab
 
         # Try to get pane_id if not provided
         if not pane_id:
-            if pane and hasattr(pane, 'leaf_node') and hasattr(pane.leaf_node, 'id'):
+            if pane and hasattr(pane, "leaf_node") and hasattr(pane.leaf_node, "id"):
                 pane_id = pane.leaf_node.id
 
         if pane_id:
@@ -375,16 +403,12 @@ def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandR
                 return CommandResult(success=True)
 
         return CommandResult(
-            success=False,
-            error="Could not identify pane for replacement"
+            success=False, error="Could not identify pane for replacement"
         )
 
     except Exception as e:
         logger.error(f"Failed to replace pane with keyboard shortcuts editor: {e}")
-        return CommandResult(
-            success=False,
-            error=str(e)
-        )
+        return CommandResult(success=False, error=str(e))
 
 
 @command(
@@ -392,7 +416,7 @@ def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandR
     title="Show Keyboard Shortcuts",
     category="Settings",
     description="Display all keyboard shortcuts",
-    icon="keyboard"
+    icon="keyboard",
 )
 def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     """Show all keyboard shortcuts."""
@@ -405,10 +429,12 @@ def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
         shortcuts = settings_service.get_keyboard_shortcuts()
 
         # Filter out empty shortcuts and sort
-        active_shortcuts = {cmd: shortcut for cmd, shortcut in shortcuts.items() if shortcut.strip()}
+        active_shortcuts = {
+            cmd: shortcut for cmd, shortcut in shortcuts.items() if shortcut.strip()
+        }
 
         # Show in status bar
-        if context.main_window and hasattr(context.main_window, 'status_bar'):
+        if context.main_window and hasattr(context.main_window, "status_bar"):
             total_shortcuts = len(shortcuts)
             active_count = len(active_shortcuts)
             context.main_window.status_bar.set_message(
@@ -418,11 +444,11 @@ def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
         return CommandResult(
             success=True,
             value={
-                'shortcuts': shortcuts,
-                'active_shortcuts': active_shortcuts,
-                'total': len(shortcuts),
-                'active': len(active_shortcuts)
-            }
+                "shortcuts": shortcuts,
+                "active_shortcuts": active_shortcuts,
+                "total": len(shortcuts),
+                "active": len(active_shortcuts),
+            },
         )
 
     except Exception as e:
@@ -434,13 +460,13 @@ def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     id="settings.setKeyboardShortcut",
     title="Set Keyboard Shortcut",
     category="Settings",
-    description="Set keyboard shortcut for a specific command"
+    description="Set keyboard shortcut for a specific command",
 )
 def set_keyboard_shortcut_command(context: CommandContext) -> CommandResult:
     """Set keyboard shortcut for a command."""
     try:
-        command_id = context.args.get('command_id')
-        shortcut = context.args.get('shortcut')
+        command_id = context.args.get("command_id")
+        shortcut = context.args.get("shortcut")
 
         if not command_id:
             return CommandResult(success=False, error="command_id is required")
@@ -453,8 +479,7 @@ def set_keyboard_shortcut_command(context: CommandContext) -> CommandResult:
         settings_service.set_keyboard_shortcut(command_id, shortcut or "")
 
         return CommandResult(
-            success=True,
-            value={'command_id': command_id, 'shortcut': shortcut}
+            success=True, value={"command_id": command_id, "shortcut": shortcut}
         )
 
     except Exception as e:
@@ -466,7 +491,7 @@ def set_keyboard_shortcut_command(context: CommandContext) -> CommandResult:
     id="settings.registerKeyboardShortcut",
     title="Register Keyboard Shortcut",
     category="Settings",
-    description="Register a keyboard shortcut with the keyboard service"
+    description="Register a keyboard shortcut with the keyboard service",
 )
 def register_keyboard_shortcut_command(context: CommandContext) -> CommandResult:
     """Register a keyboard shortcut with the keyboard service."""
@@ -474,8 +499,8 @@ def register_keyboard_shortcut_command(context: CommandContext) -> CommandResult
         from core.commands.registry import command_registry
         from core.keyboard.service import KeyboardService
 
-        command_id = context.args.get('command_id')
-        shortcut = context.args.get('shortcut')
+        command_id = context.args.get("command_id")
+        shortcut = context.args.get("shortcut")
 
         if not command_id:
             return CommandResult(success=False, error="command_id is required")
@@ -497,12 +522,11 @@ def register_keyboard_shortcut_command(context: CommandContext) -> CommandResult
                     command_id=command_id,
                     description=command.description or command.title,
                     source="user",
-                    priority=100  # User shortcuts have higher priority
+                    priority=100,  # User shortcuts have higher priority
                 )
 
         return CommandResult(
-            success=True,
-            value={'command_id': command_id, 'shortcut': shortcut}
+            success=True, value={"command_id": command_id, "shortcut": shortcut}
         )
 
     except Exception as e:

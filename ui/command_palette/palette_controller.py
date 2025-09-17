@@ -64,6 +64,7 @@ class CommandPaletteController(QObject):
         try:
             # Update context to indicate palette is visible
             from core.context.keys import ContextKey
+
             context_manager.set(ContextKey.COMMAND_PALETTE_VISIBLE, True)
             context_manager.set(ContextKey.COMMAND_PALETTE_FOCUS, True)
 
@@ -80,9 +81,13 @@ class CommandPaletteController(QObject):
                 if command.can_execute(self.current_context):
                     available_commands.append(command)
                 else:
-                    logger.debug(f"Command {command.id} filtered out by when-clause: {command.when}")
+                    logger.debug(
+                        f"Command {command.id} filtered out by when-clause: {command.when}"
+                    )
 
-            logger.info(f"Showing palette with {len(available_commands)} of {len(all_commands)} commands")
+            logger.info(
+                f"Showing palette with {len(available_commands)} of {len(all_commands)} commands"
+            )
 
             # Get recent commands (if any)
             recent_command_objects = []
@@ -127,7 +132,9 @@ class CommandPaletteController(QObject):
                     if command.can_execute(self.current_context):
                         filtered_results.append(command)
 
-                logger.debug(f"Search '{query}': {len(filtered_results)} of {len(search_results)} results available")
+                logger.debug(
+                    f"Search '{query}': {len(filtered_results)} of {len(search_results)} results available"
+                )
                 return filtered_results
 
             return search_results
@@ -148,10 +155,7 @@ class CommandPaletteController(QObject):
             logger.info(f"Executing command from palette: {command_id}")
 
             # Create command context
-            context = CommandContext(
-                main_window=self.main_window,
-                args=kwargs
-            )
+            context = CommandContext(main_window=self.main_window, args=kwargs)
 
             # Execute command through executor
             result = command_executor.execute(command_id, context)
@@ -164,32 +168,29 @@ class CommandPaletteController(QObject):
                 self._track_command_usage(command_id, context)
 
                 # Emit success signal
-                self.command_executed.emit(command_id, {
-                    'success': True,
-                    'value': result.value
-                })
+                self.command_executed.emit(
+                    command_id, {"success": True, "value": result.value}
+                )
 
             else:
                 logger.warning(f"Command {command_id} failed: {result.error}")
 
                 # Emit failure signal
-                self.command_executed.emit(command_id, {
-                    'success': False,
-                    'error': result.error
-                })
+                self.command_executed.emit(
+                    command_id, {"success": False, "error": result.error}
+                )
 
                 # Show error to user if main window available
-                if self.main_window and hasattr(self.main_window, 'status_bar'):
-                    self.main_window.status_bar.set_message(f"Command failed: {result.error}", 5000)
+                if self.main_window and hasattr(self.main_window, "status_bar"):
+                    self.main_window.status_bar.set_message(
+                        f"Command failed: {result.error}", 5000
+                    )
 
         except Exception as e:
             logger.error(f"Failed to execute command {command_id}: {e}")
 
             # Emit failure signal
-            self.command_executed.emit(command_id, {
-                'success': False,
-                'error': str(e)
-            })
+            self.command_executed.emit(command_id, {"success": False, "error": str(e)})
 
     def on_palette_closed(self):
         """Handle palette being closed."""
@@ -197,6 +198,7 @@ class CommandPaletteController(QObject):
 
         # Update context to indicate palette is hidden
         from core.context.keys import ContextKey
+
         context_manager.set(ContextKey.COMMAND_PALETTE_VISIBLE, False)
         context_manager.set(ContextKey.COMMAND_PALETTE_FOCUS, False)
 
@@ -271,7 +273,7 @@ class CommandPaletteController(QObject):
 
         # Trim to max size
         if len(self._recent_commands) > self._max_recent:
-            self._recent_commands = self._recent_commands[:self._max_recent]
+            self._recent_commands = self._recent_commands[: self._max_recent]
 
         # Save to settings
         self._save_recent_commands()
@@ -285,7 +287,8 @@ class CommandPaletteController(QObject):
                 self._recent_commands = json.loads(recent_json)
                 # Validate that all commands still exist
                 self._recent_commands = [
-                    cmd_id for cmd_id in self._recent_commands
+                    cmd_id
+                    for cmd_id in self._recent_commands
                     if command_registry.get_command(cmd_id)
                 ]
         except Exception as e:
@@ -341,8 +344,11 @@ class CommandPaletteController(QObject):
             # Add commands from common categories
             common_categories = ["File", "Edit", "View", "Workspace"]
             for category in common_categories:
-                category_commands = [cmd for cmd in all_commands
-                                   if cmd.category == category and cmd.can_execute(current_context)]
+                category_commands = [
+                    cmd
+                    for cmd in all_commands
+                    if cmd.category == category and cmd.can_execute(current_context)
+                ]
                 recommendations.extend(category_commands[:2])  # Top 2 per category
 
             return recommendations[:8]  # Limit to 8 recommendations

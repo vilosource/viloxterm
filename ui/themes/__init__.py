@@ -11,6 +11,6 @@ This module provides the UI layer for the theme system:
 from ui.themes.stylesheet_generator import StylesheetGenerator
 
 __all__ = [
-    'ThemeProvider',
-    'StylesheetGenerator',
+    "ThemeProvider",
+    "StylesheetGenerator",
 ]

@@ -60,7 +60,8 @@ class PaneHeaderBar(QWidget):
 
         # Pane number label (shows 1-9 when enabled)
         self.number_label = QLabel()
-        self.number_label.setStyleSheet("""
+        self.number_label.setStyleSheet(
+            """
             QLabel {
                 background-color: #007ACC;
                 color: white;
@@ -71,20 +72,23 @@ class PaneHeaderBar(QWidget):
                 min-width: 12px;
                 max-width: 12px;
             }
-        """)
+        """
+        )
         self.number_label.setAlignment(Qt.AlignCenter)
         self.number_label.hide()  # Hidden by default
         layout.addWidget(self.number_label)
 
         # Pane ID label (optional, for debugging)
         self.id_label = QLabel(self.pane_id)
-        self.id_label.setStyleSheet("""
+        self.id_label.setStyleSheet(
+            """
             QLabel {
                 color: #969696;
                 font-size: 10px;
                 padding: 0 2px;
             }
-        """)
+        """
+        )
         layout.addWidget(self.id_label)
 
         # Stretch to push buttons to the right
@@ -97,18 +101,32 @@ class PaneHeaderBar(QWidget):
             layout.addWidget(self.type_button)
 
         # Split horizontal button
-        self.split_h_button = self.create_tool_button("↔", "Split horizontal (new pane on right)")
-        self.split_h_button.clicked.connect(lambda: execute_command("workbench.action.splitPaneHorizontal", pane=self.parent()))
+        self.split_h_button = self.create_tool_button(
+            "↔", "Split horizontal (new pane on right)"
+        )
+        self.split_h_button.clicked.connect(
+            lambda: execute_command(
+                "workbench.action.splitPaneHorizontal", pane=self.parent()
+            )
+        )
         layout.addWidget(self.split_h_button)
 
         # Split vertical button
-        self.split_v_button = self.create_tool_button("↕", "Split vertical (new pane below)")
-        self.split_v_button.clicked.connect(lambda: execute_command("workbench.action.splitPaneVertical", pane=self.parent()))
+        self.split_v_button = self.create_tool_button(
+            "↕", "Split vertical (new pane below)"
+        )
+        self.split_v_button.clicked.connect(
+            lambda: execute_command(
+                "workbench.action.splitPaneVertical", pane=self.parent()
+            )
+        )
         layout.addWidget(self.split_v_button)
 
         # Close button
         self.close_button = self.create_tool_button("×", "Close this pane")
-        self.close_button.clicked.connect(lambda: execute_command("workbench.action.closePane", pane=self.parent()))
+        self.close_button.clicked.connect(
+            lambda: execute_command("workbench.action.closePane", pane=self.parent())
+        )
         # Style will be applied by theme
         layout.addWidget(self.close_button)
 
@@ -132,7 +150,8 @@ class PaneHeaderBar(QWidget):
         colors = theme_result.value if theme_result and theme_result.success else {}
 
         if colors:
-            menu.setStyleSheet(f"""
+            menu.setStyleSheet(
+                f"""
                 QMenu {{
                     background-color: {colors.get("menu.background", "#252526")};
                     color: {colors.get("menu.foreground", "#cccccc")};
@@ -152,7 +171,8 @@ class PaneHeaderBar(QWidget):
                     background-color: {colors.get("menu.separatorBackground", "#454545")};
                     margin: 4px 10px;
                 }}
-            """)
+            """
+            )
 
         # Try to use AppWidgetManager for dynamic menu generation
         try:
@@ -170,9 +190,21 @@ class PaneHeaderBar(QWidget):
                 categories[category_name].append(widget)
 
             # Sort categories for consistent ordering
-            category_order = ["editor", "terminal", "viewer", "tools", "development", "system", "plugin"]
-            sorted_categories = sorted(categories.items(),
-                                     key=lambda x: category_order.index(x[0]) if x[0] in category_order else 999)
+            category_order = [
+                "editor",
+                "terminal",
+                "viewer",
+                "tools",
+                "development",
+                "system",
+                "plugin",
+            ]
+            sorted_categories = sorted(
+                categories.items(),
+                key=lambda x: (
+                    category_order.index(x[0]) if x[0] in category_order else 999
+                ),
+            )
 
             # Add widgets by category
             for category_name, widgets in sorted_categories:
@@ -190,7 +222,9 @@ class PaneHeaderBar(QWidget):
 
                         # Always use replacement behavior in pane header context
                         action.triggered.connect(
-                            lambda checked, wm=widget_meta: self._handle_widget_selection(wm)
+                            lambda checked, wm=widget_meta: self._handle_widget_selection(
+                                wm
+                            )
                         )
                         menu.addAction(action)
 
@@ -239,8 +273,12 @@ class PaneHeaderBar(QWidget):
                 editor_types.append(widget_type)
             elif widget_type == WidgetType.TERMINAL:
                 terminal_types.append(widget_type)
-            elif widget_type in [WidgetType.EXPLORER, WidgetType.TABLE_VIEW,
-                               WidgetType.TREE_VIEW, WidgetType.IMAGE_VIEWER]:
+            elif widget_type in [
+                WidgetType.EXPLORER,
+                WidgetType.TABLE_VIEW,
+                WidgetType.TREE_VIEW,
+                WidgetType.IMAGE_VIEWER,
+            ]:
                 view_types.append(widget_type)
             elif widget_type in [WidgetType.SETTINGS, WidgetType.CUSTOM]:
                 special_types.append(widget_type)
@@ -314,9 +352,11 @@ class PaneHeaderBar(QWidget):
             WidgetType.IMAGE_VIEWER: "🖼️ Image Viewer",
             WidgetType.SETTINGS: "⚙️ Settings",
             WidgetType.CUSTOM: "🔧 Custom Widget",
-            WidgetType.PLACEHOLDER: "⬜ Empty Pane"
+            WidgetType.PLACEHOLDER: "⬜ Empty Pane",
         }
-        return display_names.get(widget_type, widget_type.value.replace('_', ' ').title())
+        return display_names.get(
+            widget_type, widget_type.value.replace("_", " ").title()
+        )
 
     def _handle_widget_selection(self, widget_meta):
         """
@@ -327,24 +367,31 @@ class PaneHeaderBar(QWidget):
         # Get the pane ID from the parent PaneContent
         pane = self.parent()
         pane_id = None
-        if hasattr(pane, 'leaf_node') and hasattr(pane.leaf_node, 'id'):
+        if hasattr(pane, "leaf_node") and hasattr(pane.leaf_node, "id"):
             pane_id = pane.leaf_node.id
 
         # Check for replace command first
-        if hasattr(widget_meta, 'commands') and "replace_pane" in widget_meta.commands:
-            execute_command(widget_meta.commands["replace_pane"],
-                           pane=pane,
-                           pane_id=pane_id,
-                           widget_id=widget_meta.widget_id)
-        elif hasattr(widget_meta, 'supports_replacement') and widget_meta.supports_replacement:
+        if hasattr(widget_meta, "commands") and "replace_pane" in widget_meta.commands:
+            execute_command(
+                widget_meta.commands["replace_pane"],
+                pane=pane,
+                pane_id=pane_id,
+                widget_id=widget_meta.widget_id,
+            )
+        elif (
+            hasattr(widget_meta, "supports_replacement")
+            and widget_meta.supports_replacement
+        ):
             # Use generic replacement for widgets that support it
-            execute_command("workbench.action.replaceWidgetInPane",
-                           pane=pane,
-                           pane_id=pane_id,
-                           widget_id=widget_meta.widget_id)
+            execute_command(
+                "workbench.action.replaceWidgetInPane",
+                pane=pane,
+                pane_id=pane_id,
+                widget_id=widget_meta.widget_id,
+            )
         else:
             # Fallback to type change for basic widgets
-            if hasattr(widget_meta, 'widget_type'):
+            if hasattr(widget_meta, "widget_type"):
                 self._change_widget_type(widget_meta.widget_type)
             elif widget_meta.open_command:
                 # Last resort: use open command (will create new tab)
@@ -352,10 +399,11 @@ class PaneHeaderBar(QWidget):
 
     def _change_widget_type(self, widget_type: WidgetType):
         """Change the widget type of the current pane."""
-        execute_command("workbench.action.changePaneType",
-                       pane=self.parent(),
-                       widget_type=widget_type)
-
+        execute_command(
+            "workbench.action.changePaneType",
+            pane=self.parent(),
+            widget_type=widget_type,
+        )
 
     def set_pane_id(self, pane_id: str):
         """Update the pane ID display."""
@@ -389,17 +437,20 @@ class PaneHeaderBar(QWidget):
             self.background_color = QColor("#2d2d30")  # Default active background
             self.update()  # Force repaint
 
-            self.id_label.setStyleSheet("""
+            self.id_label.setStyleSheet(
+                """
                 QLabel {
                     color: #ffffff;
                     font-size: 10px;
                     padding: 0 2px;
                     font-weight: bold;
                 }
-            """)
+            """
+            )
             # Highlight number label for active pane
             if self.number_label.isVisible():
-                self.number_label.setStyleSheet("""
+                self.number_label.setStyleSheet(
+                    """
                     QLabel {
                         background-color: #007ACC;
                         color: white;
@@ -411,22 +462,26 @@ class PaneHeaderBar(QWidget):
                         max-width: 12px;
                         border: 1px solid white;
                     }
-                """)
+                """
+                )
         else:
             # Set inactive background color
             self.background_color = QColor("#252526")  # Default inactive background
             self.update()  # Force repaint
 
-            self.id_label.setStyleSheet("""
+            self.id_label.setStyleSheet(
+                """
                 QLabel {
                     color: #969696;
                     font-size: 10px;
                     padding: 0 2px;
                 }
-            """)
+            """
+            )
             # Normal number label for inactive pane
             if self.number_label.isVisible():
-                self.number_label.setStyleSheet("""
+                self.number_label.setStyleSheet(
+                    """
                     QLabel {
                         background-color: #505050;
                         color: #969696;
@@ -437,7 +492,8 @@ class PaneHeaderBar(QWidget):
                         min-width: 12px;
                         max-width: 12px;
                     }
-                """)
+                """
+                )
 
     def apply_theme(self):
         """Apply current theme to pane header."""
@@ -470,14 +526,15 @@ class PaneHeaderBar(QWidget):
                 }}
             """
 
-            if hasattr(self, 'split_h_button'):
+            if hasattr(self, "split_h_button"):
                 self.split_h_button.setStyleSheet(button_style)
-            if hasattr(self, 'split_v_button'):
+            if hasattr(self, "split_v_button"):
                 self.split_v_button.setStyleSheet(button_style)
 
             # Close button special style
-            if hasattr(self, 'close_button'):
-                self.close_button.setStyleSheet(f"""
+            if hasattr(self, "close_button"):
+                self.close_button.setStyleSheet(
+                    f"""
                     QToolButton {{
                         background-color: transparent;
                         color: {colors.get("titleBar.activeForeground", "#cccccc")};
@@ -491,7 +548,8 @@ class PaneHeaderBar(QWidget):
                         color: white;
                         border-radius: 2px;
                     }}
-                """)
+                """
+                )
 
             # Update label styles based on active state
             self.set_active(self.is_active)
@@ -521,11 +579,13 @@ class CompactPaneHeader(QWidget):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         # Semi-transparent by default
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             CompactPaneHeader {
                 background-color: rgba(45, 45, 48, 180);
             }
-        """)
+        """
+        )
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -544,7 +604,8 @@ class CompactPaneHeader(QWidget):
             btn.setToolTip(tooltip)
             btn.setFixedSize(18, 18)
             btn.clicked.connect(signal.emit)
-            btn.setStyleSheet("""
+            btn.setStyleSheet(
+                """
                 QToolButton {
                     background: transparent;
                     color: #969696;
@@ -555,24 +616,29 @@ class CompactPaneHeader(QWidget):
                     background: #3c3c3c;
                     color: white;
                 }
-            """)
+            """
+            )
             layout.addWidget(btn)
 
     def enterEvent(self, event):
         """Show fully on mouse enter."""
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             CompactPaneHeader {
                 background-color: rgba(45, 45, 48, 255);
             }
-        """)
+        """
+        )
         super().enterEvent(event)
 
     def leaveEvent(self, event):
         """Fade on mouse leave."""
         if self.hide_on_mouse_leave:
-            self.setStyleSheet("""
+            self.setStyleSheet(
+                """
                 CompactPaneHeader {
                     background-color: rgba(45, 45, 48, 180);
                 }
-            """)
+            """
+            )
         super().leaveEvent(event)

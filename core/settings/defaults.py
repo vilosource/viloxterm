@@ -23,7 +23,7 @@ COMMAND_PALETTE_SETTINGS = {
     "fuzzy_search_threshold": 0.3,
     "remember_window_size": True,
     "window_width": 600,
-    "window_height": 400
+    "window_height": 400,
 }
 
 # ============= Keyboard Shortcut Settings =============
@@ -31,7 +31,6 @@ DEFAULT_KEYBOARD_SHORTCUTS = {
     # Command Palette
     "commandPalette.show": "ctrl+shift+p",
     "commandPalette.showInCurrentCategory": "ctrl+p",
-
     # File Operations (Legacy - to be removed)
     # "file.newTerminalTab": "ctrl+n",  # Replaced by workspace.newTab
     # "file.newEditorTab": "ctrl+shift+n",  # Replaced by workspace.newTab
@@ -42,7 +41,6 @@ DEFAULT_KEYBOARD_SHORTCUTS = {
     "file.closeFile": "ctrl+w",
     "file.closeAll": "ctrl+shift+w",
     "file.reopenClosedFile": "ctrl+shift+t",
-
     # View Operations
     "view.toggleSidebar": "ctrl+b",
     "view.toggleActivityBar": "ctrl+shift+a",
@@ -52,7 +50,6 @@ DEFAULT_KEYBOARD_SHORTCUTS = {
     "view.zoomOut": "ctrl+-",
     "view.resetZoom": "ctrl+0",
     "view.toggleFullScreen": "f11",
-
     # Workspace Operations
     "workspace.splitVertical": "ctrl+\\",
     "workspace.splitHorizontal": "ctrl+shift+\\",
@@ -71,7 +68,6 @@ DEFAULT_KEYBOARD_SHORTCUTS = {
     "workspace.switchToTab7": "ctrl+7",
     "workspace.switchToTab8": "ctrl+8",
     "workspace.switchToTab9": "ctrl+9",
-
     # Edit Operations
     "edit.undo": "ctrl+z",
     "edit.redo": "ctrl+y",
@@ -81,12 +77,10 @@ DEFAULT_KEYBOARD_SHORTCUTS = {
     "edit.selectAll": "ctrl+a",
     "edit.find": "ctrl+f",
     "edit.findAndReplace": "ctrl+h",
-
     # Navigation
     "navigation.goToLine": "ctrl+g",
     "navigation.goToSymbol": "ctrl+shift+o",
     "navigation.goToFile": "ctrl+shift+e",
-
     # Debug Operations
     "debug.resetAppState": "ctrl+shift+r",
     "debug.reloadWindow": "ctrl+r",
@@ -103,7 +97,7 @@ THEME_SETTINGS = {
     "line_height": 1.5,
     "editor_theme": "vscode_dark",
     "icon_theme": "vscode",
-    "auto_detect_theme": False  # Follow OS theme
+    "auto_detect_theme": False,  # Follow OS theme
 }
 
 # ============= UI Settings =============
@@ -120,7 +114,7 @@ UI_SETTINGS = {
     "line_numbers": True,
     "minimap_enabled": False,
     "breadcrumbs_enabled": True,
-    "frameless_mode": False  # Enable frameless window mode for more screen space
+    "frameless_mode": False,  # Enable frameless window mode for more screen space
 }
 
 # ============= Workspace Settings =============
@@ -138,8 +132,8 @@ WORKSPACE_SETTINGS = {
         ".git/",
         ".vscode/",
         "node_modules/",
-        ".env"
-    ]
+        ".env",
+    ],
 }
 
 # ============= Editor Settings =============
@@ -155,7 +149,7 @@ EDITOR_SETTINGS = {
     "highlight_current_line": True,
     "show_whitespace": False,
     "rulers": [80, 120],
-    "selection_highlight": True
+    "selection_highlight": True,
 }
 
 # ============= Terminal Settings =============
@@ -169,7 +163,7 @@ TERMINAL_SETTINGS = {
     "bell": False,
     "copy_on_select": False,
     "paste_on_right_click": True,
-    "confirm_on_exit": True
+    "confirm_on_exit": True,
 }
 
 # ============= Performance Settings =============
@@ -190,7 +184,7 @@ PRIVACY_SETTINGS = {
     "crash_reporting": True,
     "usage_analytics": False,
     "error_reporting": True,
-    "improvement_program": False
+    "improvement_program": False,
 }
 
 # ============= Complete Default Settings =============
@@ -204,10 +198,9 @@ DEFAULT_SETTINGS = {
     "terminal": TERMINAL_SETTINGS,
     "performance": PERFORMANCE_SETTINGS,
     "privacy": PRIVACY_SETTINGS,
-
     # Meta settings
     "settings_version": "1.0.0",
-    "last_migration": None
+    "last_migration": None,
 }
 
 
@@ -241,7 +234,7 @@ def get_all_categories() -> list[str]:
     Returns:
         List of category names
     """
-    return [key for key in DEFAULT_SETTINGS.keys() if not key.startswith('settings_')]
+    return [key for key in DEFAULT_SETTINGS.keys() if not key.startswith("settings_")]
 
 
 def validate_category(category: str) -> bool:
@@ -271,28 +264,40 @@ def get_setting_description(category: str, key: str) -> str:
     descriptions = {
         # Command Palette
         ("command_palette", "max_results"): "Maximum number of search results to show",
-        ("command_palette", "show_recent_commands"): "Show recently used commands at top",
-        ("command_palette", "recent_commands_count"): "Number of recent commands to remember",
-        ("command_palette", "search_debounce_ms"): "Delay before searching while typing (ms)",
-        ("command_palette", "auto_select_first"): "Automatically select first search result",
+        (
+            "command_palette",
+            "show_recent_commands",
+        ): "Show recently used commands at top",
+        (
+            "command_palette",
+            "recent_commands_count",
+        ): "Number of recent commands to remember",
+        (
+            "command_palette",
+            "search_debounce_ms",
+        ): "Delay before searching while typing (ms)",
+        (
+            "command_palette",
+            "auto_select_first",
+        ): "Automatically select first search result",
         ("command_palette", "show_shortcuts"): "Display keyboard shortcuts in results",
         ("command_palette", "show_categories"): "Group results by command category",
-        ("command_palette", "fuzzy_search_threshold"): "Minimum match score for fuzzy search",
-
+        (
+            "command_palette",
+            "fuzzy_search_threshold",
+        ): "Minimum match score for fuzzy search",
         # Theme
         ("theme", "theme"): "Color theme (light, dark, auto)",
         ("theme", "accent_color"): "Accent color for UI elements",
         ("theme", "font_family"): "Default font family",
         ("theme", "font_size"): "Default font size",
         ("theme", "auto_detect_theme"): "Automatically follow OS theme",
-
         # UI
         ("ui", "show_activity_bar"): "Show activity bar on left side",
         ("ui", "show_sidebar"): "Show sidebar by default",
         ("ui", "show_status_bar"): "Show status bar at bottom",
         ("ui", "show_menu_bar"): "Show menu bar at top",
         ("ui", "sidebar_width"): "Default sidebar width (pixels)",
-
         # Workspace
         ("workspace", "auto_save"): "Automatically save files",
         ("workspace", "auto_save_delay"): "Delay before auto-saving (ms)",

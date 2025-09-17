@@ -37,6 +37,7 @@ class UIService(Service):
         self._sidebar_view = "explorer"
         # Use the same settings as main.py for consistency
         from core.settings.config import get_settings
+
         self._settings = get_settings("ViloxTerm", "ViloxTerm")
 
     def initialize(self, context: dict[str, Any]) -> None:
@@ -45,7 +46,7 @@ class UIService(Service):
 
         # Get main window from context if not provided
         if not self._main_window:
-            self._main_window = context.get('main_window')
+            self._main_window = context.get("main_window")
 
         # Load saved UI state
         self._load_ui_state()
@@ -84,7 +85,9 @@ class UIService(Service):
         # Log for debugging
         logger.info(f"Toggled frameless mode from {current} to {new_mode}")
         logger.info(f"Settings file: {self._settings.fileName()}")
-        logger.info(f"Verified setting value: {self._settings.value('UI/FramelessMode')}")
+        logger.info(
+            f"Verified setting value: {self._settings.value('UI/FramelessMode')}"
+        )
 
         return new_mode
 
@@ -96,16 +99,16 @@ class UIService(Service):
             'normal', 'minimized', 'maximized', or 'fullscreen'
         """
         if not self._main_window:
-            return 'normal'
+            return "normal"
 
         if self._main_window.isFullScreen():
-            return 'fullscreen'
+            return "fullscreen"
         elif self._main_window.isMaximized():
-            return 'maximized'
+            return "maximized"
         elif self._main_window.isMinimized():
-            return 'minimized'
+            return "minimized"
         else:
-            return 'normal'
+            return "normal"
 
     # ============= Theme Management =============
 
@@ -127,17 +130,16 @@ class UIService(Service):
         self._current_theme = icon_manager.theme
 
         # Update status bar if available
-        if self._main_window and hasattr(self._main_window, 'status_bar'):
+        if self._main_window and hasattr(self._main_window, "status_bar"):
             self._main_window.status_bar.set_message(
-                f"Switched to {self._current_theme.capitalize()} theme",
-                2000
+                f"Switched to {self._current_theme.capitalize()} theme", 2000
             )
 
         # Save theme preference
         self._settings.setValue("theme", self._current_theme)
 
         # Notify observers
-        self.notify('theme_changed', {'theme': self._current_theme})
+        self.notify("theme_changed", {"theme": self._current_theme})
 
         logger.info(f"Theme toggled to: {self._current_theme}")
         return self._current_theme
@@ -167,7 +169,7 @@ class UIService(Service):
         self._settings.setValue("theme", theme)
 
         # Notify observers
-        self.notify('theme_changed', {'theme': theme})
+        self.notify("theme_changed", {"theme": theme})
 
         logger.info(f"Theme set to: {theme}")
         return True
@@ -203,7 +205,7 @@ class UIService(Service):
         self._settings.setValue("sidebar_visible", self._sidebar_visible)
 
         # Notify observers
-        self.notify('sidebar_toggled', {'visible': self._sidebar_visible})
+        self.notify("sidebar_toggled", {"visible": self._sidebar_visible})
 
         logger.info(f"Sidebar toggled, visible: {self._sidebar_visible}")
         return self._sidebar_visible
@@ -244,7 +246,7 @@ class UIService(Service):
             logger.error(f"Invalid sidebar view: {view_name}")
             return False
 
-        if not self._main_window or not hasattr(self._main_window, 'sidebar'):
+        if not self._main_window or not hasattr(self._main_window, "sidebar"):
             return False
 
         # Set the view
@@ -259,7 +261,7 @@ class UIService(Service):
         self._settings.setValue("sidebar_view", view_name)
 
         # Notify observers
-        self.notify('sidebar_view_changed', {'view': view_name})
+        self.notify("sidebar_view_changed", {"view": view_name})
 
         logger.info(f"Sidebar view set to: {view_name}")
         return True
@@ -273,7 +275,9 @@ class UIService(Service):
         """
         self.validate_initialized()
 
-        if not self._main_window or not hasattr(self._main_window, 'toggle_activity_bar'):
+        if not self._main_window or not hasattr(
+            self._main_window, "toggle_activity_bar"
+        ):
             logger.error("Main window doesn't support activity bar toggle")
             return False
 
@@ -284,7 +288,7 @@ class UIService(Service):
         self._settings.setValue("activity_bar_visible", visible)
 
         # Notify observers
-        self.notify('activity_bar_toggled', {'visible': visible})
+        self.notify("activity_bar_toggled", {"visible": visible})
 
         logger.info(f"Activity bar toggled to: {'visible' if visible else 'hidden'}")
         return visible
@@ -320,7 +324,7 @@ class UIService(Service):
         self._settings.setValue("menu_bar_visible", self._menu_bar_visible)
 
         # Notify observers
-        self.notify('menu_bar_toggled', {'visible': self._menu_bar_visible})
+        self.notify("menu_bar_toggled", {"visible": self._menu_bar_visible})
 
         logger.info(f"Menu bar toggled, visible: {self._menu_bar_visible}")
         return self._menu_bar_visible
@@ -344,14 +348,11 @@ class UIService(Service):
             message: Message to display
             timeout: Timeout in milliseconds (0 for permanent)
         """
-        if self._main_window and hasattr(self._main_window, 'status_bar'):
+        if self._main_window and hasattr(self._main_window, "status_bar"):
             self._main_window.status_bar.set_message(message, timeout)
 
             # Notify observers
-            self.notify('status_message', {
-                'message': message,
-                'timeout': timeout
-            })
+            self.notify("status_message", {"message": message, "timeout": timeout})
 
     def clear_status_message(self) -> None:
         """Clear the status bar message."""
@@ -379,7 +380,7 @@ class UIService(Service):
             is_fullscreen = True
 
         # Notify observers
-        self.notify('fullscreen_toggled', {'fullscreen': is_fullscreen})
+        self.notify("fullscreen_toggled", {"fullscreen": is_fullscreen})
 
         logger.info(f"Fullscreen toggled: {is_fullscreen}")
         return is_fullscreen
@@ -401,7 +402,7 @@ class UIService(Service):
         self._main_window.resize(1200, 800)
 
         # Notify observers
-        self.notify('layout_reset', {})
+        self.notify("layout_reset", {})
 
         logger.info("UI layout reset to defaults")
 
@@ -416,11 +417,15 @@ class UIService(Service):
                 self._current_theme = saved_theme
 
             # Load sidebar state
-            self._sidebar_visible = self._settings.value("sidebar_visible", True, type=bool)
+            self._sidebar_visible = self._settings.value(
+                "sidebar_visible", True, type=bool
+            )
             self._sidebar_view = self._settings.value("sidebar_view", "explorer")
 
             # Load menu bar state
-            self._menu_bar_visible = self._settings.value("menu_bar_visible", True, type=bool)
+            self._menu_bar_visible = self._settings.value(
+                "menu_bar_visible", True, type=bool
+            )
 
             logger.info("UI state loaded from settings")
 
@@ -450,11 +455,13 @@ class UIService(Service):
             Dictionary containing UI state
         """
         return {
-            'theme': self._current_theme,
-            'sidebar_visible': self._sidebar_visible,
-            'sidebar_view': self._sidebar_view,
-            'menu_bar_visible': self._menu_bar_visible,
-            'window_fullscreen': self._main_window.isFullScreen() if self._main_window else False
+            "theme": self._current_theme,
+            "sidebar_visible": self._sidebar_visible,
+            "sidebar_view": self._sidebar_view,
+            "menu_bar_visible": self._menu_bar_visible,
+            "window_fullscreen": (
+                self._main_window.isFullScreen() if self._main_window else False
+            ),
         }
 
     def restore_ui_state(self, state: dict[str, Any]) -> None:
@@ -467,20 +474,20 @@ class UIService(Service):
         self.validate_initialized()
 
         # Restore theme
-        if 'theme' in state:
-            self.set_theme(state['theme'])
+        if "theme" in state:
+            self.set_theme(state["theme"])
 
         # Restore sidebar
-        if 'sidebar_visible' in state:
-            if state['sidebar_visible'] != self._sidebar_visible:
+        if "sidebar_visible" in state:
+            if state["sidebar_visible"] != self._sidebar_visible:
                 self.toggle_sidebar()
 
-        if 'sidebar_view' in state:
-            self.set_sidebar_view(state['sidebar_view'])
+        if "sidebar_view" in state:
+            self.set_sidebar_view(state["sidebar_view"])
 
         # Restore menu bar
-        if 'menu_bar_visible' in state:
-            if state['menu_bar_visible'] != self._menu_bar_visible:
+        if "menu_bar_visible" in state:
+            if state["menu_bar_visible"] != self._menu_bar_visible:
                 self.toggle_menu_bar()
 
         logger.info("UI state restored")

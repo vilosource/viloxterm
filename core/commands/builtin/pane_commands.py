@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     id="workbench.action.splitPaneHorizontal",
     title="Split Pane Horizontal",
     category="Panes",
-    description="Split the current pane horizontally"
+    description="Split the current pane horizontally",
 )
 def split_pane_horizontal_command(context: CommandContext) -> CommandResult:
     """
@@ -42,7 +42,7 @@ def split_pane_horizontal_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="No workspace available")
 
         # Use the workspace's split method directly
-        if hasattr(workspace, 'split_active_pane_horizontal'):
+        if hasattr(workspace, "split_active_pane_horizontal"):
             workspace.split_active_pane_horizontal()
             return CommandResult(success=True, value={"action": "split_horizontal"})
 
@@ -57,7 +57,7 @@ def split_pane_horizontal_command(context: CommandContext) -> CommandResult:
     id="workbench.action.splitPaneVertical",
     title="Split Pane Vertical",
     category="Panes",
-    description="Split the current pane vertically"
+    description="Split the current pane vertically",
 )
 def split_pane_vertical_command(context: CommandContext) -> CommandResult:
     """
@@ -80,7 +80,7 @@ def split_pane_vertical_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="No workspace available")
 
         # Use the workspace's split method directly
-        if hasattr(workspace, 'split_active_pane_vertical'):
+        if hasattr(workspace, "split_active_pane_vertical"):
             workspace.split_active_pane_vertical()
             return CommandResult(success=True, value={"action": "split_vertical"})
 
@@ -96,7 +96,7 @@ def split_pane_vertical_command(context: CommandContext) -> CommandResult:
     title="Close Pane",
     category="Panes",
     description="Close the current pane",
-    shortcut="ctrl+shift+w"
+    shortcut="ctrl+shift+w",
 )
 def close_pane_command(context: CommandContext) -> CommandResult:
     """
@@ -119,10 +119,11 @@ def close_pane_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="No workspace available")
 
         # Use the workspace's close method directly
-        if hasattr(workspace, 'close_active_pane'):
+        if hasattr(workspace, "close_active_pane"):
             # During tests, don't show message boxes
             import os
-            show_message = os.environ.get('PYTEST_CURRENT_TEST') is None
+
+            show_message = os.environ.get("PYTEST_CURRENT_TEST") is None
             result = workspace.close_active_pane(show_message=show_message)
             if result:
                 return CommandResult(success=True, value={"action": "close_pane"})
@@ -140,7 +141,7 @@ def close_pane_command(context: CommandContext) -> CommandResult:
     id="workbench.action.maximizePane",
     title="Maximize Pane",
     category="Panes",
-    description="Maximize or restore the current pane"
+    description="Maximize or restore the current pane",
 )
 def maximize_pane_command(context: CommandContext) -> CommandResult:
     """
@@ -163,13 +164,13 @@ def maximize_pane_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="No workspace available")
 
         # Get current pane from context or focused pane
-        pane = context.args.get('pane')
+        pane = context.args.get("pane")
         if not pane:
             # Get currently focused pane
-            if hasattr(workspace, 'get_focused_pane'):
+            if hasattr(workspace, "get_focused_pane"):
                 pane = workspace.get_focused_pane()
 
-        if pane and hasattr(pane, 'toggle_maximize'):
+        if pane and hasattr(pane, "toggle_maximize"):
             pane.toggle_maximize()
             return CommandResult(success=True, value={"action": "toggle_maximize"})
 
@@ -184,7 +185,7 @@ def maximize_pane_command(context: CommandContext) -> CommandResult:
     id="workbench.action.replaceWidgetInPane",
     title="Replace Widget in Pane",
     category="Panes",
-    description="Replace current pane content with specified widget"
+    description="Replace current pane content with specified widget",
 )
 def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
     """
@@ -199,9 +200,9 @@ def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
     try:
         from core.app_widget_manager import AppWidgetManager
 
-        widget_id = context.args.get('widget_id')
-        pane = context.args.get('pane')
-        pane_id = context.args.get('pane_id')  # Can be passed directly
+        widget_id = context.args.get("widget_id")
+        pane = context.args.get("pane")
+        pane_id = context.args.get("pane_id")  # Can be passed directly
 
         if not widget_id:
             return CommandResult(success=False, error="No widget_id specified")
@@ -218,7 +219,7 @@ def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
 
         # Get current tab's split widget
         current_tab = workspace.tab_widget.currentWidget()
-        if not current_tab or not hasattr(current_tab, 'model'):
+        if not current_tab or not hasattr(current_tab, "model"):
             return CommandResult(success=False, error="No split widget available")
 
         split_widget = current_tab
@@ -226,9 +227,9 @@ def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
         # Try to get pane_id from different sources
         if not pane_id:
             # Try from PaneContent wrapper
-            if pane and hasattr(pane, 'leaf_node') and hasattr(pane.leaf_node, 'id'):
+            if pane and hasattr(pane, "leaf_node") and hasattr(pane.leaf_node, "id"):
                 pane_id = pane.leaf_node.id
-            elif pane and hasattr(pane, 'pane_id'):
+            elif pane and hasattr(pane, "pane_id"):
                 pane_id = pane.pane_id
 
         if pane_id:
@@ -240,14 +241,20 @@ def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
             if metadata:
                 # Change the pane to use the new widget
                 # We'll use the existing change_pane_type if it's a basic widget type
-                if hasattr(metadata, 'widget_type'):
-                    success = split_widget.model.change_pane_type(pane_id, metadata.widget_type)
+                if hasattr(metadata, "widget_type"):
+                    success = split_widget.model.change_pane_type(
+                        pane_id, metadata.widget_type
+                    )
                     if success:
                         split_widget.refresh_view()
                         logger.info(f"Replaced pane {pane_id} with widget {widget_id}")
-                        return CommandResult(success=True, value={'widget_id': widget_id})
+                        return CommandResult(
+                            success=True, value={"widget_id": widget_id}
+                        )
 
-            return CommandResult(success=False, error=f"Could not find widget {widget_id}")
+            return CommandResult(
+                success=False, error=f"Could not find widget {widget_id}"
+            )
 
         return CommandResult(success=False, error="Could not identify pane")
 
@@ -260,7 +267,7 @@ def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
     id="workbench.action.changePaneType",
     title="Change Pane Type",
     category="Panes",
-    description="Change the widget type of a pane"
+    description="Change the widget type of a pane",
 )
 def change_pane_type_command(context: CommandContext) -> CommandResult:
     """
@@ -283,18 +290,18 @@ def change_pane_type_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="No workspace available")
 
         # Get widget type from context
-        widget_type = context.args.get('widget_type')
+        widget_type = context.args.get("widget_type")
         if not widget_type:
             return CommandResult(success=False, error="No widget type specified")
 
         # Get current pane from context or focused pane
-        pane = context.args.get('pane')
+        pane = context.args.get("pane")
         if not pane:
             # Get currently focused pane
-            if hasattr(workspace, 'get_focused_pane'):
+            if hasattr(workspace, "get_focused_pane"):
                 pane = workspace.get_focused_pane()
 
-        if pane and hasattr(pane, 'set_widget_type'):
+        if pane and hasattr(pane, "set_widget_type"):
             pane.set_widget_type(widget_type)
             return CommandResult(success=True, value={"widget_type": widget_type})
 

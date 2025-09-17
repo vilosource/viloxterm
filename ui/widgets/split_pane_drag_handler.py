@@ -118,7 +118,9 @@ class SplitPaneDragHandler(QObject):
         """
         try:
             if splitter.count() != 2:
-                logger.warning(f"Cannot apply ratio to splitter with {splitter.count()} children")
+                logger.warning(
+                    f"Cannot apply ratio to splitter with {splitter.count()} children"
+                )
                 return False
 
             total = 1000  # Use fixed total for consistent calculations
@@ -126,7 +128,9 @@ class SplitPaneDragHandler(QObject):
             second_size = total - first_size
 
             splitter.setSizes([first_size, second_size])
-            logger.debug(f"Applied ratio {ratio:.3f} to splitter: sizes=[{first_size}, {second_size}]")
+            logger.debug(
+                f"Applied ratio {ratio:.3f} to splitter: sizes=[{first_size}, {second_size}]"
+            )
             return True
 
         except Exception as e:

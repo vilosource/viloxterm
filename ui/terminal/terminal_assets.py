@@ -24,7 +24,7 @@ class TerminalAssetBundler:
         path_str = str(path)
         if path_str not in self._cache:
             try:
-                with open(path, encoding='utf-8') as f:
+                with open(path, encoding="utf-8") as f:
                     self._cache[path_str] = f.read()
                 logger.debug(f"Loaded asset: {path}")
             except Exception as e:
@@ -71,7 +71,7 @@ class TerminalAssetBundler:
         socketio_js = self.get_socketio_js()
 
         # Generate HTML with bundled assets
-        html = f'''<!DOCTYPE html>
+        html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -414,7 +414,7 @@ class TerminalAssetBundler:
         }}
     </script>
 </body>
-</html>'''
+</html>"""
 
         return html
 

@@ -125,7 +125,7 @@ class TestAppDefaults:
     @pytest.fixture
     def app_defaults(self):
         """Create a fresh AppDefaults instance."""
-        with patch('core.settings.app_defaults.QSettings') as mock_settings_class:
+        with patch("core.settings.app_defaults.QSettings") as mock_settings_class:
             mock_settings = MagicMock()
             mock_settings_class.return_value = mock_settings
             mock_settings.contains.return_value = False  # No saved settings by default
@@ -178,26 +178,26 @@ class TestAppDefaults:
     def test_export_settings(self, app_defaults):
         """Test exporting settings."""
         # Mock QSettings to return test data
-        with patch.object(app_defaults._settings, 'allKeys', return_value=['test_key']):
-            with patch.object(app_defaults._settings, 'value', return_value='test_value'):
+        with patch.object(app_defaults._settings, "allKeys", return_value=["test_key"]):
+            with patch.object(
+                app_defaults._settings, "value", return_value="test_value"
+            ):
                 settings = app_defaults.export_settings()
-                assert 'test_key' in settings
-                assert settings['test_key'] == 'test_value'
+                assert "test_key" in settings
+                assert settings["test_key"] == "test_value"
 
     def test_import_settings(self, app_defaults):
         """Test importing settings."""
         test_settings = {
             "workspace.default_new_tab_widget": "editor",
-            "pane.default_split_ratio": 0.7
+            "pane.default_split_ratio": 0.7,
         }
 
         count = app_defaults.import_settings(test_settings)
         assert count == 2  # Both should be imported successfully
 
         # Try importing invalid settings
-        invalid_settings = {
-            "workspace.default_new_tab_widget": "invalid_type"
-        }
+        invalid_settings = {"workspace.default_new_tab_widget": "invalid_type"}
         count = app_defaults.import_settings(invalid_settings)
         assert count == 0  # Should reject invalid settings
 
@@ -205,7 +205,7 @@ class TestAppDefaults:
 class TestConvenienceFunctions:
     """Test the convenience functions."""
 
-    @patch('core.settings.app_defaults.get_app_defaults')
+    @patch("core.settings.app_defaults.get_app_defaults")
     def test_get_default_widget_type(self, mock_get_defaults):
         """Test getting default widget type."""
         mock_defaults = MagicMock()
@@ -214,9 +214,11 @@ class TestConvenienceFunctions:
 
         result = get_default_widget_type()
         assert result == "editor"
-        mock_defaults.get.assert_called_with("workspace.default_new_tab_widget", "terminal")
+        mock_defaults.get.assert_called_with(
+            "workspace.default_new_tab_widget", "terminal"
+        )
 
-    @patch('core.settings.app_defaults.get_app_defaults')
+    @patch("core.settings.app_defaults.get_app_defaults")
     def test_get_default_split_direction(self, mock_get_defaults):
         """Test getting default split direction."""
         mock_defaults = MagicMock()
@@ -231,7 +233,7 @@ class TestConvenienceFunctions:
         result = get_default_split_direction()
         assert result == "horizontal"  # Should fallback
 
-    @patch('core.settings.app_defaults.get_app_defaults')
+    @patch("core.settings.app_defaults.get_app_defaults")
     def test_get_default_split_ratio(self, mock_get_defaults):
         """Test getting default split ratio."""
         mock_defaults = MagicMock()
@@ -241,7 +243,7 @@ class TestConvenienceFunctions:
         result = get_default_split_ratio()
         assert result == 0.75
 
-    @patch('core.settings.app_defaults.get_app_defaults')
+    @patch("core.settings.app_defaults.get_app_defaults")
     def test_should_restore_tabs(self, mock_get_defaults):
         """Test checking if tabs should be restored."""
         mock_defaults = MagicMock()
@@ -251,7 +253,7 @@ class TestConvenienceFunctions:
         result = should_restore_tabs()
         assert result is True
 
-    @patch('core.settings.app_defaults.get_app_defaults')
+    @patch("core.settings.app_defaults.get_app_defaults")
     def test_should_confirm_app_exit(self, mock_get_defaults):
         """Test checking if app exit confirmation is required."""
         mock_defaults = MagicMock()
@@ -267,7 +269,7 @@ class TestFallbackChain:
 
     def test_fallback_chain_priority(self):
         """Test that fallback chain works in correct order."""
-        with patch('core.settings.app_defaults.QSettings') as mock_settings_class:
+        with patch("core.settings.app_defaults.QSettings") as mock_settings_class:
             mock_settings = MagicMock()
             mock_settings_class.return_value = mock_settings
 
@@ -302,7 +304,7 @@ class TestFallbackChain:
 class TestMigration:
     """Test legacy settings migration."""
 
-    @patch('core.settings.app_defaults.QSettings')
+    @patch("core.settings.app_defaults.QSettings")
     def test_migrate_legacy_settings(self, mock_settings_class):
         """Test migration from old settings format."""
         mock_settings = MagicMock()
@@ -312,7 +314,7 @@ class TestMigration:
         legacy_settings = {
             "UI/ShowSidebar": True,
             "Theme/Current": "dark",
-            "Workspace/RestoreOnStartup": False
+            "Workspace/RestoreOnStartup": False,
         }
 
         def contains_side_effect(key):
@@ -336,7 +338,7 @@ class TestMigration:
             migrated.append((key, value))
             return original_set(key, value)
 
-        with patch.object(defaults, 'set', side_effect=track_set):
+        with patch.object(defaults, "set", side_effect=track_set):
             count = defaults.migrate_legacy_settings()
 
         # Check that migration was attempted

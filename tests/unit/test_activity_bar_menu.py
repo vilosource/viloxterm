@@ -15,7 +15,7 @@ class TestActivityBarMenu:
 
     def test_menu_action_properties(self, qtbot):
         """Test menu action has correct properties."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch("ui.activity_bar.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon
@@ -25,14 +25,14 @@ class TestActivityBarMenu:
             qtbot.addWidget(activity_bar)
 
             # Check menu action properties
-            assert hasattr(activity_bar, 'menu_action')
+            assert hasattr(activity_bar, "menu_action")
             assert activity_bar.menu_action.text() == "Menu"
             assert not activity_bar.menu_action.isCheckable()
             assert activity_bar.menu_action.toolTip() == "Application Menu"
 
     def test_menu_icon_at_bottom(self, qtbot):
         """Test menu icon is positioned at the bottom after a spacer."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch("ui.activity_bar.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon
@@ -51,12 +51,15 @@ class TestActivityBarMenu:
             # There should be a spacer widget before the menu
             # The spacer has expanding size policy
             from PySide6.QtWidgets import QSizePolicy
+
             spacer_found = False
             for widget in widgets:
-                if widget and hasattr(widget, 'sizePolicy'):
+                if widget and hasattr(widget, "sizePolicy"):
                     policy = widget.sizePolicy()
-                    if (policy.verticalPolicy() == QSizePolicy.Expanding and
-                        policy.horizontalPolicy() == QSizePolicy.Expanding):
+                    if (
+                        policy.verticalPolicy() == QSizePolicy.Expanding
+                        and policy.horizontalPolicy() == QSizePolicy.Expanding
+                    ):
                         spacer_found = True
                         break
 
@@ -64,7 +67,7 @@ class TestActivityBarMenu:
 
     def test_menu_click_creates_popup(self, qtbot, monkeypatch):
         """Test clicking menu creates a popup menu."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch("ui.activity_bar.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon
@@ -87,10 +90,10 @@ class TestActivityBarMenu:
             qtbot.addWidget(activity_bar)
 
             # Mock the window() method to return our mock main window
-            monkeypatch.setattr(activity_bar, 'window', lambda: mock_main_window)
+            monkeypatch.setattr(activity_bar, "window", lambda: mock_main_window)
 
             # Mock QMenu to track its creation
-            with patch('PySide6.QtWidgets.QMenu') as mock_qmenu_class:
+            with patch("PySide6.QtWidgets.QMenu") as mock_qmenu_class:
                 mock_menu = MagicMock(spec=QMenu)
                 mock_qmenu_class.return_value = mock_menu
 
@@ -108,7 +111,7 @@ class TestActivityBarMenu:
 
     def test_menu_stylesheet_valid(self, qtbot):
         """Test menu stylesheet doesn't throw NameError for undefined constants."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch("ui.activity_bar.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon
@@ -134,7 +137,7 @@ class TestActivityBarMenu:
 
     def test_menu_copies_all_menus(self, qtbot, monkeypatch):
         """Test menu popup copies all menus from menu bar."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch("ui.activity_bar.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon
@@ -162,9 +165,9 @@ class TestActivityBarMenu:
             qtbot.addWidget(activity_bar)
 
             # Mock the window() method
-            monkeypatch.setattr(activity_bar, 'window', lambda: mock_main_window)
+            monkeypatch.setattr(activity_bar, "window", lambda: mock_main_window)
 
-            with patch('ui.activity_bar.QMenu') as mock_qmenu_class:
+            with patch("ui.activity_bar.QMenu") as mock_qmenu_class:
                 mock_menu = MagicMock(spec=QMenu)
                 mock_qmenu_class.return_value = mock_menu
 
@@ -178,7 +181,7 @@ class TestActivityBarMenu:
 
     def test_menu_handles_missing_menubar(self, qtbot):
         """Test menu handles case when menubar is not available."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch("ui.activity_bar.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_icon = QIcon()
             mock_manager.get_icon.return_value = mock_icon
@@ -191,7 +194,7 @@ class TestActivityBarMenu:
             activity_bar.setParent(None)
 
             # This should not crash
-            with patch('ui.activity_bar.logger') as mock_logger:
+            with patch("ui.activity_bar.logger") as mock_logger:
                 activity_bar.on_menu_clicked()
 
                 # Verify warning was logged

@@ -10,6 +10,7 @@ from typing import Optional
 
 class FontFamily(Enum):
     """Standard font family options."""
+
     MONOSPACE = "monospace"
     SANS_SERIF = "sans-serif"
     SERIF = "serif"
@@ -31,15 +32,17 @@ class ThemeTypography:
     font_weight_bold: int = 700
 
     # Size scale (relative to base)
-    size_scale: dict[str, float] = field(default_factory=lambda: {
-        "xs": 0.75,    # 75% of base
-        "sm": 0.875,   # 87.5% of base
-        "base": 1.0,   # 100% of base
-        "lg": 1.125,   # 112.5% of base
-        "xl": 1.25,    # 125% of base
-        "2xl": 1.5,    # 150% of base
-        "3xl": 1.875,  # 187.5% of base
-    })
+    size_scale: dict[str, float] = field(
+        default_factory=lambda: {
+            "xs": 0.75,  # 75% of base
+            "sm": 0.875,  # 87.5% of base
+            "base": 1.0,  # 100% of base
+            "lg": 1.125,  # 112.5% of base
+            "xl": 1.25,  # 125% of base
+            "2xl": 1.5,  # 150% of base
+            "3xl": 1.875,  # 187.5% of base
+        }
+    )
 
     # Component-specific overrides
     overrides: dict[str, dict[str, any]] = field(default_factory=dict)
@@ -86,7 +89,7 @@ class ThemeTypography:
             "font-family": self.font_family,
             "font-size": f"{self.font_size_base}px",
             "line-height": str(self.line_height),
-            "font-weight": self.font_weight_normal
+            "font-weight": self.font_weight_normal,
         }
 
         # Apply component-specific overrides
@@ -105,11 +108,11 @@ class ThemeTypography:
             "fontWeightMedium": self.font_weight_medium,
             "fontWeightBold": self.font_weight_bold,
             "sizeScale": self.size_scale,
-            "overrides": self.overrides
+            "overrides": self.overrides,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ThemeTypography':
+    def from_dict(cls, data: dict) -> "ThemeTypography":
         """
         Create typography from dictionary.
 
@@ -131,33 +134,23 @@ class ThemeTypography:
         }
 
         return cls(
-            font_family=data.get("fontFamily", "Fira Code, Consolas, Monaco, monospace"),
+            font_family=data.get(
+                "fontFamily", "Fira Code, Consolas, Monaco, monospace"
+            ),
             font_size_base=data.get("fontSizeBase", 14),
             line_height=data.get("lineHeight", 1.5),
             font_weight_normal=data.get("fontWeightNormal", 400),
             font_weight_medium=data.get("fontWeightMedium", 500),
             font_weight_bold=data.get("fontWeightBold", 700),
             size_scale=data.get("sizeScale", default_size_scale),
-            overrides=data.get("overrides", {})
+            overrides=data.get("overrides", {}),
         )
 
 
 # Default typography presets
 TYPOGRAPHY_PRESETS = {
-    "compact": ThemeTypography(
-        font_size_base=12,
-        line_height=1.4
-    ),
-    "default": ThemeTypography(
-        font_size_base=14,
-        line_height=1.5
-    ),
-    "comfortable": ThemeTypography(
-        font_size_base=16,
-        line_height=1.6
-    ),
-    "large": ThemeTypography(
-        font_size_base=18,
-        line_height=1.7
-    )
+    "compact": ThemeTypography(font_size_base=12, line_height=1.4),
+    "default": ThemeTypography(font_size_base=14, line_height=1.5),
+    "comfortable": ThemeTypography(font_size_base=16, line_height=1.6),
+    "large": ThemeTypography(font_size_base=18, line_height=1.7),
 }

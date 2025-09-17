@@ -39,6 +39,7 @@ class MainWindow(QMainWindow):
         """Initialize the UI components."""
         # Set window title with dev mode indicator if applicable
         from core.app_config import app_config
+
         dev_mode = app_config.dev_mode
         title = "ViloxTerm [DEV]" if dev_mode else "ViloxTerm"
         self.setWindowTitle(title)
@@ -65,7 +66,7 @@ class MainWindow(QMainWindow):
             main_window=self,
             workspace=self.workspace,
             sidebar=self.sidebar,
-            activity_bar=self.activity_bar
+            activity_bar=self.activity_bar,
         )
 
         # Setup theme system through layout manager
@@ -73,6 +74,7 @@ class MainWindow(QMainWindow):
 
         # Log service initialization
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info("Services initialized successfully")
 
@@ -85,6 +87,7 @@ class MainWindow(QMainWindow):
 
         # Log command initialization
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info("Commands initialized successfully")
 
@@ -109,8 +112,12 @@ class MainWindow(QMainWindow):
 
         # Connect keyboard service signals
         self.keyboard_service.shortcut_triggered.connect(self._on_shortcut_triggered)
-        self.keyboard_service.chord_sequence_started.connect(self._on_chord_sequence_started)
-        self.keyboard_service.chord_sequence_cancelled.connect(self._on_chord_sequence_cancelled)
+        self.keyboard_service.chord_sequence_started.connect(
+            self._on_chord_sequence_started
+        )
+        self.keyboard_service.chord_sequence_cancelled.connect(
+            self._on_chord_sequence_cancelled
+        )
 
         # Add context providers
         self.keyboard_service.add_context_provider(self._get_ui_context)
@@ -124,6 +131,7 @@ class MainWindow(QMainWindow):
 
         # Register any pending shortcuts from commands
         from core.commands.decorators import register_pending_shortcuts
+
         register_pending_shortcuts()
 
         # Install event filters on workspace widgets to catch shortcuts
@@ -131,11 +139,12 @@ class MainWindow(QMainWindow):
         self._install_workspace_filters()
 
         # Re-install filters when new panes are added
-        if hasattr(self.workspace, 'split_widget'):
+        if hasattr(self.workspace, "split_widget"):
             self.workspace.split_widget.pane_added.connect(self._on_pane_added)
 
         # Register shortcuts for all commands with the keyboard service
         from core.commands.registry import command_registry
+
         commands_with_shortcuts = 0
         for command in command_registry.get_all_commands():
             if command.shortcut:
@@ -146,16 +155,19 @@ class MainWindow(QMainWindow):
                     command_id=command.id,
                     when=command.when,
                     description=command.title,
-                    source="command"
+                    source="command",
                 )
                 if success:
                     commands_with_shortcuts += 1
 
         # Log keyboard initialization
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info("Keyboard service initialized successfully")
-        logger.info(f"Registered {commands_with_shortcuts} command shortcuts with keyboard service")
+        logger.info(
+            f"Registered {commands_with_shortcuts} command shortcuts with keyboard service"
+        )
 
     def initialize_command_palette(self):
         """Initialize the command palette controller."""
@@ -164,7 +176,9 @@ class MainWindow(QMainWindow):
         from ui.command_palette import CommandPaletteController
 
         # Create command palette controller
-        self.command_palette_controller = CommandPaletteController(parent=self, main_window=self)
+        self.command_palette_controller = CommandPaletteController(
+            parent=self, main_window=self
+        )
 
         # Connect palette signals to context updates
         self.command_palette_controller.palette_shown.connect(
@@ -179,6 +193,7 @@ class MainWindow(QMainWindow):
 
         # Log initialization
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info("Command palette initialized successfully")
 
@@ -193,6 +208,7 @@ class MainWindow(QMainWindow):
         self.focus_sink.commandModeExited.connect(self._on_command_mode_exited)
 
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info("Focus sink initialized successfully")
 
@@ -200,6 +216,7 @@ class MainWindow(QMainWindow):
         """Handle pane number selection in command mode."""
         # Get workspace service to switch panes
         from services.workspace_service import WorkspaceService
+
         workspace_service = self.service_locator.get(WorkspaceService)
 
         if workspace_service:
@@ -214,6 +231,7 @@ class MainWindow(QMainWindow):
             # No need to call exit_command_mode here
 
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info(f"Pane {number} selected in command mode")
 
@@ -221,12 +239,14 @@ class MainWindow(QMainWindow):
         """Handle command mode cancellation."""
         # Hide pane numbers
         from services.workspace_service import WorkspaceService
+
         workspace_service = self.service_locator.get(WorkspaceService)
 
         if workspace_service:
             workspace_service.hide_pane_numbers()
 
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info("Command mode cancelled")
 
@@ -237,6 +257,7 @@ class MainWindow(QMainWindow):
         # This prevents double-hiding which can interfere with focus
 
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info("Command mode exited")
 
@@ -247,7 +268,9 @@ class MainWindow(QMainWindow):
         return CommandContext(
             main_window=self,
             workspace=self.workspace,
-            active_widget=self.workspace.get_current_split_widget() if self.workspace else None
+            active_widget=(
+                self.workspace.get_current_split_widget() if self.workspace else None
+            ),
         )
 
     def execute_command(self, command_id: str, **kwargs):
@@ -264,7 +287,7 @@ class MainWindow(QMainWindow):
         from core.commands.executor import CommandExecutor
 
         # Get or create executor
-        if not hasattr(self, '_command_executor'):
+        if not hasattr(self, "_command_executor"):
             self._command_executor = CommandExecutor()
 
         # Create context and execute
@@ -274,6 +297,7 @@ class MainWindow(QMainWindow):
         # Log result if failed
         if not result.success:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(f"Command {command_id} failed: {result.error}")
 
@@ -289,12 +313,12 @@ class MainWindow(QMainWindow):
         Install event filters on workspace and its children.
         This ensures keyboard shortcuts work even when terminal has focus.
         """
-        if hasattr(self, 'workspace'):
+        if hasattr(self, "workspace"):
             # Install on workspace itself
             self.workspace.installEventFilter(self)
 
             # Install on split pane widget if it exists
-            if hasattr(self.workspace, 'split_widget'):
+            if hasattr(self.workspace, "split_widget"):
                 self._install_filters_recursively(self.workspace.split_widget)
 
     def _install_filters_recursively(self, widget):
@@ -308,6 +332,7 @@ class MainWindow(QMainWindow):
 
         # For WebEngineView, also try to install on focus proxy
         from PySide6.QtWebEngineWidgets import QWebEngineView
+
         if isinstance(widget, QWebEngineView):
             focus_proxy = widget.focusProxy()
             if focus_proxy:
@@ -315,6 +340,7 @@ class MainWindow(QMainWindow):
 
         # Recursively install on children
         from PySide6.QtWidgets import QWidget
+
         for child in widget.findChildren(QWidget):
             # Skip WebEngine internal widgets to avoid recursion issues
             if "RenderWidgetHostViewQtDelegateWidget" not in child.__class__.__name__:
@@ -334,11 +360,14 @@ class MainWindow(QMainWindow):
         # Only handle KeyPress events
         if event.type() == QEvent.KeyPress:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.debug(f"eventFilter received KeyPress from {obj.__class__.__name__}")
 
             # Let keyboard service handle the event first
-            if hasattr(self, 'keyboard_service') and self.keyboard_service.handle_key_event(event):
+            if hasattr(
+                self, "keyboard_service"
+            ) and self.keyboard_service.handle_key_event(event):
                 # Event was handled by keyboard service - stop propagation
                 logger.debug("Event handled by keyboard service via eventFilter")
                 return True
@@ -349,11 +378,16 @@ class MainWindow(QMainWindow):
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Handle key press events for keyboard shortcuts."""
         import logging
+
         logger = logging.getLogger(__name__)
-        logger.debug(f"MainWindow.keyPressEvent called with key: {event.key()}, modifiers: {event.modifiers()}")
+        logger.debug(
+            f"MainWindow.keyPressEvent called with key: {event.key()}, modifiers: {event.modifiers()}"
+        )
 
         # Let keyboard service handle the event first
-        if hasattr(self, 'keyboard_service') and self.keyboard_service.handle_key_event(event):
+        if hasattr(self, "keyboard_service") and self.keyboard_service.handle_key_event(
+            event
+        ):
             # Event was handled by keyboard service
             logger.debug("Event handled by keyboard service")
             return
@@ -364,6 +398,7 @@ class MainWindow(QMainWindow):
     def _on_shortcut_triggered(self, command_id: str, context: dict) -> None:
         """Handle shortcut triggered by keyboard service."""
         import logging
+
         logger = logging.getLogger(__name__)
         logger.debug(f"Shortcut triggered: {command_id}")
 
@@ -373,13 +408,13 @@ class MainWindow(QMainWindow):
     def _on_chord_sequence_started(self, sequence_str: str) -> None:
         """Handle chord sequence started."""
         # Could show status in status bar
-        if hasattr(self, 'status_bar'):
+        if hasattr(self, "status_bar"):
             self.status_bar.showMessage(f"Chord sequence: {sequence_str}...", 2000)
 
     def _on_chord_sequence_cancelled(self) -> None:
         """Handle chord sequence cancelled."""
         # Clear status message
-        if hasattr(self, 'status_bar'):
+        if hasattr(self, "status_bar"):
             self.status_bar.clearMessage()
 
     def _get_ui_context(self) -> dict:
@@ -387,25 +422,28 @@ class MainWindow(QMainWindow):
         context = {}
 
         # Add basic UI state
-        context['sidebarVisible'] = not self.sidebar.is_collapsed if hasattr(self, 'sidebar') else False
-        context['editorFocus'] = self._has_editor_focus()
-        context['terminalFocus'] = self._has_terminal_focus()
-        context['menuBarVisible'] = self.menuBar().isVisible()
+        context["sidebarVisible"] = (
+            not self.sidebar.is_collapsed if hasattr(self, "sidebar") else False
+        )
+        context["editorFocus"] = self._has_editor_focus()
+        context["terminalFocus"] = self._has_terminal_focus()
+        context["menuBarVisible"] = self.menuBar().isVisible()
 
         # Add workspace context
-        if hasattr(self, 'workspace'):
+        if hasattr(self, "workspace"):
             try:
-                context['paneCount'] = self.workspace.get_split_count()
-                context['activeTabIndex'] = self.workspace.get_current_tab_index()
-                context['hasActiveEditor'] = self.workspace.has_active_editor()
+                context["paneCount"] = self.workspace.get_split_count()
+                context["activeTabIndex"] = self.workspace.get_current_tab_index()
+                context["hasActiveEditor"] = self.workspace.has_active_editor()
             except (AttributeError, RuntimeError) as e:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.debug(f"Failed to get workspace context: {e}")
                 # Set safe defaults
-                context['paneCount'] = 0
-                context['activeTabIndex'] = -1
-                context['hasActiveEditor'] = False
+                context["paneCount"] = 0
+                context["activeTabIndex"] = -1
+                context["hasActiveEditor"] = False
 
         return context
 
@@ -417,7 +455,7 @@ class MainWindow(QMainWindow):
             return False
 
         # Check if focused widget is in workspace
-        return hasattr(focused_widget, 'toPlainText')  # Text editor check
+        return hasattr(focused_widget, "toPlainText")  # Text editor check
 
     def _has_terminal_focus(self) -> bool:
         """Check if a terminal has focus."""
@@ -427,7 +465,7 @@ class MainWindow(QMainWindow):
             return False
 
         # Check if focused widget is a terminal
-        return 'terminal' in focused_widget.__class__.__name__.lower()
+        return "terminal" in focused_widget.__class__.__name__.lower()
 
     def _create_application_shortcuts(self):
         """
@@ -445,16 +483,18 @@ class MainWindow(QMainWindow):
         toggle_panes_action = QAction("Toggle Pane Numbers", self)
         toggle_panes_action.setShortcut(QKeySequence("Alt+P"))
         toggle_panes_action.setShortcutContext(Qt.ApplicationShortcut)
-        toggle_panes_action.triggered.connect(lambda: self.execute_command("workbench.action.togglePaneNumbers"))
+        toggle_panes_action.triggered.connect(
+            lambda: self.execute_command("workbench.action.togglePaneNumbers")
+        )
         self.addAction(toggle_panes_action)
 
         # Also ensure the action is enabled
         toggle_panes_action.setEnabled(True)
 
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info("Created QAction for Alt+P with ApplicationShortcut context")
-
 
     def toggle_theme(self):
         """Toggle application theme - delegate to action manager."""
@@ -483,7 +523,6 @@ class MainWindow(QMainWindow):
     def reset_app_state(self):
         """Reset application to default state - delegate to action manager."""
         return self.action_manager.reset_app_state()
-
 
     def closeEvent(self, event):
         """Handle close event - delegate to state manager."""

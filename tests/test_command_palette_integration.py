@@ -27,22 +27,22 @@ def main_window(qtbot):
 
 def test_command_palette_controller_exists(main_window):
     """Test that command palette controller is initialized."""
-    assert hasattr(main_window, 'command_palette_controller')
+    assert hasattr(main_window, "command_palette_controller")
     assert main_window.command_palette_controller is not None
 
 
 def test_command_palette_show_command_registered():
     """Test that commandPalette.show is registered."""
-    cmd = command_registry.get_command('commandPalette.show')
+    cmd = command_registry.get_command("commandPalette.show")
     assert cmd is not None
-    assert cmd.shortcut == 'ctrl+shift+p'
-    assert cmd.title == 'Show Command Palette'
+    assert cmd.shortcut == "ctrl+shift+p"
+    assert cmd.title == "Show Command Palette"
 
 
 def test_keyboard_service_has_palette_shortcut(main_window):
     """Test that keyboard service has ctrl+shift+p registered."""
     # Check that keyboard service exists
-    assert hasattr(main_window, 'keyboard_service')
+    assert hasattr(main_window, "keyboard_service")
 
     # Check shortcuts are registered
     registry = main_window.keyboard_service._registry
@@ -51,17 +51,19 @@ def test_keyboard_service_has_palette_shortcut(main_window):
     found_palette_shortcut = False
     for shortcuts_list in registry._shortcuts.values():
         for shortcut in shortcuts_list:
-            if shortcut.command_id == 'commandPalette.show':
+            if shortcut.command_id == "commandPalette.show":
                 found_palette_shortcut = True
                 break
 
-    assert found_palette_shortcut, "commandPalette.show shortcut not found in keyboard registry"
+    assert (
+        found_palette_shortcut
+    ), "commandPalette.show shortcut not found in keyboard registry"
 
 
 def test_execute_show_palette_command(main_window, qtbot):
     """Test executing the show palette command directly."""
     # Execute command
-    result = main_window.execute_command('commandPalette.show')
+    result = main_window.execute_command("commandPalette.show")
 
     # Check result
     assert result.success is True
@@ -96,11 +98,7 @@ def test_keyboard_shortcut_opens_palette(main_window, qtbot):
     assert not main_window.command_palette_controller.is_visible()
 
     # Simulate Ctrl+Shift+P key press
-    QTest.keyClick(
-        main_window,
-        Qt.Key_P,
-        Qt.ControlModifier | Qt.ShiftModifier
-    )
+    QTest.keyClick(main_window, Qt.Key_P, Qt.ControlModifier | Qt.ShiftModifier)
 
     # Give UI time to update
     qtbot.wait(200)
@@ -119,7 +117,7 @@ def test_keyboard_shortcut_opens_palette(main_window, qtbot):
 def test_escape_closes_palette(main_window, qtbot):
     """Test that Escape closes the command palette."""
     # Open palette first
-    main_window.execute_command('commandPalette.show')
+    main_window.execute_command("commandPalette.show")
     qtbot.wait(100)
     assert main_window.command_palette_controller.is_visible()
 
@@ -143,7 +141,7 @@ def test_escape_closes_palette(main_window, qtbot):
 def test_command_filtering_by_context(main_window, qtbot):
     """Test that commands are filtered based on context."""
     # Open palette
-    main_window.execute_command('commandPalette.show')
+    main_window.execute_command("commandPalette.show")
     qtbot.wait(100)
 
     # Get available commands
@@ -151,12 +149,16 @@ def test_command_filtering_by_context(main_window, qtbot):
     commands = palette_widget.command_list.commands
 
     # Check that commandPalette.show is NOT in the list (when="!commandPaletteVisible")
-    show_cmd_in_list = any(cmd.id == 'commandPalette.show' for cmd in commands)
-    assert not show_cmd_in_list, "commandPalette.show should be filtered out when palette is visible"
+    show_cmd_in_list = any(cmd.id == "commandPalette.show" for cmd in commands)
+    assert (
+        not show_cmd_in_list
+    ), "commandPalette.show should be filtered out when palette is visible"
 
     # Check that commandPalette.hide IS in the list (when="commandPaletteVisible")
-    hide_cmd_in_list = any(cmd.id == 'commandPalette.hide' for cmd in commands)
-    assert hide_cmd_in_list, "commandPalette.hide should be available when palette is visible"
+    hide_cmd_in_list = any(cmd.id == "commandPalette.hide" for cmd in commands)
+    assert (
+        hide_cmd_in_list
+    ), "commandPalette.hide should be available when palette is visible"
 
     # Clean up
     main_window.command_palette_controller.hide_palette()
@@ -165,7 +167,7 @@ def test_command_filtering_by_context(main_window, qtbot):
 def test_command_search(main_window, qtbot):
     """Test searching for commands in the palette."""
     # Open palette
-    main_window.execute_command('commandPalette.show')
+    main_window.execute_command("commandPalette.show")
     qtbot.wait(100)
 
     palette_widget = main_window.command_palette_controller.palette_widget
@@ -178,7 +180,7 @@ def test_command_search(main_window, qtbot):
     commands = palette_widget.command_list.commands
 
     # Should have theme-related commands
-    theme_commands = [cmd for cmd in commands if 'theme' in cmd.title.lower()]
+    theme_commands = [cmd for cmd in commands if "theme" in cmd.title.lower()]
     assert len(theme_commands) > 0, "Should find theme-related commands"
 
     # Clean up
@@ -189,10 +191,11 @@ def test_command_execution_from_palette(main_window, qtbot):
     """Test executing a command from the palette."""
     # Get initial theme
     from core.context.manager import context_manager
-    initial_theme = context_manager.get('theme')
+
+    initial_theme = context_manager.get("theme")
 
     # Open palette
-    main_window.execute_command('commandPalette.show')
+    main_window.execute_command("commandPalette.show")
     qtbot.wait(100)
 
     palette_widget = main_window.command_palette_controller.palette_widget
@@ -213,7 +216,7 @@ def test_command_execution_from_palette(main_window, qtbot):
         assert not main_window.command_palette_controller.is_visible()
 
         # Check theme changed
-        new_theme = context_manager.get('theme')
+        new_theme = context_manager.get("theme")
         assert new_theme != initial_theme, "Theme should have changed"
 
 
@@ -230,16 +233,16 @@ def test_shortcut_conflicts_resolved():
     """Test that shortcut conflicts have been resolved."""
     # Known resolved conflicts
     resolved_conflicts = [
-        ('ctrl+t', ['view.toggleTheme']),  # settings.toggleTheme removed
-        ('escape', ['commandPalette.hide']),  # workbench.action.focusActivePane removed
+        ("ctrl+t", ["view.toggleTheme"]),  # settings.toggleTheme removed
+        ("escape", ["commandPalette.hide"]),  # workbench.action.focusActivePane removed
     ]
 
     all_commands = command_registry.get_all_commands()
 
     for shortcut, expected_commands in resolved_conflicts:
         commands_with_shortcut = [
-            cmd.id for cmd in all_commands
-            if cmd.shortcut == shortcut
+            cmd.id for cmd in all_commands if cmd.shortcut == shortcut
         ]
-        assert commands_with_shortcut == expected_commands, \
-            f"Shortcut {shortcut} should only be assigned to {expected_commands}, found {commands_with_shortcut}"
+        assert (
+            commands_with_shortcut == expected_commands
+        ), f"Shortcut {shortcut} should only be assigned to {expected_commands}, found {commands_with_shortcut}"

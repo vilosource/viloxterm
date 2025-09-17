@@ -148,6 +148,7 @@ class TestValidators:
 
     def test_custom_validator_success(self):
         """Test CustomValidator with valid value."""
+
         def even_number(value):
             return value % 2 == 0
 
@@ -156,6 +157,7 @@ class TestValidators:
 
     def test_custom_validator_failure(self):
         """Test CustomValidator with invalid value."""
+
         def even_number(value):
             return value % 2 == 0
 
@@ -177,10 +179,7 @@ class TestValidators:
 
     def test_composite_validator(self):
         """Test CompositeValidator combines multiple validators."""
-        validators = [
-            TypeValidator(int),
-            RangeValidator(0, 100)
-        ]
+        validators = [TypeValidator(int), RangeValidator(0, 100)]
         validator = CompositeValidator(validators)
 
         assert validator.validate(50) is True
@@ -282,7 +281,7 @@ class TestCommandValidationSpec:
         """Test successful context validation."""
         specs = {
             "count": ParameterSpec("count", Type(int), required=True),
-            "name": ParameterSpec("name", String(min_length=1), default="default")
+            "name": ParameterSpec("name", String(min_length=1), default="default"),
         }
         validation_spec = CommandValidationSpec(specs)
 
@@ -294,9 +293,7 @@ class TestCommandValidationSpec:
 
     def test_validate_context_failure(self):
         """Test context validation failure."""
-        specs = {
-            "count": ParameterSpec("count", Type(int), required=True)
-        }
+        specs = {"count": ParameterSpec("count", Type(int), required=True)}
         validation_spec = CommandValidationSpec(specs)
 
         context = CommandContext(args={})
@@ -327,9 +324,10 @@ class TestValidateDecorator:
 
     def test_validate_decorator_with_function(self):
         """Test @validate decorator applied to a function."""
+
         @validate(
             count=ParameterSpec("count", Type(int), required=True),
-            name=ParameterSpec("name", String(min_length=1))
+            name=ParameterSpec("name", String(min_length=1)),
         )
         def test_function(context: CommandContext) -> CommandResult:
             return CommandResult(success=True, value=context.args)
@@ -356,10 +354,7 @@ class TestValidateDecorator:
 
         # Apply command decorator first
         test_command = command(
-            id="test.command",
-            title="Test Command",
-            category="Test",
-            register=False
+            id="test.command", title="Test Command", category="Test", register=False
         )(test_func)
 
         # Then apply validation decorator
@@ -368,17 +363,15 @@ class TestValidateDecorator:
         )(test_command)
 
         # Test that command object has validation spec
-        assert hasattr(test_command_with_validation, '_validation_spec')
+        assert hasattr(test_command_with_validation, "_validation_spec")
         validation_spec = get_validation_spec(test_command_with_validation)
         assert validation_spec is not None
         assert "tab_index" in validation_spec.parameters
 
     def test_validate_decorator_with_simple_validators(self):
         """Test @validate decorator with simple validator objects."""
-        @validate(
-            count=Type(int),
-            name=String(min_length=1)
-        )
+
+        @validate(count=Type(int), name=String(min_length=1))
         def test_function(context: CommandContext) -> CommandResult:
             return CommandResult(success=True, value=context.args)
 
@@ -396,12 +389,12 @@ class TestIntegration:
         """Test validate_command_args function."""
         # Create a mock command with validation
         test_command = Mock()
-        test_command._validation_spec = CommandValidationSpec({
-            "count": ParameterSpec("count", Type(int), required=True)
-        })
+        test_command._validation_spec = CommandValidationSpec(
+            {"count": ParameterSpec("count", Type(int), required=True)}
+        )
 
         # Mock the registry
-        with patch('core.commands.registry.command_registry') as mock_registry:
+        with patch("core.commands.registry.command_registry") as mock_registry:
             mock_registry.get_command.return_value = test_command
 
             # Test successful validation
@@ -414,7 +407,7 @@ class TestIntegration:
 
     def test_command_not_found(self):
         """Test validate_command_args with non-existent command."""
-        with patch('core.commands.registry.command_registry') as mock_registry:
+        with patch("core.commands.registry.command_registry") as mock_registry:
             mock_registry.get_command.return_value = None
 
             with pytest.raises(ValidationError) as exc_info:
@@ -426,7 +419,7 @@ class TestIntegration:
         test_command = Mock()
         test_command._validation_spec = None
 
-        with patch('core.commands.registry.command_registry') as mock_registry:
+        with patch("core.commands.registry.command_registry") as mock_registry:
             mock_registry.get_command.return_value = test_command
 
             # Should return args unchanged
@@ -475,20 +468,19 @@ class TestRealWorldScenarios:
 
     def test_workspace_command_validation(self):
         """Test validation for workspace-type commands."""
+
         @validate(
             widget_type=OneOf("terminal", "editor", "explorer"),
             tab_index=Optional(Range(0, 50)),
-            name=Optional(String(max_length=100))
+            name=Optional(String(max_length=100)),
         )
         def workspace_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=True, value=context.args)
 
         # Test valid arguments
-        context = CommandContext(args={
-            "widget_type": "terminal",
-            "tab_index": 2,
-            "name": "My Terminal"
-        })
+        context = CommandContext(
+            args={"widget_type": "terminal", "tab_index": 2, "name": "My Terminal"}
+        )
         result = workspace_command(context)
         assert result.success is True
 
@@ -500,20 +492,19 @@ class TestRealWorldScenarios:
 
     def test_file_operation_validation(self):
         """Test validation for file operation commands."""
+
         @validate(
             file_path=String(min_length=1, pattern=r"^[^<>:\"\\|?*]+$"),
             encoding=Optional(OneOf("utf-8", "utf-16", "ascii")),
-            backup=Optional(Type(bool))
+            backup=Optional(Type(bool)),
         )
         def file_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=True, value=context.args)
 
         # Test valid file path
-        context = CommandContext(args={
-            "file_path": "test.txt",
-            "encoding": "utf-8",
-            "backup": True
-        })
+        context = CommandContext(
+            args={"file_path": "test.txt", "encoding": "utf-8", "backup": True}
+        )
         result = file_command(context)
         assert result.success is True
 
@@ -524,20 +515,17 @@ class TestRealWorldScenarios:
 
     def test_numeric_range_validation(self):
         """Test validation for numeric ranges."""
+
         @validate(
             port=Range(1, 65535),
             timeout=Range(0.1, 300.0),
-            retry_count=All(Type(int), Range(0, 10))
+            retry_count=All(Type(int), Range(0, 10)),
         )
         def network_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=True, value=context.args)
 
         # Test valid values
-        context = CommandContext(args={
-            "port": 8080,
-            "timeout": 30.5,
-            "retry_count": 3
-        })
+        context = CommandContext(args={"port": 8080, "timeout": 30.5, "retry_count": 3})
         result = network_command(context)
         assert result.success is True
 

@@ -25,10 +25,10 @@ class ContextManager:
     for evaluating when clauses on commands and shortcuts.
     """
 
-    _instance: Optional['ContextManager'] = None
+    _instance: Optional["ContextManager"] = None
     _lock = Lock()
 
-    def __new__(cls) -> 'ContextManager':
+    def __new__(cls) -> "ContextManager":
         """Ensure singleton pattern."""
         if cls._instance is None:
             with cls._lock:
@@ -77,12 +77,13 @@ class ContextManager:
 
         # Platform detection
         import sys
-        if sys.platform == 'win32':
-            self._context[ContextKey.PLATFORM] = 'windows'
-        elif sys.platform == 'darwin':
-            self._context[ContextKey.PLATFORM] = 'darwin'
+
+        if sys.platform == "win32":
+            self._context[ContextKey.PLATFORM] = "windows"
+        elif sys.platform == "darwin":
+            self._context[ContextKey.PLATFORM] = "darwin"
         else:
-            self._context[ContextKey.PLATFORM] = 'linux'
+            self._context[ContextKey.PLATFORM] = "linux"
 
     def set(self, key: str, value: Any) -> None:
         """
@@ -141,7 +142,7 @@ class ContextManager:
             ContextKey.ACTIVITY_BAR_FOCUS,
             ContextKey.COMMAND_PALETTE_FOCUS,
             ContextKey.MENU_FOCUS,
-            ContextKey.DIALOG_FOCUS
+            ContextKey.DIALOG_FOCUS,
         ]
 
         for key in focus_keys:
@@ -202,7 +203,7 @@ class ContextManager:
         if observer in self._observers:
             self._observers.remove(observer)
 
-    def add_provider(self, provider: 'ContextProvider') -> None:
+    def add_provider(self, provider: "ContextProvider") -> None:
         """
         Add a context provider.
 
@@ -215,7 +216,7 @@ class ContextManager:
             self._providers.append(provider)
             provider.initialize(self)
 
-    def remove_provider(self, provider: 'ContextProvider') -> None:
+    def remove_provider(self, provider: "ContextProvider") -> None:
         """
         Remove a context provider.
 

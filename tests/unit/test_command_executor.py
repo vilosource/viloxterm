@@ -45,7 +45,9 @@ class TestCommandHistoryEntry:
     def test_repr_shows_executed_status_when_not_undone(self):
         """Test that __repr__ shows 'executed' status when undone is False."""
         # Arrange
-        entry = CommandHistoryEntry("test.cmd", CommandContext(), CommandResult(True), datetime.now())
+        entry = CommandHistoryEntry(
+            "test.cmd", CommandContext(), CommandResult(True), datetime.now()
+        )
 
         # Act
         repr_str = repr(entry)
@@ -58,7 +60,9 @@ class TestCommandHistoryEntry:
     def test_repr_shows_undone_status_when_undone(self):
         """Test that __repr__ shows 'undone' status when undone is True."""
         # Arrange
-        entry = CommandHistoryEntry("test.cmd", CommandContext(), CommandResult(True), datetime.now())
+        entry = CommandHistoryEntry(
+            "test.cmd", CommandContext(), CommandResult(True), datetime.now()
+        )
         entry.undone = True
 
         # Act
@@ -170,6 +174,7 @@ class TestCommandExecutorExecution:
 
     def test_execute_successful_command_returns_success_result(self):
         """Test that execute returns success result for successful command."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True, value="test_value")
@@ -178,7 +183,7 @@ class TestCommandExecutorExecution:
             id="test.success",
             title="Test Success",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -207,6 +212,7 @@ class TestCommandExecutorExecution:
 
     def test_execute_disabled_command_returns_failure_result(self):
         """Test that execute returns failure result for disabled command."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -216,7 +222,7 @@ class TestCommandExecutorExecution:
             title="Test Disabled",
             category=CommandCategory.FILE,
             handler=mock_handler,
-            enabled=False
+            enabled=False,
         )
         command_registry.register(command)
 
@@ -243,7 +249,7 @@ class TestCommandExecutorExecution:
             id="test.context",
             title="Test Context",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -272,7 +278,7 @@ class TestCommandExecutorExecution:
             id="test.no_context",
             title="Test No Context",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -300,7 +306,7 @@ class TestCommandExecutorExecution:
             id="test.kwargs",
             title="Test Kwargs",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -316,6 +322,7 @@ class TestCommandExecutorExecution:
 
     def test_execute_stores_last_result_on_success(self):
         """Test that execute stores result in _last_result on success."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True, value="stored_value")
@@ -324,7 +331,7 @@ class TestCommandExecutorExecution:
             id="test.store",
             title="Test Store",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -340,6 +347,7 @@ class TestCommandExecutorExecution:
 
     def test_execute_stores_last_result_on_failure(self):
         """Test that execute stores result in _last_result on failure."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=False, error="test_error")
@@ -348,7 +356,7 @@ class TestCommandExecutorExecution:
             id="test.fail",
             title="Test Fail",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -375,7 +383,7 @@ class TestCommandExecutorExecution:
             id="test.recursive",
             title="Test Recursive",
             category=CommandCategory.FILE,
-            handler=recursive_handler
+            handler=recursive_handler,
         )
         command_registry.register(command)
 
@@ -388,6 +396,7 @@ class TestCommandExecutorExecution:
 
     def test_execute_adds_successful_command_to_history(self):
         """Test that execute adds successful commands to history."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True, value="test")
@@ -396,7 +405,7 @@ class TestCommandExecutorExecution:
             id="test.history",
             title="Test History",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -416,6 +425,7 @@ class TestCommandExecutorExecution:
 
     def test_execute_does_not_add_failed_command_to_history(self):
         """Test that execute does not add failed commands to history."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=False, error="test error")
@@ -424,7 +434,7 @@ class TestCommandExecutorExecution:
             id="test.fail_history",
             title="Test Fail History",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -439,6 +449,7 @@ class TestCommandExecutorExecution:
 
     def test_execute_handles_exception_in_command_handler(self):
         """Test that execute handles exceptions in command handlers gracefully."""
+
         # Arrange
         def exception_handler(context):
             raise ValueError("Test exception")
@@ -447,7 +458,7 @@ class TestCommandExecutorExecution:
             id="test.exception",
             title="Test Exception",
             category=CommandCategory.FILE,
-            handler=exception_handler
+            handler=exception_handler,
         )
         command_registry.register(command)
 
@@ -483,12 +494,17 @@ class TestCommandExecutorHistory:
 
     def test_get_history_returns_most_recent_first(self):
         """Test that get_history returns entries with most recent first."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
 
-        command1 = Command(id="test.first", title="First", category="Test", handler=mock_handler)
-        command2 = Command(id="test.second", title="Second", category="Test", handler=mock_handler)
+        command1 = Command(
+            id="test.first", title="First", category="Test", handler=mock_handler
+        )
+        command2 = Command(
+            id="test.second", title="Second", category="Test", handler=mock_handler
+        )
         command_registry.register(command1)
         command_registry.register(command2)
 
@@ -506,13 +522,19 @@ class TestCommandExecutorHistory:
 
     def test_get_history_respects_limit_parameter(self):
         """Test that get_history respects the limit parameter."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
 
         commands = []
         for i in range(5):
-            command = Command(id=f"test.cmd{i}", title=f"Command {i}", category="Test", handler=mock_handler)
+            command = Command(
+                id=f"test.cmd{i}",
+                title=f"Command {i}",
+                category="Test",
+                handler=mock_handler,
+            )
             commands.append(command)
             command_registry.register(command)
 
@@ -545,6 +567,7 @@ class TestCommandExecutorHistory:
 
     def test_get_last_result_returns_last_command_result(self):
         """Test that get_last_result returns result of last executed command."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True, value="last_value")
@@ -553,7 +576,7 @@ class TestCommandExecutorHistory:
             id="test.last_result",
             title="Test Last Result",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -570,11 +593,14 @@ class TestCommandExecutorHistory:
 
     def test_clear_history_removes_all_history_and_stacks(self):
         """Test that clear_history removes all history and undo/redo stacks."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
 
-        command = Command(id="test.clear", title="Test Clear", category="Test", handler=mock_handler)
+        command = Command(
+            id="test.clear", title="Test Clear", category="Test", handler=mock_handler
+        )
         command_registry.register(command)
 
         executor = CommandExecutor()
@@ -604,6 +630,7 @@ class TestCommandExecutorValidation:
 
     def test_execute_skips_validation_when_no_validation_spec(self):
         """Test that execute skips validation when command has no validation spec."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True, value=context.args.get("unchecked"))
@@ -612,7 +639,7 @@ class TestCommandExecutorValidation:
             id="test.no_validation",
             title="Test No Validation",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -625,9 +652,12 @@ class TestCommandExecutorValidation:
         assert result.success is True
         assert result.value == "invalid_value"
 
-    @patch('core.commands.validation.get_validation_spec')
-    def test_execute_validates_parameters_when_validation_spec_exists(self, mock_get_validation_spec):
+    @patch("core.commands.validation.get_validation_spec")
+    def test_execute_validates_parameters_when_validation_spec_exists(
+        self, mock_get_validation_spec
+    ):
         """Test that execute validates parameters when validation spec exists."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True, value=context.args.get("name"))
@@ -636,7 +666,7 @@ class TestCommandExecutorValidation:
             id="test.with_validation",
             title="Test With Validation",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -656,9 +686,12 @@ class TestCommandExecutorValidation:
         assert result.value == "validated_value"
         mock_spec.validate_context.assert_called_once()
 
-    @patch('core.commands.validation.get_validation_spec')
-    def test_execute_returns_failure_when_validation_fails(self, mock_get_validation_spec):
+    @patch("core.commands.validation.get_validation_spec")
+    def test_execute_returns_failure_when_validation_fails(
+        self, mock_get_validation_spec
+    ):
         """Test that execute returns failure when parameter validation fails."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -667,7 +700,7 @@ class TestCommandExecutorValidation:
             id="test.validation_fail",
             title="Test Validation Fail",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -686,9 +719,10 @@ class TestCommandExecutorValidation:
         assert "Parameter validation failed" in result.error
         assert "Invalid parameter" in result.error
 
-    @patch('core.commands.validation.get_validation_spec')
+    @patch("core.commands.validation.get_validation_spec")
     def test_execute_logs_validation_debug_messages(self, mock_get_validation_spec):
         """Test that execute logs appropriate debug messages during validation."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -697,7 +731,7 @@ class TestCommandExecutorValidation:
             id="test.validation_logging",
             title="Test Validation Logging",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -709,17 +743,24 @@ class TestCommandExecutorValidation:
         executor = CommandExecutor()
 
         # Act
-        with patch('core.commands.executor.logger') as mock_logger:
+        with patch("core.commands.executor.logger") as mock_logger:
             result = executor.execute("test.validation_logging")
 
             # Assert
             assert result.success is True
-            mock_logger.debug.assert_any_call("Validating parameters for command: test.validation_logging")
-            mock_logger.debug.assert_any_call("Parameter validation passed for command: test.validation_logging")
+            mock_logger.debug.assert_any_call(
+                "Validating parameters for command: test.validation_logging"
+            )
+            mock_logger.debug.assert_any_call(
+                "Parameter validation passed for command: test.validation_logging"
+            )
 
-    @patch('core.commands.validation.get_validation_spec')
-    def test_execute_handles_validation_module_import_failure(self, mock_get_validation_spec):
+    @patch("core.commands.validation.get_validation_spec")
+    def test_execute_handles_validation_module_import_failure(
+        self, mock_get_validation_spec
+    ):
         """Test that execute handles validation module import failure gracefully."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -728,17 +769,19 @@ class TestCommandExecutorValidation:
             id="test.import_fail",
             title="Test Import Fail",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
         # Make get_validation_spec raise ImportError
-        mock_get_validation_spec.side_effect = ImportError("Validation module not found")
+        mock_get_validation_spec.side_effect = ImportError(
+            "Validation module not found"
+        )
 
         executor = CommandExecutor()
 
         # Act
-        with patch('core.commands.executor.logger') as mock_logger:
+        with patch("core.commands.executor.logger") as mock_logger:
             result = executor.execute("test.import_fail")
 
             # Assert
@@ -757,6 +800,7 @@ class TestCommandExecutorDirectExecution:
 
     def test_execute_command_registers_unregistered_command(self):
         """Test that execute_command registers command if not already registered."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True, value="direct_execution")
@@ -765,7 +809,7 @@ class TestCommandExecutorDirectExecution:
             id="test.direct",
             title="Test Direct",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
 
         executor = CommandExecutor()
@@ -784,6 +828,7 @@ class TestCommandExecutorDirectExecution:
 
     def test_execute_command_uses_existing_registration(self):
         """Test that execute_command uses existing registration if command already registered."""
+
         # Arrange
         def original_handler(context):
             return CommandResult(success=True, value="original")
@@ -795,7 +840,7 @@ class TestCommandExecutorDirectExecution:
             id="test.existing",
             title="Test Existing",
             category=CommandCategory.FILE,
-            handler=original_handler
+            handler=original_handler,
         )
         command_registry.register(original_command)
 
@@ -803,7 +848,7 @@ class TestCommandExecutorDirectExecution:
             id="test.existing",  # Same ID
             title="Test New",
             category=CommandCategory.FILE,
-            handler=new_handler
+            handler=new_handler,
         )
 
         executor = CommandExecutor()
@@ -830,7 +875,7 @@ class TestCommandExecutorDirectExecution:
             id="test.kwargs_direct",
             title="Test Kwargs Direct",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
 
         executor = CommandExecutor()
@@ -854,6 +899,7 @@ class TestGlobalExecuteCommandFunction:
 
     def test_execute_command_function_uses_global_executor(self):
         """Test that global execute_command function uses global executor."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True, value="global_function")
@@ -862,7 +908,7 @@ class TestGlobalExecuteCommandFunction:
             id="test.global_func",
             title="Test Global Function",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -887,7 +933,7 @@ class TestGlobalExecuteCommandFunction:
             id="test.global_kwargs",
             title="Test Global Kwargs",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -926,6 +972,7 @@ class TestCommandExecutorUndoRedo:
 
     def test_execute_adds_undoable_command_to_undo_stack(self):
         """Test that execute adds undoable commands to undo stack."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -939,7 +986,7 @@ class TestCommandExecutorUndoRedo:
             category=CommandCategory.FILE,
             handler=mock_handler,
             undo_handler=mock_undo_handler,
-            supports_undo=True
+            supports_undo=True,
         )
         command_registry.register(command)
 
@@ -956,6 +1003,7 @@ class TestCommandExecutorUndoRedo:
 
     def test_execute_does_not_add_non_undoable_command_to_undo_stack(self):
         """Test that execute does not add non-undoable commands to undo stack."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -965,7 +1013,7 @@ class TestCommandExecutorUndoRedo:
             title="Test Not Undoable",
             category=CommandCategory.FILE,
             handler=mock_handler,
-            supports_undo=False
+            supports_undo=False,
         )
         command_registry.register(command)
 
@@ -981,6 +1029,7 @@ class TestCommandExecutorUndoRedo:
 
     def test_execute_clears_redo_stack_on_new_command(self):
         """Test that execute clears redo stack when new command is executed."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -994,7 +1043,7 @@ class TestCommandExecutorUndoRedo:
             category=CommandCategory.FILE,
             handler=mock_handler,
             undo_handler=mock_undo_handler,
-            supports_undo=True
+            supports_undo=True,
         )
         command2 = Command(
             id="test.cmd2",
@@ -1002,7 +1051,7 @@ class TestCommandExecutorUndoRedo:
             category=CommandCategory.FILE,
             handler=mock_handler,
             undo_handler=mock_undo_handler,
-            supports_undo=True
+            supports_undo=True,
         )
         command_registry.register(command1)
         command_registry.register(command2)
@@ -1053,7 +1102,7 @@ class TestCommandExecutorUndoRedo:
             category=CommandCategory.FILE,
             handler=mock_handler,
             undo_handler=mock_undo_handler,
-            supports_undo=True
+            supports_undo=True,
         )
         command_registry.register(command)
 
@@ -1075,6 +1124,7 @@ class TestCommandExecutorUndoRedo:
 
     def test_undo_returns_failure_when_command_has_no_undo_handler(self):
         """Test that undo returns failure when command has no undo handler."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -1085,7 +1135,7 @@ class TestCommandExecutorUndoRedo:
             category=CommandCategory.FILE,
             handler=mock_handler,
             supports_undo=True,  # Says it supports undo but no handler
-            undo_handler=None
+            undo_handler=None,
         )
         command_registry.register(command)
 
@@ -1103,6 +1153,7 @@ class TestCommandExecutorUndoRedo:
 
     def test_undo_handles_exception_in_undo_handler(self):
         """Test that undo handles exceptions in undo handler gracefully."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -1116,7 +1167,7 @@ class TestCommandExecutorUndoRedo:
             category=CommandCategory.FILE,
             handler=mock_handler,
             undo_handler=exception_undo_handler,
-            supports_undo=True
+            supports_undo=True,
         )
         command_registry.register(command)
 
@@ -1167,7 +1218,7 @@ class TestCommandExecutorUndoRedo:
             handler=mock_handler,
             undo_handler=mock_undo_handler,
             redo_handler=mock_redo_handler,
-            supports_undo=True
+            supports_undo=True,
         )
         command_registry.register(command)
 
@@ -1204,7 +1255,7 @@ class TestCommandExecutorUndoRedo:
             category=CommandCategory.FILE,
             handler=counting_handler,
             undo_handler=mock_undo_handler,
-            supports_undo=True
+            supports_undo=True,
         )
         command_registry.register(command)
 
@@ -1222,6 +1273,7 @@ class TestCommandExecutorUndoRedo:
 
     def test_redo_handles_command_not_found(self):
         """Test that redo handles case when command is no longer registered."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -1235,7 +1287,7 @@ class TestCommandExecutorUndoRedo:
             category=CommandCategory.FILE,
             handler=mock_handler,
             undo_handler=mock_undo_handler,
-            supports_undo=True
+            supports_undo=True,
         )
         command_registry.register(command)
 
@@ -1257,6 +1309,7 @@ class TestCommandExecutorUndoRedo:
 
     def test_redo_handles_exception_in_redo_execution(self):
         """Test that redo handles exceptions during redo execution gracefully."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -1274,7 +1327,7 @@ class TestCommandExecutorUndoRedo:
             handler=mock_handler,
             undo_handler=mock_undo_handler,
             redo_handler=exception_redo_handler,
-            supports_undo=True
+            supports_undo=True,
         )
         command_registry.register(command)
 
@@ -1326,6 +1379,7 @@ class TestCommandExecutorEdgeCases:
 
     def test_history_deque_respects_maxlen_limit(self):
         """Test that history deque respects maxlen=100 limit."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -1339,7 +1393,7 @@ class TestCommandExecutorEdgeCases:
                 id=f"test.bulk_{i}",
                 title=f"Bulk Test {i}",
                 category=CommandCategory.FILE,
-                handler=mock_handler
+                handler=mock_handler,
             )
             commands.append(command)
             command_registry.register(command)
@@ -1354,7 +1408,7 @@ class TestCommandExecutorEdgeCases:
         history = executor.get_history(limit=100)  # Get all 100 entries
         assert history[0].command_id == "test.bulk_104"  # Most recent
         assert len(history) == 100  # Should have exactly 100 entries
-        assert history[99].command_id == "test.bulk_5"   # Oldest in history
+        assert history[99].command_id == "test.bulk_5"  # Oldest in history
 
     def test_execute_with_very_large_kwargs_succeeds(self):
         """Test that execute handles very large kwargs dictionaries."""
@@ -1370,7 +1424,7 @@ class TestCommandExecutorEdgeCases:
             id="test.large_kwargs",
             title="Test Large Kwargs",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -1401,7 +1455,7 @@ class TestCommandExecutorEdgeCases:
             id="test.special_chars",
             title="Test Special Characters",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -1414,19 +1468,22 @@ class TestCommandExecutorEdgeCases:
             special_chars="!@#$%^&*()_+-=[]{}|;':\",./<>?",
             newlines="line1\nline2\r\nline3",
             empty_string="",
-            none_value=None
+            none_value=None,
         )
 
         # Assert
         assert result.success is True
         assert received_context.args["unicode_text"] == "Hello 世界! 🚀"
-        assert received_context.args["special_chars"] == "!@#$%^&*()_+-=[]{}|;':\",./<>?"
+        assert (
+            received_context.args["special_chars"] == "!@#$%^&*()_+-=[]{}|;':\",./<>?"
+        )
         assert received_context.args["newlines"] == "line1\nline2\r\nline3"
         assert received_context.args["empty_string"] == ""
         assert received_context.args["none_value"] is None
 
     def test_command_handler_returns_non_commandresult_gets_wrapped(self):
         """Test that handlers returning non-CommandResult values get wrapped."""
+
         # Arrange
         def handler_returning_string(context):
             return "plain string result"
@@ -1438,9 +1495,24 @@ class TestCommandExecutorEdgeCases:
             return None
 
         commands = [
-            Command(id="test.string", title="String", category="Test", handler=handler_returning_string),
-            Command(id="test.dict", title="Dict", category="Test", handler=handler_returning_dict),
-            Command(id="test.none", title="None", category="Test", handler=handler_returning_none),
+            Command(
+                id="test.string",
+                title="String",
+                category="Test",
+                handler=handler_returning_string,
+            ),
+            Command(
+                id="test.dict",
+                title="Dict",
+                category="Test",
+                handler=handler_returning_dict,
+            ),
+            Command(
+                id="test.none",
+                title="None",
+                category="Test",
+                handler=handler_returning_none,
+            ),
         ]
 
         for command in commands:
@@ -1475,7 +1547,7 @@ class TestCommandExecutorEdgeCases:
             id="test.preserve_args",
             title="Test Preserve Args",
             category=CommandCategory.FILE,
-            handler=mock_handler
+            handler=mock_handler,
         )
         command_registry.register(command)
 
@@ -1483,21 +1555,26 @@ class TestCommandExecutorEdgeCases:
         context = CommandContext(args={"existing": "value", "shared": "original"})
 
         # Act
-        result = executor.execute("test.preserve_args", context, shared="updated", new="added")
+        result = executor.execute(
+            "test.preserve_args", context, shared="updated", new="added"
+        )
 
         # Assert
         assert result.success is True
         assert received_context.args["existing"] == "value"  # Preserved
         assert received_context.args["shared"] == "updated"  # Updated by kwargs
-        assert received_context.args["new"] == "added"       # Added by kwargs
+        assert received_context.args["new"] == "added"  # Added by kwargs
 
     def test_get_history_with_zero_limit_returns_empty_list(self):
         """Test that get_history with limit=0 returns empty list."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
 
-        command = Command(id="test.zero_limit", title="Test", category="Test", handler=mock_handler)
+        command = Command(
+            id="test.zero_limit", title="Test", category="Test", handler=mock_handler
+        )
         command_registry.register(command)
 
         executor = CommandExecutor()
@@ -1511,11 +1588,17 @@ class TestCommandExecutorEdgeCases:
 
     def test_get_history_with_negative_limit_returns_empty_list(self):
         """Test that get_history with negative limit returns empty list."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
 
-        command = Command(id="test.negative_limit", title="Test", category="Test", handler=mock_handler)
+        command = Command(
+            id="test.negative_limit",
+            title="Test",
+            category="Test",
+            handler=mock_handler,
+        )
         command_registry.register(command)
 
         executor = CommandExecutor()
@@ -1529,9 +1612,12 @@ class TestCommandExecutorEdgeCases:
 
     def test_undo_redo_sequence_maintains_proper_stack_states(self):
         """Test that multiple undo/redo operations maintain proper stack states."""
+
         # Arrange
         def mock_handler(context):
-            return CommandResult(success=True, value=context.args.get("value", "default"))
+            return CommandResult(
+                success=True, value=context.args.get("value", "default")
+            )
 
         def mock_undo_handler(context):
             return CommandResult(success=True, value="undone")
@@ -1544,7 +1630,7 @@ class TestCommandExecutorEdgeCases:
                 category=CommandCategory.FILE,
                 handler=mock_handler,
                 undo_handler=mock_undo_handler,
-                supports_undo=True
+                supports_undo=True,
             )
             commands.append(command)
             command_registry.register(command)
@@ -1583,6 +1669,7 @@ class TestCommandExecutorEdgeCases:
 
     def test_undo_with_failed_undo_handler_restores_entry_to_correct_position(self):
         """Test that failed undo restores entry to correct position in undo stack."""
+
         # Arrange
         def mock_handler(context):
             return CommandResult(success=True)
@@ -1599,7 +1686,7 @@ class TestCommandExecutorEdgeCases:
             category="Test",
             handler=mock_handler,
             undo_handler=successful_undo_handler,
-            supports_undo=True
+            supports_undo=True,
         )
         cmd2 = Command(
             id="test.undo_fail",
@@ -1607,7 +1694,7 @@ class TestCommandExecutorEdgeCases:
             category="Test",
             handler=mock_handler,
             undo_handler=failing_undo_handler,
-            supports_undo=True
+            supports_undo=True,
         )
 
         command_registry.register(cmd1)

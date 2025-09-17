@@ -39,13 +39,14 @@ class TestKeyboardShortcutsGUI:
         new_tab_widget = window.workspace.tab_widget.widget(new_tab_index)
 
         # Check if it's a split pane widget containing a terminal
-        if hasattr(new_tab_widget, 'model'):
+        if hasattr(new_tab_widget, "model"):
             # Get the root node of the split pane
             root = new_tab_widget.model.root
-            if hasattr(root, 'widget'):
+            if hasattr(root, "widget"):
                 # Verify it's a terminal widget
-                assert root.widget.widget_type == WidgetType.TERMINAL, \
-                    f"Expected TERMINAL widget, got {root.widget.widget_type}"
+                assert (
+                    root.widget.widget_type == WidgetType.TERMINAL
+                ), f"Expected TERMINAL widget, got {root.widget.widget_type}"
 
     def test_ctrl_shift_n_creates_editor_tab(self, qtbot, main_window_fixture):
         """Test that Ctrl+Shift+N creates an editor tab."""
@@ -69,13 +70,14 @@ class TestKeyboardShortcutsGUI:
         new_tab_widget = window.workspace.tab_widget.widget(new_tab_index)
 
         # Check if it's a split pane widget containing an editor
-        if hasattr(new_tab_widget, 'model'):
+        if hasattr(new_tab_widget, "model"):
             # Get the root node of the split pane
             root = new_tab_widget.model.root
-            if hasattr(root, 'widget'):
+            if hasattr(root, "widget"):
                 # Verify it's a text editor widget
-                assert root.widget.widget_type == WidgetType.TEXT_EDITOR, \
-                    f"Expected TEXT_EDITOR widget, got {root.widget.widget_type}"
+                assert (
+                    root.widget.widget_type == WidgetType.TEXT_EDITOR
+                ), f"Expected TEXT_EDITOR widget, got {root.widget.widget_type}"
 
     def test_ctrl_backtick_creates_terminal_tab(self, qtbot, main_window_fixture):
         """Test that Ctrl+` also creates a terminal tab (alternative shortcut)."""
@@ -99,13 +101,14 @@ class TestKeyboardShortcutsGUI:
         new_tab_widget = window.workspace.tab_widget.widget(new_tab_index)
 
         # Check if it's a split pane widget containing a terminal
-        if hasattr(new_tab_widget, 'model'):
+        if hasattr(new_tab_widget, "model"):
             # Get the root node of the split pane
             root = new_tab_widget.model.root
-            if hasattr(root, 'widget'):
+            if hasattr(root, "widget"):
                 # Verify it's a terminal widget
-                assert root.widget.widget_type == WidgetType.TERMINAL, \
-                    f"Expected TERMINAL widget, got {root.widget.widget_type}"
+                assert (
+                    root.widget.widget_type == WidgetType.TERMINAL
+                ), f"Expected TERMINAL widget, got {root.widget.widget_type}"
 
     def test_no_shortcut_conflicts(self):
         """Test that there are no conflicting keyboard shortcuts."""
@@ -117,23 +120,24 @@ class TestKeyboardShortcutsGUI:
         conflicts = []
 
         for cmd in commands:
-            if hasattr(cmd, 'shortcut') and cmd.shortcut:
+            if hasattr(cmd, "shortcut") and cmd.shortcut:
                 # Normalize the shortcut to lowercase for comparison
                 shortcut = cmd.shortcut.lower()
 
                 if shortcut in shortcut_map:
                     # Found a conflict
-                    conflicts.append({
-                        'shortcut': shortcut,
-                        'command1': shortcut_map[shortcut],
-                        'command2': cmd.id
-                    })
+                    conflicts.append(
+                        {
+                            "shortcut": shortcut,
+                            "command1": shortcut_map[shortcut],
+                            "command2": cmd.id,
+                        }
+                    )
                 else:
                     shortcut_map[shortcut] = cmd.id
 
         # Assert no conflicts found
-        assert len(conflicts) == 0, \
-            f"Found shortcut conflicts: {conflicts}"
+        assert len(conflicts) == 0, f"Found shortcut conflicts: {conflicts}"
 
     def test_shortcut_case_consistency(self):
         """Test that all shortcuts use consistent lowercase formatting."""
@@ -141,24 +145,44 @@ class TestKeyboardShortcutsGUI:
 
         inconsistent = []
         for cmd in commands:
-            if hasattr(cmd, 'shortcut') and cmd.shortcut:
+            if hasattr(cmd, "shortcut") and cmd.shortcut:
                 # Check if shortcut contains uppercase letters (except for key names)
                 # Allow uppercase only for actual key names like Key_A, Key_B, etc.
-                parts = cmd.shortcut.split('+')
+                parts = cmd.shortcut.split("+")
                 for part in parts:
-                    if part and part not in ['ctrl', 'alt', 'shift', 'cmd', 'meta']:
+                    if part and part not in ["ctrl", "alt", "shift", "cmd", "meta"]:
                         # Check if it's a function key or special key
-                        if not part.startswith('f') and part not in ['tab', 'escape', 'space', 'enter', 'return', 'backspace', 'delete', 'insert', 'home', 'end', 'pageup', 'pagedown', 'up', 'down', 'left', 'right']:
+                        if not part.startswith("f") and part not in [
+                            "tab",
+                            "escape",
+                            "space",
+                            "enter",
+                            "return",
+                            "backspace",
+                            "delete",
+                            "insert",
+                            "home",
+                            "end",
+                            "pageup",
+                            "pagedown",
+                            "up",
+                            "down",
+                            "left",
+                            "right",
+                        ]:
                             # Regular keys should be lowercase
                             if part != part.lower():
-                                inconsistent.append({
-                                    'command': cmd.id,
-                                    'shortcut': cmd.shortcut,
-                                    'issue': f"Part '{part}' should be lowercase"
-                                })
+                                inconsistent.append(
+                                    {
+                                        "command": cmd.id,
+                                        "shortcut": cmd.shortcut,
+                                        "issue": f"Part '{part}' should be lowercase",
+                                    }
+                                )
 
-        assert len(inconsistent) == 0, \
-            f"Found inconsistent shortcut formatting: {inconsistent}"
+        assert (
+            len(inconsistent) == 0
+        ), f"Found inconsistent shortcut formatting: {inconsistent}"
 
     def test_ctrl_comma_settings_shortcut(self, qtbot, main_window_fixture):
         """Test that Ctrl+, opens settings (not conflicting with view.showSettings)."""
@@ -175,16 +199,22 @@ class TestKeyboardShortcutsGUI:
         # If not, we can check via the registry
         commands_with_ctrl_comma = []
         for cmd in command_registry.get_all_commands():
-            if hasattr(cmd, 'shortcut') and cmd.shortcut and cmd.shortcut.lower() == 'ctrl+,':
+            if (
+                hasattr(cmd, "shortcut")
+                and cmd.shortcut
+                and cmd.shortcut.lower() == "ctrl+,"
+            ):
                 commands_with_ctrl_comma.append(cmd.id)
 
         # Should only have one command with this shortcut
-        assert len(commands_with_ctrl_comma) == 1, \
-            f"Expected 1 command with ctrl+,, found {len(commands_with_ctrl_comma)}: {commands_with_ctrl_comma}"
+        assert (
+            len(commands_with_ctrl_comma) == 1
+        ), f"Expected 1 command with ctrl+,, found {len(commands_with_ctrl_comma)}: {commands_with_ctrl_comma}"
 
         # Should be the settings command
-        assert commands_with_ctrl_comma[0] == 'settings.openSettings', \
-            f"Expected 'settings.openSettings' to have ctrl+,, but found '{commands_with_ctrl_comma[0]}'"
+        assert (
+            commands_with_ctrl_comma[0] == "settings.openSettings"
+        ), f"Expected 'settings.openSettings' to have ctrl+,, but found '{commands_with_ctrl_comma[0]}'"
 
     def test_ctrl_w_closes_tab(self, qtbot, main_window_fixture):
         """Test that Ctrl+W closes the current tab."""
@@ -196,7 +226,9 @@ class TestKeyboardShortcutsGUI:
         # Create a few tabs first
         QTest.keyClick(window, Qt.Key_N, Qt.ControlModifier)  # Create terminal tab
         qtbot.wait(100)
-        QTest.keyClick(window, Qt.Key_N, Qt.ControlModifier | Qt.ShiftModifier)  # Create editor tab
+        QTest.keyClick(
+            window, Qt.Key_N, Qt.ControlModifier | Qt.ShiftModifier
+        )  # Create editor tab
         qtbot.wait(100)
 
         # Should have 3 tabs now (initial + 2 new)
@@ -236,8 +268,9 @@ class TestKeyboardShortcutsGUI:
         qtbot.wait(100)
 
         # Should still have 1 tab (last tab shouldn't close)
-        assert window.workspace.tab_widget.count() == 1, \
-            "The last tab should not be closeable with Ctrl+W"
+        assert (
+            window.workspace.tab_widget.count() == 1
+        ), "The last tab should not be closeable with Ctrl+W"
 
 
 @pytest.fixture

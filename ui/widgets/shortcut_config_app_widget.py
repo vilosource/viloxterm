@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ShortcutItem:
     """Data model for a shortcut configuration item."""
+
     command_id: str
     title: str
     category: str
@@ -78,7 +79,9 @@ class ShortcutRecorder(QLineEdit):
         self.recording = True
         self.recorded_keys = []
         self.setText("Press shortcut keys...")
-        self.setStyleSheet("QLineEdit { background-color: #1e1e1e; border: 2px solid #007ACC; }")
+        self.setStyleSheet(
+            "QLineEdit { background-color: #1e1e1e; border: 2px solid #007ACC; }"
+        )
         self.recording_started.emit()
         self.setFocus()
 
@@ -216,7 +219,9 @@ class ShortcutConfigAppWidget(AppWidget):
 
         # Tree widget for shortcuts
         self.tree_widget = QTreeWidget()
-        self.tree_widget.setHeaderLabels(["Command", "Current Shortcut", "New Shortcut"])
+        self.tree_widget.setHeaderLabels(
+            ["Command", "Current Shortcut", "New Shortcut"]
+        )
         self.tree_widget.setRootIsDecorated(True)
         # Don't use alternating row colors - let theme handle it
         self.tree_widget.setAlternatingRowColors(False)
@@ -235,7 +240,8 @@ class ShortcutConfigAppWidget(AppWidget):
         # Conflict warning area
         self.conflict_label = QLabel()
         # Use warning color from theme for conflict display
-        self.conflict_label.setStyleSheet("""
+        self.conflict_label.setStyleSheet(
+            """
             QLabel {
                 background-color: rgba(244, 135, 113, 0.1);
                 color: #f48771;
@@ -243,7 +249,8 @@ class ShortcutConfigAppWidget(AppWidget):
                 border: 1px solid #f48771;
                 border-radius: 4px;
             }
-        """)
+        """
+        )
         self.conflict_label.setWordWrap(True)
         self.conflict_label.hide()
         content_layout.addWidget(self.conflict_label)
@@ -308,10 +315,11 @@ class ShortcutConfigAppWidget(AppWidget):
 
         # Get current custom shortcuts from settings using command
         from core.commands.executor import execute_command
+
         custom_shortcuts = {}
         result = execute_command("settings.showKeyboardShortcuts")
         if result.success and result.value:
-            custom_shortcuts = result.value.get('shortcuts', {})
+            custom_shortcuts = result.value.get("shortcuts", {})
 
         # Group commands by category
         categories = {}
@@ -331,7 +339,9 @@ class ShortcutConfigAppWidget(AppWidget):
                 category=category,
                 description=command.description or "",
                 default_shortcut=command.shortcut or "",
-                current_shortcut=custom_shortcuts.get(command.id, command.shortcut or "")
+                current_shortcut=custom_shortcuts.get(
+                    command.id, command.shortcut or ""
+                ),
             )
 
             categories[category].append(item)
@@ -353,7 +363,9 @@ class ShortcutConfigAppWidget(AppWidget):
             for shortcut_item in sorted(categories[category], key=lambda x: x.title):
                 self.add_shortcut_to_tree(shortcut_item, category_item)
 
-    def add_shortcut_to_tree(self, shortcut_item: ShortcutItem, parent_item: QTreeWidgetItem):
+    def add_shortcut_to_tree(
+        self, shortcut_item: ShortcutItem, parent_item: QTreeWidgetItem
+    ):
         """Add a shortcut item to the tree."""
         tree_item = QTreeWidgetItem(parent_item)
         tree_item.setText(0, shortcut_item.title)
@@ -364,7 +376,9 @@ class ShortcutConfigAppWidget(AppWidget):
         recorder = ShortcutRecorder()
         recorder.set_shortcut(shortcut_item.new_shortcut or "")
         recorder.shortcut_recorded.connect(
-            lambda s, cmd_id=shortcut_item.command_id: self.on_shortcut_changed(cmd_id, s)
+            lambda s, cmd_id=shortcut_item.command_id: self.on_shortcut_changed(
+                cmd_id, s
+            )
         )
 
         self.tree_widget.setItemWidget(tree_item, 2, recorder)
@@ -404,7 +418,11 @@ class ShortcutConfigAppWidget(AppWidget):
 
         # Build map of all shortcuts (current + modified)
         for cmd_id, item in self.shortcut_items.items():
-            shortcut = item.new_shortcut if item.new_shortcut is not None else item.current_shortcut
+            shortcut = (
+                item.new_shortcut
+                if item.new_shortcut is not None
+                else item.current_shortcut
+            )
             if shortcut:
                 if shortcut not in shortcut_map:
                     shortcut_map[shortcut] = []
@@ -417,7 +435,9 @@ class ShortcutConfigAppWidget(AppWidget):
                 # Mark items as having conflicts
                 for cmd_id in commands:
                     self.shortcut_items[cmd_id].has_conflict = True
-                    self.shortcut_items[cmd_id].conflicting_commands = [c for c in commands if c != cmd_id]
+                    self.shortcut_items[cmd_id].conflicting_commands = [
+                        c for c in commands if c != cmd_id
+                    ]
 
         # Update UI
         if conflicts:
@@ -445,8 +465,9 @@ class ShortcutConfigAppWidget(AppWidget):
             category_name = category_item.text(0)
 
             # Check category filter
-            category_visible = (category_filter == "All Categories" or
-                              category_name == category_filter)
+            category_visible = (
+                category_filter == "All Categories" or category_name == category_filter
+            )
 
             # Check children visibility
             any_child_visible = False
@@ -459,10 +480,10 @@ class ShortcutConfigAppWidget(AppWidget):
 
                     # Check search filter
                     visible = category_visible and (
-                        not search_text or
-                        search_text in item.title.lower() or
-                        search_text in item.description.lower() or
-                        search_text in item.current_shortcut.lower()
+                        not search_text
+                        or search_text in item.title.lower()
+                        or search_text in item.description.lower()
+                        or search_text in item.current_shortcut.lower()
                     )
 
                     child_item.setHidden(not visible)
@@ -480,7 +501,7 @@ class ShortcutConfigAppWidget(AppWidget):
             "This will reset ALL keyboard shortcuts to their default values.\n\n"
             "Are you sure you want to continue?",
             QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
+            QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
@@ -508,7 +529,9 @@ class ShortcutConfigAppWidget(AppWidget):
         """Reset selected shortcuts to defaults."""
         selected_items = self.tree_widget.selectedItems()
         if not selected_items:
-            QMessageBox.information(self, "No Selection", "Please select shortcuts to reset.")
+            QMessageBox.information(
+                self, "No Selection", "Please select shortcuts to reset."
+            )
             return
 
         for tree_item in selected_items:
@@ -545,7 +568,7 @@ class ShortcutConfigAppWidget(AppWidget):
                 "There are conflicting keyboard shortcuts.\n\n"
                 "Do you want to apply anyway? Conflicting shortcuts may not work as expected.",
                 QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
+                QMessageBox.No,
             )
 
             if reply != QMessageBox.Yes:
@@ -556,24 +579,34 @@ class ShortcutConfigAppWidget(AppWidget):
 
         for command_id, new_shortcut in self.modified_shortcuts.items():
             # Set the shortcut in settings
-            result = execute_command("settings.setKeyboardShortcut",
-                                    command_id=command_id, shortcut=new_shortcut)
+            result = execute_command(
+                "settings.setKeyboardShortcut",
+                command_id=command_id,
+                shortcut=new_shortcut,
+            )
             if not result.success:
-                logger.warning(f"Failed to set shortcut for {command_id}: {result.error}")
+                logger.warning(
+                    f"Failed to set shortcut for {command_id}: {result.error}"
+                )
                 continue
 
             # Register the shortcut with keyboard service
-            result = execute_command("settings.registerKeyboardShortcut",
-                                    command_id=command_id, shortcut=new_shortcut)
+            result = execute_command(
+                "settings.registerKeyboardShortcut",
+                command_id=command_id,
+                shortcut=new_shortcut,
+            )
             if not result.success:
-                logger.warning(f"Failed to register shortcut for {command_id}: {result.error}")
+                logger.warning(
+                    f"Failed to register shortcut for {command_id}: {result.error}"
+                )
 
         # Show success message
         QMessageBox.information(
             self,
             "Shortcuts Updated",
             f"Successfully updated {len(self.modified_shortcuts)} keyboard shortcuts.\n\n"
-            "Changes have been applied immediately."
+            "Changes have been applied immediately.",
         )
 
         # Clear modifications and reload
@@ -592,7 +625,7 @@ class ShortcutConfigAppWidget(AppWidget):
                 "Discard Changes",
                 "You have unsaved changes.\n\nDo you want to discard them?",
                 QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
+                QMessageBox.No,
             )
 
             if reply != QMessageBox.Yes:
@@ -618,7 +651,7 @@ class ShortcutConfigAppWidget(AppWidget):
                 "You have unsaved changes to keyboard shortcuts.\n\n"
                 "Do you want to save them before closing?",
                 QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
-                QMessageBox.Save
+                QMessageBox.Save,
             )
 
             if reply == QMessageBox.Save:
@@ -638,15 +671,19 @@ class ShortcutConfigAppWidget(AppWidget):
         # Use command to get theme information
         result = execute_command("settings.showSettingsInfo")
         if result.success and result.value:
-            current_theme = result.value.get('current_theme', 'dark')
+            current_theme = result.value.get("current_theme", "dark")
             # Apply basic theme styling based on current theme
-            if current_theme == 'light':
-                self.setStyleSheet("""
+            if current_theme == "light":
+                self.setStyleSheet(
+                    """
                     QWidget { background-color: #f0f0f0; color: #333333; }
                     QTreeWidget { background-color: #ffffff; }
-                """)
+                """
+                )
             else:
-                self.setStyleSheet("""
+                self.setStyleSheet(
+                    """
                     QWidget { background-color: #2b2b2b; color: #cccccc; }
                     QTreeWidget { background-color: #1e1e1e; }
-                """)
+                """
+                )

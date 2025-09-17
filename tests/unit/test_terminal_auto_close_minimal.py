@@ -16,7 +16,7 @@ class TestCodeChangesExist:
         from ui.terminal.terminal_server import TerminalServerManager
 
         # Check signal exists on class
-        assert hasattr(TerminalServerManager, 'session_ended')
+        assert hasattr(TerminalServerManager, "session_ended")
 
     def test_terminal_server_inherits_qobject(self):
         """Test that TerminalServerManager inherits from QObject."""
@@ -32,14 +32,14 @@ class TestCodeChangesExist:
         from ui.terminal.terminal_app_widget import TerminalAppWidget
 
         # Check signal exists on class
-        assert hasattr(TerminalAppWidget, 'pane_close_requested')
+        assert hasattr(TerminalAppWidget, "pane_close_requested")
 
     def test_terminal_app_widget_has_session_handler(self):
         """Test that TerminalAppWidget has session end handler."""
         from ui.terminal.terminal_app_widget import TerminalAppWidget
 
         # Check method exists
-        assert hasattr(TerminalAppWidget, 'on_session_ended')
+        assert hasattr(TerminalAppWidget, "on_session_ended")
         assert callable(TerminalAppWidget.on_session_ended)
 
     def test_split_pane_model_has_callback_system(self):
@@ -48,8 +48,8 @@ class TestCodeChangesExist:
         import ui.widgets.split_pane_model as model_module
 
         # Check methods exist on class
-        assert hasattr(model_module.SplitPaneModel, 'set_terminal_close_callback')
-        assert hasattr(model_module.SplitPaneModel, 'on_terminal_close_requested')
+        assert hasattr(model_module.SplitPaneModel, "set_terminal_close_callback")
+        assert hasattr(model_module.SplitPaneModel, "on_terminal_close_requested")
 
         # Check they are callable
         assert callable(model_module.SplitPaneModel.set_terminal_close_callback)
@@ -61,7 +61,7 @@ class TestCodeChangesExist:
         import ui.widgets.split_pane_widget as widget_module
 
         # Check method exists on class
-        assert hasattr(widget_module.SplitPaneWidget, 'on_terminal_close_requested')
+        assert hasattr(widget_module.SplitPaneWidget, "on_terminal_close_requested")
         assert callable(widget_module.SplitPaneWidget.on_terminal_close_requested)
 
     def test_split_pane_widget_has_close_pane_method(self):
@@ -70,7 +70,7 @@ class TestCodeChangesExist:
         import ui.widgets.split_pane_widget as widget_module
 
         # Check method exists on class
-        assert hasattr(widget_module.SplitPaneWidget, 'close_pane')
+        assert hasattr(widget_module.SplitPaneWidget, "close_pane")
         assert callable(widget_module.SplitPaneWidget.close_pane)
 
 
@@ -85,7 +85,9 @@ class TestCallbackLogic:
         # Simulate setting callback
         callback_holder = Mock()
         callback_holder.terminal_close_callback = None
-        callback_holder.set_terminal_close_callback = lambda cb: setattr(callback_holder, 'terminal_close_callback', cb)
+        callback_holder.set_terminal_close_callback = lambda cb: setattr(
+            callback_holder, "terminal_close_callback", cb
+        )
 
         # Test setting callback
         callback_holder.set_terminal_close_callback(callback)
@@ -130,10 +132,7 @@ class TestDataStructures:
         from ui.terminal.terminal_server import TerminalSession
 
         session = TerminalSession(
-            session_id="test_123",
-            fd=1,
-            child_pid=1234,
-            active=True
+            session_id="test_123", fd=1, child_pid=1234, active=True
         )
 
         assert session.session_id == "test_123"

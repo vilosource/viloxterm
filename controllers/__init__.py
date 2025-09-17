@@ -15,9 +15,9 @@ from .state_controller import (
 )
 
 __all__ = [
-    'StateController',
-    'ApplicationStateController',
-    'StateModel',
-    'SplitPaneStateModel',
-    'WorkspaceStateModel'
+    "StateController",
+    "ApplicationStateController",
+    "StateModel",
+    "SplitPaneStateModel",
+    "WorkspaceStateModel",
 ]

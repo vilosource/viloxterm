@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
     id="workbench.view.explorer",
     title="Show Explorer",
     category="View",
-    description="Show the Explorer view in the sidebar"
+    description="Show the Explorer view in the sidebar",
 )
 def show_explorer_command(context: CommandContext) -> CommandResult:
     """
@@ -36,7 +36,7 @@ def show_explorer_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="No main window available")
 
         # Show explorer through activity bar
-        if hasattr(main_window, 'activity_bar'):
+        if hasattr(main_window, "activity_bar"):
             main_window.activity_bar.show_view("explorer")
             return CommandResult(success=True, value={"view": "explorer"})
 
@@ -51,7 +51,7 @@ def show_explorer_command(context: CommandContext) -> CommandResult:
     id="workbench.view.search",
     title="Show Search",
     category="View",
-    description="Show the Search view in the sidebar"
+    description="Show the Search view in the sidebar",
 )
 def show_search_command(context: CommandContext) -> CommandResult:
     """
@@ -69,7 +69,7 @@ def show_search_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="No main window available")
 
         # Show search through activity bar
-        if hasattr(main_window, 'activity_bar'):
+        if hasattr(main_window, "activity_bar"):
             main_window.activity_bar.show_view("search")
             return CommandResult(success=True, value={"view": "search"})
 
@@ -84,7 +84,7 @@ def show_search_command(context: CommandContext) -> CommandResult:
     id="workbench.view.git",
     title="Show Source Control",
     category="View",
-    description="Show the Git/Source Control view in the sidebar"
+    description="Show the Git/Source Control view in the sidebar",
 )
 def show_git_command(context: CommandContext) -> CommandResult:
     """
@@ -102,7 +102,7 @@ def show_git_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="No main window available")
 
         # Show git through activity bar
-        if hasattr(main_window, 'activity_bar'):
+        if hasattr(main_window, "activity_bar"):
             main_window.activity_bar.show_view("git")
             return CommandResult(success=True, value={"view": "git"})
 
@@ -117,7 +117,7 @@ def show_git_command(context: CommandContext) -> CommandResult:
     id="workbench.view.settings",
     title="Show Settings",
     category="View",
-    description="Show the Settings view in the sidebar"
+    description="Show the Settings view in the sidebar",
 )
 def show_settings_command(context: CommandContext) -> CommandResult:
     """
@@ -135,7 +135,7 @@ def show_settings_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="No main window available")
 
         # Show settings through activity bar
-        if hasattr(main_window, 'activity_bar'):
+        if hasattr(main_window, "activity_bar"):
             main_window.activity_bar.show_view("settings")
             return CommandResult(success=True, value={"view": "settings"})
 

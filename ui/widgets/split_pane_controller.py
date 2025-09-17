@@ -67,13 +67,13 @@ class SplitPaneController(QObject):
         logger.info(f"Handling action from {leaf_id}: {action} with params {params}")
 
         try:
-            if action == 'split':
+            if action == "split":
                 return self._handle_split_action(leaf_id, params)
-            elif action == 'close':
+            elif action == "close":
                 return self._handle_close_action(leaf_id, params)
-            elif action == 'change_type':
+            elif action == "change_type":
                 return self._handle_change_type_action(leaf_id, params)
-            elif action == 'focus':
+            elif action == "focus":
                 return self._handle_focus_action(leaf_id, params)
             else:
                 logger.warning(f"Unknown action: {action}")
@@ -85,8 +85,8 @@ class SplitPaneController(QObject):
 
     def _handle_split_action(self, leaf_id: str, params: dict) -> bool:
         """Handle split action."""
-        orientation = params.get('orientation', 'horizontal')
-        target_id = params.get('leaf_id', leaf_id)
+        orientation = params.get("orientation", "horizontal")
+        target_id = params.get("leaf_id", leaf_id)
 
         new_id = self.model.split_pane(target_id, orientation)
         if new_id:
@@ -101,7 +101,7 @@ class SplitPaneController(QObject):
 
     def _handle_close_action(self, leaf_id: str, params: dict) -> bool:
         """Handle close action."""
-        target_id = params.get('leaf_id', leaf_id)
+        target_id = params.get("leaf_id", leaf_id)
 
         if self.model.close_pane(target_id):
             self.pane_removed.emit(target_id)
@@ -112,8 +112,8 @@ class SplitPaneController(QObject):
 
     def _handle_change_type_action(self, leaf_id: str, params: dict) -> bool:
         """Handle widget type change action."""
-        target_id = params.get('leaf_id', leaf_id)
-        new_type = params.get('new_type')
+        target_id = params.get("leaf_id", leaf_id)
+        new_type = params.get("new_type")
 
         if new_type and self.model.change_pane_type(target_id, new_type):
             self.layout_changed.emit()
@@ -123,7 +123,7 @@ class SplitPaneController(QObject):
 
     def _handle_focus_action(self, leaf_id: str, params: dict) -> bool:
         """Handle focus action."""
-        target_id = params.get('leaf_id', leaf_id)
+        target_id = params.get("leaf_id", leaf_id)
         return self.set_active_pane(target_id)
 
     def _prepare_new_pane_for_focus(self, pane_id: str):
@@ -144,7 +144,9 @@ class SplitPaneController(QObject):
                 QTimer.singleShot(10, lambda: self._emit_focus_ready(pane_id))
             else:
                 # Widget needs async initialization
-                logger.debug(f"Widget {pane_id} not ready, connecting to widget_ready signal")
+                logger.debug(
+                    f"Widget {pane_id} not ready, connecting to widget_ready signal"
+                )
                 leaf.app_widget.widget_ready.connect(
                     lambda: self._emit_focus_ready(pane_id),
                     # Qt.SingleShotConnection  # Auto-disconnect after firing
@@ -306,6 +308,7 @@ class SplitPaneController(QObject):
         Args:
             signal_connector: Function that connects widget signals
         """
+
         def connect_widget(leaf: LeafNode):
             if leaf.app_widget:
                 signal_connector(leaf)
@@ -316,8 +319,8 @@ class SplitPaneController(QObject):
     def get_state(self) -> dict:
         """Get controller state for persistence."""
         return {
-            'model_state': self.model.to_dict(),
-            'active_pane': self.model.get_active_pane_id()
+            "model_state": self.model.to_dict(),
+            "active_pane": self.model.get_active_pane_id(),
         }
 
     def set_state(self, state: dict) -> bool:
@@ -331,11 +334,11 @@ class SplitPaneController(QObject):
             True if state was restored successfully
         """
         try:
-            if 'model_state' in state:
-                self.model.from_dict(state['model_state'])
+            if "model_state" in state:
+                self.model.from_dict(state["model_state"])
 
-            if 'active_pane' in state:
-                self.set_active_pane(state['active_pane'])
+            if "active_pane" in state:
+                self.set_active_pane(state["active_pane"])
 
             self.layout_changed.emit()
             return True

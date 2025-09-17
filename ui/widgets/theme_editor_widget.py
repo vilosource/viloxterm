@@ -8,7 +8,7 @@ Provides a complete interface for editing, previewing, and managing themes.
 import logging
 from typing import Optional
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (
     QComboBox,
@@ -44,17 +44,27 @@ class ThemeEditorAppWidget(AppWidget):
     - Save/reset capabilities
     """
 
-    def __init__(self, widget_id: str = None, parent: Optional[QWidget] = None):
+    # Signal emitted when theme is modified
+    theme_modified = Signal(bool)  # True if modified, False if saved/reset
+
+    def __init__(
+        self,
+        widget_id: str = None,
+        parent: Optional[QWidget] = None,
+        show_bottom_buttons: bool = True,
+    ):
         """
         Initialize theme editor.
 
         Args:
             widget_id: Unique widget identifier (auto-generated if None)
             parent: Parent widget
+            show_bottom_buttons: Whether to show Apply/Save/Reset buttons at bottom
         """
         # Generate widget ID if not provided
         if widget_id is None:
             import uuid
+
             widget_id = str(uuid.uuid4())[:8]
 
         # Import WidgetType here to avoid circular imports
@@ -65,6 +75,7 @@ class ThemeEditorAppWidget(AppWidget):
 
         self._current_theme: Optional[Theme] = None
         self._modified = False
+        self._show_bottom_buttons = show_bottom_buttons
         self._preview_timer = QTimer()
         self._preview_timer.setSingleShot(True)
         self._preview_timer.timeout.connect(self._apply_preview)
@@ -97,7 +108,7 @@ class ThemeEditorAppWidget(AppWidget):
                 self,
                 "Unsaved Changes",
                 "You have unsaved changes. Do you want to save them?",
-                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
+                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
             )
 
             if reply == QMessageBox.Save:
@@ -106,6 +117,36 @@ class ThemeEditorAppWidget(AppWidget):
                 return False
 
         return True
+
+    def has_unsaved_changes(self) -> bool:
+        """Check if there are unsaved changes."""
+        return self._modified
+
+    def apply_changes(self) -> bool:
+        """Apply current theme changes. Public method for parent widgets."""
+        return self._apply_theme()
+
+    def save_changes(self) -> bool:
+        """Save current theme changes. Public method for parent widgets."""
+        return self._save_theme()
+
+    def reset_changes(self):
+        """Reset theme changes. Public method for parent widgets."""
+        self._reset_changes()
+
+    def showEvent(self, event):  # noqa: N802
+        """Handle widget show event."""
+        super().showEvent(event)
+        # Ensure splitter is properly configured when shown
+        if hasattr(self, "_splitter") and hasattr(self, "_controls_widget"):
+            # Make sure both widgets are visible
+            if self._controls_widget:
+                self._controls_widget.show()
+            if hasattr(self, "_preview_widget") and self._preview_widget:
+                self._preview_widget.parent().show()  # Show the preview container
+            # Reset splitter sizes
+            self._splitter.setSizes([600, 900])
+            logger.debug("ThemeEditor shown, splitter sizes reset")
 
     def _setup_ui(self):
         """Set up the editor UI."""
@@ -137,12 +178,18 @@ class ThemeEditorAppWidget(AppWidget):
         layout.addLayout(selector_layout)
 
         # Main content splitter
-        splitter = QSplitter(Qt.Horizontal)
+        self._splitter = QSplitter(Qt.Horizontal)
 
         # Left: Controls (will be set up in _setup_components)
         self._controls_placeholder = QFrame()
-        self._controls_placeholder.setMinimumWidth(400)
-        splitter.addWidget(self._controls_placeholder)
+        self._controls_placeholder.setMinimumWidth(
+            500
+        )  # Ensure enough space for color controls
+        # Add a temporary label to make it visible
+        placeholder_layout = QVBoxLayout()
+        placeholder_layout.addWidget(QLabel("Loading color controls..."))
+        self._controls_placeholder.setLayout(placeholder_layout)
+        self._splitter.addWidget(self._controls_placeholder)
 
         # Right: Preview
         preview_container = QFrame()
@@ -158,56 +205,79 @@ class ThemeEditorAppWidget(AppWidget):
         preview_layout.addWidget(self._preview_placeholder, 1)
 
         preview_container.setLayout(preview_layout)
-        splitter.addWidget(preview_container)
+        self._splitter.addWidget(preview_container)
 
-        # Set splitter sizes (25/75 split for property editor/preview)
-        # With minimum width of 400px for property editor
-        splitter.setSizes([400, 1200])  # Total 1600px default, 75% for preview
+        # Set splitter sizes for a better balance between controls and preview
+        # 40% for controls (color editor), 60% for preview
+        self._splitter.setSizes([600, 900])  # Total 1500px default
+        self._splitter.setStretchFactor(0, 2)  # Controls panel can stretch
+        self._splitter.setStretchFactor(1, 3)  # Preview panel stretches more
 
-        layout.addWidget(splitter, 1)
+        layout.addWidget(self._splitter, 1)
 
-        # Bottom buttons
-        button_layout = QHBoxLayout()
-        button_layout.setContentsMargins(8, 8, 8, 8)
+        # Bottom buttons (only if requested)
+        if self._show_bottom_buttons:
+            button_layout = QHBoxLayout()
+            button_layout.setContentsMargins(8, 8, 8, 8)
 
-        self._apply_button = QPushButton("Apply")
-        self._apply_button.clicked.connect(self._apply_theme)
-        self._apply_button.setEnabled(False)
-        button_layout.addWidget(self._apply_button)
+            self._apply_button = QPushButton("Apply")
+            self._apply_button.clicked.connect(self._apply_theme)
+            self._apply_button.setEnabled(False)
+            button_layout.addWidget(self._apply_button)
 
-        self._save_button = QPushButton("Save")
-        self._save_button.clicked.connect(self._save_theme)
-        self._save_button.setEnabled(False)
-        button_layout.addWidget(self._save_button)
+            self._save_button = QPushButton("Save")
+            self._save_button.clicked.connect(self._save_theme)
+            self._save_button.setEnabled(False)
+            button_layout.addWidget(self._save_button)
 
-        button_layout.addStretch()
+            button_layout.addStretch()
 
-        self._reset_button = QPushButton("Reset")
-        self._reset_button.clicked.connect(self._reset_changes)
-        self._reset_button.setEnabled(False)
-        button_layout.addWidget(self._reset_button)
+            self._reset_button = QPushButton("Reset")
+            self._reset_button.clicked.connect(self._reset_changes)
+            self._reset_button.setEnabled(False)
+            button_layout.addWidget(self._reset_button)
 
-        layout.addLayout(button_layout)
+            layout.addLayout(button_layout)
+        else:
+            # Initialize button references to None when not shown
+            self._apply_button = None
+            self._save_button = None
+            self._reset_button = None
 
         self.setLayout(layout)
 
     def _setup_components(self):
         """Set up the component widgets after UI is created."""
+        logger.debug("Setting up theme editor components")
+
         # Initialize persistence manager
         self._persistence_manager = ThemePersistenceManager(self)
         self._connect_persistence_signals()
 
         # Create and setup controls widget
+        logger.debug("Creating ThemeControlsWidget")
         self._controls_widget = ThemeControlsWidget()
         self._connect_controls_signals()
+        logger.debug(f"Controls widget created: {self._controls_widget}")
 
-        # Replace placeholder with actual controls
-        layout = self._controls_placeholder.parent().layout()
-        if layout:
-            index = layout.indexOf(self._controls_placeholder)
-            layout.removeWidget(self._controls_placeholder)
-            self._controls_placeholder.deleteLater()
-            layout.insertWidget(index, self._controls_widget)
+        # Replace placeholder with actual controls in the splitter
+        if hasattr(self, "_splitter"):
+            logger.debug(f"Splitter exists with {self._splitter.count()} widgets")
+            index = self._splitter.indexOf(self._controls_placeholder)
+            logger.debug(f"Placeholder index in splitter: {index}")
+            if index >= 0:
+                logger.debug(
+                    f"Replacing placeholder at index {index} with controls widget"
+                )
+                self._splitter.replaceWidget(index, self._controls_widget)
+                self._controls_placeholder.deleteLater()
+                # Ensure the controls widget is visible
+                self._controls_widget.show()
+                logger.debug(
+                    f"Controls widget visible: {self._controls_widget.isVisible()}"
+                )
+        else:
+            logger.error("Splitter not found!")
 
         # Create and setup preview widget
         self._preview_widget = ThemePreviewWidget()
@@ -221,11 +291,27 @@ class ThemeEditorAppWidget(AppWidget):
             self._preview_placeholder.deleteLater()
             parent_layout.insertWidget(index, self._preview_widget, 1)
 
+        # Re-set splitter sizes after replacing widgets
+        if hasattr(self, "_splitter"):
+            # Force update of splitter and ensure widgets are shown
+            self._splitter.refresh()
+            self._splitter.setSizes([600, 900])
+
+            logger.debug(f"Splitter widget count: {self._splitter.count()}")
+            for i in range(self._splitter.count()):
+                widget = self._splitter.widget(i)
+                widget.show()  # Force show each widget
+                logger.debug(
+                    f"  Widget {i}: {widget.__class__.__name__} (visible: {widget.isVisible()})"
+                )
+
     def _connect_controls_signals(self):
         """Connect signals from controls widget."""
         if self._controls_widget:
             self._controls_widget.color_changed.connect(self._on_color_changed)
-            self._controls_widget.typography_changed.connect(self._on_typography_changed)
+            self._controls_widget.typography_changed.connect(
+                self._on_typography_changed
+            )
             self._controls_widget.preset_changed.connect(self._on_preset_changed)
 
     def _connect_persistence_signals(self):
@@ -235,7 +321,9 @@ class ThemeEditorAppWidget(AppWidget):
             self._persistence_manager.theme_saved.connect(self._on_theme_saved)
             self._persistence_manager.theme_created.connect(self._on_theme_created)
             self._persistence_manager.theme_deleted.connect(self._on_theme_deleted)
-            self._persistence_manager.operation_failed.connect(self._on_operation_failed)
+            self._persistence_manager.operation_failed.connect(
+                self._on_operation_failed
+            )
 
     def _create_toolbar(self) -> QToolBar:
         """Create editor toolbar."""
@@ -244,7 +332,13 @@ class ThemeEditorAppWidget(AppWidget):
         # Import action
         import_action = QAction("Import", self)
         import_action.setToolTip("Import theme from file")
-        import_action.triggered.connect(lambda: self._persistence_manager.import_theme() if self._persistence_manager else None)
+        import_action.triggered.connect(
+            lambda: (
+                self._persistence_manager.import_theme()
+                if self._persistence_manager
+                else None
+            )
+        )
         toolbar.addAction(import_action)
 
         # Export action
@@ -258,7 +352,13 @@ class ThemeEditorAppWidget(AppWidget):
         # Import VSCode action
         vscode_action = QAction("Import VSCode", self)
         vscode_action.setToolTip("Import VSCode theme")
-        vscode_action.triggered.connect(lambda: self._persistence_manager.import_vscode_theme() if self._persistence_manager else None)
+        vscode_action.triggered.connect(
+            lambda: (
+                self._persistence_manager.import_vscode_theme()
+                if self._persistence_manager
+                else None
+            )
+        )
         toolbar.addAction(vscode_action)
 
         toolbar.addSeparator()
@@ -321,10 +421,10 @@ class ThemeEditorAppWidget(AppWidget):
                 if theme.typography:
                     typography = theme.typography
                     self._controls_widget.load_typography_settings(
-                        typography.font_family.split(',')[0].strip(),
+                        typography.font_family.split(",")[0].strip(),
                         typography.font_size_base,
                         typography.line_height,
-                        "custom"
+                        "custom",
                     )
                 else:
                     # Use defaults
@@ -349,7 +449,7 @@ class ThemeEditorAppWidget(AppWidget):
                 self,
                 "Unsaved Changes",
                 "You have unsaved changes. Do you want to discard them?",
-                QMessageBox.Discard | QMessageBox.Cancel
+                QMessageBox.Discard | QMessageBox.Cancel,
             )
 
             if reply == QMessageBox.Cancel:
@@ -364,12 +464,15 @@ class ThemeEditorAppWidget(AppWidget):
         theme_id = self._theme_combo.currentData()
         if theme_id:
             from core.commands.executor import execute_command
+
             result = execute_command("theme.getTheme", theme_id=theme_id)
             if result.success and result.value:
                 theme = result.value.get("theme")
                 if theme:
                     # Check if this is a different theme than currently loaded
-                    theme_changed = not self._current_theme or theme.id != self._current_theme.id
+                    theme_changed = (
+                        not self._current_theme or theme.id != self._current_theme.id
+                    )
 
                     # Load theme and mark as modified if it's a different theme
                     self._load_theme(theme, mark_modified=theme_changed)
@@ -389,6 +492,9 @@ class ThemeEditorAppWidget(AppWidget):
         # Don't apply theme preview to the whole app during editing
         # The preview widget will be updated by the timer
 
+        # Emit modified signal
+        self.theme_modified.emit(True)
+
     def _apply_preview(self):
         """Apply preview colors."""
         colors = self._get_current_colors()
@@ -406,12 +512,20 @@ class ThemeEditorAppWidget(AppWidget):
             return False
 
         colors = self._get_current_colors()
-        typography_data = self._controls_widget.get_typography_settings() if self._controls_widget else {}
+        typography_data = (
+            self._controls_widget.get_typography_settings()
+            if self._controls_widget
+            else {}
+        )
 
-        success = self._persistence_manager.apply_theme(self._current_theme, colors, typography_data)
+        success = self._persistence_manager.apply_theme(
+            self._current_theme, colors, typography_data
+        )
         if success:
             self._modified = False
             self._update_button_states()
+            # Emit signal that changes were applied
+            self.theme_modified.emit(False)
         return success
 
     def _save_theme(self) -> bool:
@@ -420,18 +534,30 @@ class ThemeEditorAppWidget(AppWidget):
             return False
 
         colors = self._get_current_colors()
-        typography_data = self._controls_widget.get_typography_settings() if self._controls_widget else {}
+        typography_data = (
+            self._controls_widget.get_typography_settings()
+            if self._controls_widget
+            else {}
+        )
 
-        success = self._persistence_manager.save_theme(self._current_theme, colors, typography_data)
+        success = self._persistence_manager.save_theme(
+            self._current_theme, colors, typography_data
+        )
         if success:
             self._modified = False
             self._update_button_states()
+            # Emit signal that changes were saved
+            self.theme_modified.emit(False)
         return success
 
     def _reset_changes(self):
         """Reset all changes to original theme."""
         if self._current_theme:
             self._load_theme(self._current_theme)
+            self._modified = False
+            self._update_button_states()
+            # Emit signal that changes were reset
+            self.theme_modified.emit(False)
 
     def _create_new_theme(self):
         """Create a new theme using persistence manager."""
@@ -448,7 +574,9 @@ class ThemeEditorAppWidget(AppWidget):
         """Duplicate current theme using persistence manager."""
         if self._persistence_manager and self._current_theme:
             colors = self._get_current_colors()
-            theme_id = self._persistence_manager.duplicate_theme(self._current_theme, colors)
+            theme_id = self._persistence_manager.duplicate_theme(
+                self._current_theme, colors
+            )
             if theme_id:
                 self._load_current_theme()
                 # Select new theme
@@ -519,12 +647,14 @@ class ThemeEditorAppWidget(AppWidget):
         # Apply preview
         self._apply_preview()
 
-
     def _update_button_states(self):
         """Update button enabled states."""
-        self._apply_button.setEnabled(self._modified)
-        self._save_button.setEnabled(self._modified)
-        self._reset_button.setEnabled(self._modified)
+        if self._apply_button:
+            self._apply_button.setEnabled(self._modified)
+        if self._save_button:
+            self._save_button.setEnabled(self._modified)
+        if self._reset_button:
+            self._reset_button.setEnabled(self._modified)
 
     def _connect_theme_signals(self):
         """Connect to theme service signals."""
@@ -540,9 +670,14 @@ class ThemeEditorAppWidget(AppWidget):
         # Only reload if not modified or if it's a different theme
         if not self._modified:
             from core.commands.executor import execute_command
+
             result = execute_command("theme.getCurrentTheme")
-            current_theme = result.value.get("theme") if result.success and result.value else None
-            if current_theme and (not self._current_theme or current_theme.id != self._current_theme.id):
+            current_theme = (
+                result.value.get("theme") if result.success and result.value else None
+            )
+            if current_theme and (
+                not self._current_theme or current_theme.id != self._current_theme.id
+            ):
                 # Theme changed externally, reload
                 index = self._theme_combo.findData(current_theme.id)
                 if index >= 0:

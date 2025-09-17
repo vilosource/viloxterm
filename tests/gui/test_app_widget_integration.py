@@ -35,7 +35,9 @@ def manager():
     manager.clear()
 
     # Register test widgets
-    for i, category in enumerate([WidgetCategory.EDITOR, WidgetCategory.TERMINAL, WidgetCategory.TOOLS]):
+    for i, category in enumerate(
+        [WidgetCategory.EDITOR, WidgetCategory.TERMINAL, WidgetCategory.TOOLS]
+    ):
         mock_class = MagicMock(spec=AppWidget)
         mock_class.return_value = MagicMock(spec=AppWidget)
 
@@ -48,7 +50,7 @@ def manager():
             category=category,
             widget_class=mock_class,
             open_command=f"test.open_{i}",
-            show_in_menu=(i != 2)  # Hide one widget from menu
+            show_in_menu=(i != 2),  # Hide one widget from menu
         )
         manager.register_widget(metadata)
 
@@ -69,7 +71,7 @@ class TestPaneHeaderMenuGeneration:
     def test_menu_shows_registered_widgets(self, qtbot, pane_header, manager):
         """Test that menu shows registered widgets."""
         # Trigger menu creation
-        with patch.object(QMenu, 'exec_') as mock_exec:
+        with patch.object(QMenu, "exec_") as mock_exec:
             pane_header.show_widget_type_menu()
 
             # Menu should have been created and shown
@@ -87,7 +89,7 @@ class TestPaneHeaderMenuGeneration:
             icon="hidden",
             category=WidgetCategory.TOOLS,
             widget_class=mock_class,
-            show_in_menu=False
+            show_in_menu=False,
         )
         manager.register_widget(hidden_widget)
 
@@ -99,8 +101,10 @@ class TestPaneHeaderMenuGeneration:
         assert "test.widget_0" in widget_ids  # Visible widget
         assert "test.widget_1" in widget_ids  # Visible widget
 
-    @patch('core.commands.executor.execute_command')
-    def test_menu_action_triggers_command(self, mock_execute, qtbot, pane_header, manager):
+    @patch("core.commands.executor.execute_command")
+    def test_menu_action_triggers_command(
+        self, mock_execute, qtbot, pane_header, manager
+    ):
         """Test that menu actions trigger correct commands."""
         # We need to actually interact with the menu
         # Since we can't easily simulate menu interaction in tests,
@@ -112,6 +116,7 @@ class TestPaneHeaderMenuGeneration:
 
         # Simulate what happens when menu action is triggered
         from core.commands.executor import execute_command
+
         execute_command(widget.open_command)
 
         mock_execute.assert_called_once_with("test.open_0")
@@ -126,18 +131,20 @@ class TestSplitPaneModelIntegration:
 
         # Mock the manager's create_widget_by_type method
         mock_widget = MagicMock(spec=AppWidget)
-        with patch.object(manager, 'create_widget_by_type', return_value=mock_widget):
+        with patch.object(manager, "create_widget_by_type", return_value=mock_widget):
             widget = model.create_app_widget(WidgetType.CUSTOM, "test_id")
 
             assert widget == mock_widget
-            manager.create_widget_by_type.assert_called_once_with(WidgetType.CUSTOM, "test_id")
+            manager.create_widget_by_type.assert_called_once_with(
+                WidgetType.CUSTOM, "test_id"
+            )
 
     def test_fallback_to_placeholder(self, manager):
         """Test fallback to placeholder for unknown widget types."""
         model = SplitPaneModel(initial_widget_type=WidgetType.PLACEHOLDER)
 
         # Try to create unknown widget type
-        with patch.object(manager, 'create_widget_by_type', return_value=None):
+        with patch.object(manager, "create_widget_by_type", return_value=None):
             widget = model.create_app_widget(WidgetType.DEBUGGER, "test_id")
 
             # Should fall back to placeholder
@@ -156,7 +163,7 @@ class TestBuiltinWidgetRegistration:
         manager.clear()
 
         # Register built-in widgets
-        with patch('core.app_widget_registry.logger'):
+        with patch("core.app_widget_registry.logger"):
             register_builtin_widgets()
 
             # Check that widgets were registered
@@ -188,7 +195,7 @@ class TestWidgetCreationInUI:
         mock_widget.cleanup = MagicMock()
         mock_widget.widget_id = "test_widget"
 
-        with patch.object(manager, 'create_widget_by_type', return_value=mock_widget):
+        with patch.object(manager, "create_widget_by_type", return_value=mock_widget):
             # Create widget through model
             model = SplitPaneModel(initial_widget_type=WidgetType.PLACEHOLDER)
             widget = model.create_app_widget(WidgetType.CUSTOM, leaf.id)
@@ -219,7 +226,7 @@ class TestDynamicWidgetDiscovery:
             icon="capable",
             category=WidgetCategory.TOOLS,
             widget_class=mock_class,
-            provides_capabilities=["special_feature", "another_feature"]
+            provides_capabilities=["special_feature", "another_feature"],
         )
         manager.register_widget(capable_widget)
 
@@ -240,7 +247,7 @@ class TestDynamicWidgetDiscovery:
             icon="python",
             category=WidgetCategory.EDITOR,
             widget_class=mock_class,
-            supported_file_types=["py", "pyw"]
+            supported_file_types=["py", "pyw"],
         )
         manager.register_widget(python_editor)
 

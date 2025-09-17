@@ -26,7 +26,9 @@ class TestRegistryCommands:
         # Mock the new service methods
         self.mock_workspace_service.register_widget = MagicMock(return_value=True)
         self.mock_workspace_service.unregister_widget = MagicMock(return_value=True)
-        self.mock_workspace_service.update_registry_after_tab_close = MagicMock(return_value=2)
+        self.mock_workspace_service.update_registry_after_tab_close = MagicMock(
+            return_value=2
+        )
         self.mock_workspace_service.get_widget_tab_index = MagicMock(return_value=3)
         self.mock_workspace_service.is_widget_registered = MagicMock(return_value=True)
 
@@ -36,10 +38,7 @@ class TestRegistryCommands:
     def test_register_widget_command(self):
         """Test registering a widget using service method."""
         # Set up context args
-        self.mock_context.args = {
-            "widget_id": "com.viloapp.settings",
-            "tab_index": 2
-        }
+        self.mock_context.args = {"widget_id": "com.viloapp.settings", "tab_index": 2}
 
         # Register a widget
         result = register_widget_command._original_func(self.mock_context)
@@ -54,10 +53,7 @@ class TestRegistryCommands:
     def test_register_widget_no_service(self):
         """Test register command when service is not available."""
         self.mock_context.get_service.return_value = None
-        self.mock_context.args = {
-            "widget_id": "com.viloapp.settings",
-            "tab_index": 2
-        }
+        self.mock_context.args = {"widget_id": "com.viloapp.settings", "tab_index": 2}
 
         result = register_widget_command._original_func(self.mock_context)
         assert not result.success
@@ -73,7 +69,10 @@ class TestRegistryCommands:
         result = unregister_widget_command._original_func(self.mock_context)
 
         assert result.success
-        assert result.value == {"widget_id": "com.viloapp.settings", "unregistered": True}
+        assert result.value == {
+            "widget_id": "com.viloapp.settings",
+            "unregistered": True,
+        }
         # Verify service method was called
         self.mock_workspace_service.unregister_widget.assert_called_once_with(
             "com.viloapp.settings"
@@ -89,17 +88,17 @@ class TestRegistryCommands:
 
         # Command still succeeds but value shows unregistered=False
         assert result.success
-        assert result.value == {"widget_id": "com.viloapp.nonexistent", "unregistered": False}
+        assert result.value == {
+            "widget_id": "com.viloapp.nonexistent",
+            "unregistered": False,
+        }
 
     def test_update_registry_after_close(self):
         """Test updating registry indices after tab close."""
         # Service will return that 2 widgets were updated
         self.mock_workspace_service.update_registry_after_tab_close.return_value = 2
 
-        self.mock_context.args = {
-            "closed_index": 1,
-            "widget_id": "widget2"
-        }
+        self.mock_context.args = {"closed_index": 1, "widget_id": "widget2"}
 
         result = update_registry_after_close_command._original_func(self.mock_context)
 
@@ -171,17 +170,17 @@ class TestRegistryCommands:
         result = is_widget_registered_command._original_func(self.mock_context)
 
         assert result.success
-        assert result.value == {"widget_id": "com.viloapp.nonexistent", "registered": False}
+        assert result.value == {
+            "widget_id": "com.viloapp.nonexistent",
+            "registered": False,
+        }
 
     def test_register_with_failed_service_method(self):
         """Test when service method fails."""
         # Service method returns False (failure)
         self.mock_workspace_service.register_widget.return_value = False
 
-        self.mock_context.args = {
-            "widget_id": "com.viloapp.test",
-            "tab_index": 0
-        }
+        self.mock_context.args = {"widget_id": "com.viloapp.test", "tab_index": 0}
 
         result = register_widget_command._original_func(self.mock_context)
 
@@ -191,12 +190,11 @@ class TestRegistryCommands:
     def test_exception_handling(self):
         """Test exception handling in commands."""
         # Make service method raise an exception
-        self.mock_workspace_service.register_widget.side_effect = Exception("Test error")
+        self.mock_workspace_service.register_widget.side_effect = Exception(
+            "Test error"
+        )
 
-        self.mock_context.args = {
-            "widget_id": "test",
-            "tab_index": 0
-        }
+        self.mock_context.args = {"widget_id": "test", "tab_index": 0}
 
         result = register_widget_command._original_func(self.mock_context)
 

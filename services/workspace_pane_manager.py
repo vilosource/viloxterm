@@ -166,7 +166,7 @@ class WorkspacePaneManager:
             return False
 
         # Show the numbers if not already visible
-        if hasattr(widget, 'model') and not widget.model.show_pane_numbers:
+        if hasattr(widget, "model") and not widget.model.show_pane_numbers:
             widget.toggle_pane_numbers()
             logger.info("Pane numbers shown")
             return True
@@ -188,7 +188,7 @@ class WorkspacePaneManager:
             return False
 
         # Hide the numbers if currently visible
-        if hasattr(widget, 'model') and widget.model.show_pane_numbers:
+        if hasattr(widget, "model") and widget.model.show_pane_numbers:
             widget.toggle_pane_numbers()
             logger.info("Pane numbers hidden")
             return True
@@ -215,7 +215,7 @@ class WorkspacePaneManager:
             return False
 
         # Find the pane ID for the given number
-        if hasattr(widget, 'model') and hasattr(widget.model, 'pane_indices'):
+        if hasattr(widget, "model") and hasattr(widget.model, "pane_indices"):
             # Reverse lookup: find pane_id for the given number
             for pane_id, pane_number in widget.model.pane_indices.items():
                 if pane_number == number:
@@ -243,10 +243,11 @@ class WorkspacePaneManager:
 
         # Get main window and activate focus sink
         from PySide6.QtWidgets import QApplication
+
         app = QApplication.instance()
         if app:
             for window in app.topLevelWidgets():
-                if hasattr(window, 'focus_sink'):
+                if hasattr(window, "focus_sink"):
                     # Get currently focused widget to restore later
                     current_focus = app.focusWidget()
 
@@ -313,7 +314,9 @@ class WorkspacePaneManager:
             widget.focus_specific_pane(target_id)
             success = True  # focus_specific_pane doesn't return a value
             if success:
-                logger.info(f"Navigated {direction} from {widget.active_pane_id} to {target_id}")
+                logger.info(
+                    f"Navigated {direction} from {widget.active_pane_id} to {target_id}"
+                )
             return success
         else:
             logger.debug(f"No pane found in direction: {direction}")
@@ -385,23 +388,17 @@ class WorkspacePaneManager:
             Dictionary with pane information
         """
         if not self._workspace:
-            return {
-                'count': 0,
-                'active': None,
-                'available': False
-            }
+            return {"count": 0, "active": None, "available": False}
 
         widget = self._workspace.get_current_split_widget()
         if not widget:
-            return {
-                'count': 0,
-                'active': None,
-                'available': False
-            }
+            return {"count": 0, "active": None, "available": False}
 
         return {
-            'count': widget.get_pane_count(),
-            'active': widget.active_pane_id,
-            'available': True,
-            'all_panes': widget.get_all_pane_ids() if hasattr(widget, 'get_all_pane_ids') else []
+            "count": widget.get_pane_count(),
+            "active": widget.active_pane_id,
+            "available": True,
+            "all_panes": (
+                widget.get_all_pane_ids() if hasattr(widget, "get_all_pane_ids") else []
+            ),
         }

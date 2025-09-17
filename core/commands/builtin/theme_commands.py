@@ -21,9 +21,11 @@ logger = logging.getLogger(__name__)
     title="Select Color Theme",
     category="Preferences",
     description="Change the application color theme",
-    shortcut="ctrl+k ctrl+t"
+    shortcut="ctrl+k ctrl+t",
 )
-def select_theme_command(context: CommandContext, theme_id: str = None) -> CommandResult:
+def select_theme_command(
+    context: CommandContext, theme_id: str = None
+) -> CommandResult:
     """
     Select and apply a theme.
 
@@ -44,9 +46,11 @@ def select_theme_command(context: CommandContext, theme_id: str = None) -> Comma
             success = theme_service.apply_theme(theme_id)
             if success:
                 logger.info(f"Applied theme: {theme_id}")
-                return CommandResult(success=True, value={'theme_id': theme_id})
+                return CommandResult(success=True, value={"theme_id": theme_id})
             else:
-                return CommandResult(success=False, error=f"Failed to apply theme: {theme_id}")
+                return CommandResult(
+                    success=False, error=f"Failed to apply theme: {theme_id}"
+                )
         else:
             # Cycle through available themes (for now)
             themes = theme_service.get_available_themes()
@@ -54,7 +58,9 @@ def select_theme_command(context: CommandContext, theme_id: str = None) -> Comma
                 return CommandResult(success=False, error="No themes available")
 
             current_id = theme_service.get_current_theme_id()
-            current_index = next((i for i, t in enumerate(themes) if t.id == current_id), 0)
+            current_index = next(
+                (i for i, t in enumerate(themes) if t.id == current_id), 0
+            )
             next_index = (current_index + 1) % len(themes)
             next_theme = themes[next_index]
 
@@ -63,12 +69,16 @@ def select_theme_command(context: CommandContext, theme_id: str = None) -> Comma
                 # Show status message
                 ui_service = context.get_service(UIService)
                 if ui_service:
-                    ui_service.set_status_message(f"Theme changed to: {next_theme.name}", 2000)
+                    ui_service.set_status_message(
+                        f"Theme changed to: {next_theme.name}", 2000
+                    )
 
                 logger.info(f"Cycled to theme: {next_theme.id}")
-                return CommandResult(success=True, value={'theme_id': next_theme.id})
+                return CommandResult(success=True, value={"theme_id": next_theme.id})
             else:
-                return CommandResult(success=False, error=f"Failed to apply theme: {next_theme.id}")
+                return CommandResult(
+                    success=False, error=f"Failed to apply theme: {next_theme.id}"
+                )
 
     except Exception as e:
         logger.error(f"Failed to select theme: {e}")
@@ -79,7 +89,7 @@ def select_theme_command(context: CommandContext, theme_id: str = None) -> Comma
     id="theme.selectVSCodeDark",
     title="VSCode Dark+ Theme",
     category="Preferences: Color Theme",
-    description="Apply VSCode Dark+ theme"
+    description="Apply VSCode Dark+ theme",
 )
 def select_vscode_dark_command(context: CommandContext) -> CommandResult:
     """Apply VSCode Dark+ theme."""
@@ -90,7 +100,7 @@ def select_vscode_dark_command(context: CommandContext) -> CommandResult:
     id="theme.selectVSCodeLight",
     title="VSCode Light Theme",
     category="Preferences: Color Theme",
-    description="Apply VSCode Light theme"
+    description="Apply VSCode Light theme",
 )
 def select_vscode_light_command(context: CommandContext) -> CommandResult:
     """Apply VSCode Light theme."""
@@ -101,7 +111,7 @@ def select_vscode_light_command(context: CommandContext) -> CommandResult:
     id="theme.selectMonokai",
     title="Monokai Theme",
     category="Preferences: Color Theme",
-    description="Apply Monokai theme"
+    description="Apply Monokai theme",
 )
 def select_monokai_command(context: CommandContext) -> CommandResult:
     """Apply Monokai theme."""
@@ -112,7 +122,7 @@ def select_monokai_command(context: CommandContext) -> CommandResult:
     id="theme.selectSolarizedDark",
     title="Solarized Dark Theme",
     category="Preferences: Color Theme",
-    description="Apply Solarized Dark theme"
+    description="Apply Solarized Dark theme",
 )
 def select_solarized_dark_command(context: CommandContext) -> CommandResult:
     """Apply Solarized Dark theme."""
@@ -123,7 +133,7 @@ def select_solarized_dark_command(context: CommandContext) -> CommandResult:
     id="theme.createCustomTheme",
     title="Create Custom Theme...",
     category="Preferences",
-    description="Create a new custom theme based on current theme"
+    description="Create a new custom theme based on current theme",
 )
 def create_custom_theme_command(context: CommandContext) -> CommandResult:
     """
@@ -146,7 +156,7 @@ def create_custom_theme_command(context: CommandContext) -> CommandResult:
         custom_theme = theme_service.create_custom_theme(
             base_theme_id=current_theme.id,
             name=f"Custom {current_theme.name}",
-            description="Custom theme created by user"
+            description="Custom theme created by user",
         )
 
         if custom_theme:
@@ -159,10 +169,12 @@ def create_custom_theme_command(context: CommandContext) -> CommandResult:
             # Show status message
             ui_service = context.get_service(UIService)
             if ui_service:
-                ui_service.set_status_message(f"Created custom theme: {custom_theme.name}", 3000)
+                ui_service.set_status_message(
+                    f"Created custom theme: {custom_theme.name}", 3000
+                )
 
             logger.info(f"Created custom theme: {custom_theme.id}")
-            return CommandResult(success=True, value={'theme_id': custom_theme.id})
+            return CommandResult(success=True, value={"theme_id": custom_theme.id})
         else:
             return CommandResult(success=False, error="Failed to create custom theme")
 
@@ -175,7 +187,7 @@ def create_custom_theme_command(context: CommandContext) -> CommandResult:
     id="theme.exportTheme",
     title="Export Current Theme...",
     category="Preferences",
-    description="Export the current theme to a file"
+    description="Export the current theme to a file",
 )
 def export_theme_command(context: CommandContext) -> CommandResult:
     """
@@ -195,6 +207,7 @@ def export_theme_command(context: CommandContext) -> CommandResult:
 
         # For now, export to a default location
         from pathlib import Path
+
         export_path = Path.home() / "Downloads" / f"{current_theme.id}.json"
 
         success = theme_service.export_theme(current_theme.id, export_path)
@@ -205,7 +218,7 @@ def export_theme_command(context: CommandContext) -> CommandResult:
                 ui_service.set_status_message(f"Theme exported to: {export_path}", 3000)
 
             logger.info(f"Exported theme to: {export_path}")
-            return CommandResult(success=True, value={'path': str(export_path)})
+            return CommandResult(success=True, value={"path": str(export_path)})
         else:
             return CommandResult(success=False, error="Failed to export theme")
 
@@ -218,9 +231,11 @@ def export_theme_command(context: CommandContext) -> CommandResult:
     id="theme.importTheme",
     title="Import Theme...",
     category="Preferences",
-    description="Import a theme from a file"
+    description="Import a theme from a file",
 )
-def import_theme_command(context: CommandContext, file_path: str = None) -> CommandResult:
+def import_theme_command(
+    context: CommandContext, file_path: str = None
+) -> CommandResult:
     """
     Import a theme from a file.
 
@@ -241,6 +256,7 @@ def import_theme_command(context: CommandContext, file_path: str = None) -> Comm
             return CommandResult(success=False, error="No file path provided")
 
         from pathlib import Path
+
         import_path = Path(file_path)
         if not import_path.exists():
             return CommandResult(success=False, error=f"File not found: {file_path}")
@@ -253,10 +269,12 @@ def import_theme_command(context: CommandContext, file_path: str = None) -> Comm
             # Show status message
             ui_service = context.get_service(UIService)
             if ui_service:
-                ui_service.set_status_message(f"Imported and applied theme: {theme_id}", 3000)
+                ui_service.set_status_message(
+                    f"Imported and applied theme: {theme_id}", 3000
+                )
 
             logger.info(f"Imported theme: {theme_id}")
-            return CommandResult(success=True, value={'theme_id': theme_id})
+            return CommandResult(success=True, value={"theme_id": theme_id})
         else:
             return CommandResult(success=False, error="Failed to import theme")
 
@@ -269,7 +287,7 @@ def import_theme_command(context: CommandContext, file_path: str = None) -> Comm
     id="theme.resetToDefault",
     title="Reset Theme to Default",
     category="Preferences",
-    description="Reset theme to default VSCode Dark+"
+    description="Reset theme to default VSCode Dark+",
 )
 def reset_theme_command(context: CommandContext) -> CommandResult:
     """
@@ -285,7 +303,7 @@ def reset_theme_command(context: CommandContext) -> CommandResult:
     id="theme.replaceInPane",
     title="Replace Pane with Theme Editor",
     category="Preferences",
-    description="Replace current pane content with theme editor"
+    description="Replace current pane content with theme editor",
 )
 def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
     """Replace current pane with theme editor."""
@@ -294,8 +312,8 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
         from ui.widgets.widget_registry import WidgetType
 
         # Get the pane and pane_id from context
-        pane = context.args.get('pane')
-        pane_id = context.args.get('pane_id')
+        pane = context.args.get("pane")
+        pane_id = context.args.get("pane_id")
 
         # Get workspace service
         workspace_service = context.get_service(WorkspaceService)
@@ -309,14 +327,14 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
 
         # Get current tab's split widget
         current_tab = workspace.tab_widget.currentWidget()
-        if not current_tab or not hasattr(current_tab, 'model'):
+        if not current_tab or not hasattr(current_tab, "model"):
             return CommandResult(success=False, error="No split widget available")
 
         split_widget = current_tab
 
         # Try to get pane_id if not provided
         if not pane_id:
-            if pane and hasattr(pane, 'leaf_node') and hasattr(pane.leaf_node, 'id'):
+            if pane and hasattr(pane, "leaf_node") and hasattr(pane.leaf_node, "id"):
                 pane_id = pane.leaf_node.id
 
         if pane_id:
@@ -328,16 +346,12 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
                 return CommandResult(success=True)
 
         return CommandResult(
-            success=False,
-            error="Could not identify pane for replacement"
+            success=False, error="Could not identify pane for replacement"
         )
 
     except Exception as e:
         logger.error(f"Failed to replace pane with theme editor: {e}")
-        return CommandResult(
-            success=False,
-            error=str(e)
-        )
+        return CommandResult(success=False, error=str(e))
 
 
 @command(
@@ -345,7 +359,7 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
     title="Open Theme Editor",
     category="Preferences",
     description="Open the theme editor to customize themes",
-    shortcut="ctrl+k ctrl+m"
+    shortcut="ctrl+k ctrl+m",
 )
 def open_theme_editor_command(context: CommandContext) -> CommandResult:
     """Open the theme editor in a new pane."""
@@ -355,10 +369,7 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
 
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
-            return CommandResult(
-                success=False,
-                error="Workspace service not available"
-            )
+            return CommandResult(success=False, error="Workspace service not available")
 
         # 🚨 SINGLETON PATTERN: Use consistent widget_id for Theme Editor
         # This ensures only one Theme Editor instance exists at a time
@@ -369,7 +380,7 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
             workspace_service.focus_widget(widget_id)
             return CommandResult(
                 success=True,
-                value={'widget_id': widget_id, 'action': 'focused_existing'}
+                value={"widget_id": widget_id, "action": "focused_existing"},
             )
 
         # Add theme editor widget to workspace using the registered factory
@@ -377,34 +388,29 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
         success = workspace_service.add_app_widget(
             widget_type=WidgetType.SETTINGS,  # Must match registration
             widget_id=widget_id,
-            name="Theme Editor"
+            name="Theme Editor",
         )
 
         if success:
             logger.info("Opened theme editor")
             return CommandResult(
-                success=True,
-                value={'widget_id': widget_id, 'action': 'created_new'}
+                success=True, value={"widget_id": widget_id, "action": "created_new"}
             )
         else:
             return CommandResult(
-                success=False,
-                error="Failed to add theme editor to workspace"
+                success=False, error="Failed to add theme editor to workspace"
             )
 
     except Exception as e:
         logger.error(f"Failed to open theme editor: {e}")
-        return CommandResult(
-            success=False,
-            error=f"Failed to open theme editor: {e}"
-        )
+        return CommandResult(success=False, error=f"Failed to open theme editor: {e}")
 
 
 @command(
     id="theme.importVSCode",
     title="Import VSCode Theme...",
     category="Preferences",
-    description="Import a theme from VSCode JSON format"
+    description="Import a theme from VSCode JSON format",
 )
 def import_vscode_theme_command(context: CommandContext) -> CommandResult:
     """Import a VSCode theme."""
@@ -417,10 +423,7 @@ def import_vscode_theme_command(context: CommandContext) -> CommandResult:
 
         theme_service = context.get_service(ThemeService)
         if not theme_service:
-            return CommandResult(
-                success=False,
-                error="Theme service not available"
-            )
+            return CommandResult(success=False, error="Theme service not available")
 
         # Get main window for dialog parent
         ui_service = context.get_service(UIService)
@@ -428,10 +431,7 @@ def import_vscode_theme_command(context: CommandContext) -> CommandResult:
 
         # Show file dialog
         file_path, _ = QFileDialog.getOpenFileName(
-            parent,
-            "Import VSCode Theme",
-            "",
-            "JSON Files (*.json);;All Files (*)"
+            parent, "Import VSCode Theme", "", "JSON Files (*.json);;All Files (*)"
         )
 
         if not file_path:
@@ -444,12 +444,9 @@ def import_vscode_theme_command(context: CommandContext) -> CommandResult:
                 QMessageBox.critical(
                     parent,
                     "Import Failed",
-                    "Failed to import VSCode theme. Please check the file format."
+                    "Failed to import VSCode theme. Please check the file format.",
                 )
-            return CommandResult(
-                success=False,
-                error="Failed to import theme"
-            )
+            return CommandResult(success=False, error="Failed to import theme")
 
         # Add to theme service
         theme_service._themes[theme.id] = theme
@@ -462,18 +459,15 @@ def import_vscode_theme_command(context: CommandContext) -> CommandResult:
             QMessageBox.information(
                 parent,
                 "Import Successful",
-                f"Successfully imported theme: {theme.name}"
+                f"Successfully imported theme: {theme.name}",
             )
 
         logger.info(f"Imported VSCode theme: {theme.id}")
-        return CommandResult(success=True, value={'theme_id': theme.id})
+        return CommandResult(success=True, value={"theme_id": theme.id})
 
     except Exception as e:
         logger.error(f"Failed to import VSCode theme: {e}")
-        return CommandResult(
-            success=False,
-            error=f"Failed to import theme: {e}"
-        )
+        return CommandResult(success=False, error=f"Failed to import theme: {e}")
 
 
 # Register commands with the theme category

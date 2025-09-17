@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ServiceEvent:
     """Event emitted by services."""
+
     name: str
     data: dict[str, Any]
     source: str  # Service name that emitted the event
@@ -27,6 +28,7 @@ class ServiceEvent:
 # Create a metaclass that works with both QObject and ABC
 class ServiceMeta(type(QObject), ABCMeta):
     """Metaclass that combines QObject and ABC metaclasses."""
+
     pass
 
 
@@ -97,11 +99,7 @@ class Service(QObject, metaclass=ServiceMeta):
             event_name: Name of the event
             data: Optional event data
         """
-        event = ServiceEvent(
-            name=event_name,
-            data=data or {},
-            source=self.name
-        )
+        event = ServiceEvent(name=event_name, data=data or {}, source=self.name)
 
         # Emit Qt signal
         self.service_event.emit(event)

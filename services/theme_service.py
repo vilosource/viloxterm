@@ -60,6 +60,7 @@ class ThemeService(Service):
 
         # Check if theme reset was requested via command line
         from core.app_config import app_config
+
         if app_config.reset_theme:
             self.reset_to_default_theme()
         # Apply default theme
@@ -89,7 +90,7 @@ class ThemeService(Service):
             ":/themes/builtin/vscode-dark.json",
             ":/themes/builtin/vscode-light.json",
             ":/themes/builtin/monokai.json",
-            ":/themes/builtin/solarized-dark.json"
+            ":/themes/builtin/solarized-dark.json",
         ]
 
         for resource_path in theme_files:
@@ -335,7 +336,9 @@ class ThemeService(Service):
         logger.info(f"Applied typography preset: {preset_name}")
         return True
 
-    def apply_theme_preview(self, colors: dict[str, str], typography: Optional[ThemeTypography] = None) -> None:
+    def apply_theme_preview(
+        self, colors: dict[str, str], typography: Optional[ThemeTypography] = None
+    ) -> None:
         """
         Apply temporary theme for preview without saving.
 
@@ -355,8 +358,13 @@ class ThemeService(Service):
             description="Temporary preview theme",
             version="1.0.0",
             author="Theme Editor",
-            colors={**self._current_theme.colors, **colors} if self._current_theme else colors,
-            typography=typography or (self._current_theme.typography if self._current_theme else None)
+            colors=(
+                {**self._current_theme.colors, **colors}
+                if self._current_theme
+                else colors
+            ),
+            typography=typography
+            or (self._current_theme.typography if self._current_theme else None),
         )
 
         # Store preview colors for reference
@@ -397,8 +405,9 @@ class ThemeService(Service):
         self.theme_changed.emit(theme.colors)
         self.typography_changed.emit(theme.get_typography())
 
-    def create_custom_theme(self, base_theme_id: str, name: str,
-                          description: str = "") -> Optional[Theme]:
+    def create_custom_theme(
+        self, base_theme_id: str, name: str, description: str = ""
+    ) -> Optional[Theme]:
         """
         Create a new custom theme based on an existing theme.
 
@@ -432,7 +441,7 @@ class ThemeService(Service):
             version="1.0.0",
             author="User",
             extends=base_theme_id,
-            colors={}  # Start with empty, will inherit from base
+            colors={},  # Start with empty, will inherit from base
         )
 
         # Apply inheritance
@@ -557,6 +566,7 @@ class ThemeService(Service):
         """Save theme preference to settings."""
         try:
             from core.settings.config import get_settings
+
             settings = get_settings("ViloxTerm", "ViloxTerm")
             settings.setValue("theme/current", theme_id)
             settings.sync()
@@ -567,6 +577,7 @@ class ThemeService(Service):
         """Load theme preference from settings."""
         try:
             from core.settings.config import get_settings
+
             settings = get_settings("ViloxTerm", "ViloxTerm")
             return settings.value("theme/current", "vscode-dark")
         except Exception as e:
@@ -593,6 +604,7 @@ class ThemeService(Service):
         try:
             # Clear theme preference from settings
             from core.settings.config import get_settings
+
             settings = get_settings("ViloxTerm", "ViloxTerm")
             settings.remove("theme/current")
             settings.sync()

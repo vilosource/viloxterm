@@ -28,7 +28,7 @@ def command(
     group: Optional[str] = None,
     order: int = 0,
     visible: bool = True,
-    register: bool = True
+    register: bool = True,
 ) -> Callable:
     """
     Decorator for creating and registering commands.
@@ -65,6 +65,7 @@ def command(
             # Implementation
             return CommandResult(success=True)
     """
+
     def decorator(func: Callable) -> Command:
         # Ensure the function has the right signature
         @wraps(func)
@@ -72,6 +73,7 @@ def command(
             try:
                 # Inspect the function signature to handle parameters correctly
                 import inspect
+
                 sig = inspect.signature(func)
 
                 # If function only takes context, call it directly
@@ -81,7 +83,7 @@ def command(
                     # Extract additional parameters from context.args
                     kwargs = {}
                     for param_name, param in sig.parameters.items():
-                        if param_name == 'context':
+                        if param_name == "context":
                             continue
 
                         if param_name in context.args:
@@ -91,7 +93,9 @@ def command(
                             kwargs[param_name] = param.default
                         else:
                             # Required parameter missing
-                            raise ValueError(f"Required parameter '{param_name}' not provided")
+                            raise ValueError(
+                                f"Required parameter '{param_name}' not provided"
+                            )
 
                     result = func(context, **kwargs)
 
@@ -121,14 +125,14 @@ def command(
             keywords=keywords or [],
             group=group,
             order=order,
-            visible=visible
+            visible=visible,
         )
 
         # Store the original function for testing
         cmd._original_func = func
 
         # Transfer validation spec if present (for stacked decorators)
-        if hasattr(func, '_validation_spec'):
+        if hasattr(func, "_validation_spec"):
             cmd._validation_spec = func._validation_spec
             # Re-wrap the handler with validation if needed
             original_handler = cmd.handler
@@ -141,6 +145,7 @@ def command(
                     return original_handler(validated_context)
                 except Exception as e:
                     from core.commands.validation import ValidationError
+
                     if isinstance(e, ValidationError):
                         logger.warning(f"Validation failed for command {id}: {e}")
                         return CommandResult(success=False, error=str(e))
@@ -170,17 +175,23 @@ def command(
                             command_id=id,
                             description=description or title,
                             source="command",
-                            priority=75  # Default priority for command shortcuts
+                            priority=75,  # Default priority for command shortcuts
                         )
                         if success:
-                            logger.debug(f"Auto-registered shortcut for {id}: {shortcut}")
+                            logger.debug(
+                                f"Auto-registered shortcut for {id}: {shortcut}"
+                            )
                         else:
-                            logger.warning(f"Failed to register shortcut for {id}: {shortcut}")
+                            logger.warning(
+                                f"Failed to register shortcut for {id}: {shortcut}"
+                            )
                     else:
                         # Store for later registration when keyboard service is available
-                        if not hasattr(command_registry, '_pending_shortcuts'):
+                        if not hasattr(command_registry, "_pending_shortcuts"):
                             command_registry._pending_shortcuts = []
-                        command_registry._pending_shortcuts.append((id, shortcut, description or title))
+                        command_registry._pending_shortcuts.append(
+                            (id, shortcut, description or title)
+                        )
                         logger.debug(f"Queued shortcut for {id}: {shortcut}")
 
                 except Exception as e:
@@ -193,9 +204,7 @@ def command(
 
 
 def command_handler(
-    command_id: str,
-    undo: Optional[Callable] = None,
-    redo: Optional[Callable] = None
+    command_id: str, undo: Optional[Callable] = None, redo: Optional[Callable] = None
 ) -> Callable:
     """
     Decorator for adding handlers to existing commands.
@@ -216,6 +225,7 @@ def command_handler(
             # Enhanced implementation
             return CommandResult(success=True)
     """
+
     def decorator(func: Callable) -> Callable:
         # Get the existing command
         cmd = command_registry.get_command(command_id)
@@ -225,6 +235,7 @@ def command_handler(
 
         # Update the command
         if func:
+
             @wraps(func)
             def handler(context: CommandContext) -> CommandResult:
                 try:
@@ -239,6 +250,7 @@ def command_handler(
             cmd.handler = handler
 
         if undo:
+
             @wraps(undo)
             def undo_handler(context: CommandContext) -> CommandResult:
                 try:
@@ -254,6 +266,7 @@ def command_handler(
             cmd.supports_undo = True
 
         if redo:
+
             @wraps(redo)
             def redo_handler(context: CommandContext) -> CommandResult:
                 try:
@@ -294,9 +307,7 @@ def batch_register(*commands: Command) -> None:
 
 
 def create_command_group(
-    category: str,
-    group: str,
-    commands: list[dict[str, Any]]
+    category: str, group: str, commands: list[dict[str, Any]]
 ) -> list[Command]:
     """
     Create a group of related commands.
@@ -333,12 +344,12 @@ def create_command_group(
 
     for i, cmd_def in enumerate(commands):
         # Set defaults
-        cmd_def.setdefault('category', category)
-        cmd_def.setdefault('group', group)
-        cmd_def.setdefault('order', i * 10)  # Space out orders
+        cmd_def.setdefault("category", category)
+        cmd_def.setdefault("group", group)
+        cmd_def.setdefault("order", i * 10)  # Space out orders
 
         # Extract handler
-        handler = cmd_def.pop('handler', None)
+        handler = cmd_def.pop("handler", None)
         if not handler:
             logger.warning(f"No handler for command: {cmd_def.get('id')}")
             continue
@@ -360,7 +371,7 @@ def register_pending_shortcuts():
     This function should be called after the keyboard service is initialized
     to register shortcuts for commands that were created before the service was ready.
     """
-    if not hasattr(command_registry, '_pending_shortcuts'):
+    if not hasattr(command_registry, "_pending_shortcuts"):
         return
 
     try:
@@ -385,13 +396,17 @@ def register_pending_shortcuts():
                     command_id=command_id,
                     description=description,
                     source="command",
-                    priority=75
+                    priority=75,
                 )
                 if success:
                     registered_count += 1
-                    logger.debug(f"Registered pending shortcut for {command_id}: {shortcut}")
+                    logger.debug(
+                        f"Registered pending shortcut for {command_id}: {shortcut}"
+                    )
                 else:
-                    logger.warning(f"Failed to register pending shortcut for {command_id}: {shortcut}")
+                    logger.warning(
+                        f"Failed to register pending shortcut for {command_id}: {shortcut}"
+                    )
 
             except Exception as e:
                 logger.error(f"Error registering shortcut for {command_id}: {e}")

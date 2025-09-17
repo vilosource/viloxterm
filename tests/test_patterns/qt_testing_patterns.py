@@ -15,12 +15,14 @@ from PySide6.QtWidgets import QDialog, QMessageBox, QPushButton, QWidget
 # PATTERN 1: Signal/Slot Testing
 # ============================================================================
 
+
 class SignalTestPatterns:
     """Reference patterns for testing Qt signals and slots."""
 
     @staticmethod
     def test_signal_emission_pattern(qtbot):
         """Pattern: Test signal emission with arguments."""
+
         class TestWidget(QWidget):
             dataChanged = Signal(str)
 
@@ -40,6 +42,7 @@ class SignalTestPatterns:
     @staticmethod
     def test_multiple_signal_emissions_pattern(qtbot):
         """Pattern: Test multiple signal emissions."""
+
         class TestWidget(QWidget):
             valueChanged = Signal(int)
 
@@ -65,6 +68,7 @@ class SignalTestPatterns:
     @staticmethod
     def test_signal_connection_pattern(qtbot):
         """Pattern: Test signal-slot connections."""
+
         class TestWidget(QWidget):
             triggered = Signal()
 
@@ -95,12 +99,14 @@ class SignalTestPatterns:
 # PATTERN 2: Async and Event Loop Testing
 # ============================================================================
 
+
 class AsyncTestPatterns:
     """Reference patterns for testing async operations and event loop."""
 
     @staticmethod
     def test_wait_until_pattern(qtbot):
         """Pattern: Wait for a condition to be met."""
+
         class AsyncWidget(QWidget):
             def __init__(self):
                 super().__init__()
@@ -120,6 +126,7 @@ class AsyncTestPatterns:
     @staticmethod
     def test_timer_pattern(qtbot):
         """Pattern: Test timer-based functionality."""
+
         class TimerWidget(QWidget):
             def __init__(self):
                 super().__init__()
@@ -156,6 +163,7 @@ class AsyncTestPatterns:
 # PATTERN 3: Widget Hierarchy and Lifecycle
 # ============================================================================
 
+
 class WidgetLifecyclePatterns:
     """Reference patterns for widget hierarchy and lifecycle testing."""
 
@@ -181,6 +189,7 @@ class WidgetLifecyclePatterns:
     @staticmethod
     def test_memory_cleanup_pattern(qtbot):
         """Pattern: Test proper widget cleanup and no memory leaks."""
+
         class TestWidget(QWidget):
             def __init__(self):
                 super().__init__()
@@ -205,12 +214,14 @@ class WidgetLifecyclePatterns:
 # PATTERN 4: Modal Dialog Testing
 # ============================================================================
 
+
 class ModalDialogPatterns:
     """Reference patterns for testing modal dialogs."""
 
     @staticmethod
     def test_dialog_with_timer_pattern(qtbot, monkeypatch):
         """Pattern: Test modal dialog without blocking."""
+
         class MainWidget(QWidget):
             def show_dialog(self) -> bool:
                 dialog = QMessageBox(self)
@@ -230,6 +241,7 @@ class ModalDialogPatterns:
     @staticmethod
     def test_dialog_interaction_pattern(qtbot):
         """Pattern: Test dialog with automated interaction."""
+
         class CustomDialog(QDialog):
             def __init__(self, parent=None):
                 super().__init__(parent)
@@ -257,6 +269,7 @@ class ModalDialogPatterns:
 # ============================================================================
 # PATTERN 5: Focus and Input Testing
 # ============================================================================
+
 
 class FocusInputPatterns:
     """Reference patterns for testing focus and input handling."""
@@ -288,6 +301,7 @@ class FocusInputPatterns:
     @staticmethod
     def test_keyboard_input_pattern(qtbot):
         """Pattern: Test keyboard input handling."""
+
         class InputWidget(QWidget):
             def __init__(self):
                 super().__init__()
@@ -311,6 +325,7 @@ class FocusInputPatterns:
 # ============================================================================
 # Anti-Pattern Examples (What NOT to do)
 # ============================================================================
+
 
 class AntiPatterns:
     """Examples of what NOT to do in Qt tests."""
@@ -365,6 +380,7 @@ class AntiPatterns:
 # Test Quality Validators
 # ============================================================================
 
+
 class TestQualityValidator:
     """Validates test quality and patterns."""
 
@@ -381,44 +397,45 @@ class TestQualityValidator:
 
         # Check for qtbot parameter
         sig = inspect.signature(test_func)
-        if 'qtbot' in sig.parameters:
+        if "qtbot" in sig.parameters:
             info.append("✓ Uses qtbot fixture")
 
             # Check for addWidget
-            if 'qtbot.addWidget' not in source:
+            if "qtbot.addWidget" not in source:
                 warnings.append("⚠️ Creates widgets without qtbot.addWidget()")
 
         # Check for anti-patterns
-        if 'processEvents()' in source:
+        if "processEvents()" in source:
             issues.append("❌ Uses QApplication.processEvents()")
 
-        if 'time.sleep(' in source:
+        if "time.sleep(" in source:
             issues.append("❌ Uses hardcoded time.sleep()")
 
-        if 'assert widget is not None' in source or 'assert widget' in source:
+        if "assert widget is not None" in source or "assert widget" in source:
             warnings.append("⚠️ Uses weak assertions")
 
         # Check for good patterns
-        if 'wait_signal' in source:
+        if "wait_signal" in source:
             info.append("✓ Tests signals properly")
 
-        if 'waitUntil' in source:
+        if "waitUntil" in source:
             info.append("✓ Uses conditional waiting")
 
-        if 'parametrize' in source:
+        if "parametrize" in source:
             info.append("✓ Uses parametrized tests")
 
         return {
             "issues": issues,
             "warnings": warnings,
             "info": info,
-            "score": 100 - (len(issues) * 20) - (len(warnings) * 10)
+            "score": 100 - (len(issues) * 20) - (len(warnings) * 10),
         }
 
 
 # ============================================================================
 # ViloxTerm-Specific Patterns
 # ============================================================================
+
 
 class ViloxTermTestPatterns:
     """Testing patterns specific to ViloxTerm application."""
@@ -488,7 +505,9 @@ if __name__ == "__main__":
     validator = TestQualityValidator()
 
     # Validate a test function
-    result = validator.validate_qt_test_function(SignalTestPatterns.test_signal_emission_pattern)
+    result = validator.validate_qt_test_function(
+        SignalTestPatterns.test_signal_emission_pattern
+    )
     print(f"Test quality score: {result['score']}")
-    for issue in result['issues']:
+    for issue in result["issues"]:
         print(issue)

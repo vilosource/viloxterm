@@ -12,7 +12,7 @@ from core.themes.constants import ThemeColors
 from core.themes.theme import Theme, ThemeInfo
 
 __all__ = [
-    'Theme',
-    'ThemeInfo',
-    'ThemeColors',
+    "Theme",
+    "ThemeInfo",
+    "ThemeColors",
 ]

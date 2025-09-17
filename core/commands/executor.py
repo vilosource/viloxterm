@@ -20,11 +20,13 @@ logger = logging.getLogger(__name__)
 class CommandHistoryEntry:
     """Entry in the command history."""
 
-    def __init__(self,
-                 command_id: str,
-                 context: CommandContext,
-                 result: CommandResult,
-                 timestamp: datetime):
+    def __init__(
+        self,
+        command_id: str,
+        context: CommandContext,
+        result: CommandResult,
+        timestamp: datetime,
+    ):
         """
         Initialize a history entry.
 
@@ -53,9 +55,9 @@ class CommandExecutor:
     undo/redo functionality for commands that support it.
     """
 
-    _instance: Optional['CommandExecutor'] = None
+    _instance: Optional["CommandExecutor"] = None
 
-    def __new__(cls) -> 'CommandExecutor':
+    def __new__(cls) -> "CommandExecutor":
         """Ensure singleton pattern."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -76,10 +78,9 @@ class CommandExecutor:
 
         logger.info("CommandExecutor initialized")
 
-    def execute(self,
-                command_id: str,
-                context: Optional[CommandContext] = None,
-                **kwargs) -> CommandResult:
+    def execute(
+        self, command_id: str, context: Optional[CommandContext] = None, **kwargs
+    ) -> CommandResult:
         """
         Execute a command by ID.
 
@@ -95,8 +96,7 @@ class CommandExecutor:
         if self._executing:
             logger.warning(f"Recursive execution prevented for command: {command_id}")
             return CommandResult(
-                success=False,
-                error="Command execution already in progress"
+                success=False, error="Command execution already in progress"
             )
 
         # Get the command
@@ -104,8 +104,7 @@ class CommandExecutor:
         if not command:
             logger.error(f"Command not found: {command_id}")
             return CommandResult(
-                success=False,
-                error=f"Command not found: {command_id}"
+                success=False, error=f"Command not found: {command_id}"
             )
 
         # Create context if not provided
@@ -119,8 +118,7 @@ class CommandExecutor:
         if not command.enabled:
             logger.warning(f"Command is disabled: {command_id}")
             return CommandResult(
-                success=False,
-                error=f"Command is disabled: {command_id}"
+                success=False, error=f"Command is disabled: {command_id}"
             )
 
         # TODO: Check when clause once context system is implemented
@@ -136,16 +134,21 @@ class CommandExecutor:
             # Validate command parameters if validation is configured
             try:
                 from core.commands.validation import get_validation_spec
+
                 validation_spec = get_validation_spec(command)
                 if validation_spec:
                     logger.debug(f"Validating parameters for command: {command_id}")
                     context = validation_spec.validate_context(context)
-                    logger.debug(f"Parameter validation passed for command: {command_id}")
+                    logger.debug(
+                        f"Parameter validation passed for command: {command_id}"
+                    )
             except Exception as validation_error:
-                logger.warning(f"Parameter validation failed for command {command_id}: {validation_error}")
+                logger.warning(
+                    f"Parameter validation failed for command {command_id}: {validation_error}"
+                )
                 return CommandResult(
                     success=False,
-                    error=f"Parameter validation failed: {str(validation_error)}"
+                    error=f"Parameter validation failed: {str(validation_error)}",
                 )
 
             # Execute the command
@@ -160,7 +163,7 @@ class CommandExecutor:
                     command_id=command_id,
                     context=context,
                     result=result,
-                    timestamp=datetime.now()
+                    timestamp=datetime.now(),
                 )
                 self._history.append(entry)
 
@@ -177,18 +180,18 @@ class CommandExecutor:
             return result
 
         except Exception as e:
-            logger.error(f"Exception executing command {command_id}: {e}", exc_info=True)
+            logger.error(
+                f"Exception executing command {command_id}: {e}", exc_info=True
+            )
             return CommandResult(
-                success=False,
-                error=f"Exception during execution: {str(e)}"
+                success=False, error=f"Exception during execution: {str(e)}"
             )
         finally:
             self._executing = False
 
-    def execute_command(self,
-                       command: Command,
-                       context: Optional[CommandContext] = None,
-                       **kwargs) -> CommandResult:
+    def execute_command(
+        self, command: Command, context: Optional[CommandContext] = None, **kwargs
+    ) -> CommandResult:
         """
         Execute a command directly.
 
@@ -215,10 +218,7 @@ class CommandExecutor:
         """
         if not self._undo_stack:
             logger.info("Nothing to undo")
-            return CommandResult(
-                success=False,
-                error="Nothing to undo"
-            )
+            return CommandResult(success=False, error="Nothing to undo")
 
         entry = self._undo_stack.pop()
         command = command_registry.get_command(entry.command_id)
@@ -228,7 +228,7 @@ class CommandExecutor:
             self._undo_stack.append(entry)  # Put it back
             return CommandResult(
                 success=False,
-                error=f"Command does not support undo: {entry.command_id}"
+                error=f"Command does not support undo: {entry.command_id}",
             )
 
         try:
@@ -251,8 +251,7 @@ class CommandExecutor:
             logger.error(f"Exception during undo: {e}", exc_info=True)
             self._undo_stack.append(entry)  # Put it back
             return CommandResult(
-                success=False,
-                error=f"Exception during undo: {str(e)}"
+                success=False, error=f"Exception during undo: {str(e)}"
             )
 
     def redo(self) -> CommandResult:
@@ -264,10 +263,7 @@ class CommandExecutor:
         """
         if not self._redo_stack:
             logger.info("Nothing to redo")
-            return CommandResult(
-                success=False,
-                error="Nothing to redo"
-            )
+            return CommandResult(success=False, error="Nothing to redo")
 
         entry = self._redo_stack.pop()
         command = command_registry.get_command(entry.command_id)
@@ -276,8 +272,7 @@ class CommandExecutor:
             logger.error(f"Cannot redo command: {entry.command_id}")
             self._redo_stack.append(entry)  # Put it back
             return CommandResult(
-                success=False,
-                error=f"Command not found: {entry.command_id}"
+                success=False, error=f"Command not found: {entry.command_id}"
             )
 
         try:
@@ -303,8 +298,7 @@ class CommandExecutor:
             logger.error(f"Exception during redo: {e}", exc_info=True)
             self._redo_stack.append(entry)  # Put it back
             return CommandResult(
-                success=False,
-                error=f"Exception during redo: {str(e)}"
+                success=False, error=f"Exception during redo: {str(e)}"
             )
 
     def get_history(self, limit: int = 50) -> list[CommandHistoryEntry]:

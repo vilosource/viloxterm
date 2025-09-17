@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class WorkspaceTab:
     """Container for tab data."""
+
     def __init__(self, name: str, split_widget: SplitPaneWidget):
         self.name = name
         self.split_widget = split_widget
@@ -75,7 +76,9 @@ class Workspace(QWidget):
 
         # Enable context menu on tab bar
         self.tab_widget.tabBar().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tab_widget.tabBar().customContextMenuRequested.connect(self.show_tab_context_menu)
+        self.tab_widget.tabBar().customContextMenuRequested.connect(
+            self.show_tab_context_menu
+        )
 
     def _cleanup_split_widget(self, split_widget: SplitPaneWidget):
         """Clean up a split widget and all its AppWidgets before removal."""
@@ -104,6 +107,7 @@ class Workspace(QWidget):
     def _get_close_button_style(self):
         """Get the style for close buttons based on current theme."""
         from ui.icon_manager import get_icon_manager
+
         icon_manager = get_icon_manager()
         is_dark = icon_manager.theme == "dark"
 
@@ -169,13 +173,12 @@ class Workspace(QWidget):
         close_button.clicked.connect(lambda: self.close_tab(index, show_message=True))
 
         # Set as tab button
-        self.tab_widget.tabBar().setTabButton(index,
-                                              QTabBar.RightSide,
-                                              close_button)
+        self.tab_widget.tabBar().setTabButton(index, QTabBar.RightSide, close_button)
 
     def update_close_button_styles(self):
         """Update all tab close button styles for current theme."""
         from PySide6.QtWidgets import QTabBar, QToolButton
+
         style = self._get_close_button_style()
 
         # Update all existing close buttons
@@ -186,9 +189,7 @@ class Workspace(QWidget):
 
     def add_editor_tab(self, name: str = "Editor") -> int:
         """Add a new editor tab with split pane widget."""
-        split_widget = SplitPaneWidget(
-            initial_widget_type=WidgetType.TEXT_EDITOR
-        )
+        split_widget = SplitPaneWidget(initial_widget_type=WidgetType.TEXT_EDITOR)
 
         # Connect split widget signals
         split_widget.pane_added.connect(
@@ -221,9 +222,7 @@ class Workspace(QWidget):
 
     def add_terminal_tab(self, name: str = "Terminal") -> int:
         """Add a new terminal tab."""
-        split_widget = SplitPaneWidget(
-            initial_widget_type=WidgetType.TERMINAL
-        )
+        split_widget = SplitPaneWidget(initial_widget_type=WidgetType.TERMINAL)
 
         # Connect signals
         split_widget.pane_added.connect(
@@ -266,9 +265,7 @@ class Workspace(QWidget):
 
     def add_output_tab(self, name: str = "Output") -> int:
         """Add a new output tab."""
-        split_widget = SplitPaneWidget(
-            initial_widget_type=WidgetType.OUTPUT
-        )
+        split_widget = SplitPaneWidget(initial_widget_type=WidgetType.OUTPUT)
 
         # Connect signals
         split_widget.pane_added.connect(
@@ -316,7 +313,7 @@ class Workspace(QWidget):
             # Create SplitPaneWidget with the specified widget type AND widget_id
             split_widget = SplitPaneWidget(
                 initial_widget_type=widget_type,
-                initial_widget_id=widget_id  # Pass the widget_id
+                initial_widget_id=widget_id,  # Pass the widget_id
             )
 
             # Connect signals
@@ -338,7 +335,7 @@ class Workspace(QWidget):
 
             # Store tab data with widget_id in metadata
             tab_data = WorkspaceTab(name, split_widget)
-            tab_data.metadata['widget_id'] = widget_id  # Store the widget_id
+            tab_data.metadata["widget_id"] = widget_id  # Store the widget_id
             self.tabs[index] = tab_data
 
             # Switch to new tab
@@ -359,9 +356,7 @@ class Workspace(QWidget):
         if self.tab_widget.count() <= 1:
             if show_message:
                 QMessageBox.information(
-                    self,
-                    "Cannot Close Tab",
-                    "Cannot close the last remaining tab."
+                    self, "Cannot Close Tab", "Cannot close the last remaining tab."
                 )
             return
 
@@ -371,8 +366,8 @@ class Workspace(QWidget):
 
             # Get widget_id if it exists in metadata
             widget_id = None
-            if hasattr(tab_data, 'metadata') and 'widget_id' in tab_data.metadata:
-                widget_id = tab_data.metadata['widget_id']
+            if hasattr(tab_data, "metadata") and "widget_id" in tab_data.metadata:
+                widget_id = tab_data.metadata["widget_id"]
 
             # Clean up the split widget's terminals before removing
             if tab_data.split_widget:
@@ -387,12 +382,13 @@ class Workspace(QWidget):
             # Notify WorkspaceService to clean up registry using commands
             # This maintains proper architectural flow: UI → Command → Service
             from core.commands.executor import execute_command
+
             try:
                 # Update registry after tab close using proper command
                 result = execute_command(
                     "workspace.updateRegistryAfterClose",
                     closed_index=index,
-                    widget_id=widget_id
+                    widget_id=widget_id,
                 )
                 if not result.success:
                     logger.warning(f"Failed to update widget registry: {result.error}")
@@ -457,13 +453,13 @@ class Workspace(QWidget):
 
     def complete_tab_rename(self, index: int, new_name: str):
         """Complete tab rename with validation."""
-        if not hasattr(self, 'rename_editor'):
+        if not hasattr(self, "rename_editor"):
             return
 
         # Clean up the rename editor
         self.rename_editor.hide()
         self.rename_editor.deleteLater()
-        delattr(self, 'rename_editor')
+        delattr(self, "rename_editor")
 
         # Validate and apply new name
         new_name = new_name.strip()
@@ -473,13 +469,13 @@ class Workspace(QWidget):
 
     def cancel_tab_rename(self):
         """Cancel tab rename."""
-        if not hasattr(self, 'rename_editor'):
+        if not hasattr(self, "rename_editor"):
             return
 
         # Clean up the rename editor
         self.rename_editor.hide()
         self.rename_editor.deleteLater()
-        delattr(self, 'rename_editor')
+        delattr(self, "rename_editor")
 
     def on_pane_added(self, tab_name: str, pane_id: str):
         """Handle pane added in a tab."""
@@ -503,19 +499,29 @@ class Workspace(QWidget):
 
         # Duplicate tab action
         duplicate_action = QAction("Duplicate Tab", self)
-        duplicate_action.triggered.connect(lambda: execute_command("workbench.action.duplicateTab", tab_index=index))
+        duplicate_action.triggered.connect(
+            lambda: execute_command("workbench.action.duplicateTab", tab_index=index)
+        )
         menu.addAction(duplicate_action)
 
         # Close other tabs
         if self.tab_widget.count() > 1:
             close_others_action = QAction("Close Other Tabs", self)
-            close_others_action.triggered.connect(lambda: execute_command("workbench.action.closeOtherTabs", tab_index=index))
+            close_others_action.triggered.connect(
+                lambda: execute_command(
+                    "workbench.action.closeOtherTabs", tab_index=index
+                )
+            )
             menu.addAction(close_others_action)
 
         # Close tabs to the right
         if index < self.tab_widget.count() - 1:
             close_right_action = QAction("Close Tabs to the Right", self)
-            close_right_action.triggered.connect(lambda: execute_command("workbench.action.closeTabsToRight", tab_index=index))
+            close_right_action.triggered.connect(
+                lambda: execute_command(
+                    "workbench.action.closeTabsToRight", tab_index=index
+                )
+            )
             menu.addAction(close_right_action)
 
         menu.addSeparator()
@@ -531,7 +537,9 @@ class Workspace(QWidget):
 
         # Close tab
         close_action = QAction("Close Tab", self)
-        close_action.triggered.connect(lambda: execute_command("file.closeTab", tab_index=index))
+        close_action.triggered.connect(
+            lambda: execute_command("file.closeTab", tab_index=index)
+        )
         menu.addAction(close_action)
 
         menu.exec(self.tab_widget.tabBar().mapToGlobal(pos))
@@ -584,7 +592,7 @@ class Workspace(QWidget):
                     QMessageBox.information(
                         self,
                         "Cannot Close Pane",
-                        "Cannot close the last remaining pane in a tab."
+                        "Cannot close the last remaining pane in a tab.",
                     )
                 return False
         return False
@@ -600,7 +608,7 @@ class Workspace(QWidget):
                 "index": index,
                 "pane_count": widget.get_pane_count(),
                 "active_pane": widget.active_pane_id,
-                "all_panes": widget.get_all_pane_ids()
+                "all_panes": widget.get_all_pane_ids(),
             }
         return None
 
@@ -612,17 +620,14 @@ class Workspace(QWidget):
 
     def save_state(self) -> dict:
         """Save workspace state."""
-        state = {
-            "current_tab": self.tab_widget.currentIndex(),
-            "tabs": []
-        }
+        state = {"current_tab": self.tab_widget.currentIndex(), "tabs": []}
 
         for i in range(self.tab_widget.count()):
             if i in self.tabs:
                 tab_data = self.tabs[i]
                 tab_state = {
                     "name": tab_data.name,
-                    "split_state": tab_data.split_widget.get_state()
+                    "split_state": tab_data.split_widget.get_state(),
                 }
                 state["tabs"].append(tab_state)
 
@@ -644,11 +649,17 @@ class Workspace(QWidget):
                 # Restore split state
                 if index in self.tabs and "split_state" in tab_state:
                     try:
-                        success = self.tabs[index].split_widget.set_state(tab_state["split_state"])
+                        success = self.tabs[index].split_widget.set_state(
+                            tab_state["split_state"]
+                        )
                         if not success:
-                            logger.warning(f"Failed to restore split state for tab: {tab_state.get('name', 'Unknown')}")
+                            logger.warning(
+                                f"Failed to restore split state for tab: {tab_state.get('name', 'Unknown')}"
+                            )
                     except Exception as e:
-                        logger.error(f"Error restoring split state for tab {tab_state.get('name', 'Unknown')}: {e}")
+                        logger.error(
+                            f"Error restoring split state for tab {tab_state.get('name', 'Unknown')}: {e}"
+                        )
 
         # Restore current tab
         if "current_tab" in state:
@@ -680,6 +691,7 @@ class Workspace(QWidget):
         if result.success:
             # For now, use icon manager for theme detection (consistent with other methods in this file)
             from ui.icon_manager import get_icon_manager
+
             icon_manager = get_icon_manager()
             is_dark = icon_manager.theme == "dark"
 
@@ -743,6 +755,7 @@ def get_menu_stylesheet() -> str:
 
     # Fallback to basic menu styling
     from ui.icon_manager import get_icon_manager
+
     icon_manager = get_icon_manager()
     is_dark = icon_manager.theme == "dark"
 

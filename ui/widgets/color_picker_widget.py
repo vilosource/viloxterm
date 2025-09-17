@@ -37,10 +37,13 @@ class ColorPickerWidget(QWidget):
     # Emitted when color changes (value, is_preview)
     color_changed = Signal(str, bool)
 
-    def __init__(self, initial_color: str = "#000000",
-                 label: Optional[str] = None,
-                 show_hex_input: bool = True,
-                 parent: Optional[QWidget] = None):
+    def __init__(
+        self,
+        initial_color: str = "#000000",
+        label: Optional[str] = None,
+        show_hex_input: bool = True,
+        parent: Optional[QWidget] = None,
+    ):
         """
         Initialize color picker widget.
 
@@ -80,7 +83,8 @@ class ColorPickerWidget(QWidget):
         self._color_button.setToolTip("Click to choose color")
 
         # Style the button with border
-        self._color_button.setStyleSheet("""
+        self._color_button.setStyleSheet(
+            """
             QPushButton {
                 border: 1px solid #3c3c3c;
                 border-radius: 4px;
@@ -88,7 +92,8 @@ class ColorPickerWidget(QWidget):
             QPushButton:hover {
                 border: 1px solid #007acc;
             }
-        """)
+        """
+        )
 
         layout.addWidget(self._color_button)
 
@@ -99,9 +104,7 @@ class ColorPickerWidget(QWidget):
             self._hex_input.setPlaceholderText("#000000")
 
             # Hex color validator (# + 6 hex digits)
-            hex_validator = QRegularExpressionValidator(
-                r"^#[0-9A-Fa-f]{6}$", self
-            )
+            hex_validator = QRegularExpressionValidator(r"^#[0-9A-Fa-f]{6}$", self)
             self._hex_input.setValidator(hex_validator)
 
             # Connect signals
@@ -135,13 +138,14 @@ class ColorPickerWidget(QWidget):
         """Update the color button's background."""
         # Create contrasting border based on luminance
         color = QColor(color_str)
-        luminance = (0.299 * color.red() +
-                    0.587 * color.green() +
-                    0.114 * color.blue()) / 255
+        luminance = (
+            0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()
+        ) / 255
 
         border_color = "#ffffff" if luminance < 0.5 else "#000000"
 
-        self._color_button.setStyleSheet(f"""
+        self._color_button.setStyleSheet(
+            f"""
             QPushButton {{
                 background-color: {color_str};
                 border: 1px solid {border_color};
@@ -150,7 +154,8 @@ class ColorPickerWidget(QWidget):
             QPushButton:hover {{
                 border: 2px solid #007acc;
             }}
-        """)
+        """
+        )
 
     def _open_color_dialog(self):
         """Open color dialog for selection."""
@@ -190,6 +195,7 @@ class ColorPickerWidget(QWidget):
                     self.color_changed.emit(text, True)  # Preview while typing
             except (TypeError, ValueError) as e:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.debug(f"Invalid color format '{text}': {e}")
                 # Invalid color, ignore
@@ -209,6 +215,7 @@ class ColorPickerWidget(QWidget):
                     self._hex_input.setText(self._color)
             except (TypeError, ValueError) as e:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.debug(f"Invalid color format '{text}': {e}")
                 # Revert to current color
@@ -226,7 +233,7 @@ class ColorPickerWidget(QWidget):
             result = execute_command("theme.getCurrentTheme")
             theme = result.value.get("theme") if result.success else None
 
-            if theme and hasattr(theme, 'colors'):
+            if theme and hasattr(theme, "colors"):
                 colors = theme.colors
 
                 # Add up to 16 custom colors (QColorDialog limit)
@@ -239,6 +246,7 @@ class ColorPickerWidget(QWidget):
                             custom_index += 1
                     except (TypeError, ValueError) as e:
                         import logging
+
                         logger = logging.getLogger(__name__)
                         logger.debug(f"Invalid color value '{color_value}': {e}")
                         # Skip invalid colors
@@ -279,9 +287,14 @@ class ColorPickerField(QWidget):
 
     color_changed = Signal(str, str, bool)  # key, value, is_preview
 
-    def __init__(self, key: str, label: str, initial_color: str = "#000000",
-                 description: Optional[str] = None,
-                 parent: Optional[QWidget] = None):
+    def __init__(
+        self,
+        key: str,
+        label: str,
+        initial_color: str = "#000000",
+        description: Optional[str] = None,
+        parent: Optional[QWidget] = None,
+    ):
         """
         Initialize color picker field.
 
@@ -314,8 +327,7 @@ class ColorPickerField(QWidget):
 
         # Color picker
         self._picker = ColorPickerWidget(
-            initial_color=initial_color,
-            show_hex_input=True
+            initial_color=initial_color, show_hex_input=True
         )
         self._picker.color_changed.connect(self._on_color_changed)
         layout.addWidget(self._picker)

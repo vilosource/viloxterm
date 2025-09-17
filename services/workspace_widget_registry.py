@@ -69,7 +69,9 @@ class WorkspaceWidgetRegistry:
         logger.warning(f"Widget {widget_id} not found in registry")
         return False
 
-    def update_registry_after_tab_close(self, closed_index: int, widget_id: Optional[str] = None) -> int:
+    def update_registry_after_tab_close(
+        self, closed_index: int, widget_id: Optional[str] = None
+    ) -> int:
         """
         Update registry indices after a tab is closed.
 

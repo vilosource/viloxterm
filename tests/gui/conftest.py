@@ -12,8 +12,10 @@ def mock_icon_manager():
     """Mock icon manager for GUI tests to avoid resource loading issues."""
     from PySide6.QtGui import QIcon
 
-    with patch('ui.activity_bar.get_icon_manager') as mock_activity_bar, \
-         patch('ui.main_window.get_icon_manager') as mock_main_window:
+    with (
+        patch("ui.activity_bar.get_icon_manager") as mock_activity_bar,
+        patch("ui.main_window.get_icon_manager") as mock_main_window,
+    ):
 
         mock_manager = Mock()
         mock_manager.theme = "light"
@@ -76,6 +78,7 @@ def wait_for_condition(qtbot, condition, timeout=5000, interval=100):
         timeout: Maximum wait time in milliseconds
         interval: Check interval in milliseconds
     """
+
     def check_condition():
         try:
             return condition()
@@ -107,5 +110,6 @@ def simulate_key_sequence(qtbot, widget, key_sequence):
 def get_widget_center(widget):
     """Get the center point of a widget for clicking."""
     from PySide6.QtCore import QPoint
+
     rect = widget.geometry()
     return QPoint(rect.width() // 2, rect.height() // 2)

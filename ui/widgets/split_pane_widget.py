@@ -74,17 +74,23 @@ class PaneContent(QWidget):
 
         # Check if we should show header for this widget type
         config = widget_registry.get_config(self.leaf_node.widget_type)
-        logger.debug(f"PaneContent setup for {self.leaf_node.id}: widget_type={self.leaf_node.widget_type}, config={config}")
+        logger.debug(
+            f"PaneContent setup for {self.leaf_node.id}: widget_type={self.leaf_node.widget_type}, config={config}"
+        )
         if config:
-            logger.debug(f"  show_header={config.show_header}, allow_type_change={config.allow_type_change}")
+            logger.debug(
+                f"  show_header={config.show_header}, allow_type_change={config.allow_type_change}"
+            )
 
         if config and config.show_header:
             # Create header bar
             self.header_bar = PaneHeaderBar(
                 self.leaf_node.id,
-                show_type_menu=config.allow_type_change if config else False
+                show_type_menu=config.allow_type_change if config else False,
             )
-            logger.debug(f"Created header bar with show_type_menu={config.allow_type_change}")
+            logger.debug(
+                f"Created header bar with show_type_menu={config.allow_type_change}"
+            )
 
             # Connect header signals to request actions through AppWidget
             self.header_bar.split_horizontal_requested.connect(
@@ -93,10 +99,8 @@ class PaneContent(QWidget):
             self.header_bar.split_vertical_requested.connect(
                 lambda: self.request_split("vertical")
             )
-            self.header_bar.close_requested.connect(
-                lambda: self.request_close()
-            )
-            if hasattr(self.header_bar, 'type_menu_requested'):
+            self.header_bar.close_requested.connect(lambda: self.request_close())
+            if hasattr(self.header_bar, "type_menu_requested"):
                 self.header_bar.type_menu_requested.connect(self.show_type_menu)
 
             layout.addWidget(self.header_bar)
@@ -104,20 +108,29 @@ class PaneContent(QWidget):
         # Add the AppWidget from the model
         if self.leaf_node.app_widget:
             layout.addWidget(self.leaf_node.app_widget)
-            logger.debug(f"Added AppWidget {self.leaf_node.app_widget.widget_id} to PaneContent")
+            logger.debug(
+                f"Added AppWidget {self.leaf_node.app_widget.widget_id} to PaneContent"
+            )
         else:
-            logger.error(f"No AppWidget in leaf node {self.leaf_node.id} of type {self.leaf_node.widget_type}")
+            logger.error(
+                f"No AppWidget in leaf node {self.leaf_node.id} of type {self.leaf_node.widget_type}"
+            )
             # Create a placeholder to show the issue visually
             from PySide6.QtWidgets import QLabel
-            placeholder = QLabel(f"Widget Loading Failed\nNode: {self.leaf_node.id}\nType: {self.leaf_node.widget_type}")
-            placeholder.setStyleSheet("""
+
+            placeholder = QLabel(
+                f"Widget Loading Failed\nNode: {self.leaf_node.id}\nType: {self.leaf_node.widget_type}"
+            )
+            placeholder.setStyleSheet(
+                """
                 QLabel {
                     background-color: #3c3c3c;
                     color: #ff6b6b;
                     padding: 20px;
                     font-family: monospace;
                 }
-            """)
+            """
+            )
             placeholder.setAlignment(Qt.AlignCenter)
             layout.addWidget(placeholder)
 
@@ -127,17 +140,16 @@ class PaneContent(QWidget):
     def request_split(self, orientation: str):
         """Request a split action through the AppWidget."""
         if self.leaf_node.app_widget:
-            self.leaf_node.app_widget.request_action('split', {
-                'orientation': orientation,
-                'leaf_id': self.leaf_node.id
-            })
+            self.leaf_node.app_widget.request_action(
+                "split", {"orientation": orientation, "leaf_id": self.leaf_node.id}
+            )
 
     def request_close(self):
         """Request a close action through the AppWidget."""
         if self.leaf_node.app_widget:
-            self.leaf_node.app_widget.request_action('close', {
-                'leaf_id': self.leaf_node.id
-            })
+            self.leaf_node.app_widget.request_action(
+                "close", {"leaf_id": self.leaf_node.id}
+            )
 
     def mousePressEvent(self, event):
         """Handle mouse press to focus this pane."""
@@ -163,7 +175,8 @@ class PaneContent(QWidget):
 
         # Show our custom menu
         menu = QMenu(self)
-        menu.setStyleSheet("""
+        menu.setStyleSheet(
+            """
             QMenu {
                 background-color: #2d2d30;
                 color: #cccccc;
@@ -172,22 +185,31 @@ class PaneContent(QWidget):
             QMenu::item:selected {
                 background-color: #094771;
             }
-        """)
+        """
+        )
 
         # If no header bar, add split/close actions to context menu
         if not self.header_bar:
             split_h = QAction("Split Horizontal →", self)
-            split_h.triggered.connect(lambda: execute_command("workbench.action.splitPaneHorizontal", pane=self))
+            split_h.triggered.connect(
+                lambda: execute_command(
+                    "workbench.action.splitPaneHorizontal", pane=self
+                )
+            )
             menu.addAction(split_h)
 
             split_v = QAction("Split Vertical ↓", self)
-            split_v.triggered.connect(lambda: execute_command("workbench.action.splitPaneVertical", pane=self))
+            split_v.triggered.connect(
+                lambda: execute_command("workbench.action.splitPaneVertical", pane=self)
+            )
             menu.addAction(split_v)
 
             menu.addSeparator()
 
             close = QAction("Close Pane", self)
-            close.triggered.connect(lambda: execute_command("workbench.action.closePane", pane=self))
+            close.triggered.connect(
+                lambda: execute_command("workbench.action.closePane", pane=self)
+            )
             menu.addAction(close)
 
         # Always allow type change from context menu if configured
@@ -212,7 +234,8 @@ class PaneContent(QWidget):
     def show_type_menu(self):
         """Show menu for changing widget type."""
         menu = QMenu(self)
-        menu.setStyleSheet("""
+        menu.setStyleSheet(
+            """
             QMenu {
                 background-color: #2d2d30;
                 color: #cccccc;
@@ -221,7 +244,8 @@ class PaneContent(QWidget):
             QMenu::item:selected {
                 background-color: #094771;
             }
-        """)
+        """
+        )
 
         for widget_type in WidgetType:
             action = QAction(widget_type.value.replace("_", " ").title(), self)
@@ -234,20 +258,21 @@ class PaneContent(QWidget):
             menu.addAction(action)
 
         # Show menu below the type button
-        if self.header_bar and hasattr(self.header_bar, 'type_button'):
-            menu.exec(self.header_bar.type_button.mapToGlobal(
-                self.header_bar.type_button.rect().bottomLeft()
-            ))
+        if self.header_bar and hasattr(self.header_bar, "type_button"):
+            menu.exec(
+                self.header_bar.type_button.mapToGlobal(
+                    self.header_bar.type_button.rect().bottomLeft()
+                )
+            )
         else:
             menu.exec(self.mapToGlobal(self.rect().topLeft()))
 
     def change_widget_type(self, new_type: WidgetType):
         """Request widget type change through AppWidget."""
         if self.leaf_node.app_widget:
-            self.leaf_node.app_widget.request_action('change_type', {
-                'leaf_id': self.leaf_node.id,
-                'new_type': new_type
-            })
+            self.leaf_node.app_widget.request_action(
+                "change_type", {"leaf_id": self.leaf_node.id, "new_type": new_type}
+            )
 
     def set_active(self, active: bool):
         """Set the active state of this pane."""
@@ -259,17 +284,21 @@ class PaneContent(QWidget):
 
         # Update border for visual feedback
         if active:
-            self.setStyleSheet("""
+            self.setStyleSheet(
+                """
                 PaneContent {
                     border: 2px solid #007ACC;
                 }
-            """)
+            """
+            )
         else:
-            self.setStyleSheet("""
+            self.setStyleSheet(
+                """
                 PaneContent {
                     border: 1px solid #3c3c3c;
                 }
-            """)
+            """
+            )
 
 
 class SplitPaneWidget(QWidget):
@@ -289,8 +318,12 @@ class SplitPaneWidget(QWidget):
     active_pane_changed = Signal(str)  # pane_id
     layout_changed = Signal()
 
-    def __init__(self, initial_widget_type: WidgetType = WidgetType.TEXT_EDITOR,
-                 initial_widget_id: Optional[str] = None, parent=None):
+    def __init__(
+        self,
+        initial_widget_type: WidgetType = WidgetType.TEXT_EDITOR,
+        initial_widget_id: Optional[str] = None,
+        parent=None,
+    ):
         """
         Initialize the split pane widget.
 
@@ -338,11 +371,13 @@ class SplitPaneWidget(QWidget):
     def setup_ui(self):
         """Initialize the UI."""
         # Set dark background to prevent white flash
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             SplitPaneWidget {
                 background-color: #1e1e1e;
             }
-        """)
+        """
+        )
         self.setAutoFillBackground(True)
 
         self.layout = QVBoxLayout(self)
@@ -358,15 +393,17 @@ class SplitPaneWidget(QWidget):
 
     def connect_model_signals(self):
         """Connect signals from all AppWidgets in the model to our handlers."""
+
         def connect_widget(leaf: LeafNode):
             if leaf.app_widget:
                 # Clean slate - disconnect all existing connections silently
                 try:
                     # Disconnect action_requested signal if it exists
-                    if hasattr(leaf.app_widget, 'action_requested'):
+                    if hasattr(leaf.app_widget, "action_requested"):
                         signal = leaf.app_widget.action_requested
                         # Check if the signal actually has receivers before disconnecting
                         import warnings
+
                         with warnings.catch_warnings():
                             warnings.simplefilter("ignore", RuntimeWarning)
                             signal.disconnect()
@@ -375,10 +412,11 @@ class SplitPaneWidget(QWidget):
 
                 try:
                     # Disconnect focus_requested signal if it exists
-                    if hasattr(leaf.app_widget, 'focus_requested'):
+                    if hasattr(leaf.app_widget, "focus_requested"):
                         signal = leaf.app_widget.focus_requested
                         # Check if the signal actually has receivers before disconnecting
                         import warnings
+
                         with warnings.catch_warnings():
                             warnings.simplefilter("ignore", RuntimeWarning)
                             signal.disconnect()
@@ -387,7 +425,9 @@ class SplitPaneWidget(QWidget):
 
                 # Connect to our handlers - use default arguments to capture current values
                 leaf.app_widget.action_requested.connect(
-                    lambda action, params, leaf_id=leaf.id: self.handle_widget_action(leaf_id, action, params)
+                    lambda action, params, leaf_id=leaf.id: self.handle_widget_action(
+                        leaf_id, action, params
+                    )
                 )
                 leaf.app_widget.focus_requested.connect(
                     lambda leaf_id=leaf.id: self.set_active_pane(leaf_id)
@@ -428,10 +468,12 @@ class SplitPaneWidget(QWidget):
             # Clean up old view wrappers (NOT the AppWidgets!)
             # IMPORTANT: Detach AppWidgets first to prevent them from being deleted
             for wrapper in self.pane_wrappers.values():
-                if hasattr(wrapper, 'leaf_node') and wrapper.leaf_node.app_widget:
+                if hasattr(wrapper, "leaf_node") and wrapper.leaf_node.app_widget:
                     # Detach the AppWidget from the wrapper before deleting wrapper
                     wrapper.leaf_node.app_widget.setParent(None)
-                    logger.debug(f"Detached AppWidget {wrapper.leaf_node.app_widget.widget_id} from wrapper before deletion")
+                    logger.debug(
+                        f"Detached AppWidget {wrapper.leaf_node.app_widget.widget_id} from wrapper before deletion"
+                    )
                 wrapper.deleteLater()
             self.pane_wrappers.clear()
 
@@ -470,7 +512,9 @@ class SplitPaneWidget(QWidget):
             original_pane_id: ID of the pane that was split (now first child of split)
             new_pane_id: ID of the newly created pane (second child of split)
         """
-        logger.debug(f"Incremental update for split: {original_pane_id} -> {new_pane_id}")
+        logger.debug(
+            f"Incremental update for split: {original_pane_id} -> {new_pane_id}"
+        )
 
         # Disable updates during the incremental change
         self.setUpdatesEnabled(False)
@@ -478,35 +522,45 @@ class SplitPaneWidget(QWidget):
             # Find the widget that needs to be replaced (the original pane that was split)
             old_wrapper = self.pane_wrappers.get(original_pane_id)
             if not old_wrapper:
-                logger.warning(f"Could not find wrapper for {original_pane_id}, falling back to full refresh")
+                logger.warning(
+                    f"Could not find wrapper for {original_pane_id}, falling back to full refresh"
+                )
                 self.refresh_view()
                 return
 
             # Find the parent widget of the old wrapper
             parent_widget = old_wrapper.parent()
             if not parent_widget:
-                logger.warning("Old wrapper has no parent, falling back to full refresh")
+                logger.warning(
+                    "Old wrapper has no parent, falling back to full refresh"
+                )
                 self.refresh_view()
                 return
 
             # Find the original leaf node in the model
             original_leaf = self.model.find_leaf(original_pane_id)
             if not original_leaf or not original_leaf.parent:
-                logger.warning(f"Could not find original leaf or its parent for {original_pane_id}, falling back to full refresh")
+                logger.warning(
+                    f"Could not find original leaf or its parent for {original_pane_id}, falling back to full refresh"
+                )
                 self.refresh_view()
                 return
 
             # The parent of the original leaf should now be the split node
             split_node = original_leaf.parent
             if not isinstance(split_node, SplitNode):
-                logger.warning(f"Parent of {original_pane_id} is not a SplitNode, falling back to full refresh")
+                logger.warning(
+                    f"Parent of {original_pane_id} is not a SplitNode, falling back to full refresh"
+                )
                 self.refresh_view()
                 return
 
             # Create the new splitter widget for this split node
             new_splitter = self.render_node(split_node)
             if not new_splitter:
-                logger.warning("Failed to render split node, falling back to full refresh")
+                logger.warning(
+                    "Failed to render split node, falling back to full refresh"
+                )
                 self.refresh_view()
                 return
 
@@ -567,7 +621,9 @@ class SplitPaneWidget(QWidget):
         # Emit signal
         self.layout_changed.emit()
 
-    def _find_node_by_id(self, node: Optional[Union[LeafNode, SplitNode]], node_id: str) -> Optional[Union[LeafNode, SplitNode]]:
+    def _find_node_by_id(
+        self, node: Optional[Union[LeafNode, SplitNode]], node_id: str
+    ) -> Optional[Union[LeafNode, SplitNode]]:
         """
         Recursively find a node in the tree by its ID.
 
@@ -593,7 +649,9 @@ class SplitPaneWidget(QWidget):
 
         return None
 
-    def render_node(self, node: Optional[Union[LeafNode, SplitNode]]) -> Optional[QWidget]:
+    def render_node(
+        self, node: Optional[Union[LeafNode, SplitNode]]
+    ) -> Optional[QWidget]:
         """
         Render a node from the model as Qt widgets.
 
@@ -623,12 +681,18 @@ class SplitPaneWidget(QWidget):
 
         elif isinstance(node, SplitNode):
             # Get splitter from pool or create new one
-            orientation = Qt.Horizontal if node.orientation == "horizontal" else Qt.Vertical
+            orientation = (
+                Qt.Horizontal if node.orientation == "horizontal" else Qt.Vertical
+            )
             splitter = self.widget_pool.acquire_splitter(orientation)
 
             # Pool already configures optimal settings, but ensure they're set
-            splitter.setOpaqueResize(True)  # Real-time resize (actually reduces flashing)
-            splitter.setChildrenCollapsible(False)  # Prevent child widgets from collapsing
+            splitter.setOpaqueResize(
+                True
+            )  # Real-time resize (actually reduces flashing)
+            splitter.setChildrenCollapsible(
+                False
+            )  # Prevent child widgets from collapsing
 
             # Apply styling
             splitter.setStyleSheet(self._get_splitter_stylesheet())
@@ -651,9 +715,7 @@ class SplitPaneWidget(QWidget):
                 splitter.setSizes([first_size, total - first_size])
 
             # Track ratio changes
-            splitter.splitterMoved.connect(
-                lambda: self.update_ratio(node, splitter)
-            )
+            splitter.splitterMoved.connect(lambda: self.update_ratio(node, splitter))
 
             self.splitters[node.id] = splitter
             return splitter
@@ -678,7 +740,9 @@ class SplitPaneWidget(QWidget):
                     if current == wrapper or wrapper.isAncestorOf(current):
                         # Found which pane got focus - update active pane if different
                         if pane_id != self.model.get_active_pane_id():
-                            logger.debug(f"Focus detected on pane {pane_id} via event filter")
+                            logger.debug(
+                                f"Focus detected on pane {pane_id} via event filter"
+                            )
                             self.set_active_pane(pane_id)
                         return super().eventFilter(obj, event)
                 current = current.parent()
@@ -719,10 +783,7 @@ class SplitPaneWidget(QWidget):
         for pane_id, wrapper in self.pane_wrappers.items():
             if wrapper.header_bar:
                 number = self.model.get_pane_index(pane_id)
-                wrapper.header_bar.set_pane_number(
-                    number,
-                    self.model.show_pane_numbers
-                )
+                wrapper.header_bar.set_pane_number(number, self.model.show_pane_numbers)
 
     # Public API methods that delegate to model
 
@@ -752,10 +813,12 @@ class SplitPaneWidget(QWidget):
         # Check if this is the last pane - if so, close the tab instead
         # The root is a LeafNode when there's only one pane
         from ui.widgets.split_pane_model import LeafNode
+
         if isinstance(self.model.root, LeafNode):
             logger.info("Last pane in tab - requesting tab close")
             # Use command to close the tab
             from core.commands.executor import execute_command
+
             execute_command("file.closeTab")
         else:
             # Close the pane normally
@@ -786,8 +849,10 @@ class SplitPaneWidget(QWidget):
         try:
             # Call the focus_widget method on the AppWidget
             # It will handle readiness checking internally
-            if leaf.app_widget and hasattr(leaf.app_widget, 'focus_widget'):
-                logger.debug(f"Calling focus_widget on {leaf.app_widget.__class__.__name__} for pane {pane_id}")
+            if leaf.app_widget and hasattr(leaf.app_widget, "focus_widget"):
+                logger.debug(
+                    f"Calling focus_widget on {leaf.app_widget.__class__.__name__} for pane {pane_id}"
+                )
                 success = leaf.app_widget.focus_widget()
                 if success:
                     logger.info(f"Keyboard focus set to pane {pane_id} widget")
@@ -813,7 +878,7 @@ class SplitPaneWidget(QWidget):
         Uses QTimer to ensure the widget tree is fully rendered before setting focus.
         """
         # Prevent multiple simultaneous focus restorations
-        if hasattr(self, '_restoring_focus') and self._restoring_focus:
+        if hasattr(self, "_restoring_focus") and self._restoring_focus:
             return
 
         active_id = self.model.get_active_pane_id()
@@ -832,7 +897,7 @@ class SplitPaneWidget(QWidget):
         def set_focus():
             try:
                 # Call the focus_widget method on the AppWidget
-                if leaf.app_widget and hasattr(leaf.app_widget, 'focus_widget'):
+                if leaf.app_widget and hasattr(leaf.app_widget, "focus_widget"):
                     leaf.app_widget.focus_widget()
                     logger.debug(f"Focus restored to pane {active_id} after split")
             except Exception as e:

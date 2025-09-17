@@ -27,8 +27,11 @@ class FramelessWindow(MainWindow):
         """Initialize frameless window."""
         # Set frameless flag before parent init
         super().__init__()
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowSystemMenuHint |
-                          Qt.WindowMinMaxButtonsHint)
+        self.setWindowFlags(
+            Qt.FramelessWindowHint
+            | Qt.WindowSystemMenuHint
+            | Qt.WindowMinMaxButtonsHint
+        )
 
         # Enable mouse tracking for resize detection
         self.setMouseTracking(True)
@@ -130,7 +133,7 @@ class FramelessWindow(MainWindow):
     def setWindowTitle(self, title):
         """Override to update custom title bar."""
         super().setWindowTitle(title)
-        if hasattr(self, 'custom_title_bar'):
+        if hasattr(self, "custom_title_bar"):
             self.custom_title_bar.set_title(title)
 
     def get_resize_direction(self, pos):
@@ -147,7 +150,10 @@ class FramelessWindow(MainWindow):
             return Qt.Edge.TopEdge | Qt.Edge.RightEdge
         elif x <= self.RESIZE_BORDER and y >= rect.height() - self.RESIZE_BORDER:
             return Qt.Edge.BottomEdge | Qt.Edge.LeftEdge
-        elif x >= rect.width() - self.RESIZE_BORDER and y >= rect.height() - self.RESIZE_BORDER:
+        elif (
+            x >= rect.width() - self.RESIZE_BORDER
+            and y >= rect.height() - self.RESIZE_BORDER
+        ):
             return Qt.Edge.BottomEdge | Qt.Edge.RightEdge
 
         # Check edges
@@ -170,9 +176,13 @@ class FramelessWindow(MainWindow):
             self.setCursor(Qt.SizeHorCursor)
         elif direction == Qt.Edge.TopEdge or direction == Qt.Edge.BottomEdge:
             self.setCursor(Qt.SizeVerCursor)
-        elif direction == (Qt.Edge.TopEdge | Qt.Edge.LeftEdge) or direction == (Qt.Edge.BottomEdge | Qt.Edge.RightEdge):
+        elif direction == (Qt.Edge.TopEdge | Qt.Edge.LeftEdge) or direction == (
+            Qt.Edge.BottomEdge | Qt.Edge.RightEdge
+        ):
             self.setCursor(Qt.SizeFDiagCursor)
-        elif direction == (Qt.Edge.TopEdge | Qt.Edge.RightEdge) or direction == (Qt.Edge.BottomEdge | Qt.Edge.LeftEdge):
+        elif direction == (Qt.Edge.TopEdge | Qt.Edge.RightEdge) or direction == (
+            Qt.Edge.BottomEdge | Qt.Edge.LeftEdge
+        ):
             self.setCursor(Qt.SizeBDiagCursor)
         else:
             self.setCursor(Qt.ArrowCursor)
@@ -208,11 +218,11 @@ class FramelessWindow(MainWindow):
     def showMaximized(self):
         """Override to update title bar button."""
         super().showMaximized()
-        if hasattr(self, 'custom_title_bar'):
+        if hasattr(self, "custom_title_bar"):
             self.custom_title_bar.update_maximize_button(True)
 
     def showNormal(self):
         """Override to update title bar button."""
         super().showNormal()
-        if hasattr(self, 'custom_title_bar'):
+        if hasattr(self, "custom_title_bar"):
             self.custom_title_bar.update_maximize_button(False)

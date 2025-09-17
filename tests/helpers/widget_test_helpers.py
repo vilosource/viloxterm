@@ -65,7 +65,9 @@ class MockAsyncWidget(AppWidget):
     def start_initialization(self):
         """Start async initialization."""
         self.initialize()
-        self._init_timer = QTimer.singleShot(self.init_delay, self.complete_initialization)
+        self._init_timer = QTimer.singleShot(
+            self.init_delay, self.complete_initialization
+        )
 
     def complete_initialization(self):
         """Complete initialization and become ready."""
@@ -113,7 +115,9 @@ class MockErrorWidget(AppWidget):
         self.attempt_count += 1
 
         if self.attempt_count < self.error_on_attempt:
-            QTimer.singleShot(10, lambda: self.set_error(f"Error on attempt {self.attempt_count}"))
+            QTimer.singleShot(
+                10, lambda: self.set_error(f"Error on attempt {self.attempt_count}")
+            )
         else:
             QTimer.singleShot(10, self.set_ready)
 
@@ -127,7 +131,9 @@ class WidgetTestHelper:
     """Helper class for widget testing."""
 
     @staticmethod
-    def wait_for_state(widget: AppWidget, state: WidgetState, timeout_ms: int = 1000) -> bool:
+    def wait_for_state(
+        widget: AppWidget, state: WidgetState, timeout_ms: int = 1000
+    ) -> bool:
         """
         Wait for widget to reach a specific state.
 
@@ -147,8 +153,12 @@ class WidgetTestHelper:
         return True
 
     @staticmethod
-    def assert_state_transition(widget: AppWidget, from_state: WidgetState,
-                               to_state: WidgetState, action: Callable):
+    def assert_state_transition(
+        widget: AppWidget,
+        from_state: WidgetState,
+        to_state: WidgetState,
+        action: Callable,
+    ):
         """
         Assert that an action causes a specific state transition.
 
@@ -158,13 +168,15 @@ class WidgetTestHelper:
             to_state: Expected final state
             action: Callable that triggers the transition
         """
-        assert widget.widget_state == from_state, \
-            f"Widget not in expected initial state {from_state.value}, got {widget.widget_state.value}"
+        assert (
+            widget.widget_state == from_state
+        ), f"Widget not in expected initial state {from_state.value}, got {widget.widget_state.value}"
 
         action()
 
-        assert widget.widget_state == to_state, \
-            f"Widget not in expected final state {to_state.value}, got {widget.widget_state.value}"
+        assert (
+            widget.widget_state == to_state
+        ), f"Widget not in expected final state {to_state.value}, got {widget.widget_state.value}"
 
     @staticmethod
     def create_signal_spy(signal, process_events: bool = False) -> QSignalSpy:
@@ -232,8 +244,9 @@ class WidgetTestHelper:
         widget.cleanup()
 
         # Verify all connections removed
-        assert widget._signal_manager.get_connection_count() == 0, \
-            f"Signal connections not cleaned up: {widget._signal_manager.get_connection_count()} remaining"
+        assert (
+            widget._signal_manager.get_connection_count() == 0
+        ), f"Signal connections not cleaned up: {widget._signal_manager.get_connection_count()} remaining"
 
         # Verify state
         assert widget.widget_state == WidgetState.DESTROYED
@@ -261,8 +274,10 @@ class WidgetTestHelper:
             # Check if retry was attempted
             if spy.count() > 0:
                 last_state = spy.at(spy.count() - 1)[0]
-                assert last_state in ["initializing", "ready"], \
-                    f"Expected retry to initializing or ready, got {last_state}"
+                assert last_state in [
+                    "initializing",
+                    "ready",
+                ], f"Expected retry to initializing or ready, got {last_state}"
 
     @staticmethod
     def mock_timer_singleshot():
@@ -275,7 +290,7 @@ class WidgetTestHelper:
         calls = []
 
         def mock_singleshot(delay, callback):
-            calls.append({'delay': delay, 'callback': callback})
+            calls.append({"delay": delay, "callback": callback})
             # Optionally execute callback immediately for testing
             # callback()
 
@@ -299,10 +314,10 @@ class WidgetTestFixtures:
             Dictionary of test widgets
         """
         widgets = {
-            'sync': MockSyncWidget("sync-test"),
-            'async_fast': MockAsyncWidget("async-fast", init_delay=10),
-            'async_slow': MockAsyncWidget("async-slow", init_delay=100),
-            'error': MockErrorWidget("error-test", error_on_attempt=2)
+            "sync": MockSyncWidget("sync-test"),
+            "async_fast": MockAsyncWidget("async-fast", init_delay=10),
+            "async_slow": MockAsyncWidget("async-slow", init_delay=100),
+            "error": MockErrorWidget("error-test", error_on_attempt=2),
         }
 
         for widget in widgets.values():
@@ -325,11 +340,11 @@ class WidgetTestFixtures:
         qtbot.addWidget(widget)
 
         spies = {
-            'ready': QSignalSpy(widget.widget_ready),
-            'error': QSignalSpy(widget.widget_error),
-            'state_changed': QSignalSpy(widget.widget_state_changed),
-            'destroying': QSignalSpy(widget.widget_destroying),
-            'focus_requested': QSignalSpy(widget.focus_requested)
+            "ready": QSignalSpy(widget.widget_ready),
+            "error": QSignalSpy(widget.widget_error),
+            "state_changed": QSignalSpy(widget.widget_state_changed),
+            "destroying": QSignalSpy(widget.widget_destroying),
+            "focus_requested": QSignalSpy(widget.focus_requested),
         }
 
         return spies
@@ -367,8 +382,8 @@ def pytest_fixtures():
         return WidgetTestHelper()
 
     return {
-        'mock_sync_widget': mock_sync_widget,
-        'mock_async_widget': mock_async_widget,
-        'mock_error_widget': mock_error_widget,
-        'widget_helper': widget_helper
+        "mock_sync_widget": mock_sync_widget,
+        "mock_async_widget": mock_async_widget,
+        "mock_error_widget": mock_error_widget,
+        "widget_helper": widget_helper,
     }

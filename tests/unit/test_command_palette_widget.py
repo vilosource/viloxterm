@@ -18,22 +18,22 @@ def mock_commands():
             title="Test Command 1",
             description="First test command",
             category="Test",
-            shortcut="ctrl+1"
+            shortcut="ctrl+1",
         ),
         Command(
             id="test.command2",
             title="Test Command 2",
             description="Second test command",
             category="Test",
-            shortcut="ctrl+2"
+            shortcut="ctrl+2",
         ),
         Command(
             id="file.open",
             title="Open File",
             description="Open a file",
             category="File",
-            shortcut="ctrl+o"
-        )
+            shortcut="ctrl+o",
+        ),
     ]
     return commands
 
@@ -49,10 +49,14 @@ class TestCommandListWidget:
         qtbot.addWidget(widget)
 
         # Verify documented signals exist
-        assert hasattr(widget, 'command_activated'), "CommandListWidget must have command_activated signal"
+        assert hasattr(
+            widget, "command_activated"
+        ), "CommandListWidget must have command_activated signal"
 
         # Verify signals are actually Signal class attributes
-        assert hasattr(type(widget), 'command_activated'), "command_activated must be a Signal class attribute"
+        assert hasattr(
+            type(widget), "command_activated"
+        ), "command_activated must be a Signal class attribute"
 
     def test_command_activated_signal_emission_on_enter(self, qtbot, mock_commands):
         """Test command_activated signal is emitted when Enter is pressed."""
@@ -72,10 +76,16 @@ class TestCommandListWidget:
         # Verify signal was emitted with correct command
         assert len(blocker.args) == 1, f"Expected 1 argument, got {len(blocker.args)}"
         emitted_command = blocker.args[0]
-        assert isinstance(emitted_command, Command), f"Expected Command object, got {type(emitted_command)}"
-        assert emitted_command.id == "test.command1", f"Expected command1, got {emitted_command.id}"
+        assert isinstance(
+            emitted_command, Command
+        ), f"Expected Command object, got {type(emitted_command)}"
+        assert (
+            emitted_command.id == "test.command1"
+        ), f"Expected command1, got {emitted_command.id}"
 
-    def test_command_activated_signal_emission_on_item_activated(self, qtbot, mock_commands):
+    def test_command_activated_signal_emission_on_item_activated(
+        self, qtbot, mock_commands
+    ):
         """Test command_activated signal is emitted when item is activated."""
         widget = CommandListWidget()
         qtbot.addWidget(widget)
@@ -91,7 +101,9 @@ class TestCommandListWidget:
 
         # Verify signal was emitted with correct command
         emitted_command = blocker.args[0]
-        assert emitted_command.id == "test.command2", f"Expected command2, got {emitted_command.id}"
+        assert (
+            emitted_command.id == "test.command2"
+        ), f"Expected command2, got {emitted_command.id}"
 
     def test_no_signal_emission_with_no_selection(self, qtbot, mock_commands):
         """Test no signal emission when Enter pressed with no selection."""
@@ -110,9 +122,9 @@ class TestCommandListWidget:
         qtbot.wait(100)
 
         # Should not have emitted signal
-        assert len(command_activated_spy) == 0, (
-            "command_activated signal should not be emitted with no selection"
-        )
+        assert (
+            len(command_activated_spy) == 0
+        ), "command_activated signal should not be emitted with no selection"
 
     def test_no_signal_emission_with_empty_command_list(self, qtbot):
         """Test no signal emission when command list is empty."""
@@ -130,9 +142,9 @@ class TestCommandListWidget:
         qtbot.wait(100)
 
         # Should not have emitted signal
-        assert len(command_activated_spy) == 0, (
-            "command_activated signal should not be emitted with empty list"
-        )
+        assert (
+            len(command_activated_spy) == 0
+        ), "command_activated signal should not be emitted with empty list"
 
 
 @pytest.mark.unit
@@ -146,12 +158,20 @@ class TestCommandPaletteWidget:
         qtbot.addWidget(widget)
 
         # Verify documented signals exist
-        assert hasattr(widget, 'command_executed'), "CommandPaletteWidget must have command_executed signal"
-        assert hasattr(widget, 'palette_closed'), "CommandPaletteWidget must have palette_closed signal"
+        assert hasattr(
+            widget, "command_executed"
+        ), "CommandPaletteWidget must have command_executed signal"
+        assert hasattr(
+            widget, "palette_closed"
+        ), "CommandPaletteWidget must have palette_closed signal"
 
         # Verify signals are actually Signal class attributes
-        assert hasattr(type(widget), 'command_executed'), "command_executed must be a Signal class attribute"
-        assert hasattr(type(widget), 'palette_closed'), "palette_closed must be a Signal class attribute"
+        assert hasattr(
+            type(widget), "command_executed"
+        ), "command_executed must be a Signal class attribute"
+        assert hasattr(
+            type(widget), "palette_closed"
+        ), "palette_closed must be a Signal class attribute"
 
     def test_command_executed_signal_emission(self, qtbot, mock_commands):
         """Test command_executed signal is emitted when commands are activated."""
@@ -168,9 +188,13 @@ class TestCommandPaletteWidget:
             widget.command_list.command_activated.emit(test_command)
 
         # Verify signal was emitted with correct command ID and empty kwargs
-        assert len(blocker.args) == 2, f"Expected 2 arguments (command_id, kwargs), got {len(blocker.args)}"
+        assert (
+            len(blocker.args) == 2
+        ), f"Expected 2 arguments (command_id, kwargs), got {len(blocker.args)}"
         command_id, kwargs = blocker.args
-        assert command_id == "test.command1", f"Expected 'test.command1', got '{command_id}'"
+        assert (
+            command_id == "test.command1"
+        ), f"Expected 'test.command1', got '{command_id}'"
         assert kwargs == {}, f"Expected empty kwargs, got {kwargs}"
 
     def test_palette_closed_signal_emission_on_escape(self, qtbot, mock_commands):
@@ -186,9 +210,13 @@ class TestCommandPaletteWidget:
             qtbot.keyClick(widget, Qt.Key_Escape)
 
         # Verify signal was emitted (no args expected)
-        assert blocker.args == [], f"Expected no args for palette_closed signal, got {blocker.args}"
+        assert (
+            blocker.args == []
+        ), f"Expected no args for palette_closed signal, got {blocker.args}"
 
-    def test_palette_closed_signal_emission_on_close_palette(self, qtbot, mock_commands):
+    def test_palette_closed_signal_emission_on_close_palette(
+        self, qtbot, mock_commands
+    ):
         """Test palette_closed signal is emitted when close_palette is called."""
         widget = CommandPaletteWidget()
         qtbot.addWidget(widget)
@@ -201,7 +229,9 @@ class TestCommandPaletteWidget:
             widget.close_palette()
 
         # Verify signal was emitted
-        assert blocker.args == [], f"Expected no args for palette_closed signal, got {blocker.args}"
+        assert (
+            blocker.args == []
+        ), f"Expected no args for palette_closed signal, got {blocker.args}"
 
     def test_both_signals_emitted_during_command_execution(self, qtbot, mock_commands):
         """Test both command_executed and palette_closed signals are emitted during command execution."""
@@ -212,7 +242,9 @@ class TestCommandPaletteWidget:
         widget.show_palette(mock_commands)
 
         # Test multiple signals emitted during command execution
-        with qtbot.waitSignals([widget.command_executed, widget.palette_closed], timeout=1000):
+        with qtbot.waitSignals(
+            [widget.command_executed, widget.palette_closed], timeout=1000
+        ):
             # Simulate command activation
             test_command = mock_commands[0]
             widget.on_command_activated(test_command)
@@ -238,8 +270,12 @@ class TestCommandPaletteWidget:
         qtbot.wait(100)
 
         # Both signals should have been emitted
-        assert len(command_executed_spy) == 1, "command_executed signal should be emitted once"
-        assert len(palette_closed_spy) == 1, "palette_closed signal should be emitted once"
+        assert (
+            len(command_executed_spy) == 1
+        ), "command_executed signal should be emitted once"
+        assert (
+            len(palette_closed_spy) == 1
+        ), "palette_closed signal should be emitted once"
 
         # command_executed should typically be emitted before palette_closed
         # (This depends on implementation but is generally expected)
@@ -285,16 +321,22 @@ class TestCommandPaletteWidget:
             # Find and activate the filtered command
             filtered_commands = widget.command_list.commands
             if filtered_commands:
-                file_command = next((cmd for cmd in filtered_commands if cmd.id == "file.open"), None)
+                file_command = next(
+                    (cmd for cmd in filtered_commands if cmd.id == "file.open"), None
+                )
                 if file_command:
                     widget.on_command_activated(file_command)
 
         # Verify correct command was executed
         if blocker.args:
             command_id, kwargs = blocker.args
-            assert command_id == "file.open", f"Expected 'file.open', got '{command_id}'"
+            assert (
+                command_id == "file.open"
+            ), f"Expected 'file.open', got '{command_id}'"
 
-    def test_signal_emission_during_recent_commands_handling(self, qtbot, mock_commands):
+    def test_signal_emission_during_recent_commands_handling(
+        self, qtbot, mock_commands
+    ):
         """Test signals work correctly when recent commands are displayed."""
         widget = CommandPaletteWidget()
         qtbot.addWidget(widget)
@@ -310,7 +352,9 @@ class TestCommandPaletteWidget:
 
         # Verify correct command was executed
         command_id, kwargs = blocker.args
-        assert command_id == "test.command2", f"Expected 'test.command2', got '{command_id}'"
+        assert (
+            command_id == "test.command2"
+        ), f"Expected 'test.command2', got '{command_id}'"
 
     def test_signal_emission_edge_cases(self, qtbot, mock_commands):
         """Test signal emission in edge cases and boundary conditions."""
@@ -355,7 +399,9 @@ class TestCommandPaletteWidget:
             qtbot.wait(10)
 
         # Should have emitted palette_closed signal for each close
-        assert len(palette_closed_spy) == 3, f"Expected 3 palette_closed signals, got {len(palette_closed_spy)}"
+        assert (
+            len(palette_closed_spy) == 3
+        ), f"Expected 3 palette_closed signals, got {len(palette_closed_spy)}"
 
 
 @pytest.mark.unit
@@ -380,7 +426,9 @@ class TestCommandPaletteSignalIntegration:
         command_id, kwargs = blocker.args
         assert command_id == "file.open", f"Expected 'file.open', got '{command_id}'"
 
-    def test_command_list_signal_connections_after_palette_show(self, qtbot, mock_commands):
+    def test_command_list_signal_connections_after_palette_show(
+        self, qtbot, mock_commands
+    ):
         """Test that command list signal connections are established when palette is shown."""
         palette_widget = CommandPaletteWidget()
         qtbot.addWidget(palette_widget)
@@ -401,7 +449,9 @@ class TestCommandPaletteSignalIntegration:
         qtbot.wait(50)
 
         # Should have triggered palette's command execution
-        assert len(command_executed_spy) == 1, "Command list signal should trigger palette signal"
+        assert (
+            len(command_executed_spy) == 1
+        ), "Command list signal should trigger palette signal"
 
     def test_signal_disconnection_after_palette_close(self, qtbot, mock_commands):
         """Test that signals remain connected after palette close (for reuse)."""
@@ -422,4 +472,6 @@ class TestCommandPaletteSignalIntegration:
 
         # Should still work after reopen
         command_id, kwargs = blocker.args
-        assert command_id == "test.command1", f"Signals should work after reopen, got '{command_id}'"
+        assert (
+            command_id == "test.command1"
+        ), f"Signals should work after reopen, got '{command_id}'"

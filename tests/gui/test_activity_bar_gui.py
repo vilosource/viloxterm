@@ -49,10 +49,10 @@ class TestActivityBarGUI(ActivityBarGUITestBase):
 class TestActivityBarMouseGUI(ActivityBarGUITestBase, MouseGUITestBase):
     """GUI tests for activity bar mouse interactions."""
 
-    @patch('ui.activity_bar.execute_command')
+    @patch("ui.activity_bar.execute_command")
     def test_click_explorer_button(self, mock_execute, gui_activity_bar, qtbot):
         """Test clicking explorer button triggers correct action."""
-        mock_execute.return_value = {'success': True}
+        mock_execute.return_value = {"success": True}
 
         # Click explorer button
         self.click_activity_button(qtbot, gui_activity_bar, "explorer")
@@ -61,10 +61,10 @@ class TestActivityBarMouseGUI(ActivityBarGUITestBase, MouseGUITestBase):
         # (This behavior is handled by the show_view method)
         mock_execute.assert_called()
 
-    @patch('ui.activity_bar.execute_command')
+    @patch("ui.activity_bar.execute_command")
     def test_click_search_button(self, mock_execute, gui_activity_bar, qtbot):
         """Test clicking search button changes view and triggers signal."""
-        mock_execute.return_value = {'success': True}
+        mock_execute.return_value = {"success": True}
 
         # Set up signal capturing
         with qtbot.waitSignal(gui_activity_bar.view_changed, timeout=1000) as blocker:
@@ -82,10 +82,10 @@ class TestActivityBarMouseGUI(ActivityBarGUITestBase, MouseGUITestBase):
         # Verify command was executed
         mock_execute.assert_called_with("workbench.view.search")
 
-    @patch('ui.activity_bar.execute_command')
+    @patch("ui.activity_bar.execute_command")
     def test_click_git_button(self, mock_execute, gui_activity_bar, qtbot):
         """Test clicking git button changes view and triggers signal."""
-        mock_execute.return_value = {'success': True}
+        mock_execute.return_value = {"success": True}
 
         # Set up signal capturing
         with qtbot.waitSignal(gui_activity_bar.view_changed, timeout=1000) as blocker:
@@ -103,10 +103,10 @@ class TestActivityBarMouseGUI(ActivityBarGUITestBase, MouseGUITestBase):
         # Verify command was executed
         mock_execute.assert_called_with("workbench.view.git")
 
-    @patch('ui.activity_bar.execute_command')
+    @patch("ui.activity_bar.execute_command")
     def test_click_settings_button(self, mock_execute, gui_activity_bar, qtbot):
         """Test clicking settings button changes view and triggers signal."""
-        mock_execute.return_value = {'success': True}
+        mock_execute.return_value = {"success": True}
 
         # Set up signal capturing
         with qtbot.waitSignal(gui_activity_bar.view_changed, timeout=1000) as blocker:
@@ -142,7 +142,9 @@ class TestActivityBarMouseGUI(ActivityBarGUITestBase, MouseGUITestBase):
 class TestActivityBarThemeGUI(ActivityBarGUITestBase, ThemeGUITestBase):
     """GUI tests for activity bar theme interactions."""
 
-    def test_activity_bar_icon_updates_on_theme_change(self, gui_activity_bar, qtbot, mock_icon_manager):
+    def test_activity_bar_icon_updates_on_theme_change(
+        self, gui_activity_bar, qtbot, mock_icon_manager
+    ):
         """Test activity bar icons update when theme changes."""
         # Reset mock to track update calls
         mock_icon_manager.get_icon.reset_mock()
@@ -152,13 +154,19 @@ class TestActivityBarThemeGUI(ActivityBarGUITestBase, ThemeGUITestBase):
 
         # Verify get_icon was called for each button
         expected_icons = ["explorer", "search", "git", "settings"]
-        actual_calls = [call[0][0] for call in mock_icon_manager.get_icon.call_args_list]
+        actual_calls = [
+            call[0][0] for call in mock_icon_manager.get_icon.call_args_list
+        ]
 
         # All expected icons should have been requested
         for expected_icon in expected_icons:
-            assert expected_icon in actual_calls, f"Icon '{expected_icon}' was not updated"
+            assert (
+                expected_icon in actual_calls
+            ), f"Icon '{expected_icon}' was not updated"
 
-    def test_activity_bar_visual_consistency_across_themes(self, gui_activity_bar, qtbot, mock_icon_manager):
+    def test_activity_bar_visual_consistency_across_themes(
+        self, gui_activity_bar, qtbot, mock_icon_manager
+    ):
         """Test activity bar maintains visual consistency across theme changes."""
         # Initial state
         initial_width = gui_activity_bar.width()
@@ -174,7 +182,9 @@ class TestActivityBarThemeGUI(ActivityBarGUITestBase, ThemeGUITestBase):
         # Verify all buttons are still functional after theme change
         buttons = self.get_activity_buttons(gui_activity_bar)
         for view_name, button in buttons.items():
-            assert button.isEnabled(), f"Button {view_name} should remain enabled after theme change"
+            assert (
+                button.isEnabled()
+            ), f"Button {view_name} should remain enabled after theme change"
 
 
 @pytest.mark.gui
@@ -216,8 +226,8 @@ class TestActivityBarIntegrationGUI(ActivityBarGUITestBase):
         activity_bar = gui_main_window.activity_bar
 
         # Verify signals exist and are callable (can be connected)
-        assert hasattr(activity_bar, 'view_changed')
-        assert hasattr(activity_bar, 'toggle_sidebar')
+        assert hasattr(activity_bar, "view_changed")
+        assert hasattr(activity_bar, "toggle_sidebar")
         assert callable(activity_bar.view_changed.connect)
         assert callable(activity_bar.toggle_sidebar.connect)
 
@@ -230,8 +240,8 @@ class TestActivityBarIntegrationGUI(ActivityBarGUITestBase):
 
     def test_activity_bar_command_system_integration(self, gui_activity_bar, qtbot):
         """Test activity bar integrates with command system."""
-        with patch('ui.activity_bar.execute_command') as mock_execute:
-            mock_execute.return_value = {'success': True}
+        with patch("ui.activity_bar.execute_command") as mock_execute:
+            mock_execute.return_value = {"success": True}
 
             # Click a button and verify command execution
             self.click_activity_button(qtbot, gui_activity_bar, "git")
@@ -284,8 +294,8 @@ class TestActivityBarAnimationGUI(ActivityBarGUITestBase, MouseGUITestBase):
     def test_activity_bar_button_press_visual_feedback(self, gui_activity_bar, qtbot):
         """Test activity bar buttons provide visual feedback when pressed."""
         # Test button press state changes
-        with patch('ui.activity_bar.execute_command') as mock_execute:
-            mock_execute.return_value = {'success': True}
+        with patch("ui.activity_bar.execute_command") as mock_execute:
+            mock_execute.return_value = {"success": True}
 
             initial_view = gui_activity_bar.current_view
 
@@ -304,8 +314,8 @@ class TestActivityBarPerformanceGUI(ActivityBarGUITestBase):
 
     def test_activity_bar_rapid_clicking_performance(self, gui_activity_bar, qtbot):
         """Test activity bar handles rapid clicking without issues."""
-        with patch('ui.activity_bar.execute_command') as mock_execute:
-            mock_execute.return_value = {'success': True}
+        with patch("ui.activity_bar.execute_command") as mock_execute:
+            mock_execute.return_value = {"success": True}
 
             views = ["explorer", "search", "git", "settings"]
 
@@ -322,7 +332,9 @@ class TestActivityBarPerformanceGUI(ActivityBarGUITestBase):
             # Verify all commands were executed
             assert mock_execute.call_count > 0
 
-    def test_activity_bar_theme_update_performance(self, gui_activity_bar, qtbot, mock_icon_manager):
+    def test_activity_bar_theme_update_performance(
+        self, gui_activity_bar, qtbot, mock_icon_manager
+    ):
         """Test activity bar theme updates perform well."""
         # Measure multiple theme updates
         for _ in range(5):

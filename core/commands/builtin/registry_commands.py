@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     id="workspace.registerWidget",
     title="Register Widget",
     category="Workspace",
-    description="Register a widget in the workspace registry"
+    description="Register a widget in the workspace registry",
 )
 def register_widget_command(context: CommandContext) -> CommandResult:
     """
@@ -30,35 +30,27 @@ def register_widget_command(context: CommandContext) -> CommandResult:
         tab_index: The tab index where the widget is located
     """
     # Get arguments from context
-    widget_id = context.args.get('widget_id')
-    tab_index = context.args.get('tab_index')
+    widget_id = context.args.get("widget_id")
+    tab_index = context.args.get("tab_index")
 
     if widget_id is None or tab_index is None:
         return CommandResult(
-            success=False,
-            error="widget_id and tab_index are required"
+            success=False, error="widget_id and tab_index are required"
         )
 
     workspace_service = context.get_service(WorkspaceService)
     if not workspace_service:
-        return CommandResult(
-            success=False,
-            error="WorkspaceService not available"
-        )
+        return CommandResult(success=False, error="WorkspaceService not available")
 
     try:
         # Register the widget using service method
         result = workspace_service.register_widget(widget_id, tab_index)
         if result:
             return CommandResult(
-                success=True,
-                value={"widget_id": widget_id, "tab_index": tab_index}
+                success=True, value={"widget_id": widget_id, "tab_index": tab_index}
             )
         else:
-            return CommandResult(
-                success=False,
-                error="Failed to register widget"
-            )
+            return CommandResult(success=False, error="Failed to register widget")
     except Exception as e:
         logger.error(f"Failed to register widget: {e}")
         return CommandResult(success=False, error=str(e))
@@ -78,27 +70,20 @@ def unregister_widget_command(context: CommandContext) -> CommandResult:
         widget_id: The widget identifier to remove
     """
     # Get arguments from context
-    widget_id = context.args.get('widget_id')
+    widget_id = context.args.get("widget_id")
 
     if widget_id is None:
-        return CommandResult(
-            success=False,
-            error="widget_id is required"
-        )
+        return CommandResult(success=False, error="widget_id is required")
 
     workspace_service = context.get_service(WorkspaceService)
     if not workspace_service:
-        return CommandResult(
-            success=False,
-            error="WorkspaceService not available"
-        )
+        return CommandResult(success=False, error="WorkspaceService not available")
 
     try:
         # Unregister the widget using service method
         result = workspace_service.unregister_widget(widget_id)
         return CommandResult(
-            success=True,
-            value={"widget_id": widget_id, "unregistered": result}
+            success=True, value={"widget_id": widget_id, "unregistered": result}
         )
     except Exception as e:
         logger.error(f"Failed to unregister widget: {e}")
@@ -124,21 +109,15 @@ def update_registry_after_close_command(context: CommandContext) -> CommandResul
         widget_id: Optional widget ID that was closed
     """
     # Get arguments from context
-    closed_index = context.args.get('closed_index')
-    widget_id = context.args.get('widget_id')
+    closed_index = context.args.get("closed_index")
+    widget_id = context.args.get("widget_id")
 
     if closed_index is None:
-        return CommandResult(
-            success=False,
-            error="closed_index is required"
-        )
+        return CommandResult(success=False, error="closed_index is required")
 
     workspace_service = context.get_service(WorkspaceService)
     if not workspace_service:
-        return CommandResult(
-            success=False,
-            error="WorkspaceService not available"
-        )
+        return CommandResult(success=False, error="WorkspaceService not available")
 
     try:
         # Update registry using service method
@@ -148,10 +127,7 @@ def update_registry_after_close_command(context: CommandContext) -> CommandResul
 
         return CommandResult(
             success=True,
-            value={
-                "closed_index": closed_index,
-                "updated_count": updated_count
-            }
+            value={"closed_index": closed_index, "updated_count": updated_count},
         )
     except Exception as e:
         logger.error(f"Failed to update registry after close: {e}")
@@ -172,33 +148,25 @@ def get_widget_tab_index_command(context: CommandContext) -> CommandResult:
         widget_id: The widget identifier
     """
     # Get arguments from context
-    widget_id = context.args.get('widget_id')
+    widget_id = context.args.get("widget_id")
 
     if widget_id is None:
-        return CommandResult(
-            success=False,
-            error="widget_id is required"
-        )
+        return CommandResult(success=False, error="widget_id is required")
 
     workspace_service = context.get_service(WorkspaceService)
     if not workspace_service:
-        return CommandResult(
-            success=False,
-            error="WorkspaceService not available"
-        )
+        return CommandResult(success=False, error="WorkspaceService not available")
 
     try:
         # Get tab index using service method
         tab_index = workspace_service.get_widget_tab_index(widget_id)
         if tab_index is not None:
             return CommandResult(
-                success=True,
-                value={"widget_id": widget_id, "tab_index": tab_index}
+                success=True, value={"widget_id": widget_id, "tab_index": tab_index}
             )
         else:
             return CommandResult(
-                success=False,
-                error=f"Widget {widget_id} not found in registry"
+                success=False, error=f"Widget {widget_id} not found in registry"
             )
     except Exception as e:
         logger.error(f"Failed to get widget tab index: {e}")
@@ -219,28 +187,21 @@ def is_widget_registered_command(context: CommandContext) -> CommandResult:
         widget_id: The widget identifier
     """
     # Get arguments from context
-    widget_id = context.args.get('widget_id')
+    widget_id = context.args.get("widget_id")
 
     if widget_id is None:
-        return CommandResult(
-            success=False,
-            error="widget_id is required"
-        )
+        return CommandResult(success=False, error="widget_id is required")
 
     workspace_service = context.get_service(WorkspaceService)
     if not workspace_service:
-        return CommandResult(
-            success=False,
-            error="WorkspaceService not available"
-        )
+        return CommandResult(success=False, error="WorkspaceService not available")
 
     try:
         # Check registration using service method
         is_registered = workspace_service.is_widget_registered(widget_id)
 
         return CommandResult(
-            success=True,
-            value={"widget_id": widget_id, "registered": is_registered}
+            success=True, value={"widget_id": widget_id, "registered": is_registered}
         )
     except Exception as e:
         logger.error(f"Failed to check widget registration: {e}")

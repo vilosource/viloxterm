@@ -19,7 +19,7 @@ class TestThemeEditorGUI:
         """Set up test environment."""
         self.qtbot = qtbot
 
-    @patch('services.service_locator.ServiceLocator.get_instance')
+    @patch("services.service_locator.ServiceLocator.get_instance")
     def test_theme_editor_opens(self, mock_get_instance, qtbot):
         """Test that theme editor opens without errors."""
         from services.theme_service import ThemeService
@@ -32,14 +32,18 @@ class TestThemeEditorGUI:
             description="Test theme",
             version="1.0.0",
             author="Test",
-            colors={"editor.background": "#1e1e1e", "editor.foreground": "#d4d4d4"}
+            colors={"editor.background": "#1e1e1e", "editor.foreground": "#d4d4d4"},
         )
 
         # Mock theme service
         theme_service = MagicMock(spec=ThemeService)
         theme_service.get_available_themes.return_value = [
-            ThemeInfo(id="theme1", name="Theme 1", description="", version="1.0", author=""),
-            ThemeInfo(id="theme2", name="Theme 2", description="", version="1.0", author="")
+            ThemeInfo(
+                id="theme1", name="Theme 1", description="", version="1.0", author=""
+            ),
+            ThemeInfo(
+                id="theme2", name="Theme 2", description="", version="1.0", author=""
+            ),
         ]
         theme_service.get_current_theme.return_value = theme
         theme_service.theme_changed = MagicMock()  # Mock the signal
@@ -54,7 +58,9 @@ class TestThemeEditorGUI:
         qtbot.addWidget(widget)
 
         # Check widget is created
-        assert isinstance(widget, ThemeEditorWidget), f"Expected ThemeEditorWidget instance, got {type(widget)}"
+        assert isinstance(
+            widget, ThemeEditorWidget
+        ), f"Expected ThemeEditorWidget instance, got {type(widget)}"
         assert widget.get_title() == "Theme Editor"
 
         # Show and wait for visibility
@@ -62,7 +68,7 @@ class TestThemeEditorGUI:
         qtbot.waitExposed(widget)
         assert widget.isVisible()
 
-    @patch('services.service_locator.ServiceLocator')
+    @patch("services.service_locator.ServiceLocator")
     def test_theme_selection(self, mock_locator_class, qtbot):
         """Test theme selection from combo box."""
         from services.theme_service import ThemeService
@@ -75,7 +81,7 @@ class TestThemeEditorGUI:
             description="Test theme 1",
             version="1.0.0",
             author="Test",
-            colors={"editor.background": "#1e1e1e"}
+            colors={"editor.background": "#1e1e1e"},
         )
         theme2 = Theme(
             id="theme2",
@@ -83,17 +89,23 @@ class TestThemeEditorGUI:
             description="Test theme 2",
             version="1.0.0",
             author="Test",
-            colors={"editor.background": "#2e2e2e"}
+            colors={"editor.background": "#2e2e2e"},
         )
 
         # Mock theme service
         theme_service = MagicMock(spec=ThemeService)
         theme_service.get_available_themes.return_value = [
-            ThemeInfo(id="theme1", name="Theme 1", description="", version="1.0", author=""),
-            ThemeInfo(id="theme2", name="Theme 2", description="", version="1.0", author="")
+            ThemeInfo(
+                id="theme1", name="Theme 1", description="", version="1.0", author=""
+            ),
+            ThemeInfo(
+                id="theme2", name="Theme 2", description="", version="1.0", author=""
+            ),
         ]
         theme_service.get_current_theme.return_value = theme1
-        theme_service.get_theme.side_effect = lambda id: theme1 if id == "theme1" else theme2
+        theme_service.get_theme.side_effect = lambda id: (
+            theme1 if id == "theme1" else theme2
+        )
         theme_service.theme_changed = MagicMock()  # Mock the signal
 
         # Mock service locator
@@ -117,7 +129,7 @@ class TestThemeEditorGUI:
         # Check that theme was loaded
         assert widget._current_theme.id == "theme2"
 
-    @patch('services.service_locator.ServiceLocator.get_instance')
+    @patch("services.service_locator.ServiceLocator.get_instance")
     def test_button_states(self, mock_get_instance, qtbot):
         """Test that buttons are enabled/disabled correctly."""
         from services.theme_service import ThemeService
@@ -132,7 +144,7 @@ class TestThemeEditorGUI:
             description="Test theme",
             version="1.0.0",
             author="Test",
-            colors={}
+            colors={},
         )
         theme_service.theme_changed = MagicMock()  # Mock the signal
 
@@ -160,7 +172,7 @@ class TestThemeEditorGUI:
         assert widget._save_button.isEnabled()
         assert widget._reset_button.isEnabled()
 
-    @patch('services.service_locator.ServiceLocator.get_instance')
+    @patch("services.service_locator.ServiceLocator.get_instance")
     def test_search_filter(self, mock_get_instance, qtbot):
         """Test property search filter."""
         from services.theme_service import ThemeService
@@ -192,8 +204,8 @@ class TestThemeEditorGUI:
         # them to be properly created first)
         assert search_input.text() == "terminal"
 
-    @patch('services.service_locator.ServiceLocator')
-    @patch('PySide6.QtWidgets.QMessageBox.information')
+    @patch("services.service_locator.ServiceLocator")
+    @patch("PySide6.QtWidgets.QMessageBox.information")
     def test_apply_theme(self, mock_msgbox, mock_locator_class, qtbot):
         """Test applying theme changes."""
         from services.theme_service import ThemeService
@@ -206,7 +218,7 @@ class TestThemeEditorGUI:
             description="Test theme",
             version="1.0.0",
             author="Test",
-            colors={"editor.background": "#1e1e1e"}
+            colors={"editor.background": "#1e1e1e"},
         )
 
         # Mock theme service
@@ -232,7 +244,9 @@ class TestThemeEditorGUI:
         widget._update_button_states()
 
         # Mock _get_current_colors to return valid colors
-        widget._get_current_colors = MagicMock(return_value={"editor.background": "#1e1e1e"})
+        widget._get_current_colors = MagicMock(
+            return_value={"editor.background": "#1e1e1e"}
+        )
 
         # Click apply button
         assert widget._apply_button.isEnabled()
@@ -265,12 +279,16 @@ class TestColorPickerGUI:
         picker.show()
 
         # Check color button exists
-        assert hasattr(picker, '_color_button') and picker._color_button is not None, "Color picker should have a color button"
+        assert (
+            hasattr(picker, "_color_button") and picker._color_button is not None
+        ), "Color picker should have a color button"
         assert picker._color_button.isVisible()
 
         # Check hex input exists if enabled
         if picker._show_hex_input:
-            assert hasattr(picker, '_hex_input') and picker._hex_input is not None, "Color picker should have hex input when enabled"
+            assert (
+                hasattr(picker, "_hex_input") and picker._hex_input is not None
+            ), "Color picker should have hex input when enabled"
             assert picker._hex_input.text() == "#FF0000"
 
     def test_hex_input_validation(self, qtbot):
@@ -310,7 +328,9 @@ class TestColorPickerGUI:
         qtbot.wait(100)
 
         # Check signal was emitted
-        assert len(signal_args) >= 1, f"Expected at least 1 signal emission, got {len(signal_args)}"
+        assert (
+            len(signal_args) >= 1
+        ), f"Expected at least 1 signal emission, got {len(signal_args)}"
         assert signal_args[-1][0] == "#FF0000"  # color value
         assert not signal_args[-1][1]  # not preview
 
@@ -322,7 +342,7 @@ class TestColorPickerGUI:
             key="editor.background",
             label="Editor Background",
             initial_color="#1e1e1e",
-            description="Background color of the editor"
+            description="Background color of the editor",
         )
         qtbot.addWidget(field)
         field.show()
@@ -343,7 +363,9 @@ class TestColorPickerGUI:
         qtbot.wait(100)
 
         # Check signal includes key
-        assert len(signal_args) >= 1, f"Expected at least 1 signal with key, got {len(signal_args)}"
+        assert (
+            len(signal_args) >= 1
+        ), f"Expected at least 1 signal with key, got {len(signal_args)}"
         assert signal_args[-1][0] == "editor.background"  # key
         assert signal_args[-1][1] == "#FF0000"  # value
         assert not signal_args[-1][2]  # not preview
@@ -369,13 +391,27 @@ class TestThemePreviewGUI:
         assert preview.isVisible()
 
         # Check preview components exist
-        assert hasattr(preview, '_title_bar') and preview._title_bar.isVisible(), "Preview should have visible title bar"
-        assert hasattr(preview, '_menu_bar') and preview._menu_bar.isVisible(), "Preview should have visible menu bar"
-        assert hasattr(preview, '_activity_bar') and preview._activity_bar.isVisible(), "Preview should have visible activity bar"
-        assert hasattr(preview, '_sidebar') and preview._sidebar.isVisible(), "Preview should have visible sidebar"
-        assert hasattr(preview, '_editor_area') and preview._editor_area.isVisible(), "Preview should have visible editor area"
-        assert hasattr(preview, '_panel') and preview._panel.isVisible(), "Preview should have visible panel"
-        assert hasattr(preview, '_status_bar') and preview._status_bar.isVisible(), "Preview should have visible status bar"
+        assert (
+            hasattr(preview, "_title_bar") and preview._title_bar.isVisible()
+        ), "Preview should have visible title bar"
+        assert (
+            hasattr(preview, "_menu_bar") and preview._menu_bar.isVisible()
+        ), "Preview should have visible menu bar"
+        assert (
+            hasattr(preview, "_activity_bar") and preview._activity_bar.isVisible()
+        ), "Preview should have visible activity bar"
+        assert (
+            hasattr(preview, "_sidebar") and preview._sidebar.isVisible()
+        ), "Preview should have visible sidebar"
+        assert (
+            hasattr(preview, "_editor_area") and preview._editor_area.isVisible()
+        ), "Preview should have visible editor area"
+        assert (
+            hasattr(preview, "_panel") and preview._panel.isVisible()
+        ), "Preview should have visible panel"
+        assert (
+            hasattr(preview, "_status_bar") and preview._status_bar.isVisible()
+        ), "Preview should have visible status bar"
 
     def test_apply_colors_to_preview(self, qtbot):
         """Test applying colors updates preview."""
@@ -392,7 +428,7 @@ class TestThemePreviewGUI:
             "activityBar.background": "#333333",
             "sideBar.background": "#252526",
             "statusBar.background": "#007acc",
-            "terminal.background": "#000000"
+            "terminal.background": "#000000",
         }
 
         preview.apply_theme_colors(dark_colors)
@@ -405,7 +441,7 @@ class TestThemePreviewGUI:
             "activityBar.background": "#f0f0f0",
             "sideBar.background": "#f5f5f5",
             "statusBar.background": "#007acc",
-            "terminal.background": "#ffffff"
+            "terminal.background": "#ffffff",
         }
 
         preview.apply_theme_colors(light_colors)
@@ -415,7 +451,7 @@ class TestThemePreviewGUI:
 class TestThemeEditorCommands:
     """Test theme editor commands."""
 
-    @patch('services.service_locator.ServiceLocator.get_instance')
+    @patch("services.service_locator.ServiceLocator.get_instance")
     def test_open_theme_editor_command(self, mock_get_instance):
         """Test opening theme editor via command."""
         # Import theme commands to trigger decorator registration
@@ -426,7 +462,9 @@ class TestThemeEditorCommands:
         # Get the actual command function
         registry = CommandRegistry()
         command_info = registry.get_command("theme.openEditor")
-        assert command_info is not None and hasattr(command_info, 'func'), f"Expected valid command info for 'theme.openEditor', got {command_info}"
+        assert command_info is not None and hasattr(
+            command_info, "func"
+        ), f"Expected valid command info for 'theme.openEditor', got {command_info}"
 
         # Mock workspace service
         workspace = MagicMock(spec=WorkspaceService)
@@ -445,13 +483,13 @@ class TestThemeEditorCommands:
 
         # Check result
         assert result.success
-        assert 'widget_id' in result.value
+        assert "widget_id" in result.value
         workspace.add_app_widget.assert_called_once()
 
-    @patch('services.service_locator.ServiceLocator.get_instance')
-    @patch('core.themes.importers.VSCodeThemeImporter.import_from_file')
-    @patch('PySide6.QtWidgets.QMessageBox.information')
-    @patch('PySide6.QtWidgets.QFileDialog.getOpenFileName')
+    @patch("services.service_locator.ServiceLocator.get_instance")
+    @patch("core.themes.importers.VSCodeThemeImporter.import_from_file")
+    @patch("PySide6.QtWidgets.QMessageBox.information")
+    @patch("PySide6.QtWidgets.QFileDialog.getOpenFileName")
     def test_import_vscode_theme_command(
         self, mock_file_dialog, mock_msgbox, mock_import_from_file, mock_get_instance
     ):
@@ -465,7 +503,9 @@ class TestThemeEditorCommands:
         # Get the actual command function
         registry = CommandRegistry()
         command_info = registry.get_command("theme.importVSCode")
-        assert command_info is not None and hasattr(command_info, 'func'), f"Expected valid command info for 'theme.importVSCode', got {command_info}"
+        assert command_info is not None and hasattr(
+            command_info, "func"
+        ), f"Expected valid command info for 'theme.importVSCode', got {command_info}"
 
         # Mock file dialog
         mock_file_dialog.return_value = ("/path/to/theme.json", "JSON Files (*.json)")
@@ -483,11 +523,15 @@ class TestThemeEditorCommands:
         theme_service.apply_theme.return_value = True
 
         ui_service = MagicMock(spec=UIService)
-        ui_service.get_main_window.return_value = MagicMock()  # Return a mock window instead of None
+        ui_service.get_main_window.return_value = (
+            MagicMock()
+        )  # Return a mock window instead of None
 
         # Mock service locator
         mock_locator = MagicMock()
-        mock_locator.get.side_effect = lambda t: theme_service if t == ThemeService else ui_service
+        mock_locator.get.side_effect = lambda t: (
+            theme_service if t == ThemeService else ui_service
+        )
         mock_get_instance.return_value = mock_locator
 
         # Create context
@@ -498,7 +542,7 @@ class TestThemeEditorCommands:
 
         # Check result
         assert result.success
-        assert result.value['theme_id'] == "imported-theme"
+        assert result.value["theme_id"] == "imported-theme"
         theme_service.apply_theme.assert_called_with("imported-theme")
         mock_msgbox.assert_called_once()
 

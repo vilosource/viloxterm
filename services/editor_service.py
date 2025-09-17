@@ -60,11 +60,11 @@ class EditorService(Service):
             editor_widget: The editor widget instance
         """
         self._editors[widget_id] = {
-            'id': widget_id,
-            'widget': editor_widget,
-            'file_path': None,
-            'modified': False,
-            'language': 'plaintext'
+            "id": widget_id,
+            "widget": editor_widget,
+            "file_path": None,
+            "modified": False,
+            "language": "plaintext",
         }
 
         # Set as active if it's the only one
@@ -72,7 +72,7 @@ class EditorService(Service):
             self._active_editor = widget_id
 
         # Notify observers
-        self.notify('editor_registered', {'widget_id': widget_id})
+        self.notify("editor_registered", {"widget_id": widget_id})
 
         logger.debug(f"Editor registered: {widget_id}")
 
@@ -91,7 +91,7 @@ class EditorService(Service):
                 self._active_editor = next(iter(self._editors), None)
 
             # Notify observers
-            self.notify('editor_unregistered', {'widget_id': widget_id})
+            self.notify("editor_unregistered", {"widget_id": widget_id})
 
             logger.debug(f"Editor unregistered: {widget_id}")
 
@@ -112,7 +112,7 @@ class EditorService(Service):
         self._active_editor = widget_id
 
         # Notify observers
-        self.notify('editor_activated', {'widget_id': widget_id})
+        self.notify("editor_activated", {"widget_id": widget_id})
 
         return True
 
@@ -124,7 +124,7 @@ class EditorService(Service):
             Active editor widget or None
         """
         if self._active_editor and self._active_editor in self._editors:
-            return self._editors[self._active_editor]['widget']
+            return self._editors[self._active_editor]["widget"]
         return None
 
     # ============= Text Operations =============
@@ -143,10 +143,10 @@ class EditorService(Service):
         if not widget_id or widget_id not in self._editors:
             return None
 
-        editor = self._editors[widget_id]['widget']
-        if hasattr(editor, 'toPlainText'):
+        editor = self._editors[widget_id]["widget"]
+        if hasattr(editor, "toPlainText"):
             return editor.toPlainText()
-        elif hasattr(editor, 'text'):
+        elif hasattr(editor, "text"):
             return editor.text()
 
         return None
@@ -166,19 +166,19 @@ class EditorService(Service):
         if not widget_id or widget_id not in self._editors:
             return False
 
-        editor = self._editors[widget_id]['widget']
-        if hasattr(editor, 'setPlainText'):
+        editor = self._editors[widget_id]["widget"]
+        if hasattr(editor, "setPlainText"):
             editor.setPlainText(text)
-        elif hasattr(editor, 'setText'):
+        elif hasattr(editor, "setText"):
             editor.setText(text)
         else:
             return False
 
         # Mark as modified
-        self._editors[widget_id]['modified'] = True
+        self._editors[widget_id]["modified"] = True
 
         # Notify observers
-        self.notify('text_changed', {'widget_id': widget_id})
+        self.notify("text_changed", {"widget_id": widget_id})
 
         return True
 
@@ -197,18 +197,15 @@ class EditorService(Service):
         if not widget_id or widget_id not in self._editors:
             return False
 
-        editor = self._editors[widget_id]['widget']
-        if hasattr(editor, 'insertPlainText'):
+        editor = self._editors[widget_id]["widget"]
+        if hasattr(editor, "insertPlainText"):
             editor.insertPlainText(text)
 
             # Mark as modified
-            self._editors[widget_id]['modified'] = True
+            self._editors[widget_id]["modified"] = True
 
             # Notify observers
-            self.notify('text_inserted', {
-                'widget_id': widget_id,
-                'text': text
-            })
+            self.notify("text_inserted", {"widget_id": widget_id, "text": text})
 
             return True
 
@@ -230,15 +227,15 @@ class EditorService(Service):
         if not widget_id or widget_id not in self._editors:
             return False
 
-        editor = self._editors[widget_id]['widget']
-        if hasattr(editor, 'cut'):
+        editor = self._editors[widget_id]["widget"]
+        if hasattr(editor, "cut"):
             editor.cut()
 
             # Mark as modified
-            self._editors[widget_id]['modified'] = True
+            self._editors[widget_id]["modified"] = True
 
             # Notify observers
-            self.notify('text_cut', {'widget_id': widget_id})
+            self.notify("text_cut", {"widget_id": widget_id})
 
             return True
 
@@ -258,12 +255,12 @@ class EditorService(Service):
         if not widget_id or widget_id not in self._editors:
             return False
 
-        editor = self._editors[widget_id]['widget']
-        if hasattr(editor, 'copy'):
+        editor = self._editors[widget_id]["widget"]
+        if hasattr(editor, "copy"):
             editor.copy()
 
             # Notify observers
-            self.notify('text_copied', {'widget_id': widget_id})
+            self.notify("text_copied", {"widget_id": widget_id})
 
             return True
 
@@ -283,15 +280,15 @@ class EditorService(Service):
         if not widget_id or widget_id not in self._editors:
             return False
 
-        editor = self._editors[widget_id]['widget']
-        if hasattr(editor, 'paste'):
+        editor = self._editors[widget_id]["widget"]
+        if hasattr(editor, "paste"):
             editor.paste()
 
             # Mark as modified
-            self._editors[widget_id]['modified'] = True
+            self._editors[widget_id]["modified"] = True
 
             # Notify observers
-            self.notify('text_pasted', {'widget_id': widget_id})
+            self.notify("text_pasted", {"widget_id": widget_id})
 
             return True
 
@@ -313,12 +310,12 @@ class EditorService(Service):
         if not widget_id or widget_id not in self._editors:
             return False
 
-        editor = self._editors[widget_id]['widget']
-        if hasattr(editor, 'selectAll'):
+        editor = self._editors[widget_id]["widget"]
+        if hasattr(editor, "selectAll"):
             editor.selectAll()
 
             # Notify observers
-            self.notify('text_selected', {'widget_id': widget_id})
+            self.notify("text_selected", {"widget_id": widget_id})
 
             return True
 
@@ -338,8 +335,8 @@ class EditorService(Service):
         if not widget_id or widget_id not in self._editors:
             return None
 
-        editor = self._editors[widget_id]['widget']
-        if hasattr(editor, 'textCursor'):
+        editor = self._editors[widget_id]["widget"]
+        if hasattr(editor, "textCursor"):
             cursor = editor.textCursor()
             return cursor.selectedText() if cursor.hasSelection() else None
 
@@ -361,12 +358,12 @@ class EditorService(Service):
         if not widget_id or widget_id not in self._editors:
             return False
 
-        editor = self._editors[widget_id]['widget']
-        if hasattr(editor, 'undo'):
+        editor = self._editors[widget_id]["widget"]
+        if hasattr(editor, "undo"):
             editor.undo()
 
             # Notify observers
-            self.notify('undo_performed', {'widget_id': widget_id})
+            self.notify("undo_performed", {"widget_id": widget_id})
 
             return True
 
@@ -386,12 +383,12 @@ class EditorService(Service):
         if not widget_id or widget_id not in self._editors:
             return False
 
-        editor = self._editors[widget_id]['widget']
-        if hasattr(editor, 'redo'):
+        editor = self._editors[widget_id]["widget"]
+        if hasattr(editor, "redo"):
             editor.redo()
 
             # Notify observers
-            self.notify('redo_performed', {'widget_id': widget_id})
+            self.notify("redo_performed", {"widget_id": widget_id})
 
             return True
 
@@ -399,11 +396,13 @@ class EditorService(Service):
 
     # ============= Search Operations =============
 
-    def find_text(self,
-                  search_term: str,
-                  case_sensitive: bool = False,
-                  whole_word: bool = False,
-                  widget_id: Optional[str] = None) -> list[tuple[int, int]]:
+    def find_text(
+        self,
+        search_term: str,
+        case_sensitive: bool = False,
+        whole_word: bool = False,
+        widget_id: Optional[str] = None,
+    ) -> list[tuple[int, int]]:
         """
         Find text in editor.
 
@@ -443,11 +442,13 @@ class EditorService(Service):
             # Check whole word if required
             if whole_word:
                 # Check boundaries
-                if pos > 0 and search_text[pos-1].isalnum():
+                if pos > 0 and search_text[pos - 1].isalnum():
                     start = pos + 1
                     continue
-                if pos + len(search_pattern) < len(search_text) and \
-                   search_text[pos + len(search_pattern)].isalnum():
+                if (
+                    pos + len(search_pattern) < len(search_text)
+                    and search_text[pos + len(search_pattern)].isalnum()
+                ):
                     start = pos + 1
                     continue
 
@@ -455,19 +456,24 @@ class EditorService(Service):
             start = pos + 1
 
         # Notify observers
-        self.notify('text_found', {
-            'widget_id': widget_id,
-            'search_term': search_term,
-            'matches': len(matches)
-        })
+        self.notify(
+            "text_found",
+            {
+                "widget_id": widget_id,
+                "search_term": search_term,
+                "matches": len(matches),
+            },
+        )
 
         return matches
 
-    def replace_text(self,
-                    search_term: str,
-                    replace_term: str,
-                    all_occurrences: bool = False,
-                    widget_id: Optional[str] = None) -> int:
+    def replace_text(
+        self,
+        search_term: str,
+        replace_term: str,
+        all_occurrences: bool = False,
+        widget_id: Optional[str] = None,
+    ) -> int:
         """
         Replace text in editor.
 
@@ -505,12 +511,15 @@ class EditorService(Service):
             self.set_text(new_text, widget_id)
 
             # Notify observers
-            self.notify('text_replaced', {
-                'widget_id': widget_id,
-                'search_term': search_term,
-                'replace_term': replace_term,
-                'count': count
-            })
+            self.notify(
+                "text_replaced",
+                {
+                    "widget_id": widget_id,
+                    "search_term": search_term,
+                    "replace_term": replace_term,
+                    "count": count,
+                },
+            )
 
         return count
 
@@ -520,6 +529,7 @@ class EditorService(Service):
         """Load search/replace history from settings."""
         try:
             from PySide6.QtCore import QSettings
+
             settings = QSettings("ViloxTerm", "Editor")
 
             search_history = settings.value("search_history", [])
@@ -537,6 +547,7 @@ class EditorService(Service):
         """Save search/replace history to settings."""
         try:
             from PySide6.QtCore import QSettings
+
             settings = QSettings("ViloxTerm", "Editor")
 
             settings.setValue("search_history", self._search_history)
@@ -566,7 +577,7 @@ class EditorService(Service):
         """
         widget_id = widget_id or self._active_editor
         if widget_id and widget_id in self._editors:
-            return self._editors[widget_id]['modified']
+            return self._editors[widget_id]["modified"]
         return False
 
     def set_modified(self, modified: bool, widget_id: Optional[str] = None) -> None:
@@ -579,4 +590,4 @@ class EditorService(Service):
         """
         widget_id = widget_id or self._active_editor
         if widget_id and widget_id in self._editors:
-            self._editors[widget_id]['modified'] = modified
+            self._editors[widget_id]["modified"] = modified

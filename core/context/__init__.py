@@ -11,9 +11,9 @@ from core.context.keys import ContextKey, ContextValue
 from core.context.manager import ContextProvider, context_manager
 
 __all__ = [
-    'context_manager',
-    'ContextProvider',
-    'ContextKey',
-    'ContextValue',
-    'WhenClauseEvaluator',
+    "context_manager",
+    "ContextProvider",
+    "ContextKey",
+    "ContextValue",
+    "WhenClauseEvaluator",
 ]

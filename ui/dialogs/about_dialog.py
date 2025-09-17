@@ -95,7 +95,8 @@ class AboutDialog(QDialog):
         logo_label = QLabel()
         logo_label.setText("VT")  # Simple text logo for now
         logo_label.setAlignment(Qt.AlignCenter)
-        logo_label.setStyleSheet("""
+        logo_label.setStyleSheet(
+            """
             QLabel {
                 background-color: #0e639c;
                 color: #ffffff;
@@ -108,7 +109,8 @@ class AboutDialog(QDialog):
                 min-height: 80px;
                 max-height: 80px;
             }
-        """)
+        """
+        )
         layout.addWidget(logo_label)
 
         # App info
@@ -176,48 +178,48 @@ class AboutDialog(QDialog):
 
         # Python version
         grid.addWidget(QLabel("Python:"), row, 0)
-        grid.addWidget(QLabel(info['python_version']), row, 1)
+        grid.addWidget(QLabel(info["python_version"]), row, 1)
         row += 1
 
         # Qt version
         grid.addWidget(QLabel("Qt Runtime:"), row, 0)
-        grid.addWidget(QLabel(info['qt_version']['qt']), row, 1)
+        grid.addWidget(QLabel(info["qt_version"]["qt"]), row, 1)
         row += 1
 
         # PySide6 version
         grid.addWidget(QLabel("PySide6:"), row, 0)
-        grid.addWidget(QLabel(info['qt_version']['pyside']), row, 1)
+        grid.addWidget(QLabel(info["qt_version"]["pyside"]), row, 1)
         row += 1
 
         # Platform
-        platform = info['platform']
+        platform = info["platform"]
         grid.addWidget(QLabel("OS:"), row, 0)
         grid.addWidget(QLabel(f"{platform['system']} {platform['release']}"), row, 1)
         row += 1
 
         # Machine
         grid.addWidget(QLabel("Architecture:"), row, 0)
-        grid.addWidget(QLabel(platform['machine']), row, 1)
+        grid.addWidget(QLabel(platform["machine"]), row, 1)
         row += 1
 
         # Git info if available
-        if info['git']['commit']:
+        if info["git"]["commit"]:
             grid.addWidget(QLabel("Git Commit:"), row, 0)
-            commit_text = info['git']['commit_short']
-            if info['git']['dirty']:
+            commit_text = info["git"]["commit_short"]
+            if info["git"]["dirty"]:
                 commit_text += " (modified)"
             grid.addWidget(QLabel(commit_text), row, 1)
             row += 1
 
             grid.addWidget(QLabel("Git Branch:"), row, 0)
-            grid.addWidget(QLabel(info['git']['branch']), row, 1)
+            grid.addWidget(QLabel(info["git"]["branch"]), row, 1)
             row += 1
 
         # Mode
         grid.addWidget(QLabel("Mode:"), row, 0)
-        mode = "Development" if info['dev_mode'] else "Production"
+        mode = "Development" if info["dev_mode"] else "Production"
         mode_label = QLabel(mode)
-        if info['dev_mode']:
+        if info["dev_mode"]:
             mode_label.setStyleSheet("color: #ff6b6b; font-weight: bold;")
         grid.addWidget(mode_label, row, 1)
 
@@ -267,15 +269,17 @@ class AboutDialog(QDialog):
             "• Flask - Web framework for terminal backend",
             "• xterm.js - Terminal emulator",
             "",
-            "For more information, please visit our GitHub repository."
+            "For more information, please visit our GitHub repository.",
         ]
 
-        if info['dev_mode']:
-            lines.extend([
-                "",
-                "⚠️ Development Mode Active",
-                "This is a development build and may contain unstable features."
-            ])
+        if info["dev_mode"]:
+            lines.extend(
+                [
+                    "",
+                    "⚠️ Development Mode Active",
+                    "This is a development build and may contain unstable features.",
+                ]
+            )
 
         return "\n".join(lines)
 
@@ -348,8 +352,10 @@ SOFTWARE."""
             f"Platform: {info['platform']['system']} {info['platform']['release']}",
         ]
 
-        if info['git']['commit']:
-            text_lines.append(f"Git: {info['git']['branch']} @ {info['git']['commit_short']}")
+        if info["git"]["commit"]:
+            text_lines.append(
+                f"Git: {info['git']['branch']} @ {info['git']['commit_short']}"
+            )
 
         clipboard = QApplication.clipboard()
         clipboard.setText("\n".join(text_lines))
@@ -375,10 +381,11 @@ SOFTWARE."""
                 "button.background": "#0e639c",
                 "button.foreground": "#ffffff",
                 "button.hoverBackground": "#1177bb",
-                "sideBar.background": "#252526"
+                "sideBar.background": "#252526",
             }
 
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
                 QDialog {{
                     background-color: {colors.get("editor.background", "#252526")};
                     color: {colors.get("editor.foreground", "#cccccc")};
@@ -429,11 +436,13 @@ SOFTWARE."""
                 QLabel {{
                     color: {colors.get("editor.foreground", "#cccccc")};
                 }}
-            """)
+            """
+        )
 
         # Update app icon label if it exists
-        if hasattr(self, 'app_icon_label'):
-            self.app_icon_label.setStyleSheet(f"""
+        if hasattr(self, "app_icon_label"):
+            self.app_icon_label.setStyleSheet(
+                f"""
                 QLabel {{
                     background-color: {colors.get("button.background", "#0e639c")};
                     color: {colors.get("button.foreground", "#ffffff")};
@@ -442,4 +451,5 @@ SOFTWARE."""
                     border-radius: 8px;
                     padding: 20px;
                 }}
-            """)
+            """
+            )

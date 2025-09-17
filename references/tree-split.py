@@ -24,25 +24,28 @@ from PySide6.QtWidgets import (
 # Tree Model Classes
 # ============================================================================
 
+
 @dataclass
 class LeafNode:
     """Leaf node containing a widget."""
+
     type: str = "leaf"
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     widget: Optional[QWidget] = None
-    parent: Optional['SplitNode'] = None
+    parent: Optional["SplitNode"] = None
 
 
 @dataclass
 class SplitNode:
     """Split node containing two children."""
+
     type: str = "split"
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     orientation: str = "horizontal"  # "horizontal" or "vertical"
     ratio: float = 0.5
-    first: Optional[Union[LeafNode, 'SplitNode']] = None
-    second: Optional[Union[LeafNode, 'SplitNode']] = None
-    parent: Optional['SplitNode'] = None
+    first: Optional[Union[LeafNode, "SplitNode"]] = None
+    second: Optional[Union[LeafNode, "SplitNode"]] = None
+    parent: Optional["SplitNode"] = None
     splitter: Optional[QSplitter] = None  # View reference
 
     def __post_init__(self):
@@ -55,6 +58,7 @@ class SplitNode:
 # ============================================================================
 # Custom Text Editor Widget
 # ============================================================================
+
 
 class PaneTextEdit(QTextEdit):
     """Text editor with context menu for split operations."""
@@ -70,13 +74,16 @@ class PaneTextEdit(QTextEdit):
 
     def setup_ui(self):
         """Initialize the text editor."""
-        self.setPlainText(f"Pane {self.pane_id}\n\nRight-click for options:\n"
-                         "• Split Horizontal (left|right)\n"
-                         "• Split Vertical (top|bottom)\n"
-                         "• Close Pane")
+        self.setPlainText(
+            f"Pane {self.pane_id}\n\nRight-click for options:\n"
+            "• Split Horizontal (left|right)\n"
+            "• Split Vertical (top|bottom)\n"
+            "• Close Pane"
+        )
 
         # Style the editor
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QTextEdit {
                 background-color: #1e1e1e;
                 color: #d4d4d4;
@@ -88,7 +95,8 @@ class PaneTextEdit(QTextEdit):
             QTextEdit:focus {
                 border: 2px solid #007ACC;
             }
-        """)
+        """
+        )
 
     def contextMenuEvent(self, event):
         """Show custom context menu."""
@@ -96,11 +104,15 @@ class PaneTextEdit(QTextEdit):
 
         # Split actions
         split_h = QAction("Split Horizontal", self)
-        split_h.triggered.connect(lambda: self.split_horizontal_requested.emit(self.pane_id))
+        split_h.triggered.connect(
+            lambda: self.split_horizontal_requested.emit(self.pane_id)
+        )
         menu.addAction(split_h)
 
         split_v = QAction("Split Vertical", self)
-        split_v.triggered.connect(lambda: self.split_vertical_requested.emit(self.pane_id))
+        split_v.triggered.connect(
+            lambda: self.split_vertical_requested.emit(self.pane_id)
+        )
         menu.addAction(split_v)
 
         menu.addSeparator()
@@ -116,6 +128,7 @@ class PaneTextEdit(QTextEdit):
 # ============================================================================
 # Split Pane Manager
 # ============================================================================
+
 
 class SplitPaneManager(QObject):
     """Manages the tree-based split pane model and view."""
@@ -179,9 +192,7 @@ class SplitPaneManager(QObject):
             splitter.setSizes([first_size, second_size])
 
             # Track splitter movements
-            splitter.splitterMoved.connect(
-                lambda: self._update_ratio(node, splitter)
-            )
+            splitter.splitterMoved.connect(lambda: self._update_ratio(node, splitter))
 
             # Store reference
             node.splitter = splitter
@@ -221,7 +232,7 @@ class SplitPaneManager(QObject):
             orientation=orientation,
             ratio=0.5,
             first=None,  # Set these after
-            second=None
+            second=None,
         )
 
         # Now set the children and their parents
@@ -250,7 +261,7 @@ class SplitPaneManager(QObject):
         print(f"Leaves in tree: {list(self.leaves.keys())}")
 
         # Trigger view update
-        if self.parent() and hasattr(self.parent(), 'refresh_view'):
+        if self.parent() and hasattr(self.parent(), "refresh_view"):
             self.parent().refresh_view()
 
     def close_pane(self, leaf_id: str):
@@ -300,7 +311,7 @@ class SplitPaneManager(QObject):
             del self.widgets[leaf_id]
 
         # Trigger view update
-        if self.parent() and hasattr(self.parent(), 'refresh_view'):
+        if self.parent() and hasattr(self.parent(), "refresh_view"):
             self.parent().refresh_view()
 
     def print_tree(self, node=None, indent=0):
@@ -326,6 +337,7 @@ class SplitPaneManager(QObject):
 # Main Window
 # ============================================================================
 
+
 class RecursiveSplitTestWindow(QMainWindow):
     """Main window for testing recursive split functionality."""
 
@@ -341,7 +353,8 @@ class RecursiveSplitTestWindow(QMainWindow):
         self.setGeometry(100, 100, 1200, 800)
 
         # Dark theme for the window
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QMainWindow {
                 background-color: #1e1e1e;
             }
@@ -357,7 +370,8 @@ class RecursiveSplitTestWindow(QMainWindow):
             QSplitter::handle:hover {
                 background-color: #007ACC;
             }
-        """)
+        """
+        )
 
         # Create initial view
         self.refresh_view()
@@ -385,6 +399,7 @@ class RecursiveSplitTestWindow(QMainWindow):
 # ============================================================================
 # Main Entry Point
 # ============================================================================
+
 
 def main():
     """Run the test application."""

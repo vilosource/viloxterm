@@ -14,83 +14,97 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+
 def find_direct_connections(file_path: Path) -> list[dict[str, str]]:
     """Find remaining direct signal connections in a file."""
     violations = []
 
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
-            lines = content.split('\n')
+            lines = content.split("\n")
 
         # Patterns that indicate direct connections (not through commands)
         violation_patterns = [
             # Direct slot connections
-            (r'\.connect\s*\(\s*lambda.*?self\.\w+\([^)]*\)', 'Direct lambda connection'),
-            (r'\.connect\s*\(\s*self\.\w+\)', 'Direct method connection'),
-
+            (
+                r"\.connect\s*\(\s*lambda.*?self\.\w+\([^)]*\)",
+                "Direct lambda connection",
+            ),
+            (r"\.connect\s*\(\s*self\.\w+\)", "Direct method connection"),
             # Signal emissions (should go through commands in most cases)
-            (r'\.emit\(\)', 'Signal emission without command'),
-
+            (r"\.emit\(\)", "Signal emission without command"),
             # Direct widget method calls in UI event handlers
-            (r'lambda.*?:\s*self\.(close_tab|duplicate_tab|rename_tab)', 'Direct tab method call'),
-            (r'lambda.*?:\s*self\.(split_horizontal|split_vertical|close_pane)', 'Direct pane method call'),
+            (
+                r"lambda.*?:\s*self\.(close_tab|duplicate_tab|rename_tab)",
+                "Direct tab method call",
+            ),
+            (
+                r"lambda.*?:\s*self\.(split_horizontal|split_vertical|close_pane)",
+                "Direct pane method call",
+            ),
         ]
 
         for line_num, line in enumerate(lines, 1):
             for pattern, description in violation_patterns:
                 if re.search(pattern, line):
                     # Skip if the line contains execute_command (already converted)
-                    if 'execute_command' not in line:
-                        violations.append({
-                            'file': str(file_path),
-                            'line': line_num,
-                            'content': line.strip(),
-                            'type': description
-                        })
+                    if "execute_command" not in line:
+                        violations.append(
+                            {
+                                "file": str(file_path),
+                                "line": line_num,
+                                "content": line.strip(),
+                                "type": description,
+                            }
+                        )
 
     except Exception as e:
         print(f"Error reading {file_path}: {e}")
 
     return violations
 
+
 def find_command_usage(file_path: Path) -> list[dict[str, str]]:
     """Find command usage in a file."""
     commands = []
 
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
-            lines = content.split('\n')
+            lines = content.split("\n")
 
         # Find execute_command calls
         for line_num, line in enumerate(lines, 1):
-            if 'execute_command(' in line:
+            if "execute_command(" in line:
                 # Extract command ID
                 match = re.search(r'execute_command\(["\']([^"\']+)["\']', line)
                 if match:
-                    commands.append({
-                        'file': str(file_path),
-                        'line': line_num,
-                        'command_id': match.group(1),
-                        'content': line.strip()
-                    })
+                    commands.append(
+                        {
+                            "file": str(file_path),
+                            "line": line_num,
+                            "command_id": match.group(1),
+                            "content": line.strip(),
+                        }
+                    )
 
     except Exception as e:
         print(f"Error reading {file_path}: {e}")
 
     return commands
 
+
 def verify_command_centralization():
     """Main verification function."""
-    ui_dir = project_root / 'ui'
+    ui_dir = project_root / "ui"
 
     # Files to check for violations
     ui_files = [
-        ui_dir / 'activity_bar.py',
-        ui_dir / 'workspace_simple.py',
-        ui_dir / 'widgets' / 'pane_header.py',
-        ui_dir / 'widgets' / 'split_pane_widget.py',
+        ui_dir / "activity_bar.py",
+        ui_dir / "workspace_simple.py",
+        ui_dir / "widgets" / "pane_header.py",
+        ui_dir / "widgets" / "split_pane_widget.py",
     ]
 
     print("🔍 Verifying Command System Centralization")
@@ -127,7 +141,7 @@ def verify_command_centralization():
         print("\n✅ Commands Successfully Implemented:")
         command_counts = {}
         for cmd in all_commands:
-            cmd_id = cmd['command_id']
+            cmd_id = cmd["command_id"]
             command_counts[cmd_id] = command_counts.get(cmd_id, 0) + 1
 
         for cmd_id, count in sorted(command_counts.items()):
@@ -138,7 +152,7 @@ def verify_command_centralization():
         print("\n⚠️ Remaining Violations:")
         violation_types = {}
         for v in all_violations:
-            v_type = v['type']
+            v_type = v["type"]
             violation_types[v_type] = violation_types.get(v_type, 0) + 1
 
         for v_type, count in sorted(violation_types.items()):
@@ -168,6 +182,7 @@ def verify_command_centralization():
         print(f"   ⚠️ NEEDS WORK: {len(all_violations)} violations need attention")
 
     return len(all_violations) == 0
+
 
 if __name__ == "__main__":
     success = verify_command_centralization()

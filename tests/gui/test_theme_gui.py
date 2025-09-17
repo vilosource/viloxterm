@@ -28,30 +28,34 @@ class TestThemeGUI:
         """Create ThemeService for GUI testing."""
         service = ThemeService()
         # Load minimal test themes
-        service._register_theme(Theme(
-            id="test-dark",
-            name="Test Dark",
-            description="Dark test theme",
-            version="1.0.0",
-            author="Test",
-            colors={
-                "editor.background": "#1e1e1e",
-                "editor.foreground": "#ffffff",
-                "activityBar.background": "#333333"
-            }
-        ))
-        service._register_theme(Theme(
-            id="test-light",
-            name="Test Light",
-            description="Light test theme",
-            version="1.0.0",
-            author="Test",
-            colors={
-                "editor.background": "#ffffff",
-                "editor.foreground": "#000000",
-                "activityBar.background": "#f0f0f0"
-            }
-        ))
+        service._register_theme(
+            Theme(
+                id="test-dark",
+                name="Test Dark",
+                description="Dark test theme",
+                version="1.0.0",
+                author="Test",
+                colors={
+                    "editor.background": "#1e1e1e",
+                    "editor.foreground": "#ffffff",
+                    "activityBar.background": "#333333",
+                },
+            )
+        )
+        service._register_theme(
+            Theme(
+                id="test-light",
+                name="Test Light",
+                description="Light test theme",
+                version="1.0.0",
+                author="Test",
+                colors={
+                    "editor.background": "#ffffff",
+                    "editor.foreground": "#000000",
+                    "activityBar.background": "#f0f0f0",
+                },
+            )
+        )
         return service
 
     @pytest.fixture
@@ -114,7 +118,9 @@ class TestThemeGUI:
         # Verify signal was emitted
         mock_slot.assert_called()
 
-    def test_widget_automatic_theme_update(self, qtbot, theme_service, theme_provider, service_locator):
+    def test_widget_automatic_theme_update(
+        self, qtbot, theme_service, theme_provider, service_locator
+    ):
         """Test that widgets automatically update when themes change."""
 
         class TestWidget(QWidget):
@@ -134,12 +140,14 @@ class TestThemeGUI:
                 """Apply current theme."""
                 self.theme_update_count += 1
                 colors = theme_service.get_colors()
-                self.setStyleSheet(f"""
+                self.setStyleSheet(
+                    f"""
                     QWidget {{
                         background-color: {colors.get('editor.background', '#ffffff')};
                         color: {colors.get('editor.foreground', '#000000')};
                     }}
-                """)
+                """
+                )
 
         # Create widget
         widget = TestWidget()
@@ -156,13 +164,15 @@ class TestThemeGUI:
         assert widget.theme_update_count > initial_count
         assert widget.styleSheet() != initial_stylesheet
 
-    @patch('ui.main_window.MainWindow.show')  # Prevent window from actually showing
-    def test_main_window_theme_integration(self, mock_show, qtbot, theme_service, service_locator):
+    @patch("ui.main_window.MainWindow.show")  # Prevent window from actually showing
+    def test_main_window_theme_integration(
+        self, mock_show, qtbot, theme_service, service_locator
+    ):
         """Test theme integration with MainWindow."""
         # This test is more complex and would require careful mocking
         # to avoid creating a full GUI during testing
 
-        with patch('services.initialize_services') as mock_init:
+        with patch("services.initialize_services") as mock_init:
             mock_init.return_value = service_locator
 
             # Create minimal MainWindow for testing
@@ -178,11 +188,13 @@ class TestThemeGUI:
                 # If MainWindow is too complex to test directly, skip or mock more components
                 pytest.skip(f"MainWindow too complex for GUI testing: {e}")
 
-    def test_split_pane_widget_theme_support(self, qtbot, theme_service, service_locator):
+    def test_split_pane_widget_theme_support(
+        self, qtbot, theme_service, service_locator
+    ):
         """Test that SplitPaneWidget supports theme changes."""
         # Mock the dependencies that SplitPaneWidget needs
-        with patch('ui.widgets.split_pane_widget.SplitPaneModel') as mock_model:
-            with patch('ui.widgets.split_pane_widget.WidgetPool') as mock_pool:
+        with patch("ui.widgets.split_pane_widget.SplitPaneModel") as mock_model:
+            with patch("ui.widgets.split_pane_widget.WidgetPool") as mock_pool:
                 mock_model_instance = Mock()
                 mock_model.return_value = mock_model_instance
                 mock_model_instance.root = Mock()
@@ -196,7 +208,7 @@ class TestThemeGUI:
                     qtbot.addWidget(widget)
 
                     # Test that it has an apply_theme method
-                    assert hasattr(widget, 'apply_theme')
+                    assert hasattr(widget, "apply_theme")
 
                     # Call apply_theme (should not crash)
                     widget.apply_theme()
@@ -219,7 +231,9 @@ class TestThemeGUI:
         # Cache should be populated
         assert component in theme_provider._stylesheet_cache
 
-    def test_cache_invalidation_on_theme_change(self, qtbot, theme_service, theme_provider):
+    def test_cache_invalidation_on_theme_change(
+        self, qtbot, theme_service, theme_provider
+    ):
         """Test that stylesheet cache is cleared when theme changes."""
         # Generate cached stylesheet
         component = "test_component"
@@ -250,7 +264,9 @@ class TestThemeGUI:
         # Should return empty string or fallback stylesheet
         assert isinstance(stylesheet, str)
 
-    def test_multiple_widgets_theme_consistency(self, qtbot, theme_service, theme_provider):
+    def test_multiple_widgets_theme_consistency(
+        self, qtbot, theme_service, theme_provider
+    ):
         """Test that multiple widgets show consistent theming."""
         # Create multiple widgets
         widgets = []
@@ -333,7 +349,9 @@ class TestThemeGUI:
             timer.stop()
 
     @pytest.mark.parametrize("theme_id", ["test-dark", "test-light"])
-    def test_theme_switching_parametrized(self, qtbot, theme_service, theme_provider, theme_id):
+    def test_theme_switching_parametrized(
+        self, qtbot, theme_service, theme_provider, theme_id
+    ):
         """Parametrized test for different themes."""
         widget = QLabel("Parametrized Test")
         qtbot.addWidget(widget)
@@ -363,19 +381,23 @@ class TestThemeCommandsGUI:
         context.get_service.return_value = theme_service
         return context
 
-    def test_theme_select_command_gui_integration(self, qtbot, theme_service, mock_context):
+    def test_theme_select_command_gui_integration(
+        self, qtbot, theme_service, mock_context
+    ):
         """Test theme selection command in GUI context."""
         from core.commands.builtin.theme_commands import select_theme_command
 
         # Register test themes
-        theme_service._register_theme(Theme(
-            id="gui-test-theme",
-            name="GUI Test Theme",
-            description="Theme for GUI testing",
-            version="1.0.0",
-            author="Test",
-            colors={"editor.background": "#123456"}
-        ))
+        theme_service._register_theme(
+            Theme(
+                id="gui-test-theme",
+                name="GUI Test Theme",
+                description="Theme for GUI testing",
+                version="1.0.0",
+                author="Test",
+                colors={"editor.background": "#123456"},
+            )
+        )
 
         # Execute command
         result = select_theme_command(mock_context, "gui-test-theme")
@@ -402,14 +424,16 @@ class TestThemeCommandsGUI:
         mock_context.get_service.side_effect = get_service
 
         # Add test theme
-        theme_service._register_theme(Theme(
-            id="ui-test-theme",
-            name="UI Test Theme",
-            description="Theme with UI service",
-            version="1.0.0",
-            author="Test",
-            colors={"editor.background": "#abcdef"}
-        ))
+        theme_service._register_theme(
+            Theme(
+                id="ui-test-theme",
+                name="UI Test Theme",
+                description="Theme with UI service",
+                version="1.0.0",
+                author="Test",
+                colors={"editor.background": "#abcdef"},
+            )
+        )
 
         # Execute command
         result = select_theme_command(mock_context, "ui-test-theme")
@@ -419,5 +443,5 @@ class TestThemeCommandsGUI:
         # (This would depend on the actual implementation)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

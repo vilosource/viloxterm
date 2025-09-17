@@ -44,6 +44,7 @@ class ThemeProvider(QObject):
 
         # Initialize stylesheet generator
         from ui.themes.stylesheet_generator import StylesheetGenerator
+
         self._stylesheet_generator = StylesheetGenerator(theme_service)
 
     def _on_theme_changed(self, colors: dict[str, str]) -> None:

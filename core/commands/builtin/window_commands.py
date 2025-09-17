@@ -19,13 +19,14 @@ logger = logging.getLogger(__name__)
     id="window.toggleFrameless",
     title="Toggle Frameless Mode",
     category="Window",
-    description="Toggle between normal and frameless window mode"
+    description="Toggle between normal and frameless window mode",
 )
 def toggle_frameless_mode(context: CommandContext) -> CommandResult:
     """Toggle frameless window mode."""
     try:
         # Use UIService to toggle frameless mode for consistency
         from services.ui_service import UIService
+
         ui_service = context.get_service(UIService)
 
         if ui_service:
@@ -49,7 +50,7 @@ def toggle_frameless_mode(context: CommandContext) -> CommandResult:
                 "Please restart the application for the change to take effect.\n\n"
                 "Would you like to restart now?",
                 QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
+                QMessageBox.No,
             )
 
             if reply == QMessageBox.Yes:
@@ -60,7 +61,7 @@ def toggle_frameless_mode(context: CommandContext) -> CommandResult:
                 from PySide6.QtCore import QCoreApplication
 
                 # Save state before restart
-                if hasattr(context.main_window, 'save_state'):
+                if hasattr(context.main_window, "save_state"):
                     context.main_window.save_state()
 
                 # Get the executable and arguments
@@ -78,22 +79,19 @@ def toggle_frameless_mode(context: CommandContext) -> CommandResult:
 
         return CommandResult(
             success=True,
-            value=f"Frameless mode {'enabled' if new_mode else 'disabled'}. Restart required."
+            value=f"Frameless mode {'enabled' if new_mode else 'disabled'}. Restart required.",
         )
 
     except Exception as e:
         logger.error(f"Failed to toggle frameless mode: {e}")
-        return CommandResult(
-            success=False,
-            error=str(e)
-        )
+        return CommandResult(success=False, error=str(e))
 
 
 @command(
     id="window.minimize",
     title="Minimize Window",
     category="Window",
-    description="Minimize the application window"
+    description="Minimize the application window",
 )
 def minimize_window(context: CommandContext) -> CommandResult:
     """Minimize the window."""
@@ -111,7 +109,7 @@ def minimize_window(context: CommandContext) -> CommandResult:
     id="window.maximize",
     title="Maximize Window",
     category="Window",
-    description="Maximize the application window"
+    description="Maximize the application window",
 )
 def maximize_window(context: CommandContext) -> CommandResult:
     """Maximize the window."""
@@ -133,7 +131,7 @@ def maximize_window(context: CommandContext) -> CommandResult:
     id="window.restore",
     title="Restore Window",
     category="Window",
-    description="Restore the application window to normal size"
+    description="Restore the application window to normal size",
 )
 def restore_window(context: CommandContext) -> CommandResult:
     """Restore the window to normal size."""
@@ -152,7 +150,7 @@ def restore_window(context: CommandContext) -> CommandResult:
     title="Close Window",
     category="Window",
     description="Close the application window",
-    shortcut="alt+f4"
+    shortcut="alt+f4",
 )
 def close_window(context: CommandContext) -> CommandResult:
     """Close the window."""
@@ -171,7 +169,7 @@ def close_window(context: CommandContext) -> CommandResult:
     title="Toggle Full Screen",
     category="Window",
     description="Toggle full screen mode",
-    shortcut="f11"
+    shortcut="f11",
 )
 def toggle_fullscreen(context: CommandContext) -> CommandResult:
     """Toggle full screen mode."""

@@ -31,10 +31,7 @@ def get_available_themes_command(context: CommandContext) -> CommandResult:
 
     try:
         themes = theme_service.get_available_themes()
-        return CommandResult(
-            success=True,
-            value={"themes": themes}
-        )
+        return CommandResult(success=True, value={"themes": themes})
     except Exception as e:
         logger.error(f"Failed to get available themes: {e}")
         return CommandResult(success=False, error=str(e))
@@ -54,10 +51,7 @@ def get_current_theme_command(context: CommandContext) -> CommandResult:
 
     try:
         theme = theme_service.get_current_theme()
-        return CommandResult(
-            success=True,
-            value={"theme": theme}
-        )
+        return CommandResult(success=True, value={"theme": theme})
     except Exception as e:
         logger.error(f"Failed to get current theme: {e}")
         return CommandResult(success=False, error=str(e))
@@ -68,12 +62,9 @@ def get_current_theme_command(context: CommandContext) -> CommandResult:
     title="Get Theme by ID",
     category="Theme",
     description="Get a specific theme by its ID",
-    visible=False  # Internal command, not for command palette
+    visible=False,  # Internal command, not for command palette
 )
-def get_theme_command(
-    context: CommandContext,
-    theme_id: str
-) -> CommandResult:
+def get_theme_command(context: CommandContext, theme_id: str) -> CommandResult:
     """Get a specific theme."""
     theme_service = context.get_service(ThemeService)
     if not theme_service:
@@ -82,15 +73,9 @@ def get_theme_command(
     try:
         theme = theme_service.get_theme(theme_id)
         if theme:
-            return CommandResult(
-                success=True,
-                value={"theme": theme}
-            )
+            return CommandResult(success=True, value={"theme": theme})
         else:
-            return CommandResult(
-                success=False,
-                error=f"Theme {theme_id} not found"
-            )
+            return CommandResult(success=False, error=f"Theme {theme_id} not found")
     except Exception as e:
         logger.error(f"Failed to get theme {theme_id}: {e}")
         return CommandResult(success=False, error=str(e))
@@ -101,12 +86,9 @@ def get_theme_command(
     title="Apply Theme",
     category="Theme",
     description="Apply a theme by its ID",
-    visible=False  # Internal command, requires theme_id parameter
+    visible=False,  # Internal command, requires theme_id parameter
 )
-def apply_theme_command(
-    context: CommandContext,
-    theme_id: str
-) -> CommandResult:
+def apply_theme_command(context: CommandContext, theme_id: str) -> CommandResult:
     """Apply a theme."""
     theme_service = context.get_service(ThemeService)
     if not theme_service:
@@ -114,10 +96,7 @@ def apply_theme_command(
 
     try:
         theme_service.apply_theme(theme_id)
-        return CommandResult(
-            success=True,
-            value={"theme_id": theme_id}
-        )
+        return CommandResult(success=True, value={"theme_id": theme_id})
     except Exception as e:
         logger.error(f"Failed to apply theme {theme_id}: {e}")
         return CommandResult(success=False, error=str(e))
@@ -128,11 +107,10 @@ def apply_theme_command(
     title="Save Custom Theme",
     category="Theme",
     description="Save a custom theme",
-    visible=False  # Internal command, requires theme_data parameter
+    visible=False,  # Internal command, requires theme_data parameter
 )
 def save_custom_theme_command(
-    context: CommandContext,
-    theme_data: dict[str, Any]
+    context: CommandContext, theme_data: dict[str, Any]
 ) -> CommandResult:
     """Save a custom theme."""
     theme_service = context.get_service(ThemeService)
@@ -142,19 +120,14 @@ def save_custom_theme_command(
     try:
         # Create theme object from data
         from services.theme_service import Theme
+
         theme = Theme.from_dict(theme_data)
 
         success = theme_service.save_custom_theme(theme)
         if success:
-            return CommandResult(
-                success=True,
-                value={"theme_id": theme.id}
-            )
+            return CommandResult(success=True, value={"theme_id": theme.id})
         else:
-            return CommandResult(
-                success=False,
-                error="Failed to save custom theme"
-            )
+            return CommandResult(success=False, error="Failed to save custom theme")
     except Exception as e:
         logger.error(f"Failed to save custom theme: {e}")
         return CommandResult(success=False, error=str(e))
@@ -165,13 +138,13 @@ def save_custom_theme_command(
     title="Create Custom Theme",
     category="Theme",
     description="Create a new custom theme based on an existing theme",
-    visible=False  # Internal command, requires multiple parameters
+    visible=False,  # Internal command, requires multiple parameters
 )
 def create_custom_theme_command(
     context: CommandContext,
     base_theme_id: str,
     name: str,
-    description: Optional[str] = None
+    description: Optional[str] = None,
 ) -> CommandResult:
     """Create a new custom theme."""
     theme_service = context.get_service(ThemeService)
@@ -179,21 +152,11 @@ def create_custom_theme_command(
         return CommandResult(success=False, error="ThemeService not available")
 
     try:
-        new_theme = theme_service.create_custom_theme(
-            base_theme_id,
-            name,
-            description
-        )
+        new_theme = theme_service.create_custom_theme(base_theme_id, name, description)
         if new_theme:
-            return CommandResult(
-                success=True,
-                value={"theme": new_theme}
-            )
+            return CommandResult(success=True, value={"theme": new_theme})
         else:
-            return CommandResult(
-                success=False,
-                error="Failed to create custom theme"
-            )
+            return CommandResult(success=False, error="Failed to create custom theme")
     except Exception as e:
         logger.error(f"Failed to create custom theme: {e}")
         return CommandResult(success=False, error=str(e))
@@ -204,11 +167,10 @@ def create_custom_theme_command(
     title="Delete Custom Theme",
     category="Theme",
     description="Delete a custom theme",
-    visible=False  # Internal command, requires theme_id parameter
+    visible=False,  # Internal command, requires theme_id parameter
 )
 def delete_custom_theme_command(
-    context: CommandContext,
-    theme_id: str
+    context: CommandContext, theme_id: str
 ) -> CommandResult:
     """Delete a custom theme."""
     theme_service = context.get_service(ThemeService)
@@ -218,14 +180,10 @@ def delete_custom_theme_command(
     try:
         success = theme_service.delete_custom_theme(theme_id)
         if success:
-            return CommandResult(
-                success=True,
-                value={"theme_id": theme_id}
-            )
+            return CommandResult(success=True, value={"theme_id": theme_id})
         else:
             return CommandResult(
-                success=False,
-                error=f"Failed to delete theme {theme_id}"
+                success=False, error=f"Failed to delete theme {theme_id}"
             )
     except Exception as e:
         logger.error(f"Failed to delete custom theme {theme_id}: {e}")
@@ -237,12 +195,9 @@ def delete_custom_theme_command(
     title="Import Theme",
     category="Theme",
     description="Import a theme from a file",
-    visible=False  # Internal command, requires file_path parameter
+    visible=False,  # Internal command, requires file_path parameter
 )
-def import_theme_command(
-    context: CommandContext,
-    file_path: str
-) -> CommandResult:
+def import_theme_command(context: CommandContext, file_path: str) -> CommandResult:
     """Import a theme from a file."""
     theme_service = context.get_service(ThemeService)
     if not theme_service:
@@ -251,15 +206,9 @@ def import_theme_command(
     try:
         theme_id = theme_service.import_theme(Path(file_path))
         if theme_id:
-            return CommandResult(
-                success=True,
-                value={"theme_id": theme_id}
-            )
+            return CommandResult(success=True, value={"theme_id": theme_id})
         else:
-            return CommandResult(
-                success=False,
-                error="Failed to import theme"
-            )
+            return CommandResult(success=False, error="Failed to import theme")
     except Exception as e:
         logger.error(f"Failed to import theme from {file_path}: {e}")
         return CommandResult(success=False, error=str(e))
@@ -270,12 +219,10 @@ def import_theme_command(
     title="Export Theme",
     category="Theme",
     description="Export a theme to a file",
-    visible=False  # Internal command, requires parameters
+    visible=False,  # Internal command, requires parameters
 )
 def export_theme_command(
-    context: CommandContext,
-    theme_id: str,
-    file_path: str
+    context: CommandContext, theme_id: str, file_path: str
 ) -> CommandResult:
     """Export a theme to a file."""
     theme_service = context.get_service(ThemeService)
@@ -286,16 +233,11 @@ def export_theme_command(
         success = theme_service.export_theme(theme_id, Path(file_path))
         if success:
             return CommandResult(
-                success=True,
-                value={
-                    "theme_id": theme_id,
-                    "file_path": file_path
-                }
+                success=True, value={"theme_id": theme_id, "file_path": file_path}
             )
         else:
             return CommandResult(
-                success=False,
-                error=f"Failed to export theme {theme_id}"
+                success=False, error=f"Failed to export theme {theme_id}"
             )
     except Exception as e:
         logger.error(f"Failed to export theme {theme_id} to {file_path}: {e}")
@@ -307,11 +249,10 @@ def export_theme_command(
     title="Apply Typography Preset",
     category="Theme",
     description="Apply a typography preset",
-    visible=False  # Internal command, requires preset parameter
+    visible=False,  # Internal command, requires preset parameter
 )
 def apply_typography_preset_command(
-    context: CommandContext,
-    preset: str
+    context: CommandContext, preset: str
 ) -> CommandResult:
     """Apply a typography preset."""
     theme_service = context.get_service(ThemeService)
@@ -320,10 +261,7 @@ def apply_typography_preset_command(
 
     try:
         theme_service.apply_typography_preset(preset)
-        return CommandResult(
-            success=True,
-            value={"preset": preset}
-        )
+        return CommandResult(success=True, value={"preset": preset})
     except Exception as e:
         logger.error(f"Failed to apply typography preset {preset}: {e}")
         return CommandResult(success=False, error=str(e))
@@ -343,10 +281,7 @@ def get_typography_command(context: CommandContext) -> CommandResult:
 
     try:
         typography = theme_service.get_typography()
-        return CommandResult(
-            success=True,
-            value={"typography": typography}
-        )
+        return CommandResult(success=True, value={"typography": typography})
     except Exception as e:
         logger.error(f"Failed to get typography: {e}")
         return CommandResult(success=False, error=str(e))
@@ -357,12 +292,12 @@ def get_typography_command(context: CommandContext) -> CommandResult:
     title="Apply Theme Preview",
     category="Theme",
     description="Apply a temporary theme preview",
-    visible=False  # Internal command, requires colors parameter
+    visible=False,  # Internal command, requires colors parameter
 )
 def apply_theme_preview_command(
     context: CommandContext,
     colors: dict[str, str],
-    typography: Optional[dict[str, Any]] = None
+    typography: Optional[dict[str, Any]] = None,
 ) -> CommandResult:
     """Apply a theme preview."""
     theme_service = context.get_service(ThemeService)
@@ -371,10 +306,7 @@ def apply_theme_preview_command(
 
     try:
         theme_service.apply_theme_preview(colors, typography)
-        return CommandResult(
-            success=True,
-            value={"preview_applied": True}
-        )
+        return CommandResult(success=True, value={"preview_applied": True})
     except Exception as e:
         logger.error(f"Failed to apply theme preview: {e}")
         return CommandResult(success=False, error=str(e))
@@ -394,7 +326,7 @@ def get_current_colors_command(context: CommandContext) -> CommandResult:
 
     try:
         theme = theme_service.get_current_theme()
-        if theme and hasattr(theme, 'colors'):
+        if theme and hasattr(theme, "colors"):
             colors = theme.colors
         else:
             # Fallback colors
@@ -407,13 +339,10 @@ def get_current_colors_command(context: CommandContext) -> CommandResult:
                 "list.hoverBackground": "#2a2d2e",
                 "activityBar.activeBorder": "#007ACC",
                 "widget.border": "#3e3e42",
-                "tab.inactiveForeground": "#969696"
+                "tab.inactiveForeground": "#969696",
             }
 
-        return CommandResult(
-            success=True,
-            value=colors
-        )
+        return CommandResult(success=True, value=colors)
     except Exception as e:
         logger.error(f"Failed to get current colors: {e}")
         # Return fallback colors
@@ -426,7 +355,7 @@ def get_current_colors_command(context: CommandContext) -> CommandResult:
             "list.hoverBackground": "#2a2d2e",
             "activityBar.activeBorder": "#007ACC",
             "widget.border": "#3e3e42",
-            "tab.inactiveForeground": "#969696"
+            "tab.inactiveForeground": "#969696",
         }
         return CommandResult(success=True, value=fallback_colors)
 
@@ -436,12 +365,10 @@ def get_current_colors_command(context: CommandContext) -> CommandResult:
     title="Update Theme Colors",
     category="Theme",
     description="Update colors in the current theme",
-    visible=False  # Internal command, requires multiple parameters
+    visible=False,  # Internal command, requires multiple parameters
 )
 def update_theme_colors_command(
-    context: CommandContext,
-    theme_id: str,
-    colors: dict[str, str]
+    context: CommandContext, theme_id: str, colors: dict[str, str]
 ) -> CommandResult:
     """Update theme colors."""
     theme_service = context.get_service(ThemeService)
@@ -451,10 +378,7 @@ def update_theme_colors_command(
     try:
         theme = theme_service.get_theme(theme_id)
         if not theme:
-            return CommandResult(
-                success=False,
-                error=f"Theme {theme_id} not found"
-            )
+            return CommandResult(success=False, error=f"Theme {theme_id} not found")
 
         # Update theme colors
         theme.colors.update(colors)
@@ -464,16 +388,11 @@ def update_theme_colors_command(
             success = theme_service.save_custom_theme(theme)
             if not success:
                 return CommandResult(
-                    success=False,
-                    error="Failed to save theme changes"
+                    success=False, error="Failed to save theme changes"
                 )
 
         return CommandResult(
-            success=True,
-            value={
-                "theme_id": theme_id,
-                "updated_colors": len(colors)
-            }
+            success=True, value={"theme_id": theme_id, "updated_colors": len(colors)}
         )
     except Exception as e:
         logger.error(f"Failed to update theme colors: {e}")

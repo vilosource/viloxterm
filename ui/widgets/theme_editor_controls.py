@@ -65,6 +65,9 @@ class ThemeControlsWidget(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(8, 8, 8, 8)
 
+        # Set minimum width for the controls widget
+        self.setMinimumWidth(450)
+
         # Tab widget for colors and typography
         self._property_tabs = QTabWidget()
 
@@ -127,7 +130,7 @@ class ThemeControlsWidget(QWidget):
                         key=prop_key,
                         label=description,
                         initial_color="#000000",
-                        description=prop_key  # Show key as tooltip
+                        description=prop_key,  # Show key as tooltip
                     )
                     field.color_changed.connect(self._on_color_field_changed)
 
@@ -184,7 +187,9 @@ class ThemeControlsWidget(QWidget):
         family_layout.addWidget(QLabel("Font Family:"))
         self._font_family_combo = QFontComboBox()
         self._font_family_combo.setCurrentFont("Fira Code")
-        self._font_family_combo.currentFontChanged.connect(self._on_typography_field_changed)
+        self._font_family_combo.currentFontChanged.connect(
+            self._on_typography_field_changed
+        )
         family_layout.addWidget(self._font_family_combo, 1)
         font_layout.addLayout(family_layout)
 
@@ -306,8 +311,9 @@ class ThemeControlsWidget(QWidget):
 
         for prop_key, field in self._color_fields.items():
             # Check if key or label contains search text
-            visible = (search_text in prop_key.lower() or
-                      search_text in field._label.lower())
+            visible = (
+                search_text in prop_key.lower() or search_text in field._label.lower()
+            )
             field.setVisible(visible)
 
         # Hide empty category boxes
@@ -380,14 +386,20 @@ class ThemeControlsWidget(QWidget):
             "font_family": self._font_family_combo.currentFont().family(),
             "font_size_base": self._font_size_spin.value(),
             "line_height": self._line_height_spin.value() / 100.0,
-            "preset": self._preset_combo.currentData()
+            "preset": self._preset_combo.currentData(),
         }
 
-    def load_typography_settings(self, font_family: str, font_size_base: int, line_height: float, preset: str = "custom"):
+    def load_typography_settings(
+        self,
+        font_family: str,
+        font_size_base: int,
+        line_height: float,
+        preset: str = "custom",
+    ):
         """Load typography settings into controls."""
         self._updating = True
         try:
-            self._font_family_combo.setCurrentFont(font_family.split(',')[0].strip())
+            self._font_family_combo.setCurrentFont(font_family.split(",")[0].strip())
             self._font_size_spin.setValue(font_size_base)
             self._line_height_spin.setValue(int(line_height * 100))
 

@@ -71,7 +71,7 @@ class DeploymentTester:
                 [str(self.executable), "--help"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
             return result.returncode == 0 or "ViloxTerm" in result.stdout
         except subprocess.TimeoutExpired:
@@ -90,7 +90,7 @@ class DeploymentTester:
                 [str(self.executable), "--version"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
             # App might not have --version yet, check for no crash
             return result.returncode == 0 or not result.stderr
@@ -105,9 +105,7 @@ class DeploymentTester:
         try:
             # Start the process
             proc = subprocess.Popen(
-                [str(self.executable)],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                [str(self.executable)], stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
 
             # Give it a moment to start
@@ -143,15 +141,13 @@ class DeploymentTester:
 
         try:
             result = subprocess.run(
-                ["ldd", str(self.executable)],
-                capture_output=True,
-                text=True
+                ["ldd", str(self.executable)], capture_output=True, text=True
             )
 
             # Check for missing libraries
             if "not found" in result.stdout:
                 print("  Missing libraries detected:")
-                for line in result.stdout.split('\n'):
+                for line in result.stdout.split("\n"):
                     if "not found" in line:
                         print(f"    {line.strip()}")
                 return False
@@ -175,7 +171,7 @@ class DeploymentTester:
                 proc = subprocess.Popen(
                     [str(self.executable)],
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE
+                    stderr=subprocess.PIPE,
                 )
                 time.sleep(3)
                 proc.terminate()
@@ -224,6 +220,7 @@ class DeploymentTester:
 
         return failed == 0
 
+
 def main():
     """Main test runner."""
     tester = DeploymentTester()
@@ -235,6 +232,7 @@ def main():
     else:
         print("\n✗ Some tests failed. Please review the output above.")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

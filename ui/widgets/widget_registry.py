@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 
 # Widget state serialization functions
 
+
 def serialize_text_editor(widget: QWidget) -> dict[str, Any]:
     """Serialize text editor state (QPlainTextEdit)."""
     if isinstance(widget, QPlainTextEdit):
@@ -28,9 +29,10 @@ def serialize_text_editor(widget: QWidget) -> dict[str, Any]:
             "cursor_position": cursor.position(),
             "selection_start": cursor.selectionStart(),
             "selection_end": cursor.selectionEnd(),
-            "scroll_value": widget.verticalScrollBar().value()
+            "scroll_value": widget.verticalScrollBar().value(),
         }
     return {}
+
 
 def deserialize_text_editor(widget: QWidget, state: dict[str, Any]) -> None:
     """Restore text editor state."""
@@ -43,7 +45,9 @@ def deserialize_text_editor(widget: QWidget, state: dict[str, Any]) -> None:
         if "cursor_position" in state:
             cursor = widget.textCursor()
             cursor.setPosition(state.get("selection_start", state["cursor_position"]))
-            if "selection_end" in state and state["selection_end"] != state.get("selection_start", state["cursor_position"]):
+            if "selection_end" in state and state["selection_end"] != state.get(
+                "selection_start", state["cursor_position"]
+            ):
                 cursor.setPosition(state["selection_end"], cursor.KeepAnchor)
             else:
                 cursor.setPosition(state["cursor_position"])
@@ -53,6 +57,7 @@ def deserialize_text_editor(widget: QWidget, state: dict[str, Any]) -> None:
         if "scroll_value" in state:
             widget.verticalScrollBar().setValue(state["scroll_value"])
 
+
 def serialize_terminal(widget: QWidget) -> dict[str, Any]:
     """Serialize terminal state (QTextEdit)."""
     if isinstance(widget, QTextEdit):
@@ -61,9 +66,10 @@ def serialize_terminal(widget: QWidget) -> dict[str, Any]:
             "content": widget.toPlainText(),
             "cursor_position": cursor.position(),
             "scroll_value": widget.verticalScrollBar().value(),
-            "is_read_only": widget.isReadOnly()
+            "is_read_only": widget.isReadOnly(),
         }
     return {}
+
 
 def deserialize_terminal(widget: QWidget, state: dict[str, Any]) -> None:
     """Restore terminal state."""
@@ -86,6 +92,7 @@ def deserialize_terminal(widget: QWidget, state: dict[str, Any]) -> None:
         if "is_read_only" in state:
             widget.setReadOnly(state["is_read_only"])
 
+
 def serialize_table_view(widget: QWidget) -> dict[str, Any]:
     """Serialize table view state."""
     if isinstance(widget, QTableWidget):
@@ -105,9 +112,10 @@ def serialize_table_view(widget: QWidget) -> dict[str, Any]:
             "column_widths": column_widths,
             "selected_items": selected_items,
             "current_row": widget.currentRow(),
-            "current_column": widget.currentColumn()
+            "current_column": widget.currentColumn(),
         }
     return {}
+
 
 def deserialize_table_view(widget: QWidget, state: dict[str, Any]) -> None:
     """Restore table view state."""
@@ -131,14 +139,13 @@ def deserialize_table_view(widget: QWidget, state: dict[str, Any]) -> None:
         if current_row >= 0 and current_col >= 0:
             widget.setCurrentCell(current_row, current_col)
 
+
 def serialize_label(widget: QWidget) -> dict[str, Any]:
     """Serialize label state."""
     if isinstance(widget, QLabel):
-        return {
-            "text": widget.text(),
-            "alignment": int(widget.alignment())
-        }
+        return {"text": widget.text(), "alignment": int(widget.alignment())}
     return {}
+
 
 def deserialize_label(widget: QWidget, state: dict[str, Any]) -> None:
     """Restore label state."""
@@ -151,6 +158,7 @@ def deserialize_label(widget: QWidget, state: dict[str, Any]) -> None:
 
 class WidgetType(Enum):
     """Types of widgets that can be created in panes."""
+
     TEXT_EDITOR = "text_editor"
     TERMINAL = "terminal"
     OUTPUT = "output"
@@ -195,8 +203,12 @@ class WidgetConfig:
     stylesheet: str = ""  # Custom stylesheet for this widget type
 
     # State serialization
-    serializer: Optional[Callable[[QWidget], dict[str, Any]]] = None  # Custom state serializer
-    deserializer: Optional[Callable[[QWidget, dict[str, Any]], None]] = None  # Custom state deserializer
+    serializer: Optional[Callable[[QWidget], dict[str, Any]]] = (
+        None  # Custom state serializer
+    )
+    deserializer: Optional[Callable[[QWidget, dict[str, Any]], None]] = (
+        None  # Custom state deserializer
+    )
 
 
 # Default configurations for common widget types
@@ -209,9 +221,8 @@ WIDGET_CONFIGS: dict[WidgetType, WidgetConfig] = {
         default_content="# Text Editor\n\n",
         stylesheet="",  # Theme will be applied dynamically
         serializer=serialize_text_editor,
-        deserializer=deserialize_text_editor
+        deserializer=deserialize_text_editor,
     ),
-
     WidgetType.TERMINAL: WidgetConfig(
         widget_class=QTextEdit,  # Will be overridden by factory
         factory=None,  # Will be set when terminal is imported
@@ -221,9 +232,8 @@ WIDGET_CONFIGS: dict[WidgetType, WidgetConfig] = {
         default_content="",  # Terminal creates its own content
         stylesheet="",  # Terminal has its own styling
         serializer=None,  # Will be set when terminal is imported
-        deserializer=None  # Will be set when terminal is imported
+        deserializer=None,  # Will be set when terminal is imported
     ),
-
     WidgetType.OUTPUT: WidgetConfig(
         widget_class=QTextEdit,
         preserve_context_menu=True,
@@ -232,18 +242,16 @@ WIDGET_CONFIGS: dict[WidgetType, WidgetConfig] = {
         default_content="Output Panel\n",
         stylesheet="",  # Theme will be applied dynamically
         serializer=serialize_terminal,  # Same as terminal
-        deserializer=deserialize_terminal
+        deserializer=deserialize_terminal,
     ),
-
     WidgetType.EXPLORER: WidgetConfig(
         widget_class=QTreeWidget,
         preserve_context_menu=True,  # Tree has its own context menu
         show_header=True,
         header_compact=True,  # Use compact header for explorer
         allow_type_change=False,
-        stylesheet=""  # Theme will be applied dynamically
+        stylesheet="",  # Theme will be applied dynamically
     ),
-
     WidgetType.TABLE_VIEW: WidgetConfig(
         widget_class=QTableWidget,
         preserve_context_menu=True,  # Tables have cell operations
@@ -252,9 +260,8 @@ WIDGET_CONFIGS: dict[WidgetType, WidgetConfig] = {
         min_width=200,
         stylesheet="",  # Theme will be applied dynamically
         serializer=serialize_table_view,
-        deserializer=deserialize_table_view
+        deserializer=deserialize_table_view,
     ),
-
     WidgetType.TREE_VIEW: WidgetConfig(
         widget_class=QTreeWidget,
         preserve_context_menu=True,  # Trees have node operations
@@ -262,7 +269,6 @@ WIDGET_CONFIGS: dict[WidgetType, WidgetConfig] = {
         allow_type_change=True,
         stylesheet="",  # Theme will be applied dynamically
     ),
-
     WidgetType.IMAGE_VIEWER: WidgetConfig(
         widget_class=QLabel,
         preserve_context_menu=False,  # Simple widget, can override
@@ -272,9 +278,8 @@ WIDGET_CONFIGS: dict[WidgetType, WidgetConfig] = {
         default_content="[Image Viewer]",
         stylesheet="",  # Theme will be applied dynamically
         serializer=serialize_label,
-        deserializer=deserialize_label
+        deserializer=deserialize_label,
     ),
-
     WidgetType.SETTINGS: WidgetConfig(
         widget_class=QWidget,  # Will be overridden by factory
         factory=None,  # Will be set when creating shortcut config widget
@@ -285,9 +290,8 @@ WIDGET_CONFIGS: dict[WidgetType, WidgetConfig] = {
         can_be_split=False,  # Settings should not be split
         min_width=600,
         min_height=400,
-        stylesheet=""  # Settings widget handles its own styling
+        stylesheet="",  # Settings widget handles its own styling
     ),
-
     WidgetType.PLACEHOLDER: WidgetConfig(
         widget_class=QLabel,
         preserve_context_menu=False,
@@ -296,7 +300,7 @@ WIDGET_CONFIGS: dict[WidgetType, WidgetConfig] = {
         default_content="Empty Pane\n\nRight-click to change type",
         stylesheet="",  # Theme will be applied dynamically
         serializer=serialize_label,
-        deserializer=deserialize_label
+        deserializer=deserialize_label,
     ),
 }
 
@@ -312,7 +316,9 @@ class WidgetRegistry:
         """Register a new widget type or override existing."""
         self.configs[widget_type] = config
 
-    def register_factory(self, widget_type: WidgetType, factory: Callable[[str], QWidget]):
+    def register_factory(
+        self, widget_type: WidgetType, factory: Callable[[str], QWidget]
+    ):
         """Register a custom factory function for a widget type.
 
         .. deprecated:: 1.0
@@ -320,11 +326,12 @@ class WidgetRegistry:
             This method will be removed in a future version.
         """
         import warnings
+
         warnings.warn(
             "WidgetRegistry.register_factory() is deprecated. "
             "Use AppWidgetManager.register_widget() with AppWidgetMetadata instead.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         self.custom_factories[widget_type] = factory
         if widget_type in self.configs:
@@ -349,11 +356,11 @@ class WidgetRegistry:
 
         # Apply default content
         if config.default_content:
-            if hasattr(widget, 'setPlainText'):
+            if hasattr(widget, "setPlainText"):
                 widget.setPlainText(config.default_content)
-            elif hasattr(widget, 'setText'):
+            elif hasattr(widget, "setText"):
                 widget.setText(config.default_content)
-            elif hasattr(widget, 'setHtml'):
+            elif hasattr(widget, "setHtml"):
                 widget.setHtml(config.default_content)
 
         # Apply stylesheet
@@ -382,7 +389,9 @@ class WidgetRegistry:
             return config.header_compact, config.header_auto_hide
         return False, False
 
-    def serialize_widget_state(self, widget: QWidget, widget_type: WidgetType) -> dict[str, Any]:
+    def serialize_widget_state(
+        self, widget: QWidget, widget_type: WidgetType
+    ) -> dict[str, Any]:
         """Serialize widget state using the appropriate serializer."""
         config = self.get_config(widget_type)
         if config and config.serializer:
@@ -392,7 +401,9 @@ class WidgetRegistry:
                 print(f"Failed to serialize widget state for {widget_type}: {e}")
         return {}
 
-    def deserialize_widget_state(self, widget: QWidget, widget_type: WidgetType, state: dict[str, Any]) -> bool:
+    def deserialize_widget_state(
+        self, widget: QWidget, widget_type: WidgetType, state: dict[str, Any]
+    ) -> bool:
         """Deserialize widget state using the appropriate deserializer."""
         if not state:
             return True  # Empty state is valid

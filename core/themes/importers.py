@@ -29,7 +29,6 @@ class VSCodeThemeImporter:
         "editorWhitespace.foreground": "editorWhitespace.foreground",
         "editorIndentGuide.background": "editorIndentGuide.background",
         "editorIndentGuide.activeBackground": "editorIndentGuide.activeBackground",
-
         # Activity bar
         "activityBar.background": "activityBar.background",
         "activityBar.foreground": "activityBar.foreground",
@@ -37,14 +36,12 @@ class VSCodeThemeImporter:
         "activityBar.activeBorder": "activityBar.activeBorder",
         "activityBar.activeBackground": "activityBar.activeBackground",
         "activityBar.inactiveForeground": "activityBar.inactiveForeground",
-
         # Sidebar
         "sideBar.background": "sideBar.background",
         "sideBar.foreground": "sideBar.foreground",
         "sideBar.border": "sideBar.border",
         "sideBarSectionHeader.background": "sideBarSectionHeader.background",
         "sideBarSectionHeader.foreground": "sideBarSectionHeader.foreground",
-
         # Status bar
         "statusBar.background": "statusBar.background",
         "statusBar.foreground": "statusBar.foreground",
@@ -52,14 +49,12 @@ class VSCodeThemeImporter:
         "statusBar.noFolderBackground": "statusBar.noFolderBackground",
         "statusBar.debuggingBackground": "statusBar.debuggingBackground",
         "statusBar.debuggingForeground": "statusBar.debuggingForeground",
-
         # Title bar
         "titleBar.activeBackground": "titleBar.activeBackground",
         "titleBar.activeForeground": "titleBar.activeForeground",
         "titleBar.inactiveBackground": "titleBar.inactiveBackground",
         "titleBar.inactiveForeground": "titleBar.inactiveForeground",
         "titleBar.border": "titleBar.border",
-
         # Tabs
         "tab.activeBackground": "tab.activeBackground",
         "tab.activeForeground": "tab.activeForeground",
@@ -68,21 +63,18 @@ class VSCodeThemeImporter:
         "tab.inactiveBackground": "tab.inactiveBackground",
         "tab.inactiveForeground": "tab.inactiveForeground",
         "tab.border": "tab.border",
-
         # Panel
         "panel.background": "panel.background",
         "panel.border": "panel.border",
         "panelTitle.activeBorder": "panelTitle.activeBorder",
         "panelTitle.activeForeground": "panelTitle.activeForeground",
         "panelTitle.inactiveForeground": "panelTitle.inactiveForeground",
-
         # Input controls
         "input.background": "input.background",
         "input.foreground": "input.foreground",
         "input.border": "input.border",
         "input.placeholderForeground": "input.placeholderForeground",
         "focusBorder": "focusBorder",
-
         # Buttons
         "button.background": "button.background",
         "button.foreground": "button.foreground",
@@ -90,12 +82,10 @@ class VSCodeThemeImporter:
         "button.secondaryBackground": "button.secondaryBackground",
         "button.secondaryForeground": "button.secondaryForeground",
         "button.border": "button.border",
-
         # Dropdowns
         "dropdown.background": "dropdown.background",
         "dropdown.foreground": "dropdown.foreground",
         "dropdown.border": "dropdown.border",
-
         # Lists and trees
         "list.activeSelectionBackground": "list.activeSelectionBackground",
         "list.activeSelectionForeground": "list.activeSelectionForeground",
@@ -103,12 +93,10 @@ class VSCodeThemeImporter:
         "list.inactiveSelectionForeground": "list.inactiveSelectionForeground",
         "list.hoverBackground": "list.hoverBackground",
         "list.hoverForeground": "list.hoverForeground",
-
         # Scrollbar
         "scrollbarSlider.background": "scrollbarSlider.background",
         "scrollbarSlider.hoverBackground": "scrollbarSlider.hoverBackground",
         "scrollbarSlider.activeBackground": "scrollbarSlider.activeBackground",
-
         # Menu
         "menu.background": "menu.background",
         "menu.foreground": "menu.foreground",
@@ -116,14 +104,12 @@ class VSCodeThemeImporter:
         "menu.selectionForeground": "menu.selectionForeground",
         "menu.selectionBorder": "menu.selectionBorder",
         "menu.separatorBackground": "menu.separatorBackground",
-
         # Terminal colors
         "terminal.background": "terminal.background",
         "terminal.foreground": "terminal.foreground",
         "terminal.selectionBackground": "terminal.selectionBackground",
         "terminalCursor.background": "terminalCursor.background",
         "terminalCursor.foreground": "terminalCursor.foreground",
-
         # Terminal ANSI colors
         "terminal.ansiBlack": "terminal.ansiBlack",
         "terminal.ansiRed": "terminal.ansiRed",
@@ -141,7 +127,6 @@ class VSCodeThemeImporter:
         "terminal.ansiBrightMagenta": "terminal.ansiBrightMagenta",
         "terminal.ansiBrightCyan": "terminal.ansiBrightCyan",
         "terminal.ansiBrightWhite": "terminal.ansiBrightWhite",
-
         # Additional mappings
         "errorForeground": "errorForeground",
         "warningForeground": "warningForeground",
@@ -161,7 +146,7 @@ class VSCodeThemeImporter:
             Converted Theme object or None if import failed
         """
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 vscode_data = json.load(f)
 
             theme_name = file_path.stem
@@ -174,7 +159,9 @@ class VSCodeThemeImporter:
             return None
 
     @classmethod
-    def convert_vscode_theme(cls, vscode_data: dict[str, Any], theme_name: str) -> Theme:
+    def convert_vscode_theme(
+        cls, vscode_data: dict[str, Any], theme_name: str
+    ) -> Theme:
         """
         Convert VSCode theme data to ViloxTerm Theme.
 
@@ -206,17 +193,20 @@ class VSCodeThemeImporter:
         # Extract metadata
         name = vscode_data.get("name", theme_name)
         author = vscode_data.get("author", vscode_data.get("publisher", "Unknown"))
-        description = vscode_data.get("description", f"Imported from VSCode theme: {theme_name}")
+        description = vscode_data.get(
+            "description", f"Imported from VSCode theme: {theme_name}"
+        )
 
         # Create Theme object
         import uuid
+
         theme = Theme(
             id=f"imported-{uuid.uuid4().hex[:8]}",
             name=name,
             description=description,
             version="1.0.0",
             author=author,
-            colors=vilox_colors
+            colors=vilox_colors,
         )
 
         # Fill in missing required colors with defaults
@@ -291,7 +281,9 @@ class VSCodeThemeImporter:
         if "editor.lineHighlightBackground" not in theme.colors:
             bg = theme.colors.get("editor.background", "#1e1e1e")
             # Make line highlight slightly lighter/darker
-            theme.colors["editor.lineHighlightBackground"] = cls._adjust_brightness(bg, 0.1)
+            theme.colors["editor.lineHighlightBackground"] = cls._adjust_brightness(
+                bg, 0.1
+            )
 
         if "editor.selectionBackground" not in theme.colors:
             theme.colors["editor.selectionBackground"] = "#264f78"
@@ -334,7 +326,7 @@ class VSCodeThemeImporter:
         """
         try:
             # Remove # and convert to RGB
-            color = color.lstrip('#')
+            color = color.lstrip("#")
             r = int(color[0:2], 16)
             g = int(color[2:4], 16)
             b = int(color[4:6], 16)
@@ -355,6 +347,7 @@ class VSCodeThemeImporter:
             return f"#{r:02x}{g:02x}{b:02x}"
         except (ValueError, IndexError, TypeError) as e:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.debug(f"Failed to adjust color brightness for '{color}': {e}")
             return color  # Return original if adjustment fails
@@ -390,7 +383,7 @@ class ThemeImporter:
             Format identifier ('vscode', 'textmate', etc.)
         """
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Check for VSCode theme markers
@@ -402,6 +395,7 @@ class ThemeImporter:
             return "unknown"
         except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.debug(f"Failed to detect theme format for '{file_path}': {e}")
             return "unknown"

@@ -46,7 +46,9 @@ class TestPaneOperationsGUI:
         assert result.success, f"Split command failed: {result.error}"
 
         # Wait for UI update
-        self.qtbot.waitUntil(lambda: self.get_current_pane_count() == initial_count + 1, timeout=1000)
+        self.qtbot.waitUntil(
+            lambda: self.get_current_pane_count() == initial_count + 1, timeout=1000
+        )
 
         # Verify pane was split
         final_count = self.get_current_pane_count()
@@ -62,7 +64,9 @@ class TestPaneOperationsGUI:
         assert result.success, f"Split command failed: {result.error}"
 
         # Wait for UI update
-        self.qtbot.waitUntil(lambda: self.get_current_pane_count() == initial_count + 1, timeout=1000)
+        self.qtbot.waitUntil(
+            lambda: self.get_current_pane_count() == initial_count + 1, timeout=1000
+        )
 
         # Verify pane was split
         final_count = self.get_current_pane_count()
@@ -82,13 +86,17 @@ class TestPaneOperationsGUI:
         self.qtbot.keyClick(
             self.workspace,
             Qt.Key.Key_W,
-            Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier
+            Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier,
         )
-        self.qtbot.waitUntil(lambda: self.get_current_pane_count() == initial_count - 1, timeout=1000)
+        self.qtbot.waitUntil(
+            lambda: self.get_current_pane_count() == initial_count - 1, timeout=1000
+        )
 
         # Verify pane was closed
         final_count = self.get_current_pane_count()
-        assert final_count == initial_count - 1, "Pane should have been closed by Ctrl+Shift+W"
+        assert (
+            final_count == initial_count - 1
+        ), "Pane should have been closed by Ctrl+Shift+W"
 
     def test_close_pane_via_command(self):
         """Test closing a pane through the command system."""
@@ -105,7 +113,9 @@ class TestPaneOperationsGUI:
         assert result.success, f"Close command failed: {result.error}"
 
         # Wait for UI update
-        self.qtbot.waitUntil(lambda: self.get_current_pane_count() == initial_count - 1, timeout=1000)
+        self.qtbot.waitUntil(
+            lambda: self.get_current_pane_count() == initial_count - 1, timeout=1000
+        )
 
         # Verify pane was closed
         final_count = self.get_current_pane_count()
@@ -136,11 +146,15 @@ class TestPaneOperationsGUI:
 
         # Click the close button
         self.qtbot.mouseClick(close_button, Qt.MouseButton.LeftButton)
-        self.qtbot.waitUntil(lambda: self.get_current_pane_count() == initial_count - 1, timeout=1000)
+        self.qtbot.waitUntil(
+            lambda: self.get_current_pane_count() == initial_count - 1, timeout=1000
+        )
 
         # Verify pane was closed
         final_count = self.get_current_pane_count()
-        assert final_count == initial_count - 1, "Pane should have been closed after button click"
+        assert (
+            final_count == initial_count - 1
+        ), "Pane should have been closed after button click"
 
     def test_cannot_close_last_pane(self):
         """Test that the last pane cannot be closed."""
@@ -188,7 +202,7 @@ class TestPaneOperationsGUI:
             "workbench.action.focusLeftPane",
             "workbench.action.focusRightPane",
             "workbench.action.focusAbovePane",
-            "workbench.action.focusBelowPane"
+            "workbench.action.focusBelowPane",
         ]
 
         for cmd in commands:
@@ -213,7 +227,7 @@ class TestPaneOperationsGUI:
         self.qtbot.keyClick(
             self.main_window,  # Send to main window for proper event handling
             Qt.Key.Key_K,
-            Qt.KeyboardModifier.ControlModifier
+            Qt.KeyboardModifier.ControlModifier,
         )
         self.qtbot.wait(50)  # Small wait for chord to register
 
@@ -221,13 +235,17 @@ class TestPaneOperationsGUI:
         self.qtbot.keyClick(
             self.main_window,
             Qt.Key.Key_W,
-            Qt.KeyboardModifier.NoModifier  # No modifiers for second key in chord
+            Qt.KeyboardModifier.NoModifier,  # No modifiers for second key in chord
         )
-        self.qtbot.waitUntil(lambda: self.get_current_pane_count() == initial_count - 1, timeout=1000)
+        self.qtbot.waitUntil(
+            lambda: self.get_current_pane_count() == initial_count - 1, timeout=1000
+        )
 
         # Verify pane was closed
         final_count = self.get_current_pane_count()
-        assert final_count == initial_count - 1, "Pane should have been closed by Ctrl+K W chord"
+        assert (
+            final_count == initial_count - 1
+        ), "Pane should have been closed by Ctrl+K W chord"
 
 
 @pytest.mark.gui
@@ -244,6 +262,7 @@ class TestPaneServiceIntegration:
 
         # Get the service locator
         from services.service_locator import ServiceLocator
+
         self.service_locator = ServiceLocator()
 
     def test_workspace_service_has_required_methods(self):
@@ -253,8 +272,12 @@ class TestPaneServiceIntegration:
         workspace_service = self.service_locator.get(WorkspaceService)
 
         # Verify required methods exist
-        assert hasattr(workspace_service, 'get_workspace'), "Missing get_workspace method"
-        assert hasattr(workspace_service, 'set_workspace'), "Missing set_workspace method"
+        assert hasattr(
+            workspace_service, "get_workspace"
+        ), "Missing get_workspace method"
+        assert hasattr(
+            workspace_service, "set_workspace"
+        ), "Missing set_workspace method"
 
         # Verify getter returns workspace
         workspace = workspace_service.get_workspace()
@@ -287,7 +310,7 @@ class TestPaneServiceIntegration:
         self.qtbot.wait(100)
 
         # Mock the execute_command to track calls
-        with patch('core.commands.executor.execute_command') as mock_execute:
+        with patch("core.commands.executor.execute_command") as mock_execute:
             mock_execute.return_value = Mock(success=True)
 
             # Find and click close button

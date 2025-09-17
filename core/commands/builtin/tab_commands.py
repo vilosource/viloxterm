@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     id="workbench.action.duplicateTab",
     title="Duplicate Tab",
     category="Tabs",
-    description="Duplicate the current or specified tab"
+    description="Duplicate the current or specified tab",
 )
 def duplicate_tab_command(context: CommandContext) -> CommandResult:
     """
@@ -37,7 +37,7 @@ def duplicate_tab_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="WorkspaceService not available")
 
         # Get tab index from context
-        tab_index = context.args.get('tab_index')
+        tab_index = context.args.get("tab_index")
 
         # Get workspace
         workspace = workspace_service.get_workspace()
@@ -49,7 +49,7 @@ def duplicate_tab_command(context: CommandContext) -> CommandResult:
             tab_index = workspace.tab_widget.currentIndex()
 
         # Duplicate the tab
-        if hasattr(workspace, 'duplicate_tab'):
+        if hasattr(workspace, "duplicate_tab"):
             workspace.duplicate_tab(tab_index)
             return CommandResult(success=True, value={"duplicated_tab": tab_index})
         else:
@@ -71,7 +71,7 @@ def duplicate_tab_command(context: CommandContext) -> CommandResult:
     id="workbench.action.closeTabsToRight",
     title="Close Tabs to the Right",
     category="Tabs",
-    description="Close all tabs to the right of the current or specified tab"
+    description="Close all tabs to the right of the current or specified tab",
 )
 def close_tabs_to_right_command(context: CommandContext) -> CommandResult:
     """
@@ -89,7 +89,7 @@ def close_tabs_to_right_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="WorkspaceService not available")
 
         # Get tab index from context
-        tab_index = context.args.get('tab_index')
+        tab_index = context.args.get("tab_index")
 
         # Get workspace
         workspace = workspace_service.get_workspace()
@@ -101,9 +101,11 @@ def close_tabs_to_right_command(context: CommandContext) -> CommandResult:
             tab_index = workspace.tab_widget.currentIndex()
 
         # Close tabs to the right
-        if hasattr(workspace, 'close_tabs_to_right'):
+        if hasattr(workspace, "close_tabs_to_right"):
             workspace.close_tabs_to_right(tab_index)
-            return CommandResult(success=True, value={"closed_from_index": tab_index + 1})
+            return CommandResult(
+                success=True, value={"closed_from_index": tab_index + 1}
+            )
 
         return CommandResult(success=False, error="Could not close tabs")
 
@@ -116,7 +118,7 @@ def close_tabs_to_right_command(context: CommandContext) -> CommandResult:
     id="workbench.action.renameTab",
     title="Rename Tab",
     category="Tabs",
-    description="Rename the current or specified tab"
+    description="Rename the current or specified tab",
 )
 def rename_tab_command(context: CommandContext) -> CommandResult:
     """
@@ -134,8 +136,8 @@ def rename_tab_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="WorkspaceService not available")
 
         # Get tab index from context
-        tab_index = context.args.get('tab_index')
-        new_name = context.args.get('new_name')
+        tab_index = context.args.get("tab_index")
+        new_name = context.args.get("new_name")
 
         # Get workspace
         workspace = workspace_service.get_workspace()
@@ -151,13 +153,17 @@ def rename_tab_command(context: CommandContext) -> CommandResult:
             workspace.tab_widget.setTabText(tab_index, new_name)
             if tab_index in workspace.tabs:
                 workspace.tabs[tab_index].name = new_name
-            return CommandResult(success=True, value={"tab_index": tab_index, "new_name": new_name})
+            return CommandResult(
+                success=True, value={"tab_index": tab_index, "new_name": new_name}
+            )
 
         # Otherwise, start interactive rename
-        if hasattr(workspace, 'start_tab_rename'):
+        if hasattr(workspace, "start_tab_rename"):
             current_text = workspace.tab_widget.tabText(tab_index)
             workspace.start_tab_rename(tab_index, current_text)
-            return CommandResult(success=True, value={"tab_index": tab_index, "mode": "interactive"})
+            return CommandResult(
+                success=True, value={"tab_index": tab_index, "mode": "interactive"}
+            )
 
         return CommandResult(success=False, error="Could not rename tab")
 
@@ -170,7 +176,7 @@ def rename_tab_command(context: CommandContext) -> CommandResult:
     id="workbench.action.closeOtherTabs",
     title="Close Other Tabs",
     category="Tabs",
-    description="Close all tabs except the current or specified one"
+    description="Close all tabs except the current or specified one",
 )
 def close_other_tabs_command(context: CommandContext) -> CommandResult:
     """
@@ -188,7 +194,7 @@ def close_other_tabs_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="WorkspaceService not available")
 
         # Get tab index from context
-        tab_index = context.args.get('tab_index')
+        tab_index = context.args.get("tab_index")
 
         # Get workspace
         workspace = workspace_service.get_workspace()
@@ -200,7 +206,7 @@ def close_other_tabs_command(context: CommandContext) -> CommandResult:
             tab_index = workspace.tab_widget.currentIndex()
 
         # Close other tabs
-        if hasattr(workspace, 'close_other_tabs'):
+        if hasattr(workspace, "close_other_tabs"):
             workspace.close_other_tabs(tab_index)
             return CommandResult(success=True, value={"kept_tab": tab_index})
 

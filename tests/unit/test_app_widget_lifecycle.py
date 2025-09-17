@@ -113,7 +113,7 @@ class TestMockAppWidgetLifecycle:
         widget.initialize()
 
         # Mock QTimer.singleShot to capture retry scheduling
-        with patch.object(QTimer, 'singleShot') as mock_timer:
+        with patch.object(QTimer, "singleShot") as mock_timer:
             widget.set_error("Test error")
 
             # Should schedule retry with 1000ms delay
@@ -129,7 +129,7 @@ class TestMockAppWidgetLifecycle:
         widget.initialize()
 
         # Set error 3 times
-        with patch.object(QTimer, 'singleShot') as mock_timer:
+        with patch.object(QTimer, "singleShot") as mock_timer:
             widget.set_error("Error 1")
             assert mock_timer.call_count == 1
 
@@ -170,9 +170,7 @@ class TestMockAppWidgetLifecycle:
 
         # Add a mock connection to signal manager
         widget._signal_manager.connect(
-            widget.widget_ready,
-            lambda: None,
-            description="Test connection"
+            widget.widget_ready, lambda: None, description="Test connection"
         )
         assert widget._signal_manager.get_connection_count() == 1
 
@@ -230,7 +228,7 @@ class TestMockAppWidgetLifecycle:
         widget.initialize()
 
         # Mock QTimer.singleShot to verify focus is scheduled
-        with patch.object(QTimer, 'singleShot') as mock_timer:
+        with patch.object(QTimer, "singleShot") as mock_timer:
             widget.set_ready()
 
             # Should schedule focus processing
@@ -319,7 +317,9 @@ class TestMockAppWidgetLifecycle:
         qtbot.addWidget(widget)
 
         # Configure custom retry strategy
-        widget.configure_retry_strategy(max_retries=5, base_delay=500, backoff_factor=2.0)
+        widget.configure_retry_strategy(
+            max_retries=5, base_delay=500, backoff_factor=2.0
+        )
 
         assert widget._max_retries == 5
         assert widget._retry_base_delay == 500
@@ -328,7 +328,7 @@ class TestMockAppWidgetLifecycle:
         # Test that retries use the configured values
         widget.initialize()
 
-        with patch.object(QTimer, 'singleShot') as mock_timer:
+        with patch.object(QTimer, "singleShot") as mock_timer:
             widget.set_error("Test error")
 
             # Should schedule retry with 500ms delay (base_delay * 2.0^0)
@@ -350,7 +350,7 @@ class TestMockAppWidgetLifecycle:
 
         widget.initialize()
 
-        with patch.object(QTimer, 'singleShot') as mock_timer:
+        with patch.object(QTimer, "singleShot") as mock_timer:
             widget.set_error("Test error")
 
             # Should not schedule retry

@@ -88,13 +88,14 @@ class TestSplitPaneWidgetLifecycle:
             new_leaf_id = "new-pane-id"
             # Add the new leaf to the model's leaves dict
             from ui.widgets.split_pane_model import LeafNode
+
             new_leaf = LeafNode(id=new_leaf_id)
             new_leaf.app_widget = async_widget
             async_widget.leaf_node = new_leaf
             model.leaves[new_leaf_id] = new_leaf
             return new_leaf_id
 
-        with patch.object(model, 'split_pane', side_effect=mock_split):
+        with patch.object(model, "split_pane", side_effect=mock_split):
             # Start async widget initialization
             async_widget.start_initialization()
 
@@ -124,13 +125,14 @@ class TestSplitPaneWidgetLifecycle:
         def mock_split(pane_id, orientation):
             new_leaf_id = "new-pane-id"
             from ui.widgets.split_pane_model import LeafNode
+
             new_leaf = LeafNode(id=new_leaf_id)
             new_leaf.app_widget = sync_widget
             sync_widget.leaf_node = new_leaf
             model.leaves[new_leaf_id] = new_leaf
             return new_leaf_id
 
-        with patch.object(model, 'split_pane', side_effect=mock_split):
+        with patch.object(model, "split_pane", side_effect=mock_split):
             # Make sure the widget is visible for focus testing
             # (SplitPaneWidget only runs focus logic when isVisible() == True)
             split_widget.show()
@@ -155,15 +157,18 @@ class TestSplitPaneWidgetLifecycle:
 
         def create_mock_split(widget):
             """Create a mock split function for a widget."""
+
             def mock_split(pane_id, orientation):
                 new_leaf_id = f"pane-{widget.widget_id}"
                 from ui.widgets.split_pane_model import LeafNode
+
                 new_leaf = LeafNode(id=new_leaf_id)
                 new_leaf.app_widget = widget
                 widget.leaf_node = new_leaf
                 model.leaves[new_leaf_id] = new_leaf
                 widgets_created.append(widget)
                 return new_leaf_id
+
             return mock_split
 
         # Create mix of widgets
@@ -174,7 +179,9 @@ class TestSplitPaneWidgetLifecycle:
 
         # Perform multiple splits
         for widget in [sync_widget1, async_widget1, sync_widget2, async_widget2]:
-            with patch.object(model, 'split_pane', side_effect=create_mock_split(widget)):
+            with patch.object(
+                model, "split_pane", side_effect=create_mock_split(widget)
+            ):
                 # Start async widgets
                 if isinstance(widget, MockAsyncWidget):
                     widget.start_initialization()
@@ -211,13 +218,14 @@ class TestSplitPaneWidgetLifecycle:
         def mock_split(pane_id, orientation):
             new_leaf_id = "new-pane"
             from ui.widgets.split_pane_model import LeafNode
+
             new_leaf = LeafNode(id=new_leaf_id)
             new_leaf.app_widget = async_widget
             async_widget.leaf_node = new_leaf
             model.leaves[new_leaf_id] = new_leaf
             return new_leaf_id
 
-        with patch.object(model, 'split_pane', side_effect=mock_split):
+        with patch.object(model, "split_pane", side_effect=mock_split):
             # Start initialization
             async_widget.start_initialization()
 
@@ -241,13 +249,14 @@ class TestSplitPaneWidgetLifecycle:
         def mock_split(pane_id, orientation):
             new_leaf_id = "focus-test-pane"
             from ui.widgets.split_pane_model import LeafNode
+
             new_leaf = LeafNode(id=new_leaf_id)
             new_leaf.app_widget = async_widget
             async_widget.leaf_node = new_leaf
             model.leaves[new_leaf_id] = new_leaf
             return new_leaf_id
 
-        with patch.object(model, 'split_pane', side_effect=mock_split):
+        with patch.object(model, "split_pane", side_effect=mock_split):
             async_widget.start_initialization()
             split_widget.split_horizontal(model.get_active_pane_id())
 
@@ -271,13 +280,14 @@ class TestSplitPaneWidgetLifecycle:
         def mock_split(pane_id, orientation):
             new_leaf_id = "error-pane"
             from ui.widgets.split_pane_model import LeafNode
+
             new_leaf = LeafNode(id=new_leaf_id)
             new_leaf.app_widget = error_widget
             error_widget.leaf_node = new_leaf
             model.leaves[new_leaf_id] = new_leaf
             return new_leaf_id
 
-        with patch.object(model, 'split_pane', side_effect=mock_split):
+        with patch.object(model, "split_pane", side_effect=mock_split):
             # Start initialization but trigger error
             error_widget.initialize()
             error_widget.set_error("Test error during init")
@@ -300,13 +310,14 @@ class TestSplitPaneWidgetLifecycle:
         def mock_split(pane_id, orientation):
             new_leaf_id = "cleanup-pane"
             from ui.widgets.split_pane_model import LeafNode
+
             new_leaf = LeafNode(id=new_leaf_id)
             new_leaf.app_widget = async_widget
             async_widget.leaf_node = new_leaf
             model.leaves[new_leaf_id] = new_leaf
             return new_leaf_id
 
-        with patch.object(model, 'split_pane', side_effect=mock_split):
+        with patch.object(model, "split_pane", side_effect=mock_split):
             async_widget.start_initialization()
             split_widget.split_horizontal(model.get_active_pane_id())
 

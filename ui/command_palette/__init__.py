@@ -10,6 +10,6 @@ from .palette_controller import CommandPaletteController
 from .palette_widget import CommandPaletteWidget
 
 __all__ = [
-    'CommandPaletteWidget',
-    'CommandPaletteController',
+    "CommandPaletteWidget",
+    "CommandPaletteController",
 ]

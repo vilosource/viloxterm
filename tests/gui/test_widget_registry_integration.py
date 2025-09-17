@@ -51,7 +51,7 @@ class TestWidgetRegistryIntegration:
         workspace.add_tab(split_pane, "Settings")
 
         # Mock execute_command to verify it's called
-        with patch('ui.workspace.execute_command') as mock_execute:
+        with patch("ui.workspace.execute_command") as mock_execute:
             mock_execute.return_value = MagicMock(success=True)
 
             # Close the tab
@@ -61,7 +61,7 @@ class TestWidgetRegistryIntegration:
             mock_execute.assert_called_once_with(
                 "workspace.updateRegistryAfterClose",
                 closed_index=0,
-                widget_id="com.viloapp.settings"
+                widget_id="com.viloapp.settings",
             )
 
     def test_no_direct_service_access_in_close_tab(self, workspace_with_service, qtbot):
@@ -74,8 +74,8 @@ class TestWidgetRegistryIntegration:
         workspace.add_tab(split_pane, "Test")
 
         # Patch ServiceLocator to ensure it's not called directly
-        with patch('ui.workspace.ServiceLocator') as mock_locator:
-            with patch('ui.workspace.execute_command') as mock_execute:
+        with patch("ui.workspace.ServiceLocator") as mock_locator:
+            with patch("ui.workspace.execute_command") as mock_execute:
                 mock_execute.return_value = MagicMock(success=True)
 
                 # Close the tab
@@ -84,44 +84,50 @@ class TestWidgetRegistryIntegration:
                 # ServiceLocator should NOT be imported/used
                 mock_locator.get_instance.assert_not_called()
 
-    def test_singleton_widget_behavior_with_commands(self, workspace_with_service, qtbot):
+    def test_singleton_widget_behavior_with_commands(
+        self, workspace_with_service, qtbot
+    ):
         """Test that singleton widgets work correctly with command-based registry."""
         workspace, mock_service = workspace_with_service
 
         # Simulate opening Settings widget
-        with patch('core.commands.executor.execute_command') as mock_execute:
+        with patch("core.commands.executor.execute_command") as mock_execute:
             # First check if widget exists
             mock_execute.return_value = MagicMock(
-                success=True,
-                value={"registered": False}
+                success=True, value={"registered": False}
             )
 
-            result = execute_command("workspace.isWidgetRegistered", widget_id="com.viloapp.settings")
+            result = execute_command(
+                "workspace.isWidgetRegistered", widget_id="com.viloapp.settings"
+            )
             assert not result.value["registered"]
 
             # Register the widget
             mock_execute.return_value = MagicMock(
                 success=True,
-                value={"widget_id": "com.viloapp.settings", "tab_index": 0}
+                value={"widget_id": "com.viloapp.settings", "tab_index": 0},
             )
 
             result = execute_command(
                 "workspace.registerWidget",
                 widget_id="com.viloapp.settings",
-                tab_index=0
+                tab_index=0,
             )
             assert result.success
 
             # Now check if widget exists
             mock_execute.return_value = MagicMock(
-                success=True,
-                value={"registered": True}
+                success=True, value={"registered": True}
             )
 
-            result = execute_command("workspace.isWidgetRegistered", widget_id="com.viloapp.settings")
+            result = execute_command(
+                "workspace.isWidgetRegistered", widget_id="com.viloapp.settings"
+            )
             assert result.value["registered"]
 
-    def test_registry_update_on_multiple_tab_closes(self, workspace_with_service, qtbot):
+    def test_registry_update_on_multiple_tab_closes(
+        self, workspace_with_service, qtbot
+    ):
         """Test registry updates correctly when multiple tabs are closed."""
         workspace, mock_service = workspace_with_service
 
@@ -131,7 +137,7 @@ class TestWidgetRegistryIntegration:
             split_pane.widget_id = f"widget_{i}"
             workspace.add_tab(split_pane, f"Tab {i}")
 
-        with patch('ui.workspace.execute_command') as mock_execute:
+        with patch("ui.workspace.execute_command") as mock_execute:
             mock_execute.return_value = MagicMock(success=True)
 
             # Close middle tab
@@ -141,7 +147,7 @@ class TestWidgetRegistryIntegration:
             mock_execute.assert_called_with(
                 "workspace.updateRegistryAfterClose",
                 closed_index=2,
-                widget_id="widget_2"
+                widget_id="widget_2",
             )
 
             # Close first tab
@@ -153,7 +159,7 @@ class TestWidgetRegistryIntegration:
             assert calls[1] == call(
                 "workspace.updateRegistryAfterClose",
                 closed_index=0,
-                widget_id="widget_0"
+                widget_id="widget_0",
             )
 
     def test_tab_without_widget_id(self, workspace_with_service, qtbot):
@@ -165,7 +171,7 @@ class TestWidgetRegistryIntegration:
         # Don't set widget_id
         workspace.add_tab(split_pane, "No ID Tab")
 
-        with patch('ui.workspace.execute_command') as mock_execute:
+        with patch("ui.workspace.execute_command") as mock_execute:
             mock_execute.return_value = MagicMock(success=True)
 
             # Close the tab
@@ -173,9 +179,7 @@ class TestWidgetRegistryIntegration:
 
             # Command should still be called but with widget_id=None
             mock_execute.assert_called_once_with(
-                "workspace.updateRegistryAfterClose",
-                closed_index=0,
-                widget_id=None
+                "workspace.updateRegistryAfterClose", closed_index=0, widget_id=None
             )
 
     def test_command_failure_handling(self, workspace_with_service, qtbot):
@@ -187,14 +191,11 @@ class TestWidgetRegistryIntegration:
         split_pane.widget_id = "test_widget"
         workspace.add_tab(split_pane, "Test")
 
-        with patch('ui.workspace.execute_command') as mock_execute:
+        with patch("ui.workspace.execute_command") as mock_execute:
             # Simulate command failure
-            mock_execute.return_value = MagicMock(
-                success=False,
-                error="Command failed"
-            )
+            mock_execute.return_value = MagicMock(success=False, error="Command failed")
 
-            with patch('ui.workspace.logger') as mock_logger:
+            with patch("ui.workspace.logger") as mock_logger:
                 # Close the tab
                 workspace.close_tab(0)
 
@@ -213,11 +214,11 @@ class TestWidgetRegistryIntegration:
         split_pane.widget_id = "test_widget"
         workspace.add_tab(split_pane, "Test")
 
-        with patch('ui.workspace.execute_command') as mock_execute:
+        with patch("ui.workspace.execute_command") as mock_execute:
             # Simulate exception
             mock_execute.side_effect = Exception("Unexpected error")
 
-            with patch('ui.workspace.logger') as mock_logger:
+            with patch("ui.workspace.logger") as mock_logger:
                 # Close the tab - should not crash
                 workspace.close_tab(0)
 
@@ -237,6 +238,7 @@ class TestThemeCommandIntegration:
 
         # Check that theme commands exist
         from core.commands.registry import CommandRegistry
+
         registry = CommandRegistry.get_instance()
 
         # Verify theme management commands are registered

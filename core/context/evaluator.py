@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class TokenType(Enum):
     """Token types for the expression parser."""
+
     IDENTIFIER = "IDENTIFIER"
     AND = "AND"
     OR = "OR"
@@ -39,6 +40,7 @@ class TokenType(Enum):
 @dataclass
 class Token:
     """A token in the expression."""
+
     type: TokenType
     value: Any
     position: int
@@ -48,24 +50,24 @@ class WhenClauseLexer:
     """Lexer for when clause expressions."""
 
     TOKEN_PATTERNS = [
-        (r'\s+', None),  # Whitespace (skip)
-        (r'&&', TokenType.AND),
-        (r'\|\|', TokenType.OR),
-        (r'==', TokenType.EQUALS),
-        (r'!=', TokenType.NOT_EQUALS),
-        (r'>=', TokenType.GREATER_EQUAL),
-        (r'<=', TokenType.LESS_EQUAL),
-        (r'!', TokenType.NOT),  # Must come after !=
-        (r'>', TokenType.GREATER),
-        (r'<', TokenType.LESS),
-        (r'\(', TokenType.LPAREN),
-        (r'\)', TokenType.RPAREN),
-        (r'true', TokenType.TRUE),
-        (r'false', TokenType.FALSE),
+        (r"\s+", None),  # Whitespace (skip)
+        (r"&&", TokenType.AND),
+        (r"\|\|", TokenType.OR),
+        (r"==", TokenType.EQUALS),
+        (r"!=", TokenType.NOT_EQUALS),
+        (r">=", TokenType.GREATER_EQUAL),
+        (r"<=", TokenType.LESS_EQUAL),
+        (r"!", TokenType.NOT),  # Must come after !=
+        (r">", TokenType.GREATER),
+        (r"<", TokenType.LESS),
+        (r"\(", TokenType.LPAREN),
+        (r"\)", TokenType.RPAREN),
+        (r"true", TokenType.TRUE),
+        (r"false", TokenType.FALSE),
         (r'"[^"]*"', TokenType.STRING),
         (r"'[^']*'", TokenType.STRING),
-        (r'-?\d+\.?\d*', TokenType.NUMBER),
-        (r'[a-zA-Z_][a-zA-Z0-9_\.]*', TokenType.IDENTIFIER),
+        (r"-?\d+\.?\d*", TokenType.NUMBER),
+        (r"[a-zA-Z_][a-zA-Z0-9_\.]*", TokenType.IDENTIFIER),
     ]
 
     def __init__(self, expression: str):
@@ -93,7 +95,7 @@ class WhenClauseLexer:
                             value = value[1:-1]
                         elif token_type == TokenType.NUMBER:
                             # Convert to number
-                            value = float(value) if '.' in value else int(value)
+                            value = float(value) if "." in value else int(value)
                         elif token_type == TokenType.TRUE:
                             value = True
                         elif token_type == TokenType.FALSE:
@@ -106,7 +108,9 @@ class WhenClauseLexer:
                     break
 
             if not matched:
-                raise ValueError(f"Invalid token at position {self.position}: {self.expression[self.position:]}")
+                raise ValueError(
+                    f"Invalid token at position {self.position}: {self.expression[self.position:]}"
+                )
 
         self.tokens.append(Token(TokenType.EOF, None, self.position))
 
@@ -119,67 +123,72 @@ class WhenClauseParser:
         self.tokens = tokens
         self.current = 0
 
-    def parse(self) -> 'ASTNode':
+    def parse(self) -> "ASTNode":
         """Parse the tokens into an AST."""
         if not self.tokens or self.tokens[0].type == TokenType.EOF:
             return LiteralNode(True)  # Empty expression is true
         return self.parse_or()
 
-    def parse_or(self) -> 'ASTNode':
+    def parse_or(self) -> "ASTNode":
         """Parse OR expressions."""
         left = self.parse_and()
 
         while self.current_token().type == TokenType.OR:
             self.consume(TokenType.OR)
             right = self.parse_and()
-            left = BinaryOpNode('or', left, right)
+            left = BinaryOpNode("or", left, right)
 
         return left
 
-    def parse_and(self) -> 'ASTNode':
+    def parse_and(self) -> "ASTNode":
         """Parse AND expressions."""
         left = self.parse_comparison()
 
         while self.current_token().type == TokenType.AND:
             self.consume(TokenType.AND)
             right = self.parse_comparison()
-            left = BinaryOpNode('and', left, right)
+            left = BinaryOpNode("and", left, right)
 
         return left
 
-    def parse_comparison(self) -> 'ASTNode':
+    def parse_comparison(self) -> "ASTNode":
         """Parse comparison expressions."""
         left = self.parse_unary()
 
         token = self.current_token()
-        if token.type in [TokenType.EQUALS, TokenType.NOT_EQUALS,
-                          TokenType.GREATER, TokenType.LESS,
-                          TokenType.GREATER_EQUAL, TokenType.LESS_EQUAL]:
+        if token.type in [
+            TokenType.EQUALS,
+            TokenType.NOT_EQUALS,
+            TokenType.GREATER,
+            TokenType.LESS,
+            TokenType.GREATER_EQUAL,
+            TokenType.LESS_EQUAL,
+        ]:
             op = self.consume(token.type)
             right = self.parse_unary()
 
             op_map = {
-                TokenType.EQUALS: '==',
-                TokenType.NOT_EQUALS: '!=',
-                TokenType.GREATER: '>',
-                TokenType.LESS: '<',
-                TokenType.GREATER_EQUAL: '>=',
-                TokenType.LESS_EQUAL: '<='
+                TokenType.EQUALS: "==",
+                TokenType.NOT_EQUALS: "!=",
+                TokenType.GREATER: ">",
+                TokenType.LESS: "<",
+                TokenType.GREATER_EQUAL: ">=",
+                TokenType.LESS_EQUAL: "<=",
             }
 
             return BinaryOpNode(op_map[op.type], left, right)
 
         return left
 
-    def parse_unary(self) -> 'ASTNode':
+    def parse_unary(self) -> "ASTNode":
         """Parse unary expressions."""
         if self.current_token().type == TokenType.NOT:
             self.consume(TokenType.NOT)
-            return UnaryOpNode('not', self.parse_unary())
+            return UnaryOpNode("not", self.parse_unary())
 
         return self.parse_primary()
 
-    def parse_primary(self) -> 'ASTNode':
+    def parse_primary(self) -> "ASTNode":
         """Parse primary expressions."""
         token = self.current_token()
 
@@ -193,7 +202,12 @@ class WhenClauseParser:
             value = self.consume(TokenType.IDENTIFIER).value
             return IdentifierNode(value)
 
-        if token.type in [TokenType.STRING, TokenType.NUMBER, TokenType.TRUE, TokenType.FALSE]:
+        if token.type in [
+            TokenType.STRING,
+            TokenType.NUMBER,
+            TokenType.TRUE,
+            TokenType.FALSE,
+        ]:
             value = self.consume(token.type).value
             return LiteralNode(value)
 
@@ -216,25 +230,30 @@ class WhenClauseParser:
 
 # AST Node classes
 
+
 class ASTNode:
     """Base class for AST nodes."""
+
     pass
 
 
 class IdentifierNode(ASTNode):
     """Node for context identifiers."""
+
     def __init__(self, name: str):
         self.name = name
 
 
 class LiteralNode(ASTNode):
     """Node for literal values."""
+
     def __init__(self, value: Any):
         self.value = value
 
 
 class UnaryOpNode(ASTNode):
     """Node for unary operations."""
+
     def __init__(self, op: str, operand: ASTNode):
         self.op = op
         self.operand = operand
@@ -242,6 +261,7 @@ class UnaryOpNode(ASTNode):
 
 class BinaryOpNode(ASTNode):
     """Node for binary operations."""
+
     def __init__(self, op: str, left: ASTNode, right: ASTNode):
         self.op = op
         self.left = left
@@ -292,7 +312,7 @@ class WhenClauseEvaluator:
 
         if isinstance(node, IdentifierNode):
             # Handle nested properties (e.g., "config.editor.fontSize")
-            parts = node.name.split('.')
+            parts = node.name.split(".")
             value = context
 
             for part in parts:
@@ -307,7 +327,7 @@ class WhenClauseEvaluator:
         if isinstance(node, UnaryOpNode):
             operand = WhenClauseEvaluator._evaluate_node(node.operand, context)
 
-            if node.op == 'not':
+            if node.op == "not":
                 return not operand
 
             raise ValueError(f"Unknown unary operator: {node.op}")
@@ -316,21 +336,21 @@ class WhenClauseEvaluator:
             left = WhenClauseEvaluator._evaluate_node(node.left, context)
             right = WhenClauseEvaluator._evaluate_node(node.right, context)
 
-            if node.op == 'and':
+            if node.op == "and":
                 return left and right
-            elif node.op == 'or':
+            elif node.op == "or":
                 return left or right
-            elif node.op == '==':
+            elif node.op == "==":
                 return left == right
-            elif node.op == '!=':
+            elif node.op == "!=":
                 return left != right
-            elif node.op == '>':
+            elif node.op == ">":
                 return left > right
-            elif node.op == '<':
+            elif node.op == "<":
                 return left < right
-            elif node.op == '>=':
+            elif node.op == ">=":
                 return left >= right
-            elif node.op == '<=':
+            elif node.op == "<=":
                 return left <= right
 
             raise ValueError(f"Unknown binary operator: {node.op}")
@@ -345,7 +365,7 @@ def test_evaluator():
         "terminalFocus": False,
         "hasSelection": True,
         "paneCount": 3,
-        "platform": "linux"
+        "platform": "linux",
     }
 
     tests = [

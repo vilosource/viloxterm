@@ -27,10 +27,10 @@ class TestSettingsIntegration:
         # Store original environment variables
         self.original_env = {}
         env_vars = [
-            'VILOAPP_SETTINGS_DIR',
-            'VILOAPP_SETTINGS_FILE',
-            'VILOAPP_PORTABLE',
-            'VILOAPP_TEMP_SETTINGS'
+            "VILOAPP_SETTINGS_DIR",
+            "VILOAPP_SETTINGS_FILE",
+            "VILOAPP_PORTABLE",
+            "VILOAPP_TEMP_SETTINGS",
         ]
         for var in env_vars:
             self.original_env[var] = os.environ.get(var)
@@ -52,8 +52,8 @@ class TestSettingsIntegration:
 
     def test_environment_variable_detection_on_startup(self):
         """Test that environment variables are properly detected during startup."""
-        test_dir = '/tmp/integration_test_settings'
-        os.environ['VILOAPP_SETTINGS_DIR'] = test_dir
+        test_dir = "/tmp/integration_test_settings"
+        os.environ["VILOAPP_SETTINGS_DIR"] = test_dir
 
         # Import and initialize as if starting the app
         from core.settings.config import initialize_settings_from_cli
@@ -61,7 +61,7 @@ class TestSettingsIntegration:
         # Mock sys.argv to have no arguments (only env vars)
         original_argv = sys.argv
         try:
-            sys.argv = ['main.py']
+            sys.argv = ["main.py"]
             config = initialize_settings_from_cli()
 
             assert config.settings_dir == Path(test_dir).resolve()
@@ -76,30 +76,31 @@ class TestSettingsIntegration:
     def test_command_line_override_of_environment_variables(self):
         """Test that command line arguments override environment variables."""
         # Set environment variables
-        os.environ['VILOAPP_SETTINGS_DIR'] = '/tmp/env_settings'
+        os.environ["VILOAPP_SETTINGS_DIR"] = "/tmp/env_settings"
 
         # Mock command line arguments
         original_argv = sys.argv
         try:
-            sys.argv = ['main.py', '--settings-dir', '/tmp/cli_settings']
+            sys.argv = ["main.py", "--settings-dir", "/tmp/cli_settings"]
 
             from core.settings.config import initialize_settings_from_cli
+
             config = initialize_settings_from_cli()
 
             # CLI should override environment
-            assert config.settings_dir == Path('/tmp/cli_settings').resolve()
+            assert config.settings_dir == Path("/tmp/cli_settings").resolve()
             assert config.settings_dir.exists()
 
         finally:
             sys.argv = original_argv
             # Clean up
-            for path in ['/tmp/cli_settings', '/tmp/env_settings']:
+            for path in ["/tmp/cli_settings", "/tmp/env_settings"]:
                 if Path(path).exists():
                     shutil.rmtree(Path(path))
 
     def test_settings_persistence_with_custom_location(self):
         """Test that settings are actually persisted to custom location."""
-        test_dir = Path('/tmp/test_settings_persistence')
+        test_dir = Path("/tmp/test_settings_persistence")
         if test_dir.exists():
             shutil.rmtree(test_dir)
 
@@ -130,7 +131,7 @@ class TestSettingsIntegration:
         """Test that portable mode creates settings directory in app root."""
         # Find the app root (where this file's parent directories lead to)
         app_root = Path(__file__).parent.parent.parent
-        settings_dir = app_root / 'settings'
+        settings_dir = app_root / "settings"
 
         # Clean up if it exists
         if settings_dir.exists():
@@ -138,9 +139,10 @@ class TestSettingsIntegration:
 
         try:
             original_argv = sys.argv
-            sys.argv = ['main.py', '--portable']
+            sys.argv = ["main.py", "--portable"]
 
             from core.settings.config import initialize_settings_from_cli
+
             config = initialize_settings_from_cli()
 
             assert config.is_portable is True
@@ -157,7 +159,7 @@ class TestSettingsIntegration:
         # Configure for temporary settings
         config = SettingsConfig.get_instance()
         config.is_temporary = True
-        config.temp_dir = Path(tempfile.mkdtemp(prefix='viloapp_test_'))
+        config.temp_dir = Path(tempfile.mkdtemp(prefix="viloapp_test_"))
 
         temp_location = config.temp_dir
 
@@ -178,7 +180,7 @@ class TestSettingsIntegration:
 
     def test_settings_file_format_and_structure(self):
         """Test that settings are stored in the expected INI format."""
-        test_file = Path('/tmp/test_settings_format.ini')
+        test_file = Path("/tmp/test_settings_format.ini")
         if test_file.exists():
             test_file.unlink()
 
@@ -216,7 +218,7 @@ class TestSettingsIntegration:
 
     def test_multiple_settings_domains_in_custom_directory(self):
         """Test that multiple settings domains work correctly with custom directory."""
-        test_dir = Path('/tmp/test_multiple_domains')
+        test_dir = Path("/tmp/test_multiple_domains")
         if test_dir.exists():
             shutil.rmtree(test_dir)
 
@@ -245,7 +247,7 @@ class TestSettingsIntegration:
             expected_files = [
                 "ViloApp_ViloApp.ini",
                 "ViloApp_State.ini",
-                "ViloApp_UI.ini"
+                "ViloApp_UI.ini",
             ]
 
             for filename in expected_files:
@@ -272,7 +274,7 @@ class TestSettingsIntegration:
 
         # This should not raise an exception, but handle gracefully
         # Note: The current implementation creates directories, so we test with a valid scenario
-        invalid_dir = Path('/tmp/test_invalid_permissions')
+        invalid_dir = Path("/tmp/test_invalid_permissions")
         config.settings_dir = invalid_dir
 
         # This should work (creates the directory)
@@ -285,7 +287,7 @@ class TestSettingsIntegration:
 
     def test_reset_settings_functionality(self):
         """Test that reset settings functionality works correctly."""
-        test_dir = Path('/tmp/test_reset_settings')
+        test_dir = Path("/tmp/test_reset_settings")
         if test_dir.exists():
             shutil.rmtree(test_dir)
 
@@ -295,7 +297,11 @@ class TestSettingsIntegration:
             test_dir.mkdir(parents=True)
 
             # Create some settings files
-            for domain in [("ViloApp", "ViloApp"), ("ViloApp", "State"), ("ViloApp", "UI")]:
+            for domain in [
+                ("ViloApp", "ViloApp"),
+                ("ViloApp", "State"),
+                ("ViloApp", "UI"),
+            ]:
                 settings = config.create_settings(*domain)
                 settings.setValue("test_key", "test_value")
                 settings.sync()
@@ -307,10 +313,17 @@ class TestSettingsIntegration:
             config.reset_all_settings()
 
             # Verify files are cleared (they may still exist but should be empty/reset)
-            for domain in [("ViloApp", "ViloApp"), ("ViloApp", "State"), ("ViloApp", "UI")]:
+            for domain in [
+                ("ViloApp", "ViloApp"),
+                ("ViloApp", "State"),
+                ("ViloApp", "UI"),
+            ]:
                 settings = config.create_settings(*domain)
                 # After reset, the test key should not exist
-                assert settings.value("test_key") is None or settings.value("test_key") == ""
+                assert (
+                    settings.value("test_key") is None
+                    or settings.value("test_key") == ""
+                )
 
         finally:
             if test_dir.exists():

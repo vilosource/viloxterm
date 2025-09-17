@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TerminalSession:
     """Represents a single terminal session."""
+
     session_id: str
     fd: Optional[int] = None
     child_pid: Optional[int] = None
@@ -74,7 +75,7 @@ class TerminalServerManager(QObject):
         super().__init__()
 
         self.port = 0  # Will be assigned when server starts
-        self.host = '127.0.0.1'
+        self.host = "127.0.0.1"
         self.app = None
         self.socketio = None
         self.server_thread = None
@@ -93,7 +94,9 @@ class TerminalServerManager(QObject):
         """Setup Flask application with SocketIO."""
         self.app = Flask(__name__)
         self.app.config["SECRET_KEY"] = "terminal_server_secret!"
-        self.socketio = SocketIO(self.app, cors_allowed_origins="*", async_mode='threading')
+        self.socketio = SocketIO(
+            self.app, cors_allowed_origins="*", async_mode="threading"
+        )
 
         @self.app.route("/terminal/<session_id>")
         def terminal_page(session_id):
@@ -106,7 +109,7 @@ class TerminalServerManager(QObject):
         @self.socketio.on("connect", namespace="/terminal")
         def handle_connect():
             """Handle client connection."""
-            session_id = request.args.get('session_id')
+            session_id = request.args.get("session_id")
             if not session_id or session_id not in self.sessions:
                 return False
 
@@ -130,7 +133,7 @@ class TerminalServerManager(QObject):
         @self.socketio.on("disconnect", namespace="/terminal")
         def handle_disconnect():
             """Handle client disconnection."""
-            session_id = request.args.get('session_id')
+            session_id = request.args.get("session_id")
             if session_id:
                 leave_room(session_id)
                 logger.info(f"Client disconnected from session {session_id}")
@@ -138,25 +141,29 @@ class TerminalServerManager(QObject):
         @self.socketio.on("pty-input", namespace="/terminal")
         def handle_pty_input(data):
             """Handle input from client."""
-            session_id = data.get('session_id')
+            session_id = data.get("session_id")
             if session_id and session_id in self.sessions:
                 session = self.sessions[session_id]
                 if session.fd:
                     session.last_activity = time.time()
                     os.write(session.fd, data["input"].encode())
-                    logger.debug(f"Input to session {session_id}: {data['input'][:20]}...")
+                    logger.debug(
+                        f"Input to session {session_id}: {data['input'][:20]}..."
+                    )
 
         @self.socketio.on("resize", namespace="/terminal")
         def handle_resize(data):
             """Handle terminal resize."""
-            session_id = data.get('session_id')
+            session_id = data.get("session_id")
             if session_id and session_id in self.sessions:
                 session = self.sessions[session_id]
                 if session.fd:
                     session.rows = data.get("rows", 24)
                     session.cols = data.get("cols", 80)
                     self._set_winsize(session.fd, session.rows, session.cols)
-                    logger.debug(f"Resized session {session_id} to {session.rows}x{session.cols}")
+                    logger.debug(
+                        f"Resized session {session_id} to {session.rows}x{session.cols}"
+                    )
 
     def _start_terminal_process(self, session_id: str):
         """Start a terminal process for a session."""
@@ -181,10 +188,11 @@ class TerminalServerManager(QObject):
 
             # Start background task to read output
             self.socketio.start_background_task(
-                target=self._read_and_forward_pty_output,
-                session_id=session_id
+                target=self._read_and_forward_pty_output, session_id=session_id
             )
-            logger.info(f"Started terminal process for session {session_id}, PID: {child_pid}")
+            logger.info(
+                f"Started terminal process for session {session_id}, PID: {child_pid}"
+            )
 
     def _read_and_forward_pty_output(self, session_id: str):
         """Read PTY output and forward to client."""
@@ -206,7 +214,7 @@ class TerminalServerManager(QObject):
                         "pty-output",
                         {"output": output, "session_id": session_id},
                         namespace="/terminal",
-                        room=session_id
+                        room=session_id,
                     )
                     session.last_activity = time.time()
             except OSError:
@@ -224,19 +232,20 @@ class TerminalServerManager(QObject):
         winsize = struct.pack("HHHH", rows, cols, xpix, ypix)
         fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
 
-    def create_session(self, command: str = "bash", cmd_args: str = "", cwd: Optional[str] = None) -> str:
+    def create_session(
+        self, command: str = "bash", cmd_args: str = "", cwd: Optional[str] = None
+    ) -> str:
         """Create a new terminal session."""
         if len(self.sessions) >= self.max_sessions:
-            raise RuntimeError(f"Maximum number of sessions ({self.max_sessions}) reached")
+            raise RuntimeError(
+                f"Maximum number of sessions ({self.max_sessions}) reached"
+            )
 
         session_id = str(uuid.uuid4())[:8]
         args_list = shlex.split(cmd_args) if cmd_args else []
 
         session = TerminalSession(
-            session_id=session_id,
-            command=command,
-            cmd_args=args_list,
-            cwd=cwd
+            session_id=session_id, command=command, cmd_args=args_list, cwd=cwd
         )
 
         self.sessions[session_id] = session
@@ -294,8 +303,9 @@ class TerminalServerManager(QObject):
         # Find available port
         if self.port == 0:
             import socket
+
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind(('', 0))
+                s.bind(("", 0))
                 self.port = s.getsockname()[1]
 
         # Start server in background thread
@@ -306,7 +316,7 @@ class TerminalServerManager(QObject):
                 port=self.port,
                 host=self.host,
                 allow_unsafe_werkzeug=True,
-                use_reloader=False
+                use_reloader=False,
             )
 
         self.server_thread = threading.Thread(target=run_server, daemon=True)
@@ -339,13 +349,13 @@ class TerminalServerManager(QObject):
         if self.socketio:
             try:
                 # Try graceful shutdown first
-                if hasattr(self.socketio, 'stop'):
+                if hasattr(self.socketio, "stop"):
                     self.socketio.stop()
             except (RuntimeError, AttributeError) as e:
                 # If graceful shutdown fails, force cleanup
                 logger.warning(f"Graceful shutdown failed: {e}. Forcing cleanup.")
                 try:
-                    if hasattr(self.socketio, 'server') and self.socketio.server:
+                    if hasattr(self.socketio, "server") and self.socketio.server:
                         self.socketio.server.shutdown()
                 except Exception:
                     pass  # Best effort cleanup
@@ -385,6 +395,7 @@ class TerminalServerManager(QObject):
 
     def _start_cleanup_timer(self):
         """Start periodic cleanup of inactive sessions."""
+
         def cleanup_task():
             while self.running:
                 time.sleep(60)  # Run cleanup every minute

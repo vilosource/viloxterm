@@ -35,10 +35,10 @@ class TestSettingsConfig:
         # Store original environment variables
         self.original_env = {}
         env_vars = [
-            'VILOAPP_SETTINGS_DIR',
-            'VILOAPP_SETTINGS_FILE',
-            'VILOAPP_PORTABLE',
-            'VILOAPP_TEMP_SETTINGS'
+            "VILOAPP_SETTINGS_DIR",
+            "VILOAPP_SETTINGS_FILE",
+            "VILOAPP_PORTABLE",
+            "VILOAPP_TEMP_SETTINGS",
         ]
         for var in env_vars:
             self.original_env[var] = os.environ.get(var)
@@ -94,7 +94,7 @@ class TestSettingsConfig:
         assert config.is_temporary is True
         assert config.temp_dir is not None
         assert config.temp_dir.exists()
-        assert str(config.temp_dir).startswith('/tmp/viloapp_settings_')
+        assert str(config.temp_dir).startswith("/tmp/viloapp_settings_")
 
         # Clean up temp directory
         if config.temp_dir.exists():
@@ -102,7 +102,7 @@ class TestSettingsConfig:
 
     def test_temp_settings_environment_variable(self):
         """Test temporary settings via environment variable."""
-        os.environ['VILOAPP_TEMP_SETTINGS'] = '1'
+        os.environ["VILOAPP_TEMP_SETTINGS"] = "1"
 
         config = SettingsConfig.get_instance()
         args = argparse.Namespace()
@@ -124,7 +124,7 @@ class TestSettingsConfig:
 
         assert config.is_portable is True
         assert config.settings_dir is not None
-        assert config.settings_dir.name == 'settings'
+        assert config.settings_dir.name == "settings"
         assert config.settings_dir.exists()
 
         # Clean up
@@ -133,7 +133,7 @@ class TestSettingsConfig:
 
     def test_portable_mode_environment_variable(self):
         """Test portable mode via environment variable."""
-        os.environ['VILOAPP_PORTABLE'] = '1'
+        os.environ["VILOAPP_PORTABLE"] = "1"
 
         config = SettingsConfig.get_instance()
         args = argparse.Namespace()
@@ -141,7 +141,7 @@ class TestSettingsConfig:
 
         assert config.is_portable is True
         assert config.settings_dir is not None
-        assert config.settings_dir.name == 'settings'
+        assert config.settings_dir.name == "settings"
 
         # Clean up
         if config.settings_dir.exists():
@@ -149,7 +149,7 @@ class TestSettingsConfig:
 
     def test_custom_settings_file_command_line(self):
         """Test custom settings file via command line argument."""
-        test_file = Path('/tmp/test_settings.ini')
+        test_file = Path("/tmp/test_settings.ini")
 
         config = SettingsConfig.get_instance()
         args = argparse.Namespace(settings_file=test_file)
@@ -159,13 +159,13 @@ class TestSettingsConfig:
         assert config.settings_file.parent.exists()
 
         # Clean up
-        if test_file.parent.exists() and test_file.parent != Path('/tmp'):
+        if test_file.parent.exists() and test_file.parent != Path("/tmp"):
             shutil.rmtree(test_file.parent)
 
     def test_custom_settings_file_environment_variable(self):
         """Test custom settings file via environment variable."""
-        test_file = '/tmp/env_test_settings.ini'
-        os.environ['VILOAPP_SETTINGS_FILE'] = test_file
+        test_file = "/tmp/env_test_settings.ini"
+        os.environ["VILOAPP_SETTINGS_FILE"] = test_file
 
         config = SettingsConfig.get_instance()
         args = argparse.Namespace()
@@ -176,7 +176,7 @@ class TestSettingsConfig:
 
     def test_custom_settings_dir_command_line(self):
         """Test custom settings directory via command line argument."""
-        test_dir = Path('/tmp/test_settings_dir')
+        test_dir = Path("/tmp/test_settings_dir")
 
         config = SettingsConfig.get_instance()
         args = argparse.Namespace(settings_dir=test_dir)
@@ -191,8 +191,8 @@ class TestSettingsConfig:
 
     def test_custom_settings_dir_environment_variable(self):
         """Test custom settings directory via environment variable."""
-        test_dir = '/tmp/env_test_settings_dir'
-        os.environ['VILOAPP_SETTINGS_DIR'] = test_dir
+        test_dir = "/tmp/env_test_settings_dir"
+        os.environ["VILOAPP_SETTINGS_DIR"] = test_dir
 
         config = SettingsConfig.get_instance()
         args = argparse.Namespace()
@@ -208,12 +208,12 @@ class TestSettingsConfig:
     def test_command_line_precedence_over_environment(self):
         """Test that command line arguments take precedence over environment variables."""
         # Set environment variables
-        os.environ['VILOAPP_SETTINGS_DIR'] = '/tmp/env_dir'
-        os.environ['VILOAPP_SETTINGS_FILE'] = '/tmp/env_file.ini'
+        os.environ["VILOAPP_SETTINGS_DIR"] = "/tmp/env_dir"
+        os.environ["VILOAPP_SETTINGS_FILE"] = "/tmp/env_file.ini"
 
         # Set command line arguments
-        cli_dir = Path('/tmp/cli_dir')
-        cli_file = Path('/tmp/cli_file.ini')
+        cli_dir = Path("/tmp/cli_dir")
+        cli_file = Path("/tmp/cli_file.ini")
 
         config = SettingsConfig.get_instance()
         args = argparse.Namespace(settings_dir=cli_dir, settings_file=cli_file)
@@ -224,13 +224,13 @@ class TestSettingsConfig:
         assert config.settings_dir is None  # file takes precedence over directory
 
         # Clean up
-        if cli_file.parent.exists() and cli_file.parent != Path('/tmp'):
+        if cli_file.parent.exists() and cli_file.parent != Path("/tmp"):
             shutil.rmtree(cli_file.parent)
 
     def test_settings_file_precedence_over_directory(self):
         """Test that settings file takes precedence over settings directory."""
-        test_dir = Path('/tmp/test_dir')
-        test_file = Path('/tmp/test_file.ini')
+        test_dir = Path("/tmp/test_dir")
+        test_file = Path("/tmp/test_file.ini")
 
         config = SettingsConfig.get_instance()
         args = argparse.Namespace(settings_dir=test_dir, settings_file=test_file)
@@ -242,7 +242,7 @@ class TestSettingsConfig:
 
     def test_reset_settings(self):
         """Test settings reset functionality."""
-        with mock.patch.object(SettingsConfig, 'reset_all_settings') as mock_reset:
+        with mock.patch.object(SettingsConfig, "reset_all_settings") as mock_reset:
             config = SettingsConfig.get_instance()
             args = argparse.Namespace(reset_settings=True)
             config._configure_from_args(args)
@@ -253,7 +253,7 @@ class TestSettingsConfig:
         """Test QSettings creation in temporary mode."""
         config = SettingsConfig.get_instance()
         config.is_temporary = True
-        config.temp_dir = Path(tempfile.mkdtemp(prefix='viloapp_test_'))
+        config.temp_dir = Path(tempfile.mkdtemp(prefix="viloapp_test_"))
 
         settings = config.create_settings("TestOrg", "TestApp")
 
@@ -266,7 +266,7 @@ class TestSettingsConfig:
 
     def test_create_settings_custom_file(self):
         """Test QSettings creation with custom file."""
-        test_file = Path('/tmp/test_custom.ini')
+        test_file = Path("/tmp/test_custom.ini")
 
         config = SettingsConfig.get_instance()
         config.settings_file = test_file
@@ -278,7 +278,7 @@ class TestSettingsConfig:
 
     def test_create_settings_custom_dir(self):
         """Test QSettings creation with custom directory."""
-        test_dir = Path('/tmp/test_custom_dir')
+        test_dir = Path("/tmp/test_custom_dir")
         test_dir.mkdir(exist_ok=True)
 
         config = SettingsConfig.get_instance()
@@ -300,7 +300,7 @@ class TestSettingsConfig:
 
         # Test temporary mode
         config.is_temporary = True
-        config.temp_dir = Path('/tmp/test_temp')
+        config.temp_dir = Path("/tmp/test_temp")
         location = config.get_settings_location()
         assert "Temporary directory" in location
         assert str(config.temp_dir) in location
@@ -308,14 +308,14 @@ class TestSettingsConfig:
         # Reset and test custom file
         config.is_temporary = False
         config.temp_dir = None
-        config.settings_file = Path('/tmp/test.ini')
+        config.settings_file = Path("/tmp/test.ini")
         location = config.get_settings_location()
         assert "Custom file" in location
         assert str(config.settings_file) in location
 
         # Reset and test custom directory
         config.settings_file = None
-        config.settings_dir = Path('/tmp/test_dir')
+        config.settings_dir = Path("/tmp/test_dir")
         location = config.get_settings_location()
         assert "Custom directory" in location
         assert str(config.settings_dir) in location
@@ -324,7 +324,7 @@ class TestSettingsConfig:
         """Test cleanup of temporary directory."""
         config = SettingsConfig.get_instance()
         config.is_temporary = True
-        config.temp_dir = Path(tempfile.mkdtemp(prefix='viloapp_test_'))
+        config.temp_dir = Path(tempfile.mkdtemp(prefix="viloapp_test_"))
 
         # Ensure directory exists
         assert config.temp_dir.exists()
@@ -353,7 +353,7 @@ class TestConvenienceFunctions:
         """Test the get_settings convenience function."""
         config = SettingsConfig.get_instance()
         config.is_temporary = True
-        config.temp_dir = Path(tempfile.mkdtemp(prefix='viloapp_test_'))
+        config.temp_dir = Path(tempfile.mkdtemp(prefix="viloapp_test_"))
 
         settings = get_settings("TestOrg", "TestApp")
 
@@ -364,7 +364,7 @@ class TestConvenienceFunctions:
         if config.temp_dir.exists():
             shutil.rmtree(config.temp_dir)
 
-    @mock.patch('sys.argv', ['main.py', '--temp-settings'])
+    @mock.patch("sys.argv", ["main.py", "--temp-settings"])
     def test_initialize_settings_from_cli_function(self):
         """Test the initialize_settings_from_cli convenience function."""
         config = initialize_settings_from_cli()
@@ -381,17 +381,17 @@ class TestConvenienceFunctions:
         """Test the get_settings_info convenience function."""
         config = SettingsConfig.get_instance()
         config.is_portable = True
-        config.settings_dir = Path('/tmp/test_portable')
+        config.settings_dir = Path("/tmp/test_portable")
 
         info = get_settings_info()
 
         assert isinstance(info, dict)
-        assert 'location' in info
-        assert 'is_portable' in info
-        assert 'is_temporary' in info
-        assert 'custom_dir' in info
-        assert 'custom_file' in info
+        assert "location" in info
+        assert "is_portable" in info
+        assert "is_temporary" in info
+        assert "custom_dir" in info
+        assert "custom_file" in info
 
-        assert info['is_portable'] is True
-        assert info['is_temporary'] is False
-        assert info['custom_dir'] == str(config.settings_dir)
+        assert info["is_portable"] is True
+        assert info["is_temporary"] is False
+        assert info["custom_dir"] == str(config.settings_dir)

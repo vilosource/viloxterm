@@ -33,7 +33,9 @@ class TestMainWindowGUI(MainWindowGUITestBase):
 
         # Test that splitter prevents complete collapse of sidebar
         # This is a deliberate design choice to ensure sidebar is always accessible
-        assert not splitter.childrenCollapsible()  # Sidebar cannot be completely collapsed
+        assert (
+            not splitter.childrenCollapsible()
+        )  # Sidebar cannot be completely collapsed
 
     def test_main_window_menu_bar_visibility(self, gui_main_window, qtbot):
         """Test menu bar visibility can be toggled."""
@@ -75,22 +77,28 @@ class TestMainWindowKeyboardGUI(KeyboardGUITestBase):
     def test_keyboard_shortcut_toggle_sidebar(self, gui_main_window, qtbot):
         """Test Ctrl+B keyboard shortcut toggles sidebar."""
         # Mock the execute_command method on the instance
-        gui_main_window.execute_command = Mock(return_value={'success': True})
+        gui_main_window.execute_command = Mock(return_value={"success": True})
 
         # Simulate Ctrl+B
-        qtbot.keyClick(gui_main_window, Qt.Key.Key_B, Qt.KeyboardModifier.ControlModifier)
+        qtbot.keyClick(
+            gui_main_window, Qt.Key.Key_B, Qt.KeyboardModifier.ControlModifier
+        )
         qtbot.wait(100)
 
         # Should have executed the toggle sidebar command
         gui_main_window.execute_command.assert_called_with("view.toggleSidebar")
 
-    def test_keyboard_shortcut_toggle_theme(self, gui_main_window, qtbot, mock_icon_manager):
+    def test_keyboard_shortcut_toggle_theme(
+        self, gui_main_window, qtbot, mock_icon_manager
+    ):
         """Test Ctrl+T keyboard shortcut toggles theme."""
         # Mock the execute_command method on the instance
-        gui_main_window.execute_command = Mock(return_value={'success': True})
+        gui_main_window.execute_command = Mock(return_value={"success": True})
 
         # Simulate Ctrl+T
-        qtbot.keyClick(gui_main_window, Qt.Key.Key_T, Qt.KeyboardModifier.ControlModifier)
+        qtbot.keyClick(
+            gui_main_window, Qt.Key.Key_T, Qt.KeyboardModifier.ControlModifier
+        )
         qtbot.wait(100)
 
         # Should have executed the toggle theme command
@@ -99,11 +107,14 @@ class TestMainWindowKeyboardGUI(KeyboardGUITestBase):
     def test_keyboard_shortcut_toggle_menu_bar(self, gui_main_window, qtbot):
         """Test Ctrl+Shift+M keyboard shortcut toggles menu bar."""
         # Mock the execute_command method on the instance
-        gui_main_window.execute_command = Mock(return_value={'success': True})
+        gui_main_window.execute_command = Mock(return_value={"success": True})
 
         # Simulate Ctrl+Shift+M
-        qtbot.keyClick(gui_main_window, Qt.Key.Key_M,
-                      Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
+        qtbot.keyClick(
+            gui_main_window,
+            Qt.Key.Key_M,
+            Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier,
+        )
         qtbot.wait(100)
 
         # Should have executed the toggle menu bar command
@@ -112,11 +123,14 @@ class TestMainWindowKeyboardGUI(KeyboardGUITestBase):
     def test_keyboard_shortcut_reset_app_state(self, gui_main_window, qtbot):
         """Test Ctrl+Shift+R keyboard shortcut resets app state."""
         # Mock the execute_command method on the instance
-        gui_main_window.execute_command = Mock(return_value={'success': True})
+        gui_main_window.execute_command = Mock(return_value={"success": True})
 
         # Simulate Ctrl+Shift+R
-        qtbot.keyClick(gui_main_window, Qt.Key.Key_R,
-                      Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
+        qtbot.keyClick(
+            gui_main_window,
+            Qt.Key.Key_R,
+            Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier,
+        )
         qtbot.wait(100)
 
         # Should have executed the reset app state command
@@ -128,10 +142,12 @@ class TestMainWindowKeyboardGUI(KeyboardGUITestBase):
 class TestMainWindowThemeGUI(ThemeGUITestBase):
     """GUI tests for main window theme interactions."""
 
-    def test_theme_toggle_visual_update(self, gui_main_window, qtbot, mock_icon_manager):
+    def test_theme_toggle_visual_update(
+        self, gui_main_window, qtbot, mock_icon_manager
+    ):
         """Test theme toggle updates visual appearance."""
         # Mock the execute_command method on the instance
-        gui_main_window.execute_command = Mock(return_value={'success': True})
+        gui_main_window.execute_command = Mock(return_value={"success": True})
 
         # Setup theme test
         self.setup_theme_test(qtbot, gui_main_window)
@@ -144,7 +160,9 @@ class TestMainWindowThemeGUI(ThemeGUITestBase):
         # Verify theme toggle was executed
         gui_main_window.execute_command.assert_called_with("view.toggleTheme")
 
-    def test_theme_persistence_on_restart(self, gui_main_window, qtbot, mock_icon_manager):
+    def test_theme_persistence_on_restart(
+        self, gui_main_window, qtbot, mock_icon_manager
+    ):
         """Test theme setting persists across application restarts."""
         # This test verifies that theme state is saved/restored
         # The actual persistence is handled by QSettings in the app
@@ -152,7 +170,7 @@ class TestMainWindowThemeGUI(ThemeGUITestBase):
         # Verify that the app now auto-detects system theme on startup
         # The mock_icon_manager should have been called during initialization
         assert mock_icon_manager is not None
-        assert hasattr(mock_icon_manager, 'detect_system_theme')
+        assert hasattr(mock_icon_manager, "detect_system_theme")
         assert callable(mock_icon_manager.detect_system_theme)
 
         # Since we're using a mock, we can verify it was called during init
@@ -170,7 +188,9 @@ class TestMainWindowMouseGUI(MainWindowGUITestBase):
         initial_size = gui_main_window.size()
 
         # Test that window is resizable
-        assert gui_main_window.testAttribute(Qt.WidgetAttribute.WA_Resized) or True  # Default is resizable
+        assert (
+            gui_main_window.testAttribute(Qt.WidgetAttribute.WA_Resized) or True
+        )  # Default is resizable
 
         # Verify initial size is reasonable
         assert initial_size.width() > 0
@@ -197,15 +217,17 @@ class TestMainWindowMouseGUI(MainWindowGUITestBase):
 class TestMainWindowStateGUI(MainWindowGUITestBase):
     """GUI tests for main window state management."""
 
-    @patch('ui.main_window.QSettings')
-    def test_window_state_save_on_close(self, mock_settings_class, gui_main_window, qtbot):
+    @patch("ui.main_window.QSettings")
+    def test_window_state_save_on_close(
+        self, mock_settings_class, gui_main_window, qtbot
+    ):
         """Test window state is saved when window is closed."""
         mock_settings = Mock()
         mock_settings_class.return_value = mock_settings
 
         # Mock the save methods to verify they're called
-        gui_main_window.saveGeometry = Mock(return_value=b'geometry_data')
-        gui_main_window.saveState = Mock(return_value=b'state_data')
+        gui_main_window.saveGeometry = Mock(return_value=b"geometry_data")
+        gui_main_window.saveState = Mock(return_value=b"state_data")
 
         # Create and trigger close event
         close_event = Mock()
@@ -219,24 +241,29 @@ class TestMainWindowStateGUI(MainWindowGUITestBase):
         gui_main_window.saveState.assert_called()
         close_event.accept.assert_called()
 
-    @patch('ui.main_window.QSettings')
-    def test_window_state_restore_on_startup(self, mock_settings_class, qtbot, mock_icon_manager):
+    @patch("ui.main_window.QSettings")
+    def test_window_state_restore_on_startup(
+        self, mock_settings_class, qtbot, mock_icon_manager
+    ):
         """Test window state is restored on application startup."""
         mock_settings = Mock()
         mock_settings_class.return_value = mock_settings
 
         # Mock settings to return saved state
         mock_settings.value.side_effect = lambda key, default=None, type=None: {
-            "geometry": b'geometry_data',
-            "windowState": b'state_data',
-            "splitterSizes": b'splitter_data',
-            "menuBarVisible": True
+            "geometry": b"geometry_data",
+            "windowState": b"state_data",
+            "splitterSizes": b"splitter_data",
+            "menuBarVisible": True,
         }.get(key, default)
 
         # Create new window (simulating startup)
         from ui.main_window import MainWindow
-        with patch('ui.activity_bar.get_icon_manager', return_value=mock_icon_manager), \
-             patch('ui.main_window.get_icon_manager', return_value=mock_icon_manager):
+
+        with (
+            patch("ui.activity_bar.get_icon_manager", return_value=mock_icon_manager),
+            patch("ui.main_window.get_icon_manager", return_value=mock_icon_manager),
+        ):
 
             test_window = MainWindow()
             qtbot.addWidget(test_window)
@@ -258,13 +285,13 @@ class TestMainWindowIntegrationGUI(MainWindowGUITestBase):
         sidebar = gui_main_window.sidebar
 
         # Verify integration - signals should exist and be connectable
-        assert hasattr(activity_bar, 'view_changed')
-        assert hasattr(activity_bar, 'toggle_sidebar')
+        assert hasattr(activity_bar, "view_changed")
+        assert hasattr(activity_bar, "toggle_sidebar")
         assert callable(activity_bar.view_changed.connect)
         assert callable(activity_bar.toggle_sidebar.connect)
 
         # Basic interaction test - changing activity should affect sidebar
-        sidebar.current_view if hasattr(sidebar, 'current_view') else 'explorer'
+        sidebar.current_view if hasattr(sidebar, "current_view") else "explorer"
 
         # This integration is tested more thoroughly in activity bar specific tests
         assert activity_bar is not None
@@ -295,4 +322,4 @@ class TestMainWindowIntegrationGUI(MainWindowGUITestBase):
 
         # Status bar should be ready to receive updates
         # (Actual update testing would require specific status messages)
-        assert hasattr(status_bar, 'showMessage') or hasattr(status_bar, 'set_status')
+        assert hasattr(status_bar, "showMessage") or hasattr(status_bar, "set_status")

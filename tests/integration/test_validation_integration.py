@@ -30,19 +30,16 @@ class TestValidationIntegration:
             id="test.validated.success",
             title="Test Validated Success",
             category="Test",
-            register=False
+            register=False,
         )
         @validate(
             count=ParameterSpec("count", Range(1, 10), required=True),
-            mode=ParameterSpec("mode", OneOf("fast", "slow"), default="fast")
+            mode=ParameterSpec("mode", OneOf("fast", "slow"), default="fast"),
         )
         def test_command(context: CommandContext) -> CommandResult:
             count = context.args.get("count")
             mode = context.args.get("mode")
-            return CommandResult(
-                success=True,
-                value={"count": count, "mode": mode}
-            )
+            return CommandResult(success=True, value={"count": count, "mode": mode})
 
         # Register the command
         self.registry.register(test_command)
@@ -65,11 +62,9 @@ class TestValidationIntegration:
             id="test.validated.failure",
             title="Test Validated Failure",
             category="Test",
-            register=False
+            register=False,
         )
-        @validate(
-            count=ParameterSpec("count", Range(1, 10), required=True)
-        )
+        @validate(count=ParameterSpec("count", Range(1, 10), required=True))
         def test_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=True, value=context.args)
 
@@ -95,10 +90,12 @@ class TestValidationIntegration:
             id="test.executor.validation",
             title="Test Executor Validation",
             category="Test",
-            register=False
+            register=False,
         )
         @validate(
-            name=ParameterSpec("name", String(min_length=3, max_length=20), required=True)
+            name=ParameterSpec(
+                "name", String(min_length=3, max_length=20), required=True
+            )
         )
         def test_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=True, value={"name": context.args["name"]})
@@ -151,39 +148,33 @@ class TestValidationIntegration:
             id="test.complex.validation",
             title="Test Complex Validation",
             category="Test",
-            register=False
+            register=False,
         )
         @validate(
             file_paths=ParameterSpec(
                 "file_paths",
                 # This would test list validation if we need it
                 String(min_length=1),
-                required=True
+                required=True,
             ),
             options=ParameterSpec(
-                "options",
-                OneOf("create", "update", "delete"),
-                default="create"
-            )
+                "options", OneOf("create", "update", "delete"), default="create"
+            ),
         )
         def complex_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=True, value=context.args)
 
         # Test successful execution
-        context = CommandContext(args={
-            "file_paths": "test.txt",
-            "options": "update"
-        })
+        context = CommandContext(args={"file_paths": "test.txt", "options": "update"})
         result = complex_command.execute(context)
         assert result.success is True
         assert result.value["file_paths"] == "test.txt"
         assert result.value["options"] == "update"
 
         # Test with invalid option
-        context = CommandContext(args={
-            "file_paths": "test.txt",
-            "options": "invalid_option"
-        })
+        context = CommandContext(
+            args={"file_paths": "test.txt", "options": "invalid_option"}
+        )
         result = complex_command.execute(context)
         assert result.success is False
         assert "not in allowed values" in result.error

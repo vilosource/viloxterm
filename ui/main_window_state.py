@@ -22,7 +22,9 @@ class MainWindowStateManager:
         settings.setValue("windowState", self.main_window.saveState())
         settings.setValue("splitterSizes", self.main_window.main_splitter.saveState())
         settings.setValue("menuBarVisible", self.main_window.menuBar().isVisible())
-        settings.setValue("activityBarVisible", self.main_window.activity_bar.isVisible())
+        settings.setValue(
+            "activityBarVisible", self.main_window.activity_bar.isVisible()
+        )
         settings.endGroup()
 
         # Save workspace state (new tab-based workspace)
@@ -53,8 +55,10 @@ class MainWindowStateManager:
 
         # Restore menu bar visibility and activity bar menu preference
         # Fix the path - it should be under MainWindow group
-        use_activity_bar_menu = settings.value("MainWindow/useActivityBarMenu", False, type=bool)
-        if hasattr(self.main_window, 'auto_hide_menubar_action'):
+        use_activity_bar_menu = settings.value(
+            "MainWindow/useActivityBarMenu", False, type=bool
+        )
+        if hasattr(self.main_window, "auto_hide_menubar_action"):
             if use_activity_bar_menu:
                 self.main_window.auto_hide_menubar_action.setChecked(True)
                 self.main_window.menuBar().setVisible(False)
@@ -90,6 +94,7 @@ class MainWindowStateManager:
 
         # Clean up all terminal sessions before closing
         from ui.terminal.terminal_server import terminal_server
+
         terminal_server.cleanup_all_sessions()
 
         event.accept()

@@ -41,47 +41,43 @@ def get_git_info() -> dict[str, Optional[str]]:
         Dictionary with git commit hash, branch, and dirty status
     """
     info = {
-        'commit': None,
-        'commit_short': None,
-        'branch': None,
-        'dirty': False,
-        'tag': None
+        "commit": None,
+        "commit_short": None,
+        "branch": None,
+        "dirty": False,
+        "tag": None,
     }
 
     try:
         # Get commit hash
         commit = subprocess.check_output(
-            ['git', 'rev-parse', 'HEAD'],
-            stderr=subprocess.DEVNULL,
-            text=True
+            ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL, text=True
         ).strip()
-        info['commit'] = commit
-        info['commit_short'] = commit[:7]
+        info["commit"] = commit
+        info["commit_short"] = commit[:7]
 
         # Get branch name
         branch = subprocess.check_output(
-            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
             stderr=subprocess.DEVNULL,
-            text=True
+            text=True,
         ).strip()
-        info['branch'] = branch
+        info["branch"] = branch
 
         # Check if working directory is dirty
         status = subprocess.check_output(
-            ['git', 'status', '--porcelain'],
-            stderr=subprocess.DEVNULL,
-            text=True
+            ["git", "status", "--porcelain"], stderr=subprocess.DEVNULL, text=True
         ).strip()
-        info['dirty'] = bool(status)
+        info["dirty"] = bool(status)
 
         # Get current tag if on a tag
         try:
             tag = subprocess.check_output(
-                ['git', 'describe', '--exact-match', '--tags', 'HEAD'],
+                ["git", "describe", "--exact-match", "--tags", "HEAD"],
                 stderr=subprocess.DEVNULL,
-                text=True
+                text=True,
             ).strip()
-            info['tag'] = tag
+            info["tag"] = tag
         except subprocess.CalledProcessError:
             pass
 
@@ -92,8 +88,7 @@ def get_git_info() -> dict[str, Optional[str]]:
     return info
 
 
-def get_version_string(include_git: bool = True,
-                       include_dev: bool = True) -> str:
+def get_version_string(include_git: bool = True, include_dev: bool = True) -> str:
     """
     Get a formatted version string.
 
@@ -113,9 +108,9 @@ def get_version_string(include_git: bool = True,
 
     if include_git:
         git_info = get_git_info()
-        if git_info['commit_short']:
+        if git_info["commit_short"]:
             version += f"+{git_info['commit_short']}"
-            if git_info['dirty']:
+            if git_info["dirty"]:
                 version += ".dirty"
 
     return version
@@ -133,29 +128,30 @@ def get_full_version_info() -> dict[str, Any]:
     git_info = get_git_info()
 
     return {
-        'version': __version__,
-        'version_tuple': __version_info__,
-        'version_string': get_version_string(),
-        'app_name': APP_NAME,
-        'app_description': APP_DESCRIPTION,
-        'app_author': APP_AUTHOR,
-        'app_url': APP_URL,
-        'app_license': APP_LICENSE,
-        'app_copyright': APP_COPYRIGHT,
-        'build_date': BUILD_DATE,
-        'build_time': BUILD_TIME,
-        'dev_mode': app_config.dev_mode,
-        'production_mode': app_config.production_mode,
-        'git': git_info,
-        'python_version': get_python_version(),
-        'qt_version': get_qt_version(),
-        'platform': get_platform_info()
+        "version": __version__,
+        "version_tuple": __version_info__,
+        "version_string": get_version_string(),
+        "app_name": APP_NAME,
+        "app_description": APP_DESCRIPTION,
+        "app_author": APP_AUTHOR,
+        "app_url": APP_URL,
+        "app_license": APP_LICENSE,
+        "app_copyright": APP_COPYRIGHT,
+        "build_date": BUILD_DATE,
+        "build_time": BUILD_TIME,
+        "dev_mode": app_config.dev_mode,
+        "production_mode": app_config.production_mode,
+        "git": git_info,
+        "python_version": get_python_version(),
+        "qt_version": get_qt_version(),
+        "platform": get_platform_info(),
     }
 
 
 def get_python_version() -> str:
     """Get Python version string."""
     import sys
+
     return f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
 
 
@@ -164,27 +160,23 @@ def get_qt_version() -> dict[str, str]:
     try:
         from PySide6 import __version__ as pyside_version
         from PySide6.QtCore import qVersion
-        return {
-            'pyside': pyside_version,
-            'qt': qVersion()
-        }
+
+        return {"pyside": pyside_version, "qt": qVersion()}
     except ImportError:
-        return {
-            'pyside': 'Unknown',
-            'qt': 'Unknown'
-        }
+        return {"pyside": "Unknown", "qt": "Unknown"}
 
 
 def get_platform_info() -> dict[str, str]:
     """Get platform information."""
     import platform
+
     return {
-        'system': platform.system(),
-        'release': platform.release(),
-        'version': platform.version(),
-        'machine': platform.machine(),
-        'processor': platform.processor(),
-        'python_implementation': platform.python_implementation()
+        "system": platform.system(),
+        "release": platform.release(),
+        "version": platform.version(),
+        "machine": platform.machine(),
+        "processor": platform.processor(),
+        "python_implementation": platform.python_implementation(),
     }
 
 
@@ -201,24 +193,26 @@ def format_version_for_display() -> str:
         f"{info['app_name']} {info['version_string']}",
         f"{info['app_description']}",
         "",
-        f"Build Date: {info['build_date']} {info['build_time']}"
+        f"Build Date: {info['build_date']} {info['build_time']}",
     ]
 
-    if info['git']['commit_short']:
+    if info["git"]["commit_short"]:
         git_line = f"Git: {info['git']['branch']} @ {info['git']['commit_short']}"
-        if info['git']['dirty']:
+        if info["git"]["dirty"]:
             git_line += " (modified)"
         lines.append(git_line)
 
-    lines.extend([
-        "",
-        f"Python: {info['python_version']}",
-        f"Qt: {info['qt_version']['qt']}",
-        f"PySide6: {info['qt_version']['pyside']}",
-        f"Platform: {info['platform']['system']} {info['platform']['release']}"
-    ])
+    lines.extend(
+        [
+            "",
+            f"Python: {info['python_version']}",
+            f"Qt: {info['qt_version']['qt']}",
+            f"PySide6: {info['qt_version']['pyside']}",
+            f"Platform: {info['platform']['system']} {info['platform']['release']}",
+        ]
+    )
 
-    if info['dev_mode']:
+    if info["dev_mode"]:
         lines.extend(["", "⚠️ Development Mode"])
 
     return "\n".join(lines)
@@ -228,7 +222,7 @@ def format_version_for_display() -> str:
 def parse_version(version_str: str) -> tuple:
     """Parse a version string into a tuple."""
     try:
-        parts = version_str.strip('v').split('.')
+        parts = version_str.strip("v").split(".")
         return tuple(int(p) for p in parts[:3])
     except (ValueError, IndexError):
         return (0, 0, 0)

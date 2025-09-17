@@ -27,9 +27,9 @@ class AppWidgetManager:
     registration patterns throughout the codebase.
     """
 
-    _instance: Optional['AppWidgetManager'] = None
+    _instance: Optional["AppWidgetManager"] = None
 
-    def __new__(cls) -> 'AppWidgetManager':
+    def __new__(cls) -> "AppWidgetManager":
         """Ensure singleton pattern."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -47,7 +47,7 @@ class AppWidgetManager:
             logger.info("AppWidgetManager initialized")
 
     @classmethod
-    def get_instance(cls) -> 'AppWidgetManager':
+    def get_instance(cls) -> "AppWidgetManager":
         """Get the singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
@@ -79,7 +79,9 @@ class AppWidgetManager:
         if metadata.factory:
             self._factories[metadata.widget_id] = metadata.factory
 
-        logger.debug(f"Registered widget: {metadata.widget_id} ({metadata.display_name})")
+        logger.debug(
+            f"Registered widget: {metadata.widget_id} ({metadata.display_name})"
+        )
 
     def unregister_widget(self, widget_id: str) -> bool:
         """
@@ -146,17 +148,21 @@ class AppWidgetManager:
                 widget = metadata.widget_class(instance_id)
 
             # Set the metadata on the widget so it knows its configuration
-            if hasattr(widget, 'set_metadata'):
+            if hasattr(widget, "set_metadata"):
                 widget.set_metadata(metadata)
 
-            logger.debug(f"Created widget instance: {widget_id} (instance: {instance_id})")
+            logger.debug(
+                f"Created widget instance: {widget_id} (instance: {instance_id})"
+            )
             return widget
 
         except Exception as e:
             logger.error(f"Failed to create widget {widget_id}: {e}")
             return None
 
-    def create_widget_by_type(self, widget_type: WidgetType, instance_id: str) -> Optional[AppWidget]:
+    def create_widget_by_type(
+        self, widget_type: WidgetType, instance_id: str
+    ) -> Optional[AppWidget]:
         """
         Create a widget by WidgetType enum (backward compatibility).
 
@@ -186,7 +192,9 @@ class AppWidgetManager:
         """
         return self._widgets.get(widget_id)
 
-    def get_widget_by_type(self, widget_type: WidgetType) -> Optional[AppWidgetMetadata]:
+    def get_widget_by_type(
+        self, widget_type: WidgetType
+    ) -> Optional[AppWidgetMetadata]:
         """
         Get widget metadata by WidgetType enum.
 
@@ -210,7 +218,9 @@ class AppWidgetManager:
         """
         return list(self._widgets.values())
 
-    def get_widgets_by_category(self, category: WidgetCategory) -> list[AppWidgetMetadata]:
+    def get_widgets_by_category(
+        self, category: WidgetCategory
+    ) -> list[AppWidgetMetadata]:
         """
         Get widgets in a specific category.
 
@@ -245,7 +255,9 @@ class AppWidgetManager:
         Returns:
             List of widgets with the capability
         """
-        return [w for w in self._widgets.values() if capability in w.provides_capabilities]
+        return [
+            w for w in self._widgets.values() if capability in w.provides_capabilities
+        ]
 
     def get_widgets_for_file_type(self, file_extension: str) -> list[AppWidgetMetadata]:
         """
@@ -257,7 +269,7 @@ class AppWidgetManager:
         Returns:
             List of widgets supporting the file type
         """
-        ext = file_extension.lstrip('.')
+        ext = file_extension.lstrip(".")
         return [w for w in self._widgets.values() if ext in w.supported_file_types]
 
     def get_available_widgets(self) -> list[AppWidgetMetadata]:
@@ -276,9 +288,13 @@ class AppWidgetManager:
         Returns:
             List of widgets for menu display
         """
-        return [w for w in self._widgets.values() if w.show_in_menu and w.is_available()]
+        return [
+            w for w in self._widgets.values() if w.show_in_menu and w.is_available()
+        ]
 
-    def register_factory_compat(self, widget_type: WidgetType, factory: Callable) -> None:
+    def register_factory_compat(
+        self, widget_type: WidgetType, factory: Callable
+    ) -> None:
         """
         Register a factory using old WidgetType pattern (backward compatibility).
 
@@ -293,7 +309,7 @@ class AppWidgetManager:
             "register_factory_compat is deprecated. "
             "Use register_widget() with full metadata instead.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
 
         # Find widget with this type
@@ -303,7 +319,9 @@ class AppWidgetManager:
             self._factories[widget_id] = factory
             logger.debug(f"Updated factory for {widget_id} via compatibility method")
         else:
-            logger.warning(f"Cannot register factory for unknown widget type {widget_type}")
+            logger.warning(
+                f"Cannot register factory for unknown widget type {widget_type}"
+            )
 
     def clear(self) -> None:
         """Clear all registered widgets (mainly for testing)."""

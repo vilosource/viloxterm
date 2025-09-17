@@ -28,9 +28,9 @@ COMMAND_PALETTE_SCHEMA = {
         "fuzzy_search_threshold": {"type": "number", "minimum": 0.0, "maximum": 1.0},
         "remember_window_size": {"type": "boolean"},
         "window_width": {"type": "integer", "minimum": 300, "maximum": 2000},
-        "window_height": {"type": "integer", "minimum": 200, "maximum": 1500}
+        "window_height": {"type": "integer", "minimum": 200, "maximum": 1500},
     },
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 KEYBOARD_SHORTCUTS_SCHEMA = {
@@ -38,10 +38,10 @@ KEYBOARD_SHORTCUTS_SCHEMA = {
     "patternProperties": {
         r"^[a-zA-Z][a-zA-Z0-9._]*$": {  # command_id pattern
             "type": "string",
-            "pattern": r"^(ctrl\+|alt\+|shift\+|meta\+)*[a-zA-Z0-9\+\-\\\[\]\/;'`~,\.<>\?:\"{}|!@#$%^&*()_=]$|^$"
+            "pattern": r"^(ctrl\+|alt\+|shift\+|meta\+)*[a-zA-Z0-9\+\-\\\[\]\/;'`~,\.<>\?:\"{}|!@#$%^&*()_=]$|^$",
         }
     },
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 THEME_SCHEMA = {
@@ -54,9 +54,9 @@ THEME_SCHEMA = {
         "line_height": {"type": "number", "minimum": 0.5, "maximum": 3.0},
         "editor_theme": {"type": "string", "minLength": 1},
         "icon_theme": {"type": "string", "minLength": 1},
-        "auto_detect_theme": {"type": "boolean"}
+        "auto_detect_theme": {"type": "boolean"},
     },
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 UI_SCHEMA = {
@@ -73,9 +73,9 @@ UI_SCHEMA = {
         "word_wrap": {"type": "boolean"},
         "line_numbers": {"type": "boolean"},
         "minimap_enabled": {"type": "boolean"},
-        "breadcrumbs_enabled": {"type": "boolean"}
+        "breadcrumbs_enabled": {"type": "boolean"},
     },
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 WORKSPACE_SCHEMA = {
@@ -91,10 +91,10 @@ WORKSPACE_SCHEMA = {
         "exclude_patterns": {
             "type": "array",
             "items": {"type": "string"},
-            "maxItems": 100
-        }
+            "maxItems": 100,
+        },
     },
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 EDITOR_SCHEMA = {
@@ -113,17 +113,20 @@ EDITOR_SCHEMA = {
         "rulers": {
             "type": "array",
             "items": {"type": "integer", "minimum": 1, "maximum": 500},
-            "maxItems": 10
+            "maxItems": 10,
         },
-        "selection_highlight": {"type": "boolean"}
+        "selection_highlight": {"type": "boolean"},
     },
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 TERMINAL_SCHEMA = {
     "type": "object",
     "properties": {
-        "shell": {"type": "string", "enum": ["auto", "bash", "zsh", "fish", "cmd", "powershell"]},
+        "shell": {
+            "type": "string",
+            "enum": ["auto", "bash", "zsh", "fish", "cmd", "powershell"],
+        },
         "font_family": {"type": "string", "minLength": 1},
         "font_size": {"type": "integer", "minimum": 8, "maximum": 72},
         "cursor_style": {"type": "string", "enum": ["block", "line", "underline"]},
@@ -132,9 +135,9 @@ TERMINAL_SCHEMA = {
         "bell": {"type": "boolean"},
         "copy_on_select": {"type": "boolean"},
         "paste_on_right_click": {"type": "boolean"},
-        "confirm_on_exit": {"type": "boolean"}
+        "confirm_on_exit": {"type": "boolean"},
     },
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 PERFORMANCE_SCHEMA = {
@@ -145,11 +148,15 @@ PERFORMANCE_SCHEMA = {
         "indexing_enabled": {"type": "boolean"},
         "file_watcher_enabled": {"type": "boolean"},
         "git_integration": {"type": "boolean"},
-        "language_server_timeout": {"type": "integer", "minimum": 1000, "maximum": 300000},
+        "language_server_timeout": {
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 300000,
+        },
         "ui_animation_duration": {"type": "integer", "minimum": 0, "maximum": 1000},
-        "debounce_typing": {"type": "integer", "minimum": 0, "maximum": 2000}
+        "debounce_typing": {"type": "integer", "minimum": 0, "maximum": 2000},
     },
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 PRIVACY_SCHEMA = {
@@ -159,9 +166,9 @@ PRIVACY_SCHEMA = {
         "crash_reporting": {"type": "boolean"},
         "usage_analytics": {"type": "boolean"},
         "error_reporting": {"type": "boolean"},
-        "improvement_program": {"type": "boolean"}
+        "improvement_program": {"type": "boolean"},
     },
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 # ============= Master Schema =============
@@ -179,9 +186,9 @@ SETTINGS_SCHEMA = {
         "performance": PERFORMANCE_SCHEMA,
         "privacy": PRIVACY_SCHEMA,
         "settings_version": {"type": "string"},
-        "last_migration": {"type": ["string", "null"]}
+        "last_migration": {"type": ["string", "null"]},
     },
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 
@@ -200,12 +207,13 @@ class SettingsSchema:
             "terminal": TERMINAL_SCHEMA,
             "performance": PERFORMANCE_SCHEMA,
             "privacy": PRIVACY_SCHEMA,
-            "root": SETTINGS_SCHEMA
+            "root": SETTINGS_SCHEMA,
         }
 
         # Try to import jsonschema for validation
         try:
             import jsonschema
+
             self.validator = jsonschema.Draft7Validator
             self._jsonschema_available = True
         except ImportError:
@@ -228,7 +236,9 @@ class SettingsSchema:
         else:
             return self._validate_basic(settings)
 
-    def validate_category(self, category: str, data: dict[str, Any]) -> tuple[bool, list[str]]:
+    def validate_category(
+        self, category: str, data: dict[str, Any]
+    ) -> tuple[bool, list[str]]:
         """
         Validate settings for a specific category.
 
@@ -249,10 +259,13 @@ class SettingsSchema:
         else:
             return self._validate_category_basic(category, data)
 
-    def _validate_with_jsonschema(self, data: dict[str, Any], schema: dict[str, Any]) -> tuple[bool, list[str]]:
+    def _validate_with_jsonschema(
+        self, data: dict[str, Any], schema: dict[str, Any]
+    ) -> tuple[bool, list[str]]:
         """Validate using jsonschema library."""
         try:
             import jsonschema
+
             validator = jsonschema.Draft7Validator(schema)
             errors = list(validator.iter_errors(data))
 
@@ -293,7 +306,9 @@ class SettingsSchema:
 
         return len(errors) == 0, errors
 
-    def _validate_category_basic(self, category: str, data: dict[str, Any]) -> tuple[bool, list[str]]:
+    def _validate_category_basic(
+        self, category: str, data: dict[str, Any]
+    ) -> tuple[bool, list[str]]:
         """Basic category validation."""
         errors = []
 
@@ -304,7 +319,9 @@ class SettingsSchema:
         if category == "command_palette":
             if "max_results" in data and not isinstance(data["max_results"], int):
                 errors.append("max_results must be an integer")
-            if "show_recent_commands" in data and not isinstance(data["show_recent_commands"], bool):
+            if "show_recent_commands" in data and not isinstance(
+                data["show_recent_commands"], bool
+            ):
                 errors.append("show_recent_commands must be a boolean")
 
         elif category == "theme":
@@ -353,6 +370,7 @@ def validate_keyboard_shortcut(shortcut: str) -> bool:
 
     # Basic validation - should contain only valid key combinations
     import re
+
     pattern = r"^(ctrl\+|alt\+|shift\+|meta\+)*[a-zA-Z0-9\+\-\\\[\]\/;'`~,\.<>\?:\"{}|!@#$%^&*()_=]$"
     return re.match(pattern, shortcut.lower()) is not None
 
@@ -384,7 +402,7 @@ def export_schemas_json(output_path: Union[str, Path]) -> bool:
     try:
         schema_obj = SettingsSchema()
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(schema_obj.schemas, f, indent=2, sort_keys=True)
 
         logger.info(f"Schemas exported to {output_path}")

@@ -18,13 +18,15 @@ logger = logging.getLogger(__name__)
     description="Show all commands",
     shortcut="ctrl+shift+p",
     icon="command",
-    when="!commandPaletteVisible"
+    when="!commandPaletteVisible",
 )
 def show_command_palette_command(context: CommandContext) -> CommandResult:
     """Show the command palette."""
     try:
         # Check if main window has a command palette controller
-        if not context.main_window or not hasattr(context.main_window, 'command_palette_controller'):
+        if not context.main_window or not hasattr(
+            context.main_window, "command_palette_controller"
+        ):
             return CommandResult(success=False, error="Command palette not available")
 
         controller = context.main_window.command_palette_controller
@@ -45,13 +47,15 @@ def show_command_palette_command(context: CommandContext) -> CommandResult:
     category="View",
     description="Hide the command palette",
     shortcut="escape",
-    when="commandPaletteVisible"
+    when="commandPaletteVisible",
 )
 def hide_command_palette_command(context: CommandContext) -> CommandResult:
     """Hide the command palette."""
     try:
         # Check if main window has a command palette controller
-        if not context.main_window or not hasattr(context.main_window, 'command_palette_controller'):
+        if not context.main_window or not hasattr(
+            context.main_window, "command_palette_controller"
+        ):
             return CommandResult(success=False, error="Command palette not available")
 
         controller = context.main_window.command_palette_controller
@@ -71,13 +75,15 @@ def hide_command_palette_command(context: CommandContext) -> CommandResult:
     title="Refresh Command Palette",
     category="Debug",
     description="Refresh the command palette command list",
-    icon="refresh"
+    icon="refresh",
 )
 def refresh_command_palette_command(context: CommandContext) -> CommandResult:
     """Refresh the command palette."""
     try:
         # Check if main window has a command palette controller
-        if not context.main_window or not hasattr(context.main_window, 'command_palette_controller'):
+        if not context.main_window or not hasattr(
+            context.main_window, "command_palette_controller"
+        ):
             return CommandResult(success=False, error="Command palette not available")
 
         controller = context.main_window.command_palette_controller

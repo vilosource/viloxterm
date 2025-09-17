@@ -19,16 +19,18 @@ logger = logging.getLogger(__name__)
 
 class ConflictResolution(Enum):
     """Conflict resolution strategies."""
-    PRIORITY = "priority"      # Use priority to resolve
-    USER_CHOICE = "user"       # Let user choose
-    REPLACE = "replace"        # Replace existing
-    REJECT = "reject"          # Reject new shortcut
-    COEXIST = "coexist"       # Allow both (different contexts)
+
+    PRIORITY = "priority"  # Use priority to resolve
+    USER_CHOICE = "user"  # Let user choose
+    REPLACE = "replace"  # Replace existing
+    REJECT = "reject"  # Reject new shortcut
+    COEXIST = "coexist"  # Allow both (different contexts)
 
 
 @dataclass
 class ConflictInfo:
     """Information about a shortcut conflict."""
+
     new_shortcut: Shortcut
     existing_shortcuts: list[Shortcut]
     conflict_type: str  # "exact", "prefix", "context_overlap"
@@ -43,7 +45,9 @@ class ConflictResolver:
         self._default_resolution = ConflictResolution.PRIORITY
         self._resolution_callbacks: dict[str, callable] = {}
 
-    def find_conflicts(self, new_shortcut: Shortcut, registry: ShortcutRegistry) -> list[ConflictInfo]:
+    def find_conflicts(
+        self, new_shortcut: Shortcut, registry: ShortcutRegistry
+    ) -> list[ConflictInfo]:
         """
         Find conflicts for a new shortcut.
 
@@ -70,17 +74,19 @@ class ConflictResolver:
                 conflict = ConflictInfo(
                     new_shortcut=new_shortcut,
                     existing_shortcuts=[existing_shortcut],
-                    conflict_type=conflict_type
+                    conflict_type=conflict_type,
                 )
                 conflicts.append(conflict)
 
         # Group related conflicts
         return self._group_conflicts(conflicts)
 
-    def resolve_conflicts(self,
-                         new_shortcut: Shortcut,
-                         conflicts: list[ConflictInfo],
-                         registry: ShortcutRegistry) -> bool:
+    def resolve_conflicts(
+        self,
+        new_shortcut: Shortcut,
+        conflicts: list[ConflictInfo],
+        registry: ShortcutRegistry,
+    ) -> bool:
         """
         Resolve conflicts for a new shortcut.
 
@@ -104,11 +110,15 @@ class ConflictResolver:
         """Set the default conflict resolution strategy."""
         self._default_resolution = resolution
 
-    def register_resolution_callback(self, conflict_type: str, callback: callable) -> None:
+    def register_resolution_callback(
+        self, conflict_type: str, callback: callable
+    ) -> None:
         """Register a callback for resolving specific conflict types."""
         self._resolution_callbacks[conflict_type] = callback
 
-    def _analyze_conflict(self, new_shortcut: Shortcut, existing_shortcut: Shortcut) -> Optional[str]:
+    def _analyze_conflict(
+        self, new_shortcut: Shortcut, existing_shortcut: Shortcut
+    ) -> Optional[str]:
         """
         Analyze the type of conflict between two shortcuts.
 
@@ -124,7 +134,7 @@ class ConflictResolver:
                 return None  # Different contexts, no conflict
 
         # Check for prefix conflicts (chord sequences)
-        if (len(new_shortcut.sequence.chords) != len(existing_shortcut.sequence.chords)):
+        if len(new_shortcut.sequence.chords) != len(existing_shortcut.sequence.chords):
             if self._is_prefix(new_shortcut.sequence, existing_shortcut.sequence):
                 return "prefix"
 
@@ -239,14 +249,12 @@ class ConflictResolver:
         logger.warning(f"Prefix conflict detected: {conflict}")
         return ConflictResolution.REJECT
 
-    def _resolve_by_source(self, new_shortcut: Shortcut, existing_shortcut: Shortcut) -> ConflictResolution:
+    def _resolve_by_source(
+        self, new_shortcut: Shortcut, existing_shortcut: Shortcut
+    ) -> ConflictResolution:
         """Resolve conflict based on shortcut source."""
         # Source priority: builtin < user < extension
-        source_priority = {
-            "builtin": 0,
-            "user": 1,
-            "extension": 2
-        }
+        source_priority = {"builtin": 0, "user": 1, "extension": 2}
 
         new_priority = source_priority.get(new_shortcut.source, 1)
         existing_priority = source_priority.get(existing_shortcut.source, 1)
@@ -259,10 +267,12 @@ class ConflictResolver:
             # Same source priority
             return ConflictResolution.USER_CHOICE
 
-    def _apply_resolution(self,
-                         resolution: ConflictResolution,
-                         conflict: ConflictInfo,
-                         registry: ShortcutRegistry) -> bool:
+    def _apply_resolution(
+        self,
+        resolution: ConflictResolution,
+        conflict: ConflictInfo,
+        registry: ShortcutRegistry,
+    ) -> bool:
         """
         Apply a conflict resolution.
 
@@ -282,7 +292,9 @@ class ConflictResolver:
             # Remove existing shortcuts
             for existing in conflict.existing_shortcuts:
                 registry.unregister(existing.id)
-                logger.info(f"Replaced shortcut {existing.id} with {conflict.new_shortcut.id}")
+                logger.info(
+                    f"Replaced shortcut {existing.id} with {conflict.new_shortcut.id}"
+                )
             return True
 
         elif resolution == ConflictResolution.REJECT:
@@ -298,6 +310,8 @@ class ConflictResolver:
             # For now, default to priority-based resolution
             # In a real implementation, this would show a dialog
             logger.warning(f"User choice needed for conflict: {conflict}")
-            return self._apply_resolution(ConflictResolution.PRIORITY, conflict, registry)
+            return self._apply_resolution(
+                ConflictResolution.PRIORITY, conflict, registry
+            )
 
         return False

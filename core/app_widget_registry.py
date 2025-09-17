@@ -80,23 +80,26 @@ def register_builtin_widgets():
             # Note: No factory needed - TerminalAppWidget can be instantiated directly
             # Service dependency: TerminalService must be running before widget creation
             open_command="file.newTerminalTab",
-            provides_capabilities=["shell_execution", "ansi_colors", "terminal_emulation"],
+            provides_capabilities=[
+                "shell_execution",
+                "ansi_colors",
+                "terminal_emulation",
+            ],
             requires_services=["terminal_service"],
             preserve_context_menu=True,
             can_suspend=False,  # Terminal should never be suspended (has background PTY process)
             min_width=300,
             min_height=200,
-
             # Intent metadata
             default_placement=WidgetPlacement.SMART,
             supports_replacement=True,
-            supports_new_tab=True
+            supports_new_tab=True,
         )
 
         # Add context-specific commands
         metadata.commands = {
             "open_new_tab": "file.newTerminalTab",
-            "replace_pane": "file.replaceWithTerminal"
+            "replace_pane": "file.replaceWithTerminal",
         }
 
         manager.register_widget(metadata)
@@ -132,17 +135,16 @@ def register_builtin_widgets():
             can_suspend=True,  # Editor can be suspended (no background processes)
             min_width=400,
             min_height=300,
-
             # Intent metadata
             default_placement=WidgetPlacement.SMART,
             supports_replacement=True,
-            supports_new_tab=True
+            supports_new_tab=True,
         )
 
         # Add context-specific commands
         metadata.commands = {
             "open_new_tab": "file.newEditorTab",
-            "replace_pane": "file.replaceWithEditor"
+            "replace_pane": "file.replaceWithEditor",
         }
 
         manager.register_widget(metadata)
@@ -164,7 +166,7 @@ def register_builtin_widgets():
     try:
         from ui.widgets.theme_editor_widget import ThemeEditorAppWidget
 
-        def create_theme_editor_widget(widget_id: str) -> 'ThemeEditorAppWidget':
+        def create_theme_editor_widget(widget_id: str) -> "ThemeEditorAppWidget":
             return ThemeEditorAppWidget(widget_id)
 
         from core.widget_placement import WidgetPlacement
@@ -181,22 +183,25 @@ def register_builtin_widgets():
             open_command="theme.openEditor",
             singleton=True,  # 🚨 CRITICAL: This makes it a singleton widget
             # Commands MUST use "com.viloapp.theme_editor" as instance_id
-            provides_capabilities=["theme_editing", "live_preview", "color_customization"],
+            provides_capabilities=[
+                "theme_editing",
+                "live_preview",
+                "color_customization",
+            ],
             requires_services=["theme_service"],
             min_width=800,
             min_height=600,
             show_header=True,
-
             # New intent fields
             default_placement=WidgetPlacement.SMART,
             supports_replacement=True,
-            supports_new_tab=True
+            supports_new_tab=True,
         )
 
         # Add context-specific commands
         metadata.commands = {
             "open_new_tab": "theme.openEditor",
-            "replace_pane": "theme.replaceInPane"
+            "replace_pane": "theme.replaceInPane",
         }
 
         manager.register_widget(metadata)
@@ -218,7 +223,7 @@ def register_builtin_widgets():
     try:
         from ui.widgets.shortcut_config_app_widget import ShortcutConfigAppWidget
 
-        def create_shortcut_config_widget(widget_id: str) -> 'ShortcutConfigAppWidget':
+        def create_shortcut_config_widget(widget_id: str) -> "ShortcutConfigAppWidget":
             return ShortcutConfigAppWidget(widget_id)
 
         metadata = AppWidgetMetadata(
@@ -237,17 +242,16 @@ def register_builtin_widgets():
             requires_services=["keyboard_service", "command_service"],
             min_width=600,
             min_height=400,
-
             # Intent metadata
             default_placement=WidgetPlacement.SMART,
             supports_replacement=True,
-            supports_new_tab=True
+            supports_new_tab=True,
         )
 
         # Add context-specific commands
         metadata.commands = {
             "open_new_tab": "settings.openKeyboardShortcuts",
-            "replace_pane": "settings.replaceWithKeyboardShortcuts"
+            "replace_pane": "settings.replaceWithKeyboardShortcuts",
         }
 
         manager.register_widget(metadata)
@@ -268,19 +272,21 @@ def register_builtin_widgets():
     try:
         from ui.widgets.placeholder_app_widget import PlaceholderAppWidget
 
-        manager.register_widget(AppWidgetMetadata(
-            widget_id="com.viloapp.placeholder",
-            widget_type=WidgetType.PLACEHOLDER,
-            display_name="Empty Pane",
-            description="Empty pane - right-click to change type",
-            icon="layout",
-            category=WidgetCategory.SYSTEM,
-            widget_class=PlaceholderAppWidget,
-            show_in_menu=True,  # Allow users to explicitly create empty panes
-            show_in_palette=False,  # Don't show in command palette
-            min_width=100,
-            min_height=100
-        ))
+        manager.register_widget(
+            AppWidgetMetadata(
+                widget_id="com.viloapp.placeholder",
+                widget_type=WidgetType.PLACEHOLDER,
+                display_name="Empty Pane",
+                description="Empty pane - right-click to change type",
+                icon="layout",
+                category=WidgetCategory.SYSTEM,
+                widget_class=PlaceholderAppWidget,
+                show_in_menu=True,  # Allow users to explicitly create empty panes
+                show_in_palette=False,  # Don't show in command palette
+                min_width=100,
+                min_height=100,
+            )
+        )
         logger.debug("Registered Placeholder widget")
     except ImportError as e:
         logger.warning(f"Could not register Placeholder widget: {e}")
@@ -289,19 +295,21 @@ def register_builtin_widgets():
     try:
         from ui.widgets.placeholder_app_widget import PlaceholderAppWidget  # Temporary
 
-        manager.register_widget(AppWidgetMetadata(
-            widget_id="com.viloapp.output",
-            widget_type=WidgetType.OUTPUT,
-            display_name="Output Panel",
-            description="Output and console messages",
-            icon="message-square",
-            category=WidgetCategory.TOOLS,
-            widget_class=PlaceholderAppWidget,  # Using placeholder for now
-            provides_capabilities=["output_display", "console_messages"],
-            preserve_context_menu=True,
-            min_width=300,
-            min_height=150
-        ))
+        manager.register_widget(
+            AppWidgetMetadata(
+                widget_id="com.viloapp.output",
+                widget_type=WidgetType.OUTPUT,
+                display_name="Output Panel",
+                description="Output and console messages",
+                icon="message-square",
+                category=WidgetCategory.TOOLS,
+                widget_class=PlaceholderAppWidget,  # Using placeholder for now
+                provides_capabilities=["output_display", "console_messages"],
+                preserve_context_menu=True,
+                min_width=300,
+                min_height=150,
+            )
+        )
         logger.debug("Registered Output widget")
     except ImportError as e:
         logger.warning(f"Could not register Output widget: {e}")
@@ -310,21 +318,23 @@ def register_builtin_widgets():
     try:
         from ui.widgets.placeholder_app_widget import PlaceholderAppWidget  # Temporary
 
-        manager.register_widget(AppWidgetMetadata(
-            widget_id="com.viloapp.explorer",
-            widget_type=WidgetType.EXPLORER,
-            display_name="File Explorer",
-            description="Browse and manage files",
-            icon="folder",
-            category=WidgetCategory.VIEWER,
-            widget_class=PlaceholderAppWidget,  # Using placeholder for now
-            provides_capabilities=["file_browsing", "file_management"],
-            requires_services=["file_service"],
-            preserve_context_menu=True,
-            min_width=200,
-            min_height=300,
-            show_in_menu=False  # Hide until implemented
-        ))
+        manager.register_widget(
+            AppWidgetMetadata(
+                widget_id="com.viloapp.explorer",
+                widget_type=WidgetType.EXPLORER,
+                display_name="File Explorer",
+                description="Browse and manage files",
+                icon="folder",
+                category=WidgetCategory.VIEWER,
+                widget_class=PlaceholderAppWidget,  # Using placeholder for now
+                provides_capabilities=["file_browsing", "file_management"],
+                requires_services=["file_service"],
+                preserve_context_menu=True,
+                min_width=200,
+                min_height=300,
+                show_in_menu=False,  # Hide until implemented
+            )
+        )
         logger.debug("Registered File Explorer widget")
     except ImportError as e:
         logger.warning(f"Could not register File Explorer widget: {e}")
@@ -343,22 +353,24 @@ def register_builtin_widgets():
     try:
         from ui.widgets.settings_app_widget import SettingsAppWidget
 
-        manager.register_widget(AppWidgetMetadata(
-            widget_id="com.viloapp.settings",
-            widget_type=WidgetType.SETTINGS,
-            display_name="Settings",
-            description="Configure application settings and preferences",
-            icon="settings",
-            category=WidgetCategory.EDITOR,
-            widget_class=SettingsAppWidget,
-            provides_capabilities=["settings_management", "preferences"],
-            requires_services=["settings_service"],
-            singleton=True,  # 🚨 CRITICAL: This makes it a singleton widget
-            # Commands MUST use "com.viloapp.settings" as instance_id
-            min_width=600,
-            min_height=400,
-            show_in_menu=True
-        ))
+        manager.register_widget(
+            AppWidgetMetadata(
+                widget_id="com.viloapp.settings",
+                widget_type=WidgetType.SETTINGS,
+                display_name="Settings",
+                description="Configure application settings and preferences",
+                icon="settings",
+                category=WidgetCategory.EDITOR,
+                widget_class=SettingsAppWidget,
+                provides_capabilities=["settings_management", "preferences"],
+                requires_services=["settings_service"],
+                singleton=True,  # 🚨 CRITICAL: This makes it a singleton widget
+                # Commands MUST use "com.viloapp.settings" as instance_id
+                min_width=600,
+                min_height=400,
+                show_in_menu=True,
+            )
+        )
         logger.debug("Registered Settings widget")
     except ImportError as e:
         logger.warning(f"Could not register Settings widget: {e}")
@@ -554,8 +566,9 @@ def get_default_widget_for_file(file_path: str) -> Optional[AppWidgetMetadata]:
         Best matching widget metadata or None
     """
     import os
+
     _, ext = os.path.splitext(file_path)
-    ext = ext.lstrip('.')
+    ext = ext.lstrip(".")
 
     if not ext:
         return None

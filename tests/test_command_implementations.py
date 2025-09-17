@@ -173,9 +173,7 @@ class TestTabCommands:
 
         # Execute rename command with new name
         result = execute_command(
-            "workbench.action.renameTab",
-            tab_index=0,
-            new_name=new_name
+            "workbench.action.renameTab", tab_index=0, new_name=new_name
         )
         assert result.success, f"Command failed: {result.error}"
 
@@ -336,7 +334,7 @@ class TestNavigationCommands:
             "workbench.action.focusLeftPane",
             "workbench.action.focusRightPane",
             "workbench.action.focusAbovePane",
-            "workbench.action.focusBelowPane"
+            "workbench.action.focusBelowPane",
         ]
 
         for cmd in commands:
@@ -395,9 +393,9 @@ class TestCommandIntegration:
         def test_context_command(context: CommandContext) -> CommandResult:
             nonlocal context_received
             context_received = {
-                'has_main_window': context.main_window is not None,
-                'has_workspace': context.workspace is not None,
-                'has_services': context.get_service(WorkspaceService) is not None
+                "has_main_window": context.main_window is not None,
+                "has_workspace": context.workspace is not None,
+                "has_services": context.get_service(WorkspaceService) is not None,
             }
             return CommandResult(success=True)
 
@@ -406,7 +404,7 @@ class TestCommandIntegration:
             id="test.context",
             title="Test Context",
             category="Test",
-            handler=test_context_command
+            handler=test_context_command,
         )
         command_registry.register(test_cmd)
 
@@ -414,9 +412,9 @@ class TestCommandIntegration:
         execute_command("test.context")
 
         # Verify context was properly populated
-        assert context_received.get('has_main_window'), "Main window not in context"
-        assert context_received.get('has_workspace'), "Workspace not in context"
-        assert context_received.get('has_services'), "Services not in context"
+        assert context_received.get("has_main_window"), "Main window not in context"
+        assert context_received.get("has_workspace"), "Workspace not in context"
+        assert context_received.get("has_services"), "Services not in context"
 
     def test_command_error_handling(self):
         """Test that commands handle errors gracefully."""
@@ -434,15 +432,11 @@ class TestCommandIntegration:
     def test_keyboard_shortcut_triggers_command(self, qtbot):
         """Test that keyboard shortcuts trigger the correct commands."""
         # Spy on execute_command to see if it gets called
-        with patch('core.commands.executor.execute_command') as mock_execute:
+        with patch("core.commands.executor.execute_command") as mock_execute:
             mock_execute.return_value = CommandResult(success=True)
 
             # Simulate Ctrl+N keyboard shortcut
-            QTest.keyClick(
-                self.main_window,
-                Qt.Key_N,
-                Qt.ControlModifier
-            )
+            QTest.keyClick(self.main_window, Qt.Key_N, Qt.ControlModifier)
 
             self.qtbot.wait(100)
 
@@ -476,7 +470,9 @@ class TestCommandPerformance:
         assert not result.success or result.value is None
 
         # Test with wrong argument types
-        result = execute_command("workbench.action.duplicateTab", tab_index="not_a_number")
+        result = execute_command(
+            "workbench.action.duplicateTab", tab_index="not_a_number"
+        )
         # Should handle gracefully
         assert isinstance(result, CommandResult)
 
@@ -519,6 +515,7 @@ def test_all_registered_commands_have_handlers():
 
         # Test that handler accepts correct signature
         import inspect
+
         sig = inspect.signature(cmd.handler)
         params = list(sig.parameters.keys())
         assert len(params) >= 1, f"Command {cmd.id} handler missing context parameter"
@@ -539,8 +536,14 @@ def test_command_categories_are_organized():
 
     # Verify we have expected categories
     expected_categories = [
-        "File", "View", "Edit", "Navigation",
-        "Workspace", "Tabs", "Pane", "Sidebar"
+        "File",
+        "View",
+        "Edit",
+        "Navigation",
+        "Workspace",
+        "Tabs",
+        "Pane",
+        "Sidebar",
     ]
 
     for expected in expected_categories:

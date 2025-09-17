@@ -17,13 +17,14 @@ logger = logging.getLogger(__name__)
 
 # ============= Tab Navigation =============
 
+
 @command(
     id="workbench.action.firstTab",
     title="Go to First Tab",
     category="Navigation",
     description="Switch to the first tab",
     shortcut="ctrl+1",
-    when="workbench.tabs.count > 0"
+    when="workbench.tabs.count > 0",
 )
 def first_tab_command(context: CommandContext) -> CommandResult:
     """Switch to the first tab."""
@@ -35,7 +36,7 @@ def first_tab_command(context: CommandContext) -> CommandResult:
         success = workspace_service.switch_to_tab(0)
 
         if success:
-            return CommandResult(success=True, value={'tab_index': 0})
+            return CommandResult(success=True, value={"tab_index": 0})
         else:
             return CommandResult(success=False, error="No tabs available")
 
@@ -50,7 +51,7 @@ def first_tab_command(context: CommandContext) -> CommandResult:
     category="Navigation",
     description="Switch to the last tab",
     shortcut="ctrl+9",
-    when="workbench.tabs.count > 0"
+    when="workbench.tabs.count > 0",
 )
 def last_tab_command(context: CommandContext) -> CommandResult:
     """Switch to the last tab."""
@@ -64,7 +65,7 @@ def last_tab_command(context: CommandContext) -> CommandResult:
             success = workspace_service.switch_to_tab(count - 1)
 
             if success:
-                return CommandResult(success=True, value={'tab_index': count - 1})
+                return CommandResult(success=True, value={"tab_index": count - 1})
 
         return CommandResult(success=False, error="No tabs available")
 
@@ -78,7 +79,7 @@ def last_tab_command(context: CommandContext) -> CommandResult:
     title="Close Other Tabs",
     category="Navigation",
     description="Close all tabs except the current one",
-    when="workbench.tabs.count > 1"
+    when="workbench.tabs.count > 1",
 )
 def close_other_tabs_command(context: CommandContext) -> CommandResult:
     """Close all tabs except the current one."""
@@ -102,12 +103,12 @@ def close_other_tabs_command(context: CommandContext) -> CommandResult:
                     closed_count += 1
 
         # Show status message
-        if context.main_window and hasattr(context.main_window, 'status_bar'):
+        if context.main_window and hasattr(context.main_window, "status_bar"):
             context.main_window.status_bar.set_message(
                 f"Closed {closed_count} other tabs", 2000
             )
 
-        return CommandResult(success=True, value={'closed_count': closed_count})
+        return CommandResult(success=True, value={"closed_count": closed_count})
 
     except Exception as e:
         logger.error(f"Failed to close other tabs: {e}")
@@ -120,7 +121,7 @@ def close_other_tabs_command(context: CommandContext) -> CommandResult:
     category="Navigation",
     description="Close all tabs",
     shortcut="ctrl+alt+w",
-    when="workbench.tabs.count > 0"
+    when="workbench.tabs.count > 0",
 )
 def close_all_tabs_command(context: CommandContext) -> CommandResult:
     """Close all tabs."""
@@ -138,12 +139,12 @@ def close_all_tabs_command(context: CommandContext) -> CommandResult:
                 closed_count += 1
 
         # Show status message
-        if context.main_window and hasattr(context.main_window, 'status_bar'):
+        if context.main_window and hasattr(context.main_window, "status_bar"):
             context.main_window.status_bar.set_message(
                 f"Closed {closed_count} tabs", 2000
             )
 
-        return CommandResult(success=True, value={'closed_count': closed_count})
+        return CommandResult(success=True, value={"closed_count": closed_count})
 
     except Exception as e:
         logger.error(f"Failed to close all tabs: {e}")
@@ -152,13 +153,14 @@ def close_all_tabs_command(context: CommandContext) -> CommandResult:
 
 # ============= Directional Pane Navigation =============
 
+
 @command(
     id="workbench.action.focusLeftPane",
     title="Focus Left Pane",
     category="Navigation",
     description="Focus the pane to the left",
     shortcut="alt+left",
-    when="workbench.pane.count > 1"
+    when="workbench.pane.count > 1",
 )
 def focus_left_pane_command(context: CommandContext) -> CommandResult:
     """Focus the pane to the left."""
@@ -185,7 +187,7 @@ def focus_left_pane_command(context: CommandContext) -> CommandResult:
     category="Navigation",
     description="Focus the pane to the right",
     shortcut="alt+right",
-    when="workbench.pane.count > 1"
+    when="workbench.pane.count > 1",
 )
 def focus_right_pane_command(context: CommandContext) -> CommandResult:
     """Focus the pane to the right."""
@@ -212,7 +214,7 @@ def focus_right_pane_command(context: CommandContext) -> CommandResult:
     category="Navigation",
     description="Focus the pane above",
     shortcut="alt+up",
-    when="workbench.pane.count > 1"
+    when="workbench.pane.count > 1",
 )
 def focus_above_pane_command(context: CommandContext) -> CommandResult:
     """Focus the pane above."""
@@ -239,7 +241,7 @@ def focus_above_pane_command(context: CommandContext) -> CommandResult:
     category="Navigation",
     description="Focus the pane below",
     shortcut="alt+down",
-    when="workbench.pane.count > 1"
+    when="workbench.pane.count > 1",
 )
 def focus_below_pane_command(context: CommandContext) -> CommandResult:
     """Focus the pane below."""
@@ -262,13 +264,14 @@ def focus_below_pane_command(context: CommandContext) -> CommandResult:
 
 # ============= UI Navigation =============
 
+
 @command(
     id="workbench.action.focusSidebar",
     title="Focus Sidebar",
     category="Navigation",
     description="Focus the sidebar",
     shortcut="ctrl+0",
-    when="sidebarVisible"
+    when="sidebarVisible",
 )
 def focus_sidebar_command(context: CommandContext) -> CommandResult:
     """Focus the sidebar."""
@@ -285,7 +288,7 @@ def focus_sidebar_command(context: CommandContext) -> CommandResult:
             ui_service.show_sidebar()
 
         # Show status message
-        if context.main_window and hasattr(context.main_window, 'status_bar'):
+        if context.main_window and hasattr(context.main_window, "status_bar"):
             context.main_window.status_bar.set_message("Sidebar focused", 1000)
 
         return CommandResult(success=True)
@@ -301,7 +304,7 @@ def focus_sidebar_command(context: CommandContext) -> CommandResult:
     category="Navigation",
     description="Focus the currently active pane",
     # Removed escape to avoid conflict with commandPalette.hide
-    when="workbench.pane.count > 0"
+    when="workbench.pane.count > 0",
 )
 def focus_active_pane_command(context: CommandContext) -> CommandResult:
     """Focus the active pane."""
@@ -315,7 +318,7 @@ def focus_active_pane_command(context: CommandContext) -> CommandResult:
             success = workspace_service.focus_pane(active_pane_id)
 
             if success:
-                return CommandResult(success=True, value={'pane_id': active_pane_id})
+                return CommandResult(success=True, value={"pane_id": active_pane_id})
 
         return CommandResult(success=False, error="No active pane")
 
@@ -326,13 +329,14 @@ def focus_active_pane_command(context: CommandContext) -> CommandResult:
 
 # ============= Pane Management =============
 
+
 @command(
     id="workbench.action.maximizePane",
     title="Maximize Pane",
     category="Navigation",
     description="Maximize the active pane",
     shortcut="ctrl+k z",
-    when="workbench.pane.count > 1"
+    when="workbench.pane.count > 1",
 )
 def maximize_pane_command(context: CommandContext) -> CommandResult:
     """Maximize the active pane."""
@@ -350,12 +354,12 @@ def maximize_pane_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="No active pane")
 
         # Show status message (placeholder functionality)
-        if context.main_window and hasattr(context.main_window, 'status_bar'):
+        if context.main_window and hasattr(context.main_window, "status_bar"):
             context.main_window.status_bar.set_message(
                 f"Pane {active_pane_id} maximized (placeholder)", 2000
             )
 
-        return CommandResult(success=True, value={'pane_id': active_pane_id})
+        return CommandResult(success=True, value={"pane_id": active_pane_id})
 
     except Exception as e:
         logger.error(f"Failed to maximize pane: {e}")
@@ -367,7 +371,7 @@ def maximize_pane_command(context: CommandContext) -> CommandResult:
     title="Even Pane Sizes",
     category="Navigation",
     description="Make all panes the same size",
-    when="workbench.pane.count > 1"
+    when="workbench.pane.count > 1",
 )
 def even_pane_sizes_command(context: CommandContext) -> CommandResult:
     """Make all panes the same size."""
@@ -385,12 +389,12 @@ def even_pane_sizes_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=False, error="Only one pane")
 
         # Show status message (placeholder functionality)
-        if context.main_window and hasattr(context.main_window, 'status_bar'):
+        if context.main_window and hasattr(context.main_window, "status_bar"):
             context.main_window.status_bar.set_message(
                 f"Evened {pane_count} pane sizes (placeholder)", 2000
             )
 
-        return CommandResult(success=True, value={'pane_count': pane_count})
+        return CommandResult(success=True, value={"pane_count": pane_count})
 
     except Exception as e:
         logger.error(f"Failed to even pane sizes: {e}")
@@ -402,7 +406,7 @@ def even_pane_sizes_command(context: CommandContext) -> CommandResult:
     title="Move Pane to New Tab",
     category="Navigation",
     description="Move the active pane to a new tab",
-    when="workbench.pane.count > 1"
+    when="workbench.pane.count > 1",
 )
 def move_pane_to_new_tab_command(context: CommandContext) -> CommandResult:
     """Move the active pane to a new tab."""
@@ -423,15 +427,15 @@ def move_pane_to_new_tab_command(context: CommandContext) -> CommandResult:
         new_tab_index = workspace_service.add_editor_tab("Moved Pane")
 
         # Show status message
-        if context.main_window and hasattr(context.main_window, 'status_bar'):
+        if context.main_window and hasattr(context.main_window, "status_bar"):
             context.main_window.status_bar.set_message(
                 f"Pane moved to new tab {new_tab_index} (placeholder)", 2000
             )
 
-        return CommandResult(success=True, value={
-            'source_pane_id': active_pane_id,
-            'new_tab_index': new_tab_index
-        })
+        return CommandResult(
+            success=True,
+            value={"source_pane_id": active_pane_id, "new_tab_index": new_tab_index},
+        )
 
     except Exception as e:
         logger.error(f"Failed to move pane to new tab: {e}")
@@ -443,19 +447,17 @@ def focus_next_group_handler(context: CommandContext) -> CommandResult:
     try:
         main_window = ServiceLocator.get_instance().get("main_window")
         if not main_window:
-            return CommandResult(
-                success=False,
-                error="Main window not available"
-            )
+            return CommandResult(success=False, error="Main window not available")
 
         # Focus cycle: Activity Bar -> Sidebar -> Editor -> Terminal -> Activity Bar
         from PySide6.QtWidgets import QApplication
+
         app = QApplication.instance()
         if app:
             # Simple focus cycling implementation
-            if hasattr(main_window, 'sidebar') and main_window.sidebar.isVisible():
+            if hasattr(main_window, "sidebar") and main_window.sidebar.isVisible():
                 main_window.sidebar.setFocus()
-            elif hasattr(main_window, 'workspace'):
+            elif hasattr(main_window, "workspace"):
                 main_window.workspace.setFocus()
             else:
                 main_window.activity_bar.setFocus()
@@ -472,19 +474,17 @@ def focus_previous_group_handler(context: CommandContext) -> CommandResult:
     try:
         main_window = ServiceLocator.get_instance().get("main_window")
         if not main_window:
-            return CommandResult(
-                success=False,
-                error="Main window not available"
-            )
+            return CommandResult(success=False, error="Main window not available")
 
         # Reverse focus cycle
         from PySide6.QtWidgets import QApplication
+
         app = QApplication.instance()
         if app:
             # Simple reverse focus cycling
-            if hasattr(main_window, 'workspace'):
+            if hasattr(main_window, "workspace"):
                 main_window.workspace.setFocus()
-            elif hasattr(main_window, 'sidebar') and main_window.sidebar.isVisible():
+            elif hasattr(main_window, "sidebar") and main_window.sidebar.isVisible():
                 main_window.sidebar.setFocus()
             else:
                 main_window.activity_bar.setFocus()
@@ -506,7 +506,7 @@ def get_focus_navigation_commands():
             handler=focus_next_group_handler,
             description="Move focus to the next UI group",
             shortcut="f6",
-            keywords=["focus", "next", "group", "navigation"]
+            keywords=["focus", "next", "group", "navigation"],
         ),
         Command(
             id="workbench.action.focusPreviousGroup",
@@ -515,9 +515,10 @@ def get_focus_navigation_commands():
             handler=focus_previous_group_handler,
             description="Move focus to the previous UI group",
             shortcut="shift+f6",
-            keywords=["focus", "previous", "group", "navigation"]
+            keywords=["focus", "previous", "group", "navigation"],
         ),
     ]
+
 
 def register_navigation_commands():
     """Register all navigation commands."""

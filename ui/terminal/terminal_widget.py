@@ -48,11 +48,13 @@ class TerminalWidget(QWidget):
     title_changed = Signal(str)  # new title
     ready = Signal()  # Terminal is ready
 
-    def __init__(self,
-                 config: Optional[TerminalConfig] = None,
-                 command: Optional[str] = None,
-                 args: str = "",
-                 parent=None):
+    def __init__(
+        self,
+        config: Optional[TerminalConfig] = None,
+        command: Optional[str] = None,
+        args: str = "",
+        parent=None,
+    ):
         """
         Initialize terminal widget.
 
@@ -66,7 +68,7 @@ class TerminalWidget(QWidget):
             "TerminalWidget is deprecated. Use TerminalAppWidget instead, "
             "which properly extends AppWidget and integrates with the AppWidgetManager.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         super().__init__(parent)
 
@@ -114,13 +116,14 @@ class TerminalWidget(QWidget):
         try:
             # Create session on the server
             self.session_id = terminal_server.create_session(
-                command=self.command,
-                cmd_args=self.args
+                command=self.command, cmd_args=self.args
             )
 
             # Get terminal URL
             terminal_url = terminal_server.get_session_url(self.session_id)
-            logger.info(f"Loading terminal session {self.session_id} from {terminal_url}")
+            logger.info(
+                f"Loading terminal session {self.session_id} from {terminal_url}"
+            )
 
             # Load terminal in web view
             self.web_view.load(QUrl(terminal_url))
@@ -152,7 +155,8 @@ class TerminalWidget(QWidget):
         """Display error message in the widget."""
         error_label = QLabel(message)
         error_label.setWordWrap(True)
-        error_label.setStyleSheet("""
+        error_label.setStyleSheet(
+            """
             QLabel {
                 color: #f14c4c;
                 padding: 20px;
@@ -160,7 +164,8 @@ class TerminalWidget(QWidget):
                 border: 1px solid #f14c4c;
                 border-radius: 4px;
             }
-        """)
+        """
+        )
         self.layout().addWidget(error_label)
 
     def _apply_theme(self):
@@ -218,31 +223,43 @@ class TerminalWidget(QWidget):
         if self.web_view:
             self.web_view.setFocus()
             # Also focus the terminal element in JavaScript
-            self.web_view.page().runJavaScript("if (typeof term !== 'undefined') { term.focus(); }")
+            self.web_view.page().runJavaScript(
+                "if (typeof term !== 'undefined') { term.focus(); }"
+            )
 
     def clear_terminal(self):
         """Clear terminal buffer."""
         if self.is_ready and self.web_view:
-            self.web_view.page().runJavaScript("if (typeof term !== 'undefined') { term.clear(); }")
+            self.web_view.page().runJavaScript(
+                "if (typeof term !== 'undefined') { term.clear(); }"
+            )
 
     def reset_terminal(self):
         """Reset terminal (clear buffer and reset state)."""
         if self.is_ready and self.web_view:
-            self.web_view.page().runJavaScript("if (typeof term !== 'undefined') { term.reset(); }")
+            self.web_view.page().runJavaScript(
+                "if (typeof term !== 'undefined') { term.reset(); }"
+            )
 
     def write_to_terminal(self, text: str):
         """Write text to terminal (for programmatic input)."""
         if self.is_ready and self.web_view and text is not None:
             # Escape the text for JavaScript
-            escaped_text = text.replace('\\', '\\\\').replace("'", "\\'").replace('\n', '\\n')
-            self.web_view.page().runJavaScript(f"if (typeof term !== 'undefined') {{ term.write('{escaped_text}'); }}")
+            escaped_text = (
+                text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
+            )
+            self.web_view.page().runJavaScript(
+                f"if (typeof term !== 'undefined') {{ term.write('{escaped_text}'); }}"
+            )
 
     def paste_to_terminal(self, text: str):
         """Paste text to terminal (sends as input)."""
         if self.is_ready and self.web_view and text is not None:
             # Escape the text for JavaScript
-            escaped_text = text.replace('\\', '\\\\').replace("'", "\\'")
-            self.web_view.page().runJavaScript(f"if (typeof term !== 'undefined') {{ term.paste('{escaped_text}'); }}")
+            escaped_text = text.replace("\\", "\\\\").replace("'", "\\'")
+            self.web_view.page().runJavaScript(
+                f"if (typeof term !== 'undefined') {{ term.paste('{escaped_text}'); }}"
+            )
 
     def get_session_id(self) -> Optional[str]:
         """Get the terminal session ID."""
@@ -251,19 +268,19 @@ class TerminalWidget(QWidget):
     def get_state(self) -> dict[str, Any]:
         """Get terminal state for serialization."""
         return {
-            'session_id': self.session_id,
-            'command': self.command,
-            'args': self.args,
-            'is_dark_theme': self.is_dark_theme
+            "session_id": self.session_id,
+            "command": self.command,
+            "args": self.args,
+            "is_dark_theme": self.is_dark_theme,
         }
 
     def restore_state(self, state: dict[str, Any]):
         """Restore terminal state."""
         # For now, we'll create a new session with the same command
         # In the future, we could implement session persistence
-        self.command = state.get('command', self.command)
-        self.args = state.get('args', self.args)
-        self.is_dark_theme = state.get('is_dark_theme', self.is_dark_theme)
+        self.command = state.get("command", self.command)
+        self.args = state.get("args", self.args)
+        self.is_dark_theme = state.get("is_dark_theme", self.is_dark_theme)
 
         # Restart terminal with restored settings
         if self.session_id:
@@ -285,11 +302,14 @@ class TerminalWidget(QWidget):
 
     def __del__(self):
         """Cleanup on deletion."""
-        if hasattr(self, 'session_id') and self.session_id:
+        if hasattr(self, "session_id") and self.session_id:
             try:
                 terminal_server.destroy_session(self.session_id)
             except (AttributeError, OSError, RuntimeError) as e:
                 import logging
+
                 logger = logging.getLogger(__name__)
-                logger.debug(f"Failed to destroy terminal session {self.session_id}: {e}")
+                logger.debug(
+                    f"Failed to destroy terminal session {self.session_id}: {e}"
+                )
                 # Ignore errors during cleanup as destructor should not raise

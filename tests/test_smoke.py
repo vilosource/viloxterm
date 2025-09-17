@@ -54,7 +54,7 @@ def test_command_creation() -> tuple[bool, str]:
             id="test.command",
             title="Test Command",
             category="Test",
-            handler=test_handler
+            handler=test_handler,
         )
 
         if cmd.id != "test.command":
@@ -112,11 +112,11 @@ def test_app_initialization() -> tuple[bool, str]:
         from ui.main_window import MainWindow
 
         # Check if we're in a GUI environment
-        if 'DISPLAY' not in os.environ and sys.platform != 'darwin':
+        if "DISPLAY" not in os.environ and sys.platform != "darwin":
             return True, "⚠️  Skipped GUI test (no display)"
 
         # Try to import and check class structure
-        if not hasattr(MainWindow, '__init__'):
+        if not hasattr(MainWindow, "__init__"):
             return False, "❌ MainWindow missing __init__"
 
         return True, "✅ App initialization check passed"
@@ -138,10 +138,7 @@ def test_command_registry() -> tuple[bool, str]:
             return CommandResult(success=True, value="test")
 
         test_cmd = Command(
-            id="test.smoke",
-            title="Smoke Test",
-            category="Test",
-            handler=test_handler
+            id="test.smoke", title="Smoke Test", category="Test", handler=test_handler
         )
 
         command_registry.register(test_cmd)
@@ -179,7 +176,7 @@ def test_builtin_commands() -> tuple[bool, str]:
             "view.toggleSidebar",
             "workbench.action.splitRight",
             "terminal.clear",
-            "commandPalette.show"
+            "commandPalette.show",
         ]
 
         for cmd_id in essential_commands:
@@ -192,7 +189,10 @@ def test_builtin_commands() -> tuple[bool, str]:
         if len(categories) == 0:
             return False, "❌ No command categories found"
 
-        return True, f"✅ Built-in commands registered ({len(command_registry.get_all_commands())} total)"
+        return (
+            True,
+            f"✅ Built-in commands registered ({len(command_registry.get_all_commands())} total)",
+        )
     except Exception as e:
         traceback.print_exc()
         return False, f"❌ Built-in commands failed: {e}"

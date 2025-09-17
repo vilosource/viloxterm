@@ -42,12 +42,14 @@ class CommandResult:
 class CommandContext:
     """Context passed to command handlers during execution."""
 
-    def __init__(self,
-                 main_window=None,
-                 workspace=None,
-                 active_widget=None,
-                 services: Optional[dict[str, Any]] = None,
-                 args: Optional[dict[str, Any]] = None):
+    def __init__(
+        self,
+        main_window=None,
+        workspace=None,
+        active_widget=None,
+        services: Optional[dict[str, Any]] = None,
+        args: Optional[dict[str, Any]] = None,
+    ):
         """
         Initialize command context.
 
@@ -81,9 +83,12 @@ class CommandContext:
         if self._service_locator is None:
             try:
                 from services.service_locator import ServiceLocator
+
                 self._service_locator = ServiceLocator.get_instance()
             except ImportError:
-                logger.debug("ServiceLocator not available, falling back to legacy services")
+                logger.debug(
+                    "ServiceLocator not available, falling back to legacy services"
+                )
                 self._service_locator = False  # Mark as tried but not available
 
         if self._service_locator:
@@ -138,21 +143,21 @@ class Command:
     """
 
     # Identity
-    id: str                                      # Unique identifier (e.g., "file.newEditorTab")
-    title: str                                   # Display name (e.g., "New Editor Tab")
-    category: str                                # Category for grouping (e.g., "File")
+    id: str  # Unique identifier (e.g., "file.newEditorTab")
+    title: str  # Display name (e.g., "New Editor Tab")
+    category: str  # Category for grouping (e.g., "File")
 
     # Execution
     handler: Callable[[CommandContext], CommandResult]  # Function to execute
 
     # UI Metadata
-    description: Optional[str] = None            # Detailed description for tooltips
-    icon: Optional[str] = None                  # Icon identifier
+    description: Optional[str] = None  # Detailed description for tooltips
+    icon: Optional[str] = None  # Icon identifier
     keywords: list[str] = field(default_factory=list)  # Search keywords
 
     # Keyboard
-    shortcut: Optional[str] = None              # Default keyboard shortcut
-    when: Optional[str] = None                  # Context expression for availability
+    shortcut: Optional[str] = None  # Default keyboard shortcut
+    when: Optional[str] = None  # Context expression for availability
 
     # Undo/Redo Support
     undo_handler: Optional[Callable[[CommandContext], CommandResult]] = None
@@ -160,16 +165,16 @@ class Command:
     supports_undo: bool = False
 
     # Default Arguments
-    args: Optional[dict[str, Any]] = None       # Default arguments
+    args: Optional[dict[str, Any]] = None  # Default arguments
 
     # State
-    visible: bool = True                        # Show in command palette
-    enabled: bool = True                        # Can be executed
-    checked: Optional[bool] = None              # For toggle commands
+    visible: bool = True  # Show in command palette
+    enabled: bool = True  # Can be executed
+    checked: Optional[bool] = None  # For toggle commands
 
     # Grouping and Ordering
-    group: Optional[str] = None                 # Menu group
-    order: int = 0                              # Sort order within group
+    group: Optional[str] = None  # Menu group
+    order: int = 0  # Sort order within group
 
     def __post_init__(self):
         """Validate command after initialization."""
@@ -233,12 +238,15 @@ class Command:
             # This will be implemented by the context evaluator
             # For now, just return True if there's no when clause
             from core.context.evaluator import WhenClauseEvaluator
+
             return WhenClauseEvaluator.evaluate(self.when, context)
 
         return True
 
     def __repr__(self) -> str:
-        return f"Command(id={self.id!r}, title={self.title!r}, shortcut={self.shortcut!r})"
+        return (
+            f"Command(id={self.id!r}, title={self.title!r}, shortcut={self.shortcut!r})"
+        )
 
 
 class ICommandHandler(Protocol):

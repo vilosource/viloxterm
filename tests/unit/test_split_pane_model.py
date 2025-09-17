@@ -1,6 +1,5 @@
 """Unit tests for the split pane model (tree structure)."""
 
-
 import pytest
 
 from ui.widgets.split_pane_model import LeafNode, SplitNode, SplitPaneModel
@@ -17,7 +16,7 @@ class TestLeafNode:
         assert node.id is not None
         assert node.type == "leaf"
         assert node.parent is None
-        assert hasattr(node, 'app_widget')
+        assert hasattr(node, "app_widget")
 
     def test_pane_node_unique_ids(self):
         """Test that pane nodes have unique IDs."""
@@ -42,8 +41,8 @@ class TestLeafNode:
         node = LeafNode()
 
         assert node.type == "leaf"
-        assert not hasattr(node, 'first') or node.first is None
-        assert not hasattr(node, 'second') or node.second is None
+        assert not hasattr(node, "first") or node.first is None
+        assert not hasattr(node, "second") or node.second is None
 
 
 @pytest.mark.unit

@@ -24,16 +24,18 @@ logger = logging.getLogger(__name__)
 
 class KeyModifier(Enum):
     """Key modifiers."""
+
     CTRL = "ctrl"
     SHIFT = "shift"
     ALT = "alt"
     META = "meta"  # Cmd on Mac, Win on Windows
-    CMD = "cmd"    # Alias for Meta on Mac
+    CMD = "cmd"  # Alias for Meta on Mac
 
 
 @dataclass
 class KeyChord:
     """Represents a single key chord (modifiers + key)."""
+
     modifiers: set[KeyModifier]
     key: str
 
@@ -62,13 +64,15 @@ class KeyChord:
         """Check equality."""
         if not isinstance(other, KeyChord):
             return False
-        return (self.modifiers == other.modifiers and
-                self.key.lower() == other.key.lower())
+        return (
+            self.modifiers == other.modifiers and self.key.lower() == other.key.lower()
+        )
 
 
 @dataclass
 class KeySequence:
     """Represents a key sequence (one or more chords)."""
+
     chords: list[KeyChord]
 
     def __str__(self) -> str:
@@ -123,37 +127,37 @@ class KeySequence:
         key = key.lower()
 
         # Function keys
-        if key.startswith('f') and key[1:].isdigit():
+        if key.startswith("f") and key[1:].isdigit():
             num = int(key[1:])
             if 1 <= num <= 35:
-                return getattr(Qt, f'Key_F{num}')
+                return getattr(Qt, f"Key_F{num}")
 
         # Special keys
         special_keys = {
-            'escape': Qt.Key_Escape,
-            'esc': Qt.Key_Escape,
-            'tab': Qt.Key_Tab,
-            'space': Qt.Key_Space,
-            'return': Qt.Key_Return,
-            'enter': Qt.Key_Enter,
-            'backspace': Qt.Key_Backspace,
-            'delete': Qt.Key_Delete,
-            'del': Qt.Key_Delete,
-            'insert': Qt.Key_Insert,
-            'ins': Qt.Key_Insert,
-            'home': Qt.Key_Home,
-            'end': Qt.Key_End,
-            'pageup': Qt.Key_PageUp,
-            'pagedown': Qt.Key_PageDown,
-            'up': Qt.Key_Up,
-            'down': Qt.Key_Down,
-            'left': Qt.Key_Left,
-            'right': Qt.Key_Right,
-            'capslock': Qt.Key_CapsLock,
-            'numlock': Qt.Key_NumLock,
-            'scrolllock': Qt.Key_ScrollLock,
-            'pause': Qt.Key_Pause,
-            'printscreen': Qt.Key_Print,
+            "escape": Qt.Key_Escape,
+            "esc": Qt.Key_Escape,
+            "tab": Qt.Key_Tab,
+            "space": Qt.Key_Space,
+            "return": Qt.Key_Return,
+            "enter": Qt.Key_Enter,
+            "backspace": Qt.Key_Backspace,
+            "delete": Qt.Key_Delete,
+            "del": Qt.Key_Delete,
+            "insert": Qt.Key_Insert,
+            "ins": Qt.Key_Insert,
+            "home": Qt.Key_Home,
+            "end": Qt.Key_End,
+            "pageup": Qt.Key_PageUp,
+            "pagedown": Qt.Key_PageDown,
+            "up": Qt.Key_Up,
+            "down": Qt.Key_Down,
+            "left": Qt.Key_Left,
+            "right": Qt.Key_Right,
+            "capslock": Qt.Key_CapsLock,
+            "numlock": Qt.Key_NumLock,
+            "scrolllock": Qt.Key_ScrollLock,
+            "pause": Qt.Key_Pause,
+            "printscreen": Qt.Key_Print,
         }
 
         if key in special_keys:
@@ -168,38 +172,38 @@ class KeySequence:
             else:
                 # Symbol keys
                 symbol_keys = {
-                    '`': Qt.Key_QuoteLeft,
-                    '~': Qt.Key_AsciiTilde,
-                    '!': Qt.Key_Exclam,
-                    '@': Qt.Key_At,
-                    '#': Qt.Key_NumberSign,
-                    '$': Qt.Key_Dollar,
-                    '%': Qt.Key_Percent,
-                    '^': Qt.Key_AsciiCircum,
-                    '&': Qt.Key_Ampersand,
-                    '*': Qt.Key_Asterisk,
-                    '(': Qt.Key_ParenLeft,
-                    ')': Qt.Key_ParenRight,
-                    '-': Qt.Key_Minus,
-                    '_': Qt.Key_Underscore,
-                    '=': Qt.Key_Equal,
-                    '+': Qt.Key_Plus,
-                    '[': Qt.Key_BracketLeft,
-                    ']': Qt.Key_BracketRight,
-                    '{': Qt.Key_BraceLeft,
-                    '}': Qt.Key_BraceRight,
-                    '\\': Qt.Key_Backslash,
-                    '|': Qt.Key_Bar,
-                    ';': Qt.Key_Semicolon,
-                    ':': Qt.Key_Colon,
+                    "`": Qt.Key_QuoteLeft,
+                    "~": Qt.Key_AsciiTilde,
+                    "!": Qt.Key_Exclam,
+                    "@": Qt.Key_At,
+                    "#": Qt.Key_NumberSign,
+                    "$": Qt.Key_Dollar,
+                    "%": Qt.Key_Percent,
+                    "^": Qt.Key_AsciiCircum,
+                    "&": Qt.Key_Ampersand,
+                    "*": Qt.Key_Asterisk,
+                    "(": Qt.Key_ParenLeft,
+                    ")": Qt.Key_ParenRight,
+                    "-": Qt.Key_Minus,
+                    "_": Qt.Key_Underscore,
+                    "=": Qt.Key_Equal,
+                    "+": Qt.Key_Plus,
+                    "[": Qt.Key_BracketLeft,
+                    "]": Qt.Key_BracketRight,
+                    "{": Qt.Key_BraceLeft,
+                    "}": Qt.Key_BraceRight,
+                    "\\": Qt.Key_Backslash,
+                    "|": Qt.Key_Bar,
+                    ";": Qt.Key_Semicolon,
+                    ":": Qt.Key_Colon,
                     "'": Qt.Key_Apostrophe,
                     '"': Qt.Key_QuoteDbl,
-                    ',': Qt.Key_Comma,
-                    '.': Qt.Key_Period,
-                    '/': Qt.Key_Slash,
-                    '?': Qt.Key_Question,
-                    '<': Qt.Key_Less,
-                    '>': Qt.Key_Greater,
+                    ",": Qt.Key_Comma,
+                    ".": Qt.Key_Period,
+                    "/": Qt.Key_Slash,
+                    "?": Qt.Key_Question,
+                    "<": Qt.Key_Less,
+                    ">": Qt.Key_Greater,
                 }
                 return symbol_keys.get(key)
 
@@ -212,7 +216,7 @@ class KeySequenceParser:
     # Regular expression for parsing key chords
     CHORD_PATTERN = re.compile(
         r'^(?:(ctrl|shift|alt|meta|cmd)\+)*([a-zA-Z0-9`~!@#$%^&*()_+\-=\[\]{}\\|;:\'",.<>/?]|f\d+|escape|esc|tab|space|return|enter|backspace|delete|del|insert|ins|home|end|pageup|pagedown|up|down|left|right|capslock|numlock|scrolllock|pause|printscreen)$',
-        re.IGNORECASE
+        re.IGNORECASE,
     )
 
     @classmethod
@@ -253,7 +257,7 @@ class KeySequenceParser:
             return None
 
         # Split by + to get modifiers and key
-        parts = chord_str.split('+')
+        parts = chord_str.split("+")
         if not parts:
             return None
 
@@ -312,7 +316,6 @@ class KeySequenceParser:
             KeyChord({KeyModifier.ALT}, "f4"),
             KeyChord({KeyModifier.ALT}, "tab"),
             KeyChord({KeyModifier.CTRL, KeyModifier.ALT}, "delete"),
-
             # Mac system shortcuts (when running on Mac)
             KeyChord({KeyModifier.CMD}, "q"),
             KeyChord({KeyModifier.CMD}, "tab"),

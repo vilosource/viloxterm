@@ -73,7 +73,9 @@ class AppWidget(QWidget):
         self._retry_backoff_factor = 1.5  # Exponential backoff factor
 
         # State transition callbacks
-        self._state_callbacks = {}  # Dict[Tuple[WidgetState, WidgetState], List[Callable]]
+        self._state_callbacks = (
+            {}
+        )  # Dict[Tuple[WidgetState, WidgetState], List[Callable]]
         self._any_state_callbacks = []  # Callbacks for any state transition
 
         # Signal management
@@ -115,7 +117,9 @@ class AppWidget(QWidget):
             error_msg: Description of the error
         """
         self._error_count += 1
-        logger.error(f"Widget {self.widget_id} error (attempt {self._error_count}/{self._max_retries}): {error_msg}")
+        logger.error(
+            f"Widget {self.widget_id} error (attempt {self._error_count}/{self._max_retries}): {error_msg}"
+        )
 
         self._set_state(WidgetState.ERROR)
         self.widget_error.emit(error_msg)
@@ -123,17 +127,26 @@ class AppWidget(QWidget):
         # Attempt recovery if not too many errors
         if self._error_count < self._max_retries:
             # Calculate retry delay with exponential backoff
-            retry_delay = int(self._retry_base_delay * (self._retry_backoff_factor ** (self._error_count - 1)))
-            logger.info(f"Retrying widget {self.widget_id} initialization in {retry_delay}ms (attempt {self._error_count + 1}/{self._max_retries})")
+            retry_delay = int(
+                self._retry_base_delay
+                * (self._retry_backoff_factor ** (self._error_count - 1))
+            )
+            logger.info(
+                f"Retrying widget {self.widget_id} initialization in {retry_delay}ms (attempt {self._error_count + 1}/{self._max_retries})"
+            )
             QTimer.singleShot(retry_delay, self.retry_initialization)
         else:
-            logger.error(f"Widget {self.widget_id} exceeded max retries ({self._max_retries}), giving up")
+            logger.error(
+                f"Widget {self.widget_id} exceeded max retries ({self._max_retries}), giving up"
+            )
 
     def suspend(self):
         """Suspend widget when hidden/inactive."""
         # Check if widget can be suspended
         if not self.can_suspend:
-            logger.debug(f"Widget {self.widget_id} cannot be suspended (can_suspend=False)")
+            logger.debug(
+                f"Widget {self.widget_id} cannot be suspended (can_suspend=False)"
+            )
             return
 
         if self.widget_state == WidgetState.READY:
@@ -174,10 +187,7 @@ class AppWidget(QWidget):
         Returns:
             Dictionary containing widget state that can be serialized
         """
-        return {
-            "type": self.widget_type.value,
-            "widget_id": self.widget_id
-        }
+        return {"type": self.widget_type.value, "widget_id": self.widget_id}
 
     def set_state(self, state: dict[str, Any]):
         """
@@ -222,6 +232,7 @@ class AppWidget(QWidget):
     def request_focus(self):
         """Request focus on this widget."""
         import logging
+
         logger = logging.getLogger(__name__)
         logger.debug(f"AppWidget.request_focus() called for widget {self.widget_id}")
         self.focus_requested.emit()
@@ -245,11 +256,15 @@ class AppWidget(QWidget):
         elif self.widget_state in [WidgetState.CREATED, WidgetState.INITIALIZING]:
             # Widget not ready, queue focus request
             self._pending_focus = True
-            logger.debug(f"Focus pending for widget {self.widget_id} (state: {self.widget_state.value})")
+            logger.debug(
+                f"Focus pending for widget {self.widget_id} (state: {self.widget_state.value})"
+            )
             return False
         else:
             # Widget in error/destroying state, cannot focus
-            logger.warning(f"Cannot focus widget {self.widget_id} in state {self.widget_state.value}")
+            logger.warning(
+                f"Cannot focus widget {self.widget_id} in state {self.widget_state.value}"
+            )
             return False
 
     def get_title(self) -> str:
@@ -276,7 +291,7 @@ class AppWidget(QWidget):
             WidgetType.SEARCH: "search",
             WidgetType.GIT: "git-branch",
             WidgetType.SETTINGS: "settings",
-            WidgetType.PLACEHOLDER: "layout"
+            WidgetType.PLACEHOLDER: "layout",
         }
         return icon_map.get(self.widget_type)
 
@@ -317,7 +332,12 @@ class AppWidget(QWidget):
         """
         self._metadata = metadata
 
-    def configure_retry_strategy(self, max_retries: int = None, base_delay: int = None, backoff_factor: float = None):
+    def configure_retry_strategy(
+        self,
+        max_retries: int = None,
+        base_delay: int = None,
+        backoff_factor: float = None,
+    ):
         """
         Configure the retry strategy for error recovery.
 
@@ -333,7 +353,12 @@ class AppWidget(QWidget):
         if backoff_factor is not None:
             self._retry_backoff_factor = max(1.0, backoff_factor)
 
-    def on_state_transition(self, from_state: WidgetState = None, to_state: WidgetState = None, callback: callable = None):
+    def on_state_transition(
+        self,
+        from_state: WidgetState = None,
+        to_state: WidgetState = None,
+        callback: callable = None,
+    ):
         """
         Register a callback for state transitions.
 
@@ -360,7 +385,12 @@ class AppWidget(QWidget):
 
         return callback
 
-    def remove_state_callback(self, callback: callable, from_state: WidgetState = None, to_state: WidgetState = None):
+    def remove_state_callback(
+        self,
+        callback: callable,
+        from_state: WidgetState = None,
+        to_state: WidgetState = None,
+    ):
         """
         Remove a state transition callback.
 
@@ -419,13 +449,17 @@ class AppWidget(QWidget):
         if WidgetStateValidator.is_valid_transition(old_state, new_state):
             self.widget_state = new_state
             self.widget_state_changed.emit(new_state.value)
-            logger.debug(f"Widget {self.widget_id}: {old_state.value} → {new_state.value}")
+            logger.debug(
+                f"Widget {self.widget_id}: {old_state.value} → {new_state.value}"
+            )
 
             # Trigger state transition callbacks
             self._trigger_state_callbacks(old_state, new_state)
         else:
-            logger.error(f"Invalid state transition for widget {self.widget_id}: "
-                        f"{old_state.value} → {new_state.value}")
+            logger.error(
+                f"Invalid state transition for widget {self.widget_id}: "
+                f"{old_state.value} → {new_state.value}"
+            )
 
     def _trigger_state_callbacks(self, from_state: WidgetState, to_state: WidgetState):
         """
@@ -438,7 +472,9 @@ class AppWidget(QWidget):
         # Trigger specific transition callbacks
         specific_key = (from_state, to_state)
         if specific_key in self._state_callbacks:
-            for callback in self._state_callbacks[specific_key][:]:  # Copy list to allow modification during iteration
+            for callback in self._state_callbacks[specific_key][
+                :
+            ]:  # Copy list to allow modification during iteration
                 try:
                     callback(self, from_state, to_state)
                 except Exception as e:
@@ -500,5 +536,7 @@ class AppWidget(QWidget):
 
         Override in subclasses for custom retry logic.
         """
-        logger.info(f"Widget {self.widget_id}: Retrying initialization (attempt #{self._error_count})")
+        logger.info(
+            f"Widget {self.widget_id}: Retrying initialization (attempt #{self._error_count})"
+        )
         self.initialize()

@@ -69,7 +69,7 @@ class TestWorkspaceServiceInitialization:
         # Arrange
         service = WorkspaceService()
         mock_workspace = Mock()
-        context = {'workspace': mock_workspace}
+        context = {"workspace": mock_workspace}
 
         # Act
         service.initialize(context)
@@ -121,7 +121,9 @@ class TestWorkspaceServiceWidgetRegistry:
 
         # Assert
         assert result is True
-        service_with_mocks._widget_registry.has_widget.assert_called_once_with("test-widget")
+        service_with_mocks._widget_registry.has_widget.assert_called_once_with(
+            "test-widget"
+        )
 
     def test_register_widget_delegates_to_registry(self, service_with_mocks):
         """Test register_widget delegates to widget registry."""
@@ -133,7 +135,9 @@ class TestWorkspaceServiceWidgetRegistry:
 
         # Assert
         assert result is True
-        service_with_mocks._widget_registry.register_widget.assert_called_once_with("test-widget", 0)
+        service_with_mocks._widget_registry.register_widget.assert_called_once_with(
+            "test-widget", 0
+        )
 
     def test_unregister_widget_delegates_to_registry(self, service_with_mocks):
         """Test unregister_widget delegates to widget registry."""
@@ -145,7 +149,9 @@ class TestWorkspaceServiceWidgetRegistry:
 
         # Assert
         assert result is True
-        service_with_mocks._widget_registry.unregister_widget.assert_called_once_with("test-widget")
+        service_with_mocks._widget_registry.unregister_widget.assert_called_once_with(
+            "test-widget"
+        )
 
     def test_focus_widget_delegates_to_tab_manager(self, service_with_mocks):
         """Test focus_widget delegates to tab manager."""
@@ -157,7 +163,9 @@ class TestWorkspaceServiceWidgetRegistry:
 
         # Assert
         assert result is True
-        service_with_mocks._tab_manager.focus_widget.assert_called_once_with("test-widget")
+        service_with_mocks._tab_manager.focus_widget.assert_called_once_with(
+            "test-widget"
+        )
 
     def test_get_widget_tab_index_returns_correct_index(self, service_with_mocks):
         """Test get_widget_tab_index returns correct tab index."""
@@ -169,7 +177,9 @@ class TestWorkspaceServiceWidgetRegistry:
 
         # Assert
         assert result == 2
-        service_with_mocks._widget_registry.get_widget_tab_index.assert_called_once_with("test-widget")
+        service_with_mocks._widget_registry.get_widget_tab_index.assert_called_once_with(
+            "test-widget"
+        )
 
     def test_is_widget_registered_delegates_to_registry(self, service_with_mocks):
         """Test is_widget_registered delegates to widget registry."""
@@ -181,19 +191,27 @@ class TestWorkspaceServiceWidgetRegistry:
 
         # Assert
         assert result is False
-        service_with_mocks._widget_registry.is_widget_registered.assert_called_once_with("test-widget")
+        service_with_mocks._widget_registry.is_widget_registered.assert_called_once_with(
+            "test-widget"
+        )
 
-    def test_update_registry_after_tab_close_delegates_correctly(self, service_with_mocks):
+    def test_update_registry_after_tab_close_delegates_correctly(
+        self, service_with_mocks
+    ):
         """Test update_registry_after_tab_close delegates with correct parameters."""
         # Arrange
-        service_with_mocks._widget_registry.update_registry_after_tab_close.return_value = 3
+        service_with_mocks._widget_registry.update_registry_after_tab_close.return_value = (
+            3
+        )
 
         # Act
         result = service_with_mocks.update_registry_after_tab_close(1, "test-widget")
 
         # Assert
         assert result == 3
-        service_with_mocks._widget_registry.update_registry_after_tab_close.assert_called_once_with(1, "test-widget")
+        service_with_mocks._widget_registry.update_registry_after_tab_close.assert_called_once_with(
+            1, "test-widget"
+        )
 
 
 class TestWorkspaceServiceTabOperations:
@@ -213,59 +231,71 @@ class TestWorkspaceServiceTabOperations:
 
         return service
 
-    @patch('core.context.manager.context_manager')
-    def test_add_editor_tab_creates_tab_and_notifies(self, mock_context_manager, service_with_workspace):
+    @patch("core.context.manager.context_manager")
+    def test_add_editor_tab_creates_tab_and_notifies(
+        self, mock_context_manager, service_with_workspace
+    ):
         """Test add_editor_tab creates tab and sends notifications."""
         # Arrange
         service_with_workspace._tab_manager.add_editor_tab.return_value = 1
         service_with_workspace._tab_manager.get_tab_count.return_value = 2
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
         result = service_with_workspace.add_editor_tab("MyEditor")
 
         # Assert
         assert result == 1
-        service_with_workspace._tab_manager.add_editor_tab.assert_called_once_with("MyEditor")
+        service_with_workspace._tab_manager.add_editor_tab.assert_called_once_with(
+            "MyEditor"
+        )
 
         # Check notification
         assert len(observers) == 1
         event, data = observers[0]
-        assert event == 'tab_added'
-        assert data['type'] == 'editor'
-        assert data['name'] == 'MyEditor'
-        assert data['index'] == 1
+        assert event == "tab_added"
+        assert data["type"] == "editor"
+        assert data["name"] == "MyEditor"
+        assert data["index"] == 1
 
         # Check context updates
-        mock_context_manager.set.assert_any_call('workbench.tabs.count', 2)
-        mock_context_manager.set.assert_any_call('workbench.tabs.hasMultiple', True)
+        mock_context_manager.set.assert_any_call("workbench.tabs.count", 2)
+        mock_context_manager.set.assert_any_call("workbench.tabs.hasMultiple", True)
 
-    @patch('core.context.manager.context_manager')
-    def test_add_terminal_tab_creates_tab_and_notifies(self, mock_context_manager, service_with_workspace):
+    @patch("core.context.manager.context_manager")
+    def test_add_terminal_tab_creates_tab_and_notifies(
+        self, mock_context_manager, service_with_workspace
+    ):
         """Test add_terminal_tab creates tab and sends notifications."""
         # Arrange
         service_with_workspace._tab_manager.add_terminal_tab.return_value = 2
         service_with_workspace._tab_manager.get_tab_count.return_value = 3
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
         result = service_with_workspace.add_terminal_tab("MyTerminal")
 
         # Assert
         assert result == 2
-        service_with_workspace._tab_manager.add_terminal_tab.assert_called_once_with("MyTerminal")
+        service_with_workspace._tab_manager.add_terminal_tab.assert_called_once_with(
+            "MyTerminal"
+        )
 
         # Check notification
         assert len(observers) == 1
         event, data = observers[0]
-        assert event == 'tab_added'
-        assert data['type'] == 'terminal'
-        assert data['name'] == 'MyTerminal'
-        assert data['index'] == 2
+        assert event == "tab_added"
+        assert data["type"] == "terminal"
+        assert data["name"] == "MyTerminal"
+        assert data["index"] == 2
 
     def test_add_editor_tab_without_initialization_raises_error(self):
         """Test add_editor_tab raises error when service not initialized."""
@@ -274,11 +304,15 @@ class TestWorkspaceServiceTabOperations:
         # Don't mark as initialized
 
         # Act & Assert
-        with pytest.raises(RuntimeError, match="Service WorkspaceService is not initialized"):
+        with pytest.raises(
+            RuntimeError, match="Service WorkspaceService is not initialized"
+        ):
             service.add_editor_tab("Test")
 
-    @patch('core.context.manager.context_manager')
-    def test_add_app_widget_successful_registers_and_notifies(self, mock_context_manager, service_with_workspace):
+    @patch("core.context.manager.context_manager")
+    def test_add_app_widget_successful_registers_and_notifies(
+        self, mock_context_manager, service_with_workspace
+    ):
         """Test add_app_widget successfully registers widget and notifies."""
         # Arrange
         # Mock a widget type instead of importing from core.widgets
@@ -289,22 +323,28 @@ class TestWorkspaceServiceTabOperations:
         service_with_workspace._tab_manager.get_tab_count.return_value = 2
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
-        result = service_with_workspace.add_app_widget(widget_type, "settings-1", "Settings")
+        result = service_with_workspace.add_app_widget(
+            widget_type, "settings-1", "Settings"
+        )
 
         # Assert
         assert result is True
-        service_with_workspace._tab_manager.add_app_widget.assert_called_once_with(widget_type, "settings-1", "Settings")
+        service_with_workspace._tab_manager.add_app_widget.assert_called_once_with(
+            widget_type, "settings-1", "Settings"
+        )
 
         # Check notification
         assert len(observers) == 1
         event, data = observers[0]
-        assert event == 'tab_added'
-        assert data['type'] == "settings"
-        assert data['widget_id'] == "settings-1"
-        assert data['name'] == "Settings"
+        assert event == "tab_added"
+        assert data["type"] == "settings"
+        assert data["widget_id"] == "settings-1"
+        assert data["name"] == "Settings"
 
     def test_add_app_widget_failure_does_not_notify(self, service_with_workspace):
         """Test add_app_widget failure does not send notification."""
@@ -313,17 +353,23 @@ class TestWorkspaceServiceTabOperations:
         service_with_workspace._tab_manager.add_app_widget.return_value = False
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
-        result = service_with_workspace.add_app_widget(widget_type, "settings-1", "Settings")
+        result = service_with_workspace.add_app_widget(
+            widget_type, "settings-1", "Settings"
+        )
 
         # Assert
         assert result is False
         assert len(observers) == 0
 
-    @patch('core.context.manager.context_manager')
-    def test_close_tab_with_index_closes_and_notifies(self, mock_context_manager, service_with_workspace):
+    @patch("core.context.manager.context_manager")
+    def test_close_tab_with_index_closes_and_notifies(
+        self, mock_context_manager, service_with_workspace
+    ):
         """Test close_tab with specific index closes tab and notifies."""
         # Arrange
         service_with_workspace._workspace.tab_widget.tabText.return_value = "Tab 1"
@@ -331,7 +377,9 @@ class TestWorkspaceServiceTabOperations:
         service_with_workspace._tab_manager.get_tab_count.return_value = 0
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
         result = service_with_workspace.close_tab(1)
@@ -343,15 +391,17 @@ class TestWorkspaceServiceTabOperations:
         # Check notification
         assert len(observers) == 1
         event, data = observers[0]
-        assert event == 'tab_closed'
-        assert data['index'] == 1
-        assert data['name'] == "Tab 1"
+        assert event == "tab_closed"
+        assert data["index"] == 1
+        assert data["name"] == "Tab 1"
 
     def test_close_tab_without_index_uses_current_tab(self, service_with_workspace):
         """Test close_tab without index uses current tab index."""
         # Arrange
         service_with_workspace._workspace.tab_widget.currentIndex.return_value = 2
-        service_with_workspace._workspace.tab_widget.tabText.return_value = "Current Tab"
+        service_with_workspace._workspace.tab_widget.tabText.return_value = (
+            "Current Tab"
+        )
         service_with_workspace._tab_manager.close_tab.return_value = True
         service_with_workspace._tab_manager.get_tab_count.return_value = 1
 
@@ -386,13 +436,17 @@ class TestWorkspaceServiceTabOperations:
         assert result == 5
         service_with_workspace._tab_manager.get_tab_count.assert_called_once()
 
-    def test_switch_to_tab_delegates_and_notifies_on_success(self, service_with_workspace):
+    def test_switch_to_tab_delegates_and_notifies_on_success(
+        self, service_with_workspace
+    ):
         """Test switch_to_tab delegates to manager and notifies on success."""
         # Arrange
         service_with_workspace._tab_manager.switch_to_tab.return_value = True
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
         result = service_with_workspace.switch_to_tab(2)
@@ -404,8 +458,8 @@ class TestWorkspaceServiceTabOperations:
         # Check notification
         assert len(observers) == 1
         event, data = observers[0]
-        assert event == 'tab_switched'
-        assert data['index'] == 2
+        assert event == "tab_switched"
+        assert data["index"] == 2
 
     def test_switch_to_tab_does_not_notify_on_failure(self, service_with_workspace):
         """Test switch_to_tab does not notify when switching fails."""
@@ -413,7 +467,9 @@ class TestWorkspaceServiceTabOperations:
         service_with_workspace._tab_manager.switch_to_tab.return_value = False
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
         result = service_with_workspace.switch_to_tab(99)
@@ -435,8 +491,8 @@ class TestWorkspaceServicePaneOperations:
         service._pane_manager = Mock(spec=WorkspacePaneManager)
         return service
 
-    @patch('core.context.manager.context_manager')
-    @patch('core.settings.app_defaults.get_default_split_direction')
+    @patch("core.context.manager.context_manager")
+    @patch("core.settings.app_defaults.get_default_split_direction")
     def test_split_active_pane_with_orientation_creates_pane_and_notifies(
         self, mock_get_default, mock_context_manager, service_with_workspace
     ):
@@ -448,24 +504,28 @@ class TestWorkspaceServicePaneOperations:
         service_with_workspace._pane_manager.get_pane_count.return_value = 2
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
         result = service_with_workspace.split_active_pane("vertical")
 
         # Assert
         assert result == "pane-2"
-        service_with_workspace._pane_manager.split_active_pane.assert_called_once_with("vertical")
+        service_with_workspace._pane_manager.split_active_pane.assert_called_once_with(
+            "vertical"
+        )
 
         # Check notification
         assert len(observers) == 1
         event, data = observers[0]
-        assert event == 'pane_split'
-        assert data['orientation'] == "vertical"
-        assert data['new_pane_id'] == "pane-2"
-        assert data['parent_pane_id'] == "pane-1"
+        assert event == "pane_split"
+        assert data["orientation"] == "vertical"
+        assert data["new_pane_id"] == "pane-2"
+        assert data["parent_pane_id"] == "pane-1"
 
-    @patch('core.context.manager.context_manager')
+    @patch("core.context.manager.context_manager")
     def test_split_active_pane_without_orientation_uses_default(
         self, mock_context_manager, service_with_workspace
     ):
@@ -480,7 +540,9 @@ class TestWorkspaceServicePaneOperations:
 
         # Assert
         assert result == "pane-2"
-        service_with_workspace._pane_manager.split_active_pane.assert_called_once_with(None)
+        service_with_workspace._pane_manager.split_active_pane.assert_called_once_with(
+            None
+        )
 
     def test_split_active_pane_failure_does_not_notify(self, service_with_workspace):
         """Test split_active_pane failure does not send notification."""
@@ -488,7 +550,9 @@ class TestWorkspaceServicePaneOperations:
         service_with_workspace._pane_manager.split_active_pane.return_value = None
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
         result = service_with_workspace.split_active_pane("horizontal")
@@ -497,8 +561,10 @@ class TestWorkspaceServicePaneOperations:
         assert result is None
         assert len(observers) == 0
 
-    @patch('core.context.manager.context_manager')
-    def test_close_active_pane_closes_and_notifies(self, mock_context_manager, service_with_workspace):
+    @patch("core.context.manager.context_manager")
+    def test_close_active_pane_closes_and_notifies(
+        self, mock_context_manager, service_with_workspace
+    ):
         """Test close_active_pane closes pane and sends notification."""
         # Arrange
         service_with_workspace._pane_manager.get_active_pane_id.return_value = "pane-1"
@@ -506,7 +572,9 @@ class TestWorkspaceServicePaneOperations:
         service_with_workspace._pane_manager.get_pane_count.return_value = 1
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
         result = service_with_workspace.close_active_pane()
@@ -518,8 +586,8 @@ class TestWorkspaceServicePaneOperations:
         # Check notification
         assert len(observers) == 1
         event, data = observers[0]
-        assert event == 'pane_closed'
-        assert data['pane_id'] == "pane-1"
+        assert event == "pane_closed"
+        assert data["pane_id"] == "pane-1"
 
     def test_focus_pane_delegates_and_notifies_on_success(self, service_with_workspace):
         """Test focus_pane delegates to manager and notifies on success."""
@@ -527,22 +595,26 @@ class TestWorkspaceServicePaneOperations:
         service_with_workspace._pane_manager.focus_pane.return_value = True
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
         result = service_with_workspace.focus_pane("pane-3")
 
         # Assert
         assert result is True
-        service_with_workspace._pane_manager.focus_pane.assert_called_once_with("pane-3")
+        service_with_workspace._pane_manager.focus_pane.assert_called_once_with(
+            "pane-3"
+        )
 
         # Check notification
         assert len(observers) == 1
         event, data = observers[0]
-        assert event == 'pane_focused'
-        assert data['pane_id'] == "pane-3"
+        assert event == "pane_focused"
+        assert data["pane_id"] == "pane-3"
 
-    @patch('core.context.manager.context_manager')
+    @patch("core.context.manager.context_manager")
     def test_toggle_pane_numbers_updates_context_and_notifies(
         self, mock_context_manager, service_with_workspace
     ):
@@ -551,44 +623,57 @@ class TestWorkspaceServicePaneOperations:
         service_with_workspace._pane_manager.toggle_pane_numbers.return_value = True
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
         result = service_with_workspace.toggle_pane_numbers()
 
         # Assert
         assert result is True
-        mock_context_manager.set.assert_called_once_with('workbench.panes.numbersVisible', True)
+        mock_context_manager.set.assert_called_once_with(
+            "workbench.panes.numbersVisible", True
+        )
 
         # Check notification
         assert len(observers) == 1
         event, data = observers[0]
-        assert event == 'pane_numbers_toggled'
-        assert data['visible'] is True
+        assert event == "pane_numbers_toggled"
+        assert data["visible"] is True
 
-    def test_navigate_in_direction_tracks_navigation_and_notifies(self, service_with_workspace):
+    def test_navigate_in_direction_tracks_navigation_and_notifies(
+        self, service_with_workspace
+    ):
         """Test navigate_in_direction tracks from/to panes and notifies."""
         # Arrange
-        service_with_workspace._pane_manager.get_active_pane_id.side_effect = ["pane-1", "pane-2"]
+        service_with_workspace._pane_manager.get_active_pane_id.side_effect = [
+            "pane-1",
+            "pane-2",
+        ]
         service_with_workspace._pane_manager.navigate_in_direction.return_value = True
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
         result = service_with_workspace.navigate_in_direction("right")
 
         # Assert
         assert result is True
-        service_with_workspace._pane_manager.navigate_in_direction.assert_called_once_with("right")
+        service_with_workspace._pane_manager.navigate_in_direction.assert_called_once_with(
+            "right"
+        )
 
         # Check notification
         assert len(observers) == 1
         event, data = observers[0]
-        assert event == 'pane_navigated'
-        assert data['from'] == "pane-1"
-        assert data['to'] == "pane-2"
-        assert data['direction'] == "right"
+        assert event == "pane_navigated"
+        assert data["from"] == "pane-1"
+        assert data["to"] == "pane-2"
+        assert data["direction"] == "right"
 
     def test_get_pane_count_delegates_to_manager(self, service_with_workspace):
         """Test get_pane_count delegates to pane manager."""
@@ -605,7 +690,9 @@ class TestWorkspaceServicePaneOperations:
     def test_get_active_pane_id_delegates_to_manager(self, service_with_workspace):
         """Test get_active_pane_id delegates to pane manager."""
         # Arrange
-        service_with_workspace._pane_manager.get_active_pane_id.return_value = "active-pane"
+        service_with_workspace._pane_manager.get_active_pane_id.return_value = (
+            "active-pane"
+        )
 
         # Act
         result = service_with_workspace.get_active_pane_id()
@@ -629,7 +716,7 @@ class TestWorkspaceServiceLayoutOperations:
     def test_save_layout_returns_workspace_state(self, service_with_workspace):
         """Test save_layout returns state from workspace."""
         # Arrange
-        expected_state = {'tabs': [{'name': 'Tab1'}], 'current_tab': 0}
+        expected_state = {"tabs": [{"name": "Tab1"}], "current_tab": 0}
         service_with_workspace._workspace.get_state.return_value = expected_state
 
         # Act
@@ -653,10 +740,12 @@ class TestWorkspaceServiceLayoutOperations:
     def test_restore_layout_applies_state_and_notifies(self, service_with_workspace):
         """Test restore_layout applies state to workspace and notifies."""
         # Arrange
-        state = {'tabs': [{'name': 'Tab1'}], 'current_tab': 0}
+        state = {"tabs": [{"name": "Tab1"}], "current_tab": 0}
 
         observers = []
-        service_with_workspace.add_observer(lambda event: observers.append((event.name, event.data)))
+        service_with_workspace.add_observer(
+            lambda event: observers.append((event.name, event.data))
+        )
 
         # Act
         result = service_with_workspace.restore_layout(state)
@@ -668,14 +757,16 @@ class TestWorkspaceServiceLayoutOperations:
         # Check notification
         assert len(observers) == 1
         event, data = observers[0]
-        assert event == 'layout_restored'
-        assert data['state'] == state
+        assert event == "layout_restored"
+        assert data["state"] == state
 
     def test_restore_layout_handles_exception_gracefully(self, service_with_workspace):
         """Test restore_layout handles workspace exceptions gracefully."""
         # Arrange
-        state = {'invalid': 'state'}
-        service_with_workspace._workspace.set_state.side_effect = ValueError("Invalid state")
+        state = {"invalid": "state"}
+        service_with_workspace._workspace.set_state.side_effect = ValueError(
+            "Invalid state"
+        )
 
         # Act
         result = service_with_workspace.restore_layout(state)
@@ -688,7 +779,7 @@ class TestWorkspaceServiceLayoutOperations:
         # Arrange
         service = WorkspaceService()
         service._initialized = True
-        state = {'tabs': []}
+        state = {"tabs": []}
 
         # Act
         result = service.restore_layout(state)
@@ -721,10 +812,14 @@ class TestWorkspaceServiceNavigationOperations:
         assert result is True
         service_with_workspace._pane_manager.navigate_to_next_pane.assert_called_once()
 
-    def test_navigate_to_previous_pane_delegates_to_manager(self, service_with_workspace):
+    def test_navigate_to_previous_pane_delegates_to_manager(
+        self, service_with_workspace
+    ):
         """Test navigate_to_previous_pane delegates to pane manager."""
         # Arrange
-        service_with_workspace._pane_manager.navigate_to_previous_pane.return_value = True
+        service_with_workspace._pane_manager.navigate_to_previous_pane.return_value = (
+            True
+        )
 
         # Act
         result = service_with_workspace.navigate_to_previous_pane()
@@ -746,11 +841,7 @@ class TestWorkspaceServiceUtilityMethods:
         result = service.get_workspace_info()
 
         # Assert
-        assert result == {
-            'available': False,
-            'tab_count': 0,
-            'current_tab': -1
-        }
+        assert result == {"available": False, "tab_count": 0, "current_tab": -1}
 
     def test_get_workspace_info_with_workspace_combines_manager_info(self):
         """Test get_workspace_info combines information from all managers."""
@@ -761,15 +852,15 @@ class TestWorkspaceServiceUtilityMethods:
         # Mock managers
         service._tab_manager = Mock()
         service._tab_manager.get_tab_info.return_value = {
-            'count': 3,
-            'current': 1,
-            'current_tab_info': {'name': 'Tab 1'}
+            "count": 3,
+            "current": 1,
+            "current_tab_info": {"name": "Tab 1"},
         }
 
         service._pane_manager = Mock()
         service._pane_manager.get_pane_info.return_value = {
-            'count': 2,
-            'active': 'pane-1'
+            "count": 2,
+            "active": "pane-1",
         }
 
         # Act
@@ -777,12 +868,12 @@ class TestWorkspaceServiceUtilityMethods:
 
         # Assert
         expected = {
-            'available': True,
-            'tab_count': 3,
-            'current_tab': 1,
-            'current_tab_info': {'name': 'Tab 1'},
-            'pane_count': 2,
-            'active_pane_id': 'pane-1'
+            "available": True,
+            "tab_count": 3,
+            "current_tab": 1,
+            "current_tab_info": {"name": "Tab 1"},
+            "pane_count": 2,
+            "active_pane_id": "pane-1",
         }
         assert result == expected
 
@@ -797,19 +888,29 @@ class TestWorkspaceServiceErrorConditions:
         # Don't mark as initialized
 
         # Act & Assert
-        with pytest.raises(RuntimeError, match="Service WorkspaceService is not initialized"):
+        with pytest.raises(
+            RuntimeError, match="Service WorkspaceService is not initialized"
+        ):
             service.add_editor_tab("Test")
 
-        with pytest.raises(RuntimeError, match="Service WorkspaceService is not initialized"):
+        with pytest.raises(
+            RuntimeError, match="Service WorkspaceService is not initialized"
+        ):
             service.add_terminal_tab("Test")
 
-        with pytest.raises(RuntimeError, match="Service WorkspaceService is not initialized"):
+        with pytest.raises(
+            RuntimeError, match="Service WorkspaceService is not initialized"
+        ):
             service.close_tab(0)
 
-        with pytest.raises(RuntimeError, match="Service WorkspaceService is not initialized"):
+        with pytest.raises(
+            RuntimeError, match="Service WorkspaceService is not initialized"
+        ):
             service.switch_to_tab(0)
 
-        with pytest.raises(RuntimeError, match="Service WorkspaceService is not initialized"):
+        with pytest.raises(
+            RuntimeError, match="Service WorkspaceService is not initialized"
+        ):
             service.split_active_pane("horizontal")
 
     def test_operations_with_none_workspace_handle_gracefully(self):

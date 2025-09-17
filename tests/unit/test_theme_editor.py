@@ -142,8 +142,8 @@ class TestVSCodeThemeImporter:
                 "editor.background": "#1e1e1e",
                 "editor.foreground": "#d4d4d4",
                 "terminal.background": "#000000",
-                "terminal.foreground": "#ffffff"
-            }
+                "terminal.foreground": "#ffffff",
+            },
         }
 
         theme = VSCodeThemeImporter.convert_vscode_theme(vscode_data, "test-theme")
@@ -161,7 +161,7 @@ class TestVSCodeThemeImporter:
             description="Test theme",
             version="1.0.0",
             author="Test",
-            colors={}
+            colors={},
         )
 
         VSCodeThemeImporter._fill_missing_colors(theme)
@@ -185,8 +185,8 @@ class TestThemeEditorWidget:
         """Set up test environment."""
         self.qapp = qapp
 
-    @patch('services.service_locator.ServiceLocator')
-    @patch('services.theme_service.ThemeService')
+    @patch("services.service_locator.ServiceLocator")
+    @patch("services.theme_service.ThemeService")
     def test_widget_initialization(self, mock_theme_service, mock_locator):
         """Test theme editor widget initialization."""
         from ui.widgets.theme_editor_widget import ThemeEditorAppWidget
@@ -205,8 +205,8 @@ class TestThemeEditorWidget:
         assert not widget._modified
         assert not widget._updating
 
-    @patch('services.service_locator.ServiceLocator')
-    @patch('services.theme_service.ThemeService')
+    @patch("services.service_locator.ServiceLocator")
+    @patch("services.theme_service.ThemeService")
     def test_theme_loading(self, mock_theme_service, mock_locator):
         """Test loading a theme into the editor."""
         from ui.widgets.theme_editor_widget import ThemeEditorAppWidget
@@ -217,7 +217,7 @@ class TestThemeEditorWidget:
         mock_theme.name = "Test Theme"
         mock_theme.colors = {
             "editor.background": "#1e1e1e",
-            "editor.foreground": "#d4d4d4"
+            "editor.foreground": "#d4d4d4",
         }
         mock_theme.get_color.side_effect = lambda k, d: mock_theme.colors.get(k, d)
 
@@ -236,8 +236,8 @@ class TestThemeEditorWidget:
         assert widget._current_theme == mock_theme
         assert not widget._modified
 
-    @patch('services.service_locator.ServiceLocator')
-    @patch('services.theme_service.ThemeService')
+    @patch("services.service_locator.ServiceLocator")
+    @patch("services.theme_service.ThemeService")
     def test_recursive_update_prevention(self, mock_theme_service, mock_locator):
         """Test that recursive updates are prevented."""
         from ui.widgets.theme_editor_widget import ThemeEditorAppWidget
@@ -260,8 +260,8 @@ class TestThemeEditorWidget:
         # Should not mark as modified when updating
         assert not widget._modified
 
-    @patch('services.service_locator.ServiceLocator')
-    @patch('services.theme_service.ThemeService')
+    @patch("services.service_locator.ServiceLocator")
+    @patch("services.theme_service.ThemeService")
     def test_get_current_colors(self, mock_theme_service, mock_locator):
         """Test getting current colors from fields."""
         from ui.widgets.theme_editor_widget import ThemeEditorAppWidget
@@ -280,7 +280,7 @@ class TestThemeEditorWidget:
         mock_field.get_color.return_value = "#123456"
         widget._color_fields = {
             "editor.background": mock_field,
-            "editor.foreground": mock_field
+            "editor.foreground": mock_field,
         }
 
         colors = widget._get_current_colors()
@@ -331,9 +331,7 @@ class TestColorPickerWidget:
         from ui.widgets.color_picker_widget import ColorPickerField
 
         field = ColorPickerField(
-            key="editor.background",
-            label="Editor Background",
-            initial_color="#1e1e1e"
+            key="editor.background", label="Editor Background", initial_color="#1e1e1e"
         )
 
         assert field.get_key() == "editor.background"
@@ -366,7 +364,7 @@ class TestThemePreviewWidget:
             "editor.background": "#1e1e1e",
             "editor.foreground": "#d4d4d4",
             "terminal.background": "#000000",
-            "terminal.foreground": "#ffffff"
+            "terminal.foreground": "#ffffff",
         }
 
         preview.apply_theme_colors(colors)
@@ -383,7 +381,7 @@ class TestThemePreviewWidget:
             "editor.background": "#1e1e1e",
             "editor.foreground": "#d4d4d4",
             "titleBar.activeBackground": "#2d2d30",
-            "titleBar.activeForeground": "#cccccc"
+            "titleBar.activeForeground": "#cccccc",
         }
 
         stylesheet = preview._generate_stylesheet(colors)

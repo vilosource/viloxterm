@@ -19,16 +19,15 @@ from core.context.manager import context_manager
 
 __all__ = [
     # Commands
-    'Command',
-    'CommandContext',
-    'CommandResult',
-    'command_registry',
-    'command_executor',
-    'command',
-
+    "Command",
+    "CommandContext",
+    "CommandResult",
+    "command_registry",
+    "command_executor",
+    "command",
     # Context
-    'context_manager',
-    'ContextKey',
-    'ContextValue',
-    'WhenClauseEvaluator',
+    "context_manager",
+    "ContextKey",
+    "ContextValue",
+    "WhenClauseEvaluator",
 ]

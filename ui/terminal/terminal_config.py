@@ -15,6 +15,7 @@ from PySide6.QtCore import QSettings
 @dataclass
 class ColorScheme:
     """Terminal color scheme."""
+
     background: str = "#1e1e1e"
     foreground: str = "#d4d4d4"
     cursor: str = "#ffffff"
@@ -44,27 +45,27 @@ class ColorScheme:
     def to_dict(self) -> dict[str, str]:
         """Convert to dictionary for xterm.js theme."""
         return {
-            'background': self.background,
-            'foreground': self.foreground,
-            'cursor': self.cursor,
-            'cursorAccent': self.cursor_accent,
-            'selection': self.selection,
-            'black': self.black,
-            'red': self.red,
-            'green': self.green,
-            'yellow': self.yellow,
-            'blue': self.blue,
-            'magenta': self.magenta,
-            'cyan': self.cyan,
-            'white': self.white,
-            'brightBlack': self.bright_black,
-            'brightRed': self.bright_red,
-            'brightGreen': self.bright_green,
-            'brightYellow': self.bright_yellow,
-            'brightBlue': self.bright_blue,
-            'brightMagenta': self.bright_magenta,
-            'brightCyan': self.bright_cyan,
-            'brightWhite': self.bright_white
+            "background": self.background,
+            "foreground": self.foreground,
+            "cursor": self.cursor,
+            "cursorAccent": self.cursor_accent,
+            "selection": self.selection,
+            "black": self.black,
+            "red": self.red,
+            "green": self.green,
+            "yellow": self.yellow,
+            "blue": self.blue,
+            "magenta": self.magenta,
+            "cyan": self.cyan,
+            "white": self.white,
+            "brightBlack": self.bright_black,
+            "brightRed": self.bright_red,
+            "brightGreen": self.bright_green,
+            "brightYellow": self.bright_yellow,
+            "brightBlue": self.bright_blue,
+            "brightMagenta": self.bright_magenta,
+            "brightCyan": self.bright_cyan,
+            "brightWhite": self.bright_white,
         }
 
 
@@ -92,7 +93,7 @@ VSCODE_LIGHT_THEME = ColorScheme(
     bright_blue="#0451a5",
     bright_magenta="#bc05bc",
     bright_cyan="#0598bc",
-    bright_white="#a5a5a5"
+    bright_white="#a5a5a5",
 )
 
 
@@ -134,19 +135,21 @@ class TerminalConfig:
         """Get the default shell for the current platform."""
         if platform.system() == "Windows":
             # Try PowerShell first, fall back to cmd
-            if os.path.exists("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"):
+            if os.path.exists(
+                "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+            ):
                 return "powershell.exe"
             return "cmd.exe"
         else:
             # Unix-like systems
-            shell = os.environ.get('SHELL', '/bin/bash')
+            shell = os.environ.get("SHELL", "/bin/bash")
             if os.path.exists(shell):
                 return shell
             # Fallback options
-            for shell in ['/bin/bash', '/bin/zsh', '/bin/sh']:
+            for shell in ["/bin/bash", "/bin/zsh", "/bin/sh"]:
                 if os.path.exists(shell):
                     return shell
-            return 'bash'  # Last resort
+            return "bash"  # Last resort
 
     def get_shell_command(self) -> str:
         """Get the shell command to execute."""
@@ -202,7 +205,9 @@ class TerminalConfig:
         settings.endGroup()
 
     @classmethod
-    def load_from_settings(cls, settings: QSettings, prefix: str = "terminal") -> 'TerminalConfig':
+    def load_from_settings(
+        cls, settings: QSettings, prefix: str = "terminal"
+    ) -> "TerminalConfig":
         """Load configuration from QSettings."""
         config = cls()
 
@@ -211,25 +216,37 @@ class TerminalConfig:
         # Shell settings
         config.shell = settings.value("shell", config.shell)
         config.shell_args = settings.value("shell_args", config.shell_args)
-        config.custom_shell_path = settings.value("custom_shell_path", config.custom_shell_path)
+        config.custom_shell_path = settings.value(
+            "custom_shell_path", config.custom_shell_path
+        )
 
         # Appearance
         config.font_family = settings.value("font_family", config.font_family)
         config.font_size = int(settings.value("font_size", config.font_size))
         config.line_height = float(settings.value("line_height", config.line_height))
         config.cursor_style = settings.value("cursor_style", config.cursor_style)
-        config.cursor_blink = settings.value("cursor_blink", config.cursor_blink, type=bool)
+        config.cursor_blink = settings.value(
+            "cursor_blink", config.cursor_blink, type=bool
+        )
         config.scrollback = int(settings.value("scrollback", config.scrollback))
 
         # Theme
         config.theme = settings.value("theme", config.theme)
 
         # Behavior
-        config.copy_on_select = settings.value("copy_on_select", config.copy_on_select, type=bool)
-        config.right_click_paste = settings.value("right_click_paste", config.right_click_paste, type=bool)
-        config.confirm_on_exit = settings.value("confirm_on_exit", config.confirm_on_exit, type=bool)
+        config.copy_on_select = settings.value(
+            "copy_on_select", config.copy_on_select, type=bool
+        )
+        config.right_click_paste = settings.value(
+            "right_click_paste", config.right_click_paste, type=bool
+        )
+        config.confirm_on_exit = settings.value(
+            "confirm_on_exit", config.confirm_on_exit, type=bool
+        )
         config.bell_style = settings.value("bell_style", config.bell_style)
-        config.max_terminals = int(settings.value("max_terminals", config.max_terminals))
+        config.max_terminals = int(
+            settings.value("max_terminals", config.max_terminals)
+        )
 
         # Window
         config.default_cols = int(settings.value("default_cols", config.default_cols))
@@ -244,16 +261,16 @@ class TerminalConfig:
         color_scheme = self.get_color_scheme(is_dark_theme)
 
         return {
-            'cursorBlink': self.cursor_blink,
-            'cursorStyle': self.cursor_style,
-            'fontFamily': self.font_family,
-            'fontSize': self.font_size,
-            'lineHeight': self.line_height,
-            'scrollback': self.scrollback,
-            'theme': color_scheme.to_dict(),
-            'macOptionIsMeta': True,
-            'rightClickSelectsWord': not self.right_click_paste,
-            'bellStyle': self.bell_style if self.bell_style != 'visual' else 'both'
+            "cursorBlink": self.cursor_blink,
+            "cursorStyle": self.cursor_style,
+            "fontFamily": self.font_family,
+            "fontSize": self.font_size,
+            "lineHeight": self.line_height,
+            "scrollback": self.scrollback,
+            "theme": color_scheme.to_dict(),
+            "macOptionIsMeta": True,
+            "rightClickSelectsWord": not self.right_click_paste,
+            "bellStyle": self.bell_style if self.bell_style != "visual" else "both",
         }
 
 

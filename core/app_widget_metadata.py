@@ -16,6 +16,7 @@ from ui.widgets.widget_registry import WidgetType
 
 class WidgetCategory(Enum):
     """Categories for organizing widgets in menus and palettes."""
+
     EDITOR = "editor"
     TERMINAL = "terminal"
     VIEWER = "viewer"
@@ -45,8 +46,8 @@ class AppWidgetMetadata:
     category: WidgetCategory  # Category for organization
 
     # === Technical ===
-    widget_class: type['AppWidget']  # The actual widget class
-    factory: Optional[Callable[[str], 'AppWidget']] = None  # Optional factory function
+    widget_class: type["AppWidget"]  # The actual widget class
+    factory: Optional[Callable[[str], "AppWidget"]] = None  # Optional factory function
 
     # === Commands ===
     open_command: Optional[str] = None  # Command ID to open this widget
@@ -63,7 +64,9 @@ class AppWidgetMetadata:
     show_in_palette: bool = True  # Show in command palette
     show_header: bool = True  # Show pane header bar
     preserve_context_menu: bool = False  # Preserve native context menu
-    can_suspend: bool = True  # Can be suspended when hidden (False for widgets with background processes)
+    can_suspend: bool = (
+        True  # Can be suspended when hidden (False for widgets with background processes)
+    )
 
     # === Placement Intent ===
     default_placement: WidgetPlacement = WidgetPlacement.SMART
@@ -78,7 +81,9 @@ class AppWidgetMetadata:
 
     # === Requirements & Capabilities ===
     requires_services: list[str] = field(default_factory=list)  # Required services
-    provides_capabilities: list[str] = field(default_factory=list)  # Provided capabilities
+    provides_capabilities: list[str] = field(
+        default_factory=list
+    )  # Provided capabilities
     supported_file_types: list[str] = field(default_factory=list)  # File extensions
 
     # === Plugin preparation ===
@@ -147,5 +152,5 @@ class AppWidgetMetadata:
         if not self.supported_file_types:
             return False
         # Remove leading dot if present
-        ext = file_extension.lstrip('.')
+        ext = file_extension.lstrip(".")
         return ext in self.supported_file_types

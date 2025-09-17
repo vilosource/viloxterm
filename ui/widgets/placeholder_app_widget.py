@@ -20,7 +20,12 @@ class PlaceholderAppWidget(AppWidget):
     Shows a simple label with widget information.
     """
 
-    def __init__(self, widget_id: str, widget_type: WidgetType = WidgetType.PLACEHOLDER, parent=None):
+    def __init__(
+        self,
+        widget_id: str,
+        widget_type: WidgetType = WidgetType.PLACEHOLDER,
+        parent=None,
+    ):
         """Initialize the placeholder widget."""
         super().__init__(widget_id, widget_type, parent)
         self.label = None
@@ -41,7 +46,8 @@ class PlaceholderAppWidget(AppWidget):
         self.update_label()
 
         # Style
-        self.label.setStyleSheet("""
+        self.label.setStyleSheet(
+            """
             QLabel {
                 background-color: #2d2d30;
                 color: #969696;
@@ -50,7 +56,8 @@ class PlaceholderAppWidget(AppWidget):
                 padding: 20px;
                 font-size: 14px;
             }
-        """)
+        """
+        )
 
         # Add to layout
         layout.addWidget(self.label)
@@ -78,7 +85,7 @@ class PlaceholderAppWidget(AppWidget):
 
     def get_title(self) -> str:
         """Get placeholder title."""
-        return self.widget_type.value.replace('_', ' ').title()
+        return self.widget_type.value.replace("_", " ").title()
 
     def can_close(self) -> bool:
         """Placeholder can always be closed."""

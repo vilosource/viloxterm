@@ -35,10 +35,7 @@ class TestRegistryCommands:
     def test_register_widget_command(self):
         """Test registering a widget in the registry."""
         # Set up context args
-        self.mock_context.args = {
-            "widget_id": "com.viloapp.settings",
-            "tab_index": 2
-        }
+        self.mock_context.args = {"widget_id": "com.viloapp.settings", "tab_index": 2}
 
         # Register a widget
         result = register_widget_command._original_func(self.mock_context)
@@ -50,10 +47,7 @@ class TestRegistryCommands:
     def test_register_widget_no_service(self):
         """Test registering when service is not available."""
         self.mock_context.get_service.return_value = None
-        self.mock_context.args = {
-            "widget_id": "com.viloapp.settings",
-            "tab_index": 2
-        }
+        self.mock_context.args = {"widget_id": "com.viloapp.settings", "tab_index": 2}
 
         result = register_widget_command._original_func(self.mock_context)
 
@@ -70,7 +64,9 @@ class TestRegistryCommands:
         result = unregister_widget_command._original_func(self.mock_context)
 
         assert result.success
-        assert "com.viloapp.settings" not in self.mock_workspace_service._widget_registry
+        assert (
+            "com.viloapp.settings" not in self.mock_workspace_service._widget_registry
+        )
 
     def test_unregister_nonexistent_widget(self):
         """Test unregistering a widget that doesn't exist."""
@@ -87,12 +83,11 @@ class TestRegistryCommands:
             "widget1": 0,
             "widget2": 1,
             "widget3": 2,
-            "widget4": 3
+            "widget4": 3,
         }
 
         # Close tab at index 1 (widget2)
-        self.mock_context.args = {"closed_index": 1, "widget_id": "widget2"
-        }
+        self.mock_context.args = {"closed_index": 1, "widget_id": "widget2"}
         result = update_registry_after_close_command._original_func(self.mock_context)
 
         assert result.success
@@ -103,7 +98,7 @@ class TestRegistryCommands:
         expected = {
             "widget1": 0,  # unchanged
             "widget3": 1,  # moved from 2 to 1
-            "widget4": 2   # moved from 3 to 2
+            "widget4": 2,  # moved from 3 to 2
         }
         assert self.mock_workspace_service._widget_registry == expected
 
@@ -113,12 +108,11 @@ class TestRegistryCommands:
         self.mock_workspace_service._widget_registry = {
             "widget1": 0,
             "widget2": 1,
-            "widget3": 2
+            "widget3": 2,
         }
 
         # Close tab at index 0 without specifying widget_id
-        self.mock_context.args = {"closed_index": 0, "widget_id": None
-        }
+        self.mock_context.args = {"closed_index": 0, "widget_id": None}
         result = update_registry_after_close_command._original_func(self.mock_context)
 
         assert result.success
@@ -126,7 +120,7 @@ class TestRegistryCommands:
         expected = {
             "widget1": 0,  # Not removed (no widget_id provided)
             "widget2": 0,  # moved from 1 to 0
-            "widget3": 1   # moved from 2 to 1
+            "widget3": 1,  # moved from 2 to 1
         }
         assert self.mock_workspace_service._widget_registry == expected
 
@@ -164,21 +158,24 @@ class TestRegistryCommands:
         self.mock_context.args = {"widget_id": "com.viloapp.nonexistent"}
         result = is_widget_registered_command._original_func(self.mock_context)
         assert result.success
-        assert result.value == {"widget_id": "com.viloapp.nonexistent", "registered": False}
+        assert result.value == {
+            "widget_id": "com.viloapp.nonexistent",
+            "registered": False,
+        }
 
     def test_commands_handle_missing_registry(self):
         """Test that commands handle missing _widget_registry gracefully."""
         # Remove the registry attribute
-        delattr(self.mock_workspace_service, '_widget_registry')
+        delattr(self.mock_workspace_service, "_widget_registry")
 
         # Register should create it
         self.mock_context.args = {"widget_id": "test", "tab_index": 0}
         result = register_widget_command._original_func(self.mock_context)
         assert result.success
-        assert hasattr(self.mock_workspace_service, '_widget_registry')
+        assert hasattr(self.mock_workspace_service, "_widget_registry")
 
         # Remove again for other tests
-        delattr(self.mock_workspace_service, '_widget_registry')
+        delattr(self.mock_workspace_service, "_widget_registry")
 
         # Other commands should handle missing registry
         self.mock_context.args = {"widget_id": "test"}
@@ -202,7 +199,9 @@ class TestRegistryCommands:
         """Test that commands handle exceptions gracefully."""
         # Make service raise exception
         self.mock_workspace_service._widget_registry = MagicMock()
-        self.mock_workspace_service._widget_registry.__setitem__.side_effect = Exception("Test error")
+        self.mock_workspace_service._widget_registry.__setitem__.side_effect = (
+            Exception("Test error")
+        )
 
         self.mock_context.args = {"widget_id": "test", "tab_index": 0}
         result = register_widget_command._original_func(self.mock_context)

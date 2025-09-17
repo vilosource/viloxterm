@@ -36,13 +36,16 @@ class TerminalService(Service):
         # Get terminal server instance
         try:
             from ui.terminal.terminal_server import terminal_server
+
             self._terminal_server = terminal_server
 
             # Ensure server is started
             # Check if server has a thread and it's alive
-            if not hasattr(self._terminal_server, 'server_thread') or \
-               not self._terminal_server.server_thread or \
-               not self._terminal_server.server_thread.is_alive():
+            if (
+                not hasattr(self._terminal_server, "server_thread")
+                or not self._terminal_server.server_thread
+                or not self._terminal_server.server_thread.is_alive()
+            ):
                 self.start_server()
 
         except Exception as e:
@@ -56,8 +59,12 @@ class TerminalService(Service):
             self.close_session(session_id)
 
         # Stop server if running
-        if self._terminal_server and hasattr(self._terminal_server, 'server_thread') and \
-           self._terminal_server.server_thread and self._terminal_server.server_thread.is_alive():
+        if (
+            self._terminal_server
+            and hasattr(self._terminal_server, "server_thread")
+            and self._terminal_server.server_thread
+            and self._terminal_server.server_thread.is_alive()
+        ):
             self.stop_server()
 
         self._terminal_server = None
@@ -82,9 +89,7 @@ class TerminalService(Service):
             self._terminal_server.start_server()
 
             # Notify observers
-            self.notify('server_started', {
-                'port': self._terminal_server.port
-            })
+            self.notify("server_started", {"port": self._terminal_server.port})
 
             logger.info(f"Terminal server started on port {self._terminal_server.port}")
             return True
@@ -107,7 +112,7 @@ class TerminalService(Service):
             self._terminal_server.stop_server()
 
             # Notify observers
-            self.notify('server_stopped', {})
+            self.notify("server_stopped", {})
 
             logger.info("Terminal server stopped")
             return True
@@ -123,8 +128,12 @@ class TerminalService(Service):
         Returns:
             True if server is running
         """
-        return self._terminal_server and hasattr(self._terminal_server, 'server_thread') and \
-               self._terminal_server.server_thread and self._terminal_server.server_thread.is_alive()
+        return (
+            self._terminal_server
+            and hasattr(self._terminal_server, "server_thread")
+            and self._terminal_server.server_thread
+            and self._terminal_server.server_thread.is_alive()
+        )
 
     def get_server_url(self) -> Optional[str]:
         """
@@ -140,11 +149,13 @@ class TerminalService(Service):
 
     # ============= Session Management =============
 
-    def create_session(self,
-                      command: Optional[str] = None,
-                      args: Optional[list[str]] = None,
-                      cwd: Optional[str] = None,
-                      env: Optional[dict[str, str]] = None) -> Optional[str]:
+    def create_session(
+        self,
+        command: Optional[str] = None,
+        args: Optional[list[str]] = None,
+        cwd: Optional[str] = None,
+        env: Optional[dict[str, str]] = None,
+    ) -> Optional[str]:
         """
         Create a new terminal session.
 
@@ -173,26 +184,26 @@ class TerminalService(Service):
             session_id = self._terminal_server.create_session(
                 command=command or "bash",
                 cmd_args=" ".join(args) if args else "",
-                cwd=cwd
+                cwd=cwd,
             )
 
             # Store session info
             self._sessions[session_id] = {
-                'id': session_id,
-                'command': command or "bash",
-                'args': args or [],
-                'cwd': cwd,
-                'env': env or {},
-                'active': True
+                "id": session_id,
+                "command": command or "bash",
+                "args": args or [],
+                "cwd": cwd,
+                "env": env or {},
+                "active": True,
             }
 
             self._active_session_id = session_id
 
             # Notify observers
-            self.notify('session_created', {
-                'session_id': session_id,
-                'command': command or "bash"
-            })
+            self.notify(
+                "session_created",
+                {"session_id": session_id, "command": command or "bash"},
+            )
 
             logger.info(f"Created terminal session: {session_id}")
             return session_id
@@ -231,7 +242,7 @@ class TerminalService(Service):
                     self._active_session_id = next(iter(self._sessions))
 
             # Notify observers
-            self.notify('session_closed', {'session_id': session_id})
+            self.notify("session_closed", {"session_id": session_id})
 
             logger.info(f"Closed terminal session: {session_id}")
             return True
@@ -287,7 +298,7 @@ class TerminalService(Service):
         self._active_session_id = session_id
 
         # Notify observers
-        self.notify('session_activated', {'session_id': session_id})
+        self.notify("session_activated", {"session_id": session_id})
 
         return True
 
@@ -346,11 +357,10 @@ class TerminalService(Service):
                 self._terminal_server.resize_terminal(session_id, rows, cols)
 
                 # Notify observers
-                self.notify('terminal_resized', {
-                    'session_id': session_id,
-                    'rows': rows,
-                    'cols': cols
-                })
+                self.notify(
+                    "terminal_resized",
+                    {"session_id": session_id, "rows": rows, "cols": cols},
+                )
 
                 return True
             return False
@@ -400,16 +410,16 @@ class TerminalService(Service):
             Dictionary with service state information
         """
         return {
-            'server_running': self.is_server_running(),
-            'server_url': self.get_server_url(),
-            'session_count': self.get_session_count(),
-            'active_session': self._active_session_id,
-            'sessions': [
+            "server_running": self.is_server_running(),
+            "server_url": self.get_server_url(),
+            "session_count": self.get_session_count(),
+            "active_session": self._active_session_id,
+            "sessions": [
                 {
-                    'id': s['id'],
-                    'command': s['command'],
-                    'active': s['id'] == self._active_session_id
+                    "id": s["id"],
+                    "command": s["command"],
+                    "active": s["id"] == self._active_session_id,
                 }
                 for s in self._sessions.values()
-            ]
+            ],
         }

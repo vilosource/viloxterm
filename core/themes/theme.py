@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ThemeInfo:
     """Theme metadata information."""
+
     id: str
     name: str
     description: str
@@ -27,12 +28,12 @@ class ThemeInfo:
     def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
-            'id': self.id,
-            'name': self.name,
-            'description': self.description,
-            'version': self.version,
-            'author': self.author,
-            'extends': self.extends
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "version": self.version,
+            "author": self.author,
+            "extends": self.extends,
         }
 
 
@@ -121,7 +122,7 @@ class Theme:
         except ValueError:
             return False
 
-    def merge_with_parent(self, parent: 'Theme') -> None:
+    def merge_with_parent(self, parent: "Theme") -> None:
         """
         Merge parent theme colors into this theme.
 
@@ -163,17 +164,17 @@ class Theme:
     def to_dict(self) -> dict:
         """Convert theme to dictionary."""
         result = {
-            'id': self.id,
-            'name': self.name,
-            'description': self.description,
-            'version': self.version,
-            'author': self.author,
-            'extends': self.extends,
-            'colors': self.colors
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "version": self.version,
+            "author": self.author,
+            "extends": self.extends,
+            "colors": self.colors,
         }
 
         if self.typography:
-            result['typography'] = self.typography.to_dict()
+            result["typography"] = self.typography.to_dict()
 
         return result
 
@@ -182,7 +183,7 @@ class Theme:
         return json.dumps(self.to_dict(), indent=2)
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Theme':
+    def from_dict(cls, data: dict) -> "Theme":
         """
         Create theme from dictionary.
 
@@ -193,22 +194,22 @@ class Theme:
             Theme instance
         """
         typography = None
-        if 'typography' in data:
-            typography = ThemeTypography.from_dict(data['typography'])
+        if "typography" in data:
+            typography = ThemeTypography.from_dict(data["typography"])
 
         return cls(
-            id=data.get('id', 'unknown'),
-            name=data.get('name', 'Unknown Theme'),
-            description=data.get('description', ''),
-            version=data.get('version', '1.0.0'),
-            author=data.get('author', 'Unknown'),
-            extends=data.get('extends'),
-            colors=data.get('colors', {}),
-            typography=typography
+            id=data.get("id", "unknown"),
+            name=data.get("name", "Unknown Theme"),
+            description=data.get("description", ""),
+            version=data.get("version", "1.0.0"),
+            author=data.get("author", "Unknown"),
+            extends=data.get("extends"),
+            colors=data.get("colors", {}),
+            typography=typography,
         )
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'Theme':
+    def from_json(cls, json_str: str) -> "Theme":
         """
         Create theme from JSON string.
 
@@ -222,7 +223,7 @@ class Theme:
         return cls.from_dict(data)
 
     @classmethod
-    def from_json_file(cls, path: Path) -> 'Theme':
+    def from_json_file(cls, path: Path) -> "Theme":
         """
         Load theme from JSON file.
 
@@ -232,7 +233,7 @@ class Theme:
         Returns:
             Theme instance
         """
-        with open(path, encoding='utf-8') as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         return cls.from_dict(data)
 
@@ -244,7 +245,7 @@ class Theme:
             path: Path to save file
         """
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     def get_info(self) -> ThemeInfo:
@@ -255,5 +256,5 @@ class Theme:
             description=self.description,
             version=self.version,
             author=self.author,
-            extends=self.extends
+            extends=self.extends,
         )

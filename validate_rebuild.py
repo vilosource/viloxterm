@@ -14,8 +14,9 @@ from ui.widgets.split_pane_model import SplitPaneModel
 from ui.widgets.widget_registry import WidgetType
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
+
 
 def test_model_operations():
     """Test the core model operations."""
@@ -56,6 +57,7 @@ def test_model_operations():
 
     print("✓ Model operations test completed!\n")
 
+
 def test_state_persistence():
     """Test saving and restoring state."""
     print("=== Testing State Persistence ===")
@@ -67,7 +69,9 @@ def test_state_persistence():
     model1.change_pane_type(pane3, WidgetType.TEXT_EDITOR)
     model1.set_active_pane(pane2)
 
-    print(f"✓ Original model: {len(model1.leaves)} panes, active={model1.active_pane_id}")
+    print(
+        f"✓ Original model: {len(model1.leaves)} panes, active={model1.active_pane_id}"
+    )
 
     # Save state
     state = model1.to_dict()
@@ -76,13 +80,17 @@ def test_state_persistence():
     # Clean up first model
     sessions_before = len(terminal_server.sessions)
     model1.cleanup_all_widgets()
-    print(f"✓ Cleaned up model1, sessions: {sessions_before} -> {len(terminal_server.sessions)}")
+    print(
+        f"✓ Cleaned up model1, sessions: {sessions_before} -> {len(terminal_server.sessions)}"
+    )
 
     # Restore to new model
     model2 = SplitPaneModel()
     model2.from_dict(state)
 
-    print(f"✓ Restored model: {len(model2.leaves)} panes, active={model2.active_pane_id}")
+    print(
+        f"✓ Restored model: {len(model2.leaves)} panes, active={model2.active_pane_id}"
+    )
     print(f"✓ Sessions after restore: {len(terminal_server.sessions)}")
 
     # Clean up
@@ -90,6 +98,7 @@ def test_state_persistence():
     print(f"✓ Final cleanup: {len(terminal_server.sessions)} sessions")
 
     print("✓ State persistence test completed!\n")
+
 
 def main():
     """Run all validation tests."""
@@ -113,6 +122,7 @@ def main():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
 
     finally:
@@ -120,6 +130,7 @@ def main():
         print(f"\nFinal terminal server sessions: {len(terminal_server.sessions)}")
         if len(terminal_server.sessions) > 0:
             print("⚠️  Warning: Some sessions were not cleaned up properly")
+
 
 if __name__ == "__main__":
     main()

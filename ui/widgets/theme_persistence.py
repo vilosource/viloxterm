@@ -29,9 +29,9 @@ class ThemePersistenceManager(QObject):
 
     # Signals
     theme_imported = Signal(str)  # theme_id
-    theme_saved = Signal(str)     # theme_id
-    theme_created = Signal(str)   # theme_id
-    theme_deleted = Signal(str)   # theme_id
+    theme_saved = Signal(str)  # theme_id
+    theme_created = Signal(str)  # theme_id
+    theme_deleted = Signal(str)  # theme_id
     operation_failed = Signal(str)  # error_message
 
     def __init__(self, parent_widget: QWidget):
@@ -55,11 +55,7 @@ class ThemePersistenceManager(QObject):
             New theme ID if created, None if cancelled
         """
         # Get name from user
-        name, ok = QInputDialog.getText(
-            self._parent,
-            "New Theme",
-            "Enter theme name:"
-        )
+        name, ok = QInputDialog.getText(self._parent, "New Theme", "Enter theme name:")
 
         if ok and name:
             try:
@@ -71,7 +67,7 @@ class ThemePersistenceManager(QObject):
                     "theme.createCustomTheme",
                     base_theme_id=base_id,
                     name=name,
-                    description=f"Custom theme created from {base_id}"
+                    description=f"Custom theme created from {base_id}",
                 )
 
                 if result.success and result.value:
@@ -79,13 +75,17 @@ class ThemePersistenceManager(QObject):
                     if new_theme:
                         # Save using command
                         theme_data = new_theme.to_dict()
-                        save_result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
+                        save_result = execute_command(
+                            "theme.saveCustomTheme", theme_data=theme_data
+                        )
 
                         if save_result.success:
                             self.theme_created.emit(new_theme.id)
                             return new_theme.id
                         else:
-                            self.operation_failed.emit(f"Failed to save new theme: {save_result.error}")
+                            self.operation_failed.emit(
+                                f"Failed to save new theme: {save_result.error}"
+                            )
                     else:
                         self.operation_failed.emit("Failed to create theme")
                 else:
@@ -97,7 +97,9 @@ class ThemePersistenceManager(QObject):
 
         return None
 
-    def duplicate_theme(self, theme: Theme, colors: Optional[dict[str, str]] = None) -> Optional[str]:
+    def duplicate_theme(
+        self, theme: Theme, colors: Optional[dict[str, str]] = None
+    ) -> Optional[str]:
         """
         Duplicate an existing theme.
 
@@ -117,7 +119,7 @@ class ThemePersistenceManager(QObject):
             self._parent,
             "Duplicate Theme",
             "Enter theme name:",
-            text=f"{theme.name} Copy"
+            text=f"{theme.name} Copy",
         )
 
         if ok and name:
@@ -129,7 +131,7 @@ class ThemePersistenceManager(QObject):
                     "theme.createCustomTheme",
                     base_theme_id=theme.id,
                     name=name,
-                    description=f"Duplicate of {theme.name}"
+                    description=f"Duplicate of {theme.name}",
                 )
 
                 if result.success and result.value:
@@ -140,17 +142,23 @@ class ThemePersistenceManager(QObject):
 
                         # Save using command
                         theme_data = new_theme.to_dict()
-                        save_result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
+                        save_result = execute_command(
+                            "theme.saveCustomTheme", theme_data=theme_data
+                        )
 
                         if save_result.success:
                             self.theme_created.emit(new_theme.id)
                             return new_theme.id
                         else:
-                            self.operation_failed.emit(f"Failed to save duplicated theme: {save_result.error}")
+                            self.operation_failed.emit(
+                                f"Failed to save duplicated theme: {save_result.error}"
+                            )
                     else:
                         self.operation_failed.emit("Failed to create duplicate theme")
                 else:
-                    self.operation_failed.emit(result.error or "Failed to create duplicate theme")
+                    self.operation_failed.emit(
+                        result.error or "Failed to create duplicate theme"
+                    )
 
             except Exception as e:
                 logger.error(f"Failed to duplicate theme: {e}")
@@ -177,16 +185,19 @@ class ThemePersistenceManager(QObject):
             self._parent,
             "Delete Theme",
             f"Are you sure you want to delete '{theme.name}'?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
             try:
                 from core.commands.executor import execute_command
+
                 result = execute_command("theme.deleteCustomTheme", theme_id=theme.id)
 
                 if result.success:
-                    QMessageBox.information(self._parent, "Success", "Theme deleted successfully!")
+                    QMessageBox.information(
+                        self._parent, "Success", "Theme deleted successfully!"
+                    )
                     self.theme_deleted.emit(theme.id)
                     return True
                 else:
@@ -200,7 +211,9 @@ class ThemePersistenceManager(QObject):
 
         return False
 
-    def save_theme(self, theme: Theme, colors: dict[str, str], typography_data: dict[str, any]) -> bool:
+    def save_theme(
+        self, theme: Theme, colors: dict[str, str], typography_data: dict[str, any]
+    ) -> bool:
         """
         Save theme with current settings.
 
@@ -225,17 +238,20 @@ class ThemePersistenceManager(QObject):
 
             theme.typography = ThemeTypography(
                 font_family=f"{typography_data['font_family']}, monospace",
-                font_size_base=typography_data['font_size_base'],
-                line_height=typography_data['line_height']
+                font_size_base=typography_data["font_size_base"],
+                line_height=typography_data["line_height"],
             )
 
             # Save theme using command
             from core.commands.executor import execute_command
+
             theme_data = theme.to_dict()
             result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
 
             if result.success:
-                QMessageBox.information(self._parent, "Success", "Theme saved successfully!")
+                QMessageBox.information(
+                    self._parent, "Success", "Theme saved successfully!"
+                )
                 self.theme_saved.emit(theme.id)
                 return True
             else:
@@ -247,7 +263,9 @@ class ThemePersistenceManager(QObject):
             self.operation_failed.emit(f"Failed to save theme: {e}")
             return False
 
-    def apply_theme(self, theme: Theme, colors: dict[str, str], typography_data: dict[str, any]) -> bool:
+    def apply_theme(
+        self, theme: Theme, colors: dict[str, str], typography_data: dict[str, any]
+    ) -> bool:
         """
         Apply theme to the application.
 
@@ -272,16 +290,19 @@ class ThemePersistenceManager(QObject):
 
             theme.typography = ThemeTypography(
                 font_family=f"{typography_data['font_family']}, monospace",
-                font_size_base=typography_data['font_size_base'],
-                line_height=typography_data['line_height']
+                font_size_base=typography_data["font_size_base"],
+                line_height=typography_data["line_height"],
             )
 
             # Apply theme using command
             from core.commands.executor import execute_command
+
             result = execute_command("theme.applyTheme", theme_id=theme.id)
 
             if result.success:
-                QMessageBox.information(self._parent, "Success", "Theme applied successfully!")
+                QMessageBox.information(
+                    self._parent, "Success", "Theme applied successfully!"
+                )
                 return True
             else:
                 self.operation_failed.emit(f"Failed to apply theme: {result.error}")
@@ -300,20 +321,20 @@ class ThemePersistenceManager(QObject):
             Theme ID if imported successfully, None if cancelled or failed
         """
         file_path, _ = QFileDialog.getOpenFileName(
-            self._parent,
-            "Import Theme",
-            "",
-            "JSON Files (*.json);;All Files (*)"
+            self._parent, "Import Theme", "", "JSON Files (*.json);;All Files (*)"
         )
 
         if file_path:
             try:
                 from core.commands.executor import execute_command
+
                 result = execute_command("theme.importTheme", file_path=file_path)
 
                 if result.success and result.value:
                     theme_id = result.value.get("theme_id")
-                    QMessageBox.information(self._parent, "Success", "Theme imported successfully!")
+                    QMessageBox.information(
+                        self._parent, "Success", "Theme imported successfully!"
+                    )
                     self.theme_imported.emit(theme_id)
                     return theme_id
                 else:
@@ -327,7 +348,9 @@ class ThemePersistenceManager(QObject):
 
         return None
 
-    def export_theme(self, theme: Theme, colors: Optional[dict[str, str]] = None) -> bool:
+    def export_theme(
+        self, theme: Theme, colors: Optional[dict[str, str]] = None
+    ) -> bool:
         """
         Export theme to file.
 
@@ -343,10 +366,7 @@ class ThemePersistenceManager(QObject):
             return False
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self._parent,
-            "Export Theme",
-            f"{theme.id}.json",
-            "JSON Files (*.json)"
+            self._parent, "Export Theme", f"{theme.id}.json", "JSON Files (*.json)"
         )
 
         if file_path:
@@ -356,14 +376,15 @@ class ThemePersistenceManager(QObject):
                     theme.colors = colors
 
                 from core.commands.executor import execute_command
+
                 result = execute_command(
-                    "theme.exportTheme",
-                    theme_id=theme.id,
-                    file_path=file_path
+                    "theme.exportTheme", theme_id=theme.id, file_path=file_path
                 )
 
                 if result.success:
-                    QMessageBox.information(self._parent, "Success", "Theme exported successfully!")
+                    QMessageBox.information(
+                        self._parent, "Success", "Theme exported successfully!"
+                    )
                     return True
                 else:
                     self.operation_failed.emit(result.error or "Failed to export theme")
@@ -387,7 +408,7 @@ class ThemePersistenceManager(QObject):
             self._parent,
             "Import VSCode Theme",
             "",
-            "JSON Files (*.json);;All Files (*)"
+            "JSON Files (*.json);;All Files (*)",
         )
 
         if file_path:
@@ -398,14 +419,22 @@ class ThemePersistenceManager(QObject):
 
                     # Save imported theme using command
                     theme_data = theme.to_dict()
-                    result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
+                    result = execute_command(
+                        "theme.saveCustomTheme", theme_data=theme_data
+                    )
 
                     if result.success:
-                        QMessageBox.information(self._parent, "Success", "VSCode theme imported successfully!")
+                        QMessageBox.information(
+                            self._parent,
+                            "Success",
+                            "VSCode theme imported successfully!",
+                        )
                         self.theme_imported.emit(theme.id)
                         return theme.id
                     else:
-                        self.operation_failed.emit(result.error or "Failed to save imported theme")
+                        self.operation_failed.emit(
+                            result.error or "Failed to save imported theme"
+                        )
                         return None
                 else:
                     self.operation_failed.emit("Failed to parse VSCode theme file")
@@ -460,6 +489,7 @@ class ThemePersistenceManager(QObject):
         """
         try:
             from core.commands.executor import execute_command
+
             result = execute_command("theme.getTheme", theme_id=theme_id)
             if result.success and result.value:
                 return result.value.get("theme")

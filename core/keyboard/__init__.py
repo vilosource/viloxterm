@@ -13,13 +13,13 @@ from core.keyboard.service import KeyboardService
 from core.keyboard.shortcuts import Shortcut, ShortcutRegistry
 
 __all__ = [
-    'KeyboardService',
-    'Shortcut',
-    'ShortcutRegistry',
-    'KeySequenceParser',
-    'KeySequence',
-    'KeyChord',
-    'KeyModifier',
-    'ConflictResolver',
-    'KeymapManager',
+    "KeyboardService",
+    "Shortcut",
+    "ShortcutRegistry",
+    "KeySequenceParser",
+    "KeySequence",
+    "KeyChord",
+    "KeyModifier",
+    "ConflictResolver",
+    "KeymapManager",
 ]

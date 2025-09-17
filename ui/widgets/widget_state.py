@@ -37,36 +37,30 @@ class WidgetStateValidator:
 
     # Valid state transitions
     VALID_TRANSITIONS = {
-        WidgetState.CREATED: [
-            WidgetState.INITIALIZING,
-            WidgetState.DESTROYING
-        ],
+        WidgetState.CREATED: [WidgetState.INITIALIZING, WidgetState.DESTROYING],
         WidgetState.INITIALIZING: [
             WidgetState.READY,
             WidgetState.ERROR,
-            WidgetState.DESTROYING
+            WidgetState.DESTROYING,
         ],
         WidgetState.READY: [
             WidgetState.SUSPENDED,
             WidgetState.ERROR,
-            WidgetState.DESTROYING
+            WidgetState.DESTROYING,
         ],
-        WidgetState.SUSPENDED: [
-            WidgetState.READY,
-            WidgetState.DESTROYING
-        ],
+        WidgetState.SUSPENDED: [WidgetState.READY, WidgetState.DESTROYING],
         WidgetState.ERROR: [
             WidgetState.INITIALIZING,  # Allow retry
-            WidgetState.DESTROYING
+            WidgetState.DESTROYING,
         ],
-        WidgetState.DESTROYING: [
-            WidgetState.DESTROYED
-        ],
-        WidgetState.DESTROYED: []  # Terminal state
+        WidgetState.DESTROYING: [WidgetState.DESTROYED],
+        WidgetState.DESTROYED: [],  # Terminal state
     }
 
     @classmethod
-    def is_valid_transition(cls, from_state: WidgetState, to_state: WidgetState) -> bool:
+    def is_valid_transition(
+        cls, from_state: WidgetState, to_state: WidgetState
+    ) -> bool:
         """
         Check if a state transition is valid.
 

@@ -18,7 +18,9 @@ from PySide6.QtWidgets import (
 )
 
 # Set up detailed logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 from ui.terminal.terminal_server import terminal_server

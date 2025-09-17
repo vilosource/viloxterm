@@ -11,9 +11,9 @@ from .schema import SettingsSchema, validate_settings
 from .service import SettingsService
 
 __all__ = [
-    'DEFAULT_SETTINGS',
-    'get_default_keyboard_shortcuts',
-    'SettingsSchema',
-    'validate_settings',
-    'SettingsService'
+    "DEFAULT_SETTINGS",
+    "get_default_keyboard_shortcuts",
+    "SettingsSchema",
+    "validate_settings",
+    "SettingsService",
 ]

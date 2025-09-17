@@ -1,6 +1,5 @@
 """Icon management system for the application."""
 
-
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPixmap
 
@@ -17,11 +16,11 @@ class IconManager(QObject):
 
         # Icon text mapping for activity bar icons
         self._icon_symbols = {
-            "explorer": "⊞",   # Squared plus (file manager)
-            "search": "⌕",     # Search symbol
-            "git": "⌘",        # Command symbol (version control)
-            "settings": "⚙",   # Gear symbol (settings)
-            "menu": "☰"        # Hamburger menu symbol
+            "explorer": "⊞",  # Squared plus (file manager)
+            "search": "⌕",  # Search symbol
+            "git": "⌘",  # Command symbol (version control)
+            "settings": "⚙",  # Gear symbol (settings)
+            "menu": "☰",  # Hamburger menu symbol
         }
 
     @property

@@ -55,14 +55,14 @@ class TerminalAppWidget(AppWidget):
         self._signal_manager.connect(
             icon_manager.theme_changed,
             self.on_app_theme_changed,
-            description="Icon manager theme change"
+            description="Icon manager theme change",
         )
 
         # Connect to terminal server session ended signal
         self._signal_manager.connect(
             terminal_server.session_ended,
             self.on_session_ended,
-            description="Terminal server session ended"
+            description="Terminal server session ended",
         )
 
         # Start initialization
@@ -90,18 +90,21 @@ class TerminalAppWidget(AppWidget):
             focus_proxy.installEventFilter(self._shortcut_guard)
 
         # Set background color to match dark theme immediately
-        self.web_view.setStyleSheet("""
+        self.web_view.setStyleSheet(
+            """
             QWebEngineView {
                 background-color: #1e1e1e;
                 border: none;
             }
-        """)
+        """
+        )
 
         # Set the page background color before any content loads
         self.web_view.page().setBackgroundColor(QColor("#1e1e1e"))
 
         # Allow local content to be loaded
         from PySide6.QtWebEngineCore import QWebEngineSettings
+
         settings = self.web_view.settings()
         settings.setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
         settings.setAttribute(QWebEngineSettings.LocalContentCanAccessFileUrls, True)
@@ -127,8 +130,11 @@ class TerminalAppWidget(AppWidget):
 
         # Set up JavaScript communication channel with bridge
         from PySide6.QtWebChannel import QWebChannel
+
         self.channel = QWebChannel()
-        self.channel.registerObject("terminal", self.bridge)  # Register bridge, not self
+        self.channel.registerObject(
+            "terminal", self.bridge
+        )  # Register bridge, not self
         self.web_view.page().setWebChannel(self.channel)
 
         # Connect to log when terminal loads (no longer need to show/hide)
@@ -145,7 +151,9 @@ class TerminalAppWidget(AppWidget):
 
     def mousePressEvent(self, event):
         """Handle mouse press to focus this terminal."""
-        logger.debug(f"TerminalAppWidget.mousePressEvent called for widget {self.widget_id}")
+        logger.debug(
+            f"TerminalAppWidget.mousePressEvent called for widget {self.widget_id}"
+        )
         # Request focus when user clicks anywhere on the terminal widget
         self.request_focus()
         logger.debug(f"request_focus() called for terminal {self.widget_id}")
@@ -166,11 +174,7 @@ class TerminalAppWidget(AppWidget):
 
     def handle_console_message(self, level, msg, line, source):
         """Handle JavaScript console messages for debugging."""
-        level_map = {
-            0: "INFO",
-            1: "WARNING",
-            2: "ERROR"
-        }
+        level_map = {0: "INFO", 1: "WARNING", 2: "ERROR"}
         level_str = level_map.get(level, str(level))
         logger.info(f"JS Console [{level_str}] {source}:{line}: {msg}")
 
@@ -182,11 +186,12 @@ class TerminalAppWidget(AppWidget):
         # Call the original focusInEvent
         QWebEngineView.focusInEvent(self.web_view, event)
 
-
     def on_terminal_loaded(self, success: bool):
         """Called when the web view finishes loading terminal content."""
         if success:
-            logger.info(f"Terminal content loaded successfully for widget {self.widget_id}")
+            logger.info(
+                f"Terminal content loaded successfully for widget {self.widget_id}"
+            )
             # Inject a test to see if JavaScript runs
             self.web_view.page().runJavaScript(
                 "console.log('Page loaded, checking libraries...'); "
@@ -214,13 +219,12 @@ class TerminalAppWidget(AppWidget):
             self.session_id = terminal_server.create_session(
                 command=self.config.shell,
                 cmd_args=self.config.shell_args,
-                cwd=initial_dir
+                cwd=initial_dir,
             )
 
             # Get bundled HTML instead of using URL
             bundled_html = terminal_asset_bundler.get_bundled_html(
-                self.session_id,
-                terminal_server.port
+                self.session_id, terminal_server.port
             )
 
             # Set base URL for Socket.IO to work correctly
@@ -268,6 +272,7 @@ class TerminalAppWidget(AppWidget):
                 state["cwd"] = os.getcwd()  # Placeholder
             except (OSError, PermissionError) as e:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.debug(f"Failed to get current working directory: {e}")
                 # Unable to get CWD, skip saving it
@@ -299,8 +304,7 @@ class TerminalAppWidget(AppWidget):
         if self.session_id and self.web_view:
             # Get bundled HTML
             bundled_html = terminal_asset_bundler.get_bundled_html(
-                self.session_id,
-                terminal_server.port
+                self.session_id, terminal_server.port
             )
             # Set base URL for Socket.IO
             base_url = QUrl(f"http://127.0.0.1:{terminal_server.port}/")
@@ -334,6 +338,7 @@ class TerminalAppWidget(AppWidget):
         if shortcut == "Alt+P":
             # Execute the toggle pane numbers command
             from ui.main_window import MainWindow
+
             main_window = self.window()
             if isinstance(main_window, MainWindow):
                 main_window.execute_command("workbench.action.togglePaneNumbers")
@@ -356,6 +361,8 @@ class TerminalAppWidget(AppWidget):
             ended_session_id: The session ID that ended
         """
         if ended_session_id == self.session_id:
-            logger.info(f"Terminal session {self.session_id} ended, requesting pane close")
+            logger.info(
+                f"Terminal session {self.session_id} ended, requesting pane close"
+            )
             # Emit signal to request pane closure
             self.pane_close_requested.emit()

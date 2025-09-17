@@ -27,7 +27,7 @@ class SettingsConfig:
     interface for all components to access settings.
     """
 
-    _instance: Optional['SettingsConfig'] = None
+    _instance: Optional["SettingsConfig"] = None
     _initialized: bool = False
 
     def __init__(self):
@@ -45,14 +45,16 @@ class SettingsConfig:
         SettingsConfig._initialized = True
 
     @classmethod
-    def get_instance(cls) -> 'SettingsConfig':
+    def get_instance(cls) -> "SettingsConfig":
         """Get the singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     @classmethod
-    def initialize_from_args(cls, args: Optional[argparse.Namespace] = None) -> 'SettingsConfig':
+    def initialize_from_args(
+        cls, args: Optional[argparse.Namespace] = None
+    ) -> "SettingsConfig":
         """
         Initialize settings configuration from command line arguments.
 
@@ -75,38 +77,40 @@ class SettingsConfig:
     @staticmethod
     def _create_argument_parser() -> argparse.ArgumentParser:
         """Create argument parser for settings options."""
-        parser = argparse.ArgumentParser(add_help=False)  # Don't interfere with main arg parsing
+        parser = argparse.ArgumentParser(
+            add_help=False
+        )  # Don't interfere with main arg parsing
 
-        settings_group = parser.add_argument_group('Settings Options')
+        settings_group = parser.add_argument_group("Settings Options")
 
         settings_group.add_argument(
-            '--settings-dir',
+            "--settings-dir",
             type=Path,
-            help='Custom directory for storing settings files'
+            help="Custom directory for storing settings files",
         )
 
         settings_group.add_argument(
-            '--settings-file',
+            "--settings-file",
             type=Path,
-            help='Specific settings file path (INI format)'
+            help="Specific settings file path (INI format)",
         )
 
         settings_group.add_argument(
-            '--portable',
-            action='store_true',
-            help='Use portable settings (store in application directory)'
+            "--portable",
+            action="store_true",
+            help="Use portable settings (store in application directory)",
         )
 
         settings_group.add_argument(
-            '--temp-settings',
-            action='store_true',
-            help='Use temporary settings (don\'t persist after app closes)'
+            "--temp-settings",
+            action="store_true",
+            help="Use temporary settings (don't persist after app closes)",
         )
 
         settings_group.add_argument(
-            '--reset-settings',
-            action='store_true',
-            help='Reset all settings to defaults before starting'
+            "--reset-settings",
+            action="store_true",
+            help="Reset all settings to defaults before starting",
         )
 
         return parser
@@ -114,62 +118,78 @@ class SettingsConfig:
     def _configure_from_args(self, args: argparse.Namespace) -> None:
         """Configure settings based on parsed arguments and environment variables."""
         # Handle reset first
-        if getattr(args, 'reset_settings', False):
+        if getattr(args, "reset_settings", False):
             self.reset_all_settings()
             logger.info("Settings reset to defaults")
 
         # Handle temporary settings
-        if getattr(args, 'temp_settings', False) or os.getenv('VILOAPP_TEMP_SETTINGS'):
+        if getattr(args, "temp_settings", False) or os.getenv("VILOAPP_TEMP_SETTINGS"):
             self.is_temporary = True
-            self.temp_dir = Path(tempfile.mkdtemp(prefix='viloapp_settings_'))
-            source = "command line" if getattr(args, 'temp_settings', False) else "environment variable"
+            self.temp_dir = Path(tempfile.mkdtemp(prefix="viloapp_settings_"))
+            source = (
+                "command line"
+                if getattr(args, "temp_settings", False)
+                else "environment variable"
+            )
             logger.info(f"Using temporary settings in: {self.temp_dir} (from {source})")
             return
 
         # Handle portable mode
-        if getattr(args, 'portable', False) or os.getenv('VILOAPP_PORTABLE'):
+        if getattr(args, "portable", False) or os.getenv("VILOAPP_PORTABLE"):
             self.is_portable = True
             app_dir = Path(__file__).parent.parent.parent  # Go up to project root
-            self.settings_dir = app_dir / 'settings'
+            self.settings_dir = app_dir / "settings"
             self.settings_dir.mkdir(exist_ok=True)
-            source = "command line" if getattr(args, 'portable', False) else "environment variable"
-            logger.info(f"Using portable settings in: {self.settings_dir} (from {source})")
+            source = (
+                "command line"
+                if getattr(args, "portable", False)
+                else "environment variable"
+            )
+            logger.info(
+                f"Using portable settings in: {self.settings_dir} (from {source})"
+            )
             return
 
         # Handle custom settings file (command line takes precedence over env var)
         settings_file = None
-        if hasattr(args, 'settings_file') and args.settings_file:
+        if hasattr(args, "settings_file") and args.settings_file:
             settings_file = args.settings_file
             source = "command line"
-        elif os.getenv('VILOAPP_SETTINGS_FILE'):
-            settings_file = Path(os.getenv('VILOAPP_SETTINGS_FILE'))
+        elif os.getenv("VILOAPP_SETTINGS_FILE"):
+            settings_file = Path(os.getenv("VILOAPP_SETTINGS_FILE"))
             source = "environment variable"
 
         if settings_file:
             self.settings_file = Path(settings_file).resolve()
             self.settings_file.parent.mkdir(parents=True, exist_ok=True)
-            logger.info(f"Using custom settings file: {self.settings_file} (from {source})")
+            logger.info(
+                f"Using custom settings file: {self.settings_file} (from {source})"
+            )
             return
 
         # Handle custom settings directory (command line takes precedence over env var)
         settings_dir = None
-        if hasattr(args, 'settings_dir') and args.settings_dir:
+        if hasattr(args, "settings_dir") and args.settings_dir:
             settings_dir = args.settings_dir
             source = "command line"
-        elif os.getenv('VILOAPP_SETTINGS_DIR'):
-            settings_dir = Path(os.getenv('VILOAPP_SETTINGS_DIR'))
+        elif os.getenv("VILOAPP_SETTINGS_DIR"):
+            settings_dir = Path(os.getenv("VILOAPP_SETTINGS_DIR"))
             source = "environment variable"
 
         if settings_dir:
             self.settings_dir = Path(settings_dir).resolve()
             self.settings_dir.mkdir(parents=True, exist_ok=True)
-            logger.info(f"Using custom settings directory: {self.settings_dir} (from {source})")
+            logger.info(
+                f"Using custom settings directory: {self.settings_dir} (from {source})"
+            )
             return
 
         # Default behavior - use system default
         logger.info("Using system default settings location")
 
-    def create_settings(self, organization: str = "ViloxTerm", application: str = "ViloxTerm") -> QSettings:
+    def create_settings(
+        self, organization: str = "ViloxTerm", application: str = "ViloxTerm"
+    ) -> QSettings:
         """
         Create a QSettings instance with the configured location.
 
@@ -219,11 +239,11 @@ class SettingsConfig:
     def reset_all_settings(self) -> None:
         """Reset all application settings to defaults."""
         settings_domains = [
-            ("ViloxTerm", "ViloxTerm"),      # Main application
-            ("ViloxTerm", "State"),        # State service
-            ("ViloxTerm", "UI"),           # UI service
-            ("ViloxTerm", "Editor"),       # Editor service
-            ("ViloxTerm", "CommandPalette") # Command palette
+            ("ViloxTerm", "ViloxTerm"),  # Main application
+            ("ViloxTerm", "State"),  # State service
+            ("ViloxTerm", "UI"),  # UI service
+            ("ViloxTerm", "Editor"),  # Editor service
+            ("ViloxTerm", "CommandPalette"),  # Command palette
         ]
 
         for org, app in settings_domains:
@@ -247,7 +267,7 @@ class SettingsConfig:
             ("ViloxTerm", "State"),
             ("ViloxTerm", "UI"),
             ("ViloxTerm", "Editor"),
-            ("ViloxTerm", "CommandPalette")
+            ("ViloxTerm", "CommandPalette"),
         ]
 
         for org, app in settings_domains:
@@ -270,7 +290,9 @@ class SettingsConfig:
 
 
 # Convenience functions for common usage patterns
-def get_settings(organization: str = "ViloxTerm", application: str = "ViloxTerm") -> QSettings:
+def get_settings(
+    organization: str = "ViloxTerm", application: str = "ViloxTerm"
+) -> QSettings:
     """
     Get a QSettings instance using the configured settings location.
 
@@ -309,9 +331,9 @@ def get_settings_info() -> dict[str, Any]:
     """
     config = SettingsConfig.get_instance()
     return {
-        'location': config.get_settings_location(),
-        'is_portable': config.is_portable,
-        'is_temporary': config.is_temporary,
-        'custom_dir': str(config.settings_dir) if config.settings_dir else None,
-        'custom_file': str(config.settings_file) if config.settings_file else None,
+        "location": config.get_settings_location(),
+        "is_portable": config.is_portable,
+        "is_temporary": config.is_temporary,
+        "custom_dir": str(config.settings_dir) if config.settings_dir else None,
+        "custom_file": str(config.settings_file) if config.settings_file else None,
     }

@@ -27,11 +27,11 @@ class TestMainWindow:
         window = MainWindow()
         qtbot.addWidget(window)
 
-        assert hasattr(window, 'activity_bar')
-        assert hasattr(window, 'sidebar')
-        assert hasattr(window, 'workspace')
-        assert hasattr(window, 'status_bar')
-        assert hasattr(window, 'main_splitter')
+        assert hasattr(window, "activity_bar")
+        assert hasattr(window, "sidebar")
+        assert hasattr(window, "workspace")
+        assert hasattr(window, "status_bar")
+        assert hasattr(window, "main_splitter")
         assert window.activity_bar is not None
         assert window.sidebar is not None
         assert window.workspace is not None
@@ -56,11 +56,12 @@ class TestMainWindow:
         qtbot.addWidget(window)
 
         # Check keyboard service is initialized
-        assert hasattr(window, 'keyboard_service')
+        assert hasattr(window, "keyboard_service")
         assert window.keyboard_service is not None
 
         # Check that shortcuts are registered with the command system
         from core.commands.registry import command_registry
+
         toggle_menu_cmd = command_registry.get_command("view.toggleMenuBar")
         assert toggle_menu_cmd is not None
         assert toggle_menu_cmd.shortcut == "ctrl+shift+m"
@@ -147,7 +148,7 @@ class TestMainWindow:
         qtbot.addWidget(window)
 
         # Mock execute_command to verify command is called
-        window.execute_command = Mock(return_value={'success': True})
+        window.execute_command = Mock(return_value={"success": True})
 
         # Toggle menu bar
         window.toggle_menu_bar()
@@ -161,14 +162,14 @@ class TestMainWindow:
         qtbot.addWidget(window)
 
         # Mock execute_command to verify command is called
-        window.execute_command = Mock(return_value={'success': True})
+        window.execute_command = Mock(return_value={"success": True})
 
         # Call toggle_menu_bar
         result = window.toggle_menu_bar()
 
         # Verify command was executed
         window.execute_command.assert_called_once_with("view.toggleMenuBar")
-        assert result == {'success': True}
+        assert result == {"success": True}
 
     def test_save_state(self, qtbot):
         """Test state saving functionality."""
@@ -176,14 +177,14 @@ class TestMainWindow:
         qtbot.addWidget(window)
 
         # Mock methods
-        window.saveGeometry = Mock(return_value=b'geometry_data')
-        window.saveState = Mock(return_value=b'state_data')
-        window.main_splitter.saveState = Mock(return_value=b'splitter_data')
+        window.saveGeometry = Mock(return_value=b"geometry_data")
+        window.saveState = Mock(return_value=b"state_data")
+        window.main_splitter.saveState = Mock(return_value=b"splitter_data")
         window.menuBar().isVisible = Mock(return_value=True)
-        window.workspace.save_state = Mock(return_value={'tabs': []})
+        window.workspace.save_state = Mock(return_value={"tabs": []})
 
         # Mock QSettings directly to verify calls
-        with patch('ui.main_window.QSettings') as mock_settings_class:
+        with patch("ui.main_window.QSettings") as mock_settings_class:
             mock_settings = Mock()
             mock_settings_class.return_value = mock_settings
 
@@ -191,16 +192,20 @@ class TestMainWindow:
             window.save_state()
 
             # Verify QSettings calls for MainWindow group
-            calls = [call for call in mock_settings.beginGroup.call_args_list if call[0][0] == "MainWindow"]
+            calls = [
+                call
+                for call in mock_settings.beginGroup.call_args_list
+                if call[0][0] == "MainWindow"
+            ]
             assert len(calls) >= 1
-            mock_settings.setValue.assert_any_call("geometry", b'geometry_data')
-            mock_settings.setValue.assert_any_call("windowState", b'state_data')
-            mock_settings.setValue.assert_any_call("splitterSizes", b'splitter_data')
+            mock_settings.setValue.assert_any_call("geometry", b"geometry_data")
+            mock_settings.setValue.assert_any_call("windowState", b"state_data")
+            mock_settings.setValue.assert_any_call("splitterSizes", b"splitter_data")
             mock_settings.setValue.assert_any_call("menuBarVisible", True)
             # Verify workspace state is saved with JSON
-            mock_settings.setValue.assert_any_call("state", json.dumps({'tabs': []}))
+            mock_settings.setValue.assert_any_call("state", json.dumps({"tabs": []}))
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_restore_state(self, mock_settings_class, qtbot):
         """Test state restoration functionality."""
         mock_settings = Mock()
@@ -208,10 +213,10 @@ class TestMainWindow:
 
         # Mock settings values
         mock_settings.value.side_effect = lambda key, default=None, type=None: {
-            "geometry": b'geometry_data',
-            "windowState": b'state_data',
-            "splitterSizes": b'splitter_data',
-            "menuBarVisible": True
+            "geometry": b"geometry_data",
+            "windowState": b"state_data",
+            "splitterSizes": b"splitter_data",
+            "menuBarVisible": True,
         }.get(key, default)
 
         window = MainWindow()
@@ -227,9 +232,9 @@ class TestMainWindow:
         window.restore_state()
 
         # Verify restoration calls
-        window.restoreGeometry.assert_called_once_with(b'geometry_data')
-        window.restoreState.assert_called_once_with(b'state_data')
-        window.main_splitter.restoreState.assert_called_once_with(b'splitter_data')
+        window.restoreGeometry.assert_called_once_with(b"geometry_data")
+        window.restoreState.assert_called_once_with(b"state_data")
+        window.main_splitter.restoreState.assert_called_once_with(b"splitter_data")
         window.menuBar().setVisible.assert_called_once_with(True)
 
     @pytest.mark.skip(reason="Complex QSettings mock timing issue - needs refactoring")
@@ -330,7 +335,7 @@ class TestMainWindow:
         # Shortcuts are now handled by command system, check tooltip
         assert "Ctrl+Shift+R" in actions["Reset App State"].toolTip()
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_reset_app_state_user_confirms(self, mock_settings_class, qtbot):
         """Test reset app state when user confirms."""
         # Mock settings to return appropriate values during restore
@@ -342,18 +347,20 @@ class TestMainWindow:
         qtbot.addWidget(window)
 
         # Mock execute_command to verify it's called
-        window.execute_command = Mock(return_value={'success': True})
+        window.execute_command = Mock(return_value={"success": True})
 
         # Call reset
         result = window.reset_app_state()
 
         # Verify command was executed
         window.execute_command.assert_called_once_with("debug.resetAppState")
-        assert result == {'success': True}
+        assert result == {"success": True}
 
-    @patch('ui.main_window.QMessageBox.question')
-    @patch('ui.main_window.QSettings')
-    def test_reset_app_state_user_cancels(self, mock_settings_class, mock_question, qtbot):
+    @patch("ui.main_window.QMessageBox.question")
+    @patch("ui.main_window.QSettings")
+    def test_reset_app_state_user_cancels(
+        self, mock_settings_class, mock_question, qtbot
+    ):
         """Test reset app state when user cancels."""
         # Mock user clicking No
         mock_question.return_value = QMessageBox.No
@@ -375,7 +382,7 @@ class TestMainWindow:
         # Verify settings were NOT cleared
         mock_settings.clear.assert_not_called()
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_reset_app_state_handles_error(self, mock_settings_class, qtbot):
         """Test reset app state handles errors gracefully."""
         # Mock settings to return appropriate values during restore
@@ -387,14 +394,16 @@ class TestMainWindow:
         qtbot.addWidget(window)
 
         # Mock execute_command to return an error
-        window.execute_command = Mock(return_value={'success': False, 'error': 'Settings error'})
+        window.execute_command = Mock(
+            return_value={"success": False, "error": "Settings error"}
+        )
 
         # Call reset
         result = window.reset_app_state()
 
         # Verify command was executed and error returned
         window.execute_command.assert_called_once_with("debug.resetAppState")
-        assert result == {'success': False, 'error': 'Settings error'}
+        assert result == {"success": False, "error": "Settings error"}
 
     def test_reset_to_defaults(self, qtbot):
         """Test _reset_to_defaults method."""
@@ -417,7 +426,7 @@ class TestMainWindow:
         window.workspace.reset_to_default_layout = Mock()
 
         # Mock icon manager
-        with patch('ui.main_window.get_icon_manager') as mock_icon_manager:
+        with patch("ui.main_window.get_icon_manager") as mock_icon_manager:
             mock_manager = Mock()
             mock_manager.detect_system_theme = Mock()
             mock_icon_manager.return_value = mock_manager

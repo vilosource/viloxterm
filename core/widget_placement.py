@@ -14,9 +14,10 @@ class WidgetPlacement(Enum):
     """
     Defines where a widget should be placed when opened.
     """
-    NEW_TAB = "new_tab"          # Always create new tab
-    REPLACE_CURRENT = "replace"   # Always replace current pane
-    SMART = "smart"               # Context-aware decision
+
+    NEW_TAB = "new_tab"  # Always create new tab
+    REPLACE_CURRENT = "replace"  # Always replace current pane
+    SMART = "smart"  # Context-aware decision
 
 
 class CommandSource(Enum):
@@ -25,19 +26,20 @@ class CommandSource(Enum):
 
     This helps determine the appropriate widget placement behavior.
     """
-    MENU_BAR = "menu_bar"                # Main application menu
-    PANE_HEADER = "pane_header"          # Pane header menu
-    COMMAND_PALETTE = "command_palette"   # Command palette
-    KEYBOARD_SHORTCUT = "keyboard"        # Direct keyboard shortcut
-    CONTEXT_MENU = "context_menu"         # Right-click context menu
-    API = "api"                           # Programmatic API call
-    UNKNOWN = "unknown"                   # Unknown source
+
+    MENU_BAR = "menu_bar"  # Main application menu
+    PANE_HEADER = "pane_header"  # Pane header menu
+    COMMAND_PALETTE = "command_palette"  # Command palette
+    KEYBOARD_SHORTCUT = "keyboard"  # Direct keyboard shortcut
+    CONTEXT_MENU = "context_menu"  # Right-click context menu
+    API = "api"  # Programmatic API call
+    UNKNOWN = "unknown"  # Unknown source
 
 
 def determine_placement(
-    metadata: 'AppWidgetMetadata',
+    metadata: "AppWidgetMetadata",
     source: CommandSource = CommandSource.UNKNOWN,
-    preferred: Optional[WidgetPlacement] = None
+    preferred: Optional[WidgetPlacement] = None,
 ) -> WidgetPlacement:
     """
     Determine where to place a widget based on context and metadata.
@@ -83,10 +85,7 @@ def determine_placement(
         return metadata.default_placement
 
 
-def should_ask_user(
-    metadata: 'AppWidgetMetadata',
-    source: CommandSource
-) -> bool:
+def should_ask_user(metadata: "AppWidgetMetadata", source: CommandSource) -> bool:
     """
     Determine if we should ask the user for placement preference.
 

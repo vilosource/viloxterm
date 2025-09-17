@@ -45,11 +45,11 @@ class WidgetPool:
 
         # Statistics for monitoring
         self._stats = {
-            'acquisitions': 0,
-            'releases': 0,
-            'creations': 0,
-            'reuses': 0,
-            'destructions': 0
+            "acquisitions": 0,
+            "releases": 0,
+            "creations": 0,
+            "reuses": 0,
+            "destructions": 0,
         }
 
         logger.info(f"WidgetPool initialized with max_pool_size={max_pool_size}")
@@ -64,7 +64,7 @@ class WidgetPool:
         Returns:
             A configured QSplitter ready for use
         """
-        self._stats['acquisitions'] += 1
+        self._stats["acquisitions"] += 1
 
         # Try to get from pool
         pool = self._pools[QSplitter]
@@ -74,14 +74,14 @@ class WidgetPool:
         for i, widget in enumerate(pool):
             if isinstance(widget, QSplitter) and widget.orientation() == orientation:
                 splitter = pool.pop(i)
-                self._stats['reuses'] += 1
+                self._stats["reuses"] += 1
                 logger.debug(f"Reusing QSplitter from pool (orientation={orientation})")
                 break
 
         if not splitter:
             # Create new splitter
             splitter = QSplitter(orientation)
-            self._stats['creations'] += 1
+            self._stats["creations"] += 1
             logger.debug(f"Creating new QSplitter (orientation={orientation})")
 
         # Configure splitter for optimal performance
@@ -113,14 +113,14 @@ class WidgetPool:
         Returns:
             A widget ready for use
         """
-        self._stats['acquisitions'] += 1
+        self._stats["acquisitions"] += 1
 
         # Try to get from pool
         pool = self._pools[widget_type]
 
         if pool:
             widget = pool.pop()
-            self._stats['reuses'] += 1
+            self._stats["reuses"] += 1
             logger.debug(f"Reusing {widget_type.__name__} from pool")
 
             # Reset widget state
@@ -128,7 +128,7 @@ class WidgetPool:
         else:
             # Create new widget
             widget = widget_type(*args, **kwargs)
-            self._stats['creations'] += 1
+            self._stats["creations"] += 1
             logger.debug(f"Creating new {widget_type.__name__}")
 
         # Track as in-use
@@ -147,10 +147,12 @@ class WidgetPool:
             True if widget was pooled, False if destroyed
         """
         if widget not in self._in_use:
-            logger.warning(f"Attempting to release widget not tracked as in-use: {widget}")
+            logger.warning(
+                f"Attempting to release widget not tracked as in-use: {widget}"
+            )
             return False
 
-        self._stats['releases'] += 1
+        self._stats["releases"] += 1
         self._in_use.discard(widget)
 
         # Get the appropriate pool
@@ -170,7 +172,9 @@ class WidgetPool:
         widget.setParent(None)  # Remove from parent
 
         pool.append(widget)
-        logger.debug(f"Released {widget_type.__name__} to pool (pool size: {len(pool)})")
+        logger.debug(
+            f"Released {widget_type.__name__} to pool (pool size: {len(pool)})"
+        )
 
         return True
 
@@ -195,6 +199,7 @@ class WidgetPool:
             widget.disconnect()
         except (TypeError, RuntimeError) as e:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.debug(f"No connections to disconnect for widget: {e}")
             # No connections to disconnect, which is fine
@@ -211,7 +216,7 @@ class WidgetPool:
         Args:
             widget: Widget to destroy
         """
-        self._stats['destructions'] += 1
+        self._stats["destructions"] += 1
         widget.setParent(None)
         widget.deleteLater()
 
@@ -242,11 +247,12 @@ class WidgetPool:
             Dictionary of statistics
         """
         stats = self._stats.copy()
-        stats['total_pooled'] = sum(len(pool) for pool in self._pools.values())
-        stats['total_in_use'] = len(self._in_use)
-        stats['pool_efficiency'] = (
-            self._stats['reuses'] / self._stats['acquisitions'] * 100
-            if self._stats['acquisitions'] > 0 else 0
+        stats["total_pooled"] = sum(len(pool) for pool in self._pools.values())
+        stats["total_in_use"] = len(self._in_use)
+        stats["pool_efficiency"] = (
+            self._stats["reuses"] / self._stats["acquisitions"] * 100
+            if self._stats["acquisitions"] > 0
+            else 0
         )
         return stats
 

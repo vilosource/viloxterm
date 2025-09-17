@@ -18,18 +18,18 @@ class Shortcut:
     """Represents a keyboard shortcut binding."""
 
     # Identity
-    id: str                           # Unique shortcut identifier
-    sequence: KeySequence            # Key sequence
-    command_id: str                  # Command to execute
+    id: str  # Unique shortcut identifier
+    sequence: KeySequence  # Key sequence
+    command_id: str  # Command to execute
 
     # Context
-    when: Optional[str] = None       # When clause for conditional activation
+    when: Optional[str] = None  # When clause for conditional activation
     description: Optional[str] = None  # Human-readable description
 
     # Metadata
-    source: str = "user"             # Source: "builtin", "user", "extension"
-    priority: int = 100              # Priority for conflict resolution (lower = higher priority)
-    enabled: bool = True             # Whether shortcut is active
+    source: str = "user"  # Source: "builtin", "user", "extension"
+    priority: int = 100  # Priority for conflict resolution (lower = higher priority)
+    enabled: bool = True  # Whether shortcut is active
 
     def __str__(self) -> str:
         """String representation."""
@@ -49,6 +49,7 @@ class Shortcut:
 
         # Import here to avoid circular dependency
         from core.context.evaluator import WhenClauseEvaluator
+
         return WhenClauseEvaluator.evaluate(self.when, context)
 
 
@@ -58,7 +59,9 @@ class ShortcutRegistry:
     def __init__(self):
         """Initialize the registry."""
         self._shortcuts: dict[str, Shortcut] = {}  # id -> shortcut
-        self._by_sequence: dict[KeySequence, list[Shortcut]] = {}  # sequence -> shortcuts
+        self._by_sequence: dict[KeySequence, list[Shortcut]] = (
+            {}
+        )  # sequence -> shortcuts
         self._by_command: dict[str, list[Shortcut]] = {}  # command_id -> shortcuts
         self._observers: list[Callable[[str, Shortcut], None]] = []
         self._lock = Lock()
@@ -96,7 +99,7 @@ class ShortcutRegistry:
             self._by_sequence[shortcut.sequence].sort(key=lambda s: s.priority)
 
             # Notify observers
-            self._notify_observers('registered', shortcut)
+            self._notify_observers("registered", shortcut)
 
             logger.debug(f"Registered shortcut: {shortcut}")
             return True
@@ -131,7 +134,7 @@ class ShortcutRegistry:
                     del self._by_command[shortcut.command_id]
 
             # Notify observers
-            self._notify_observers('unregistered', shortcut)
+            self._notify_observers("unregistered", shortcut)
 
             logger.debug(f"Unregistered shortcut: {shortcut}")
             return True
@@ -148,7 +151,9 @@ class ShortcutRegistry:
         """Get all shortcuts for a command."""
         return self._by_command.get(command_id, []).copy()
 
-    def find_matching_shortcuts(self, sequence: KeySequence, context: dict[str, Any]) -> list[Shortcut]:
+    def find_matching_shortcuts(
+        self, sequence: KeySequence, context: dict[str, Any]
+    ) -> list[Shortcut]:
         """
         Find shortcuts that match the sequence and context.
 
@@ -202,14 +207,16 @@ class ShortcutRegistry:
 
         return conflicts
 
-    def register_from_string(self,
-                           shortcut_id: str,
-                           sequence_str: str,
-                           command_id: str,
-                           when: Optional[str] = None,
-                           description: Optional[str] = None,
-                           source: str = "user",
-                           priority: int = 100) -> bool:
+    def register_from_string(
+        self,
+        shortcut_id: str,
+        sequence_str: str,
+        command_id: str,
+        when: Optional[str] = None,
+        description: Optional[str] = None,
+        source: str = "user",
+        priority: int = 100,
+    ) -> bool:
         """
         Register a shortcut from string representation.
 
@@ -239,7 +246,7 @@ class ShortcutRegistry:
             when=when,
             description=description,
             source=source,
-            priority=priority
+            priority=priority,
         )
 
         return self.register(shortcut)
@@ -263,25 +270,27 @@ class ShortcutRegistry:
 
             # Create updated shortcut
             new_data = {
-                'id': old_shortcut.id,
-                'sequence': old_shortcut.sequence,
-                'command_id': old_shortcut.command_id,
-                'when': old_shortcut.when,
-                'description': old_shortcut.description,
-                'source': old_shortcut.source,
-                'priority': old_shortcut.priority,
-                'enabled': old_shortcut.enabled,
+                "id": old_shortcut.id,
+                "sequence": old_shortcut.sequence,
+                "command_id": old_shortcut.command_id,
+                "when": old_shortcut.when,
+                "description": old_shortcut.description,
+                "source": old_shortcut.source,
+                "priority": old_shortcut.priority,
+                "enabled": old_shortcut.enabled,
             }
             new_data.update(updates)
 
             # Handle sequence string update
-            if 'sequence_str' in updates:
-                sequence = KeySequenceParser.parse(updates['sequence_str'])
+            if "sequence_str" in updates:
+                sequence = KeySequenceParser.parse(updates["sequence_str"])
                 if sequence is None:
-                    logger.error(f"Invalid sequence in update: {updates['sequence_str']}")
+                    logger.error(
+                        f"Invalid sequence in update: {updates['sequence_str']}"
+                    )
                     return False
-                new_data['sequence'] = sequence
-                del new_data['sequence_str']
+                new_data["sequence"] = sequence
+                del new_data["sequence_str"]
 
             new_shortcut = Shortcut(**new_data)
 
@@ -312,7 +321,9 @@ class ShortcutRegistry:
                 self._by_command.clear()
             else:
                 # Clear by source
-                to_remove = [s.id for s in self._shortcuts.values() if s.source == source]
+                to_remove = [
+                    s.id for s in self._shortcuts.values() if s.source == source
+                ]
                 for shortcut_id in to_remove:
                     self.unregister(shortcut_id)
 
@@ -350,19 +361,21 @@ class ShortcutRegistry:
 
         return [
             {
-                'id': s.id,
-                'sequence': str(s.sequence),
-                'command_id': s.command_id,
-                'when': s.when,
-                'description': s.description,
-                'source': s.source,
-                'priority': s.priority,
-                'enabled': s.enabled,
+                "id": s.id,
+                "sequence": str(s.sequence),
+                "command_id": s.command_id,
+                "when": s.when,
+                "description": s.description,
+                "source": s.source,
+                "priority": s.priority,
+                "enabled": s.enabled,
             }
             for s in shortcuts
         ]
 
-    def import_shortcuts(self, shortcuts_data: list[dict[str, Any]], source: str = "import") -> int:
+    def import_shortcuts(
+        self, shortcuts_data: list[dict[str, Any]], source: str = "import"
+    ) -> int:
         """
         Import shortcuts from serialized data.
 
@@ -377,19 +390,19 @@ class ShortcutRegistry:
         for data in shortcuts_data:
             try:
                 success = self.register_from_string(
-                    shortcut_id=data['id'],
-                    sequence_str=data['sequence'],
-                    command_id=data['command_id'],
-                    when=data.get('when'),
-                    description=data.get('description'),
+                    shortcut_id=data["id"],
+                    sequence_str=data["sequence"],
+                    command_id=data["command_id"],
+                    when=data.get("when"),
+                    description=data.get("description"),
                     source=source,
-                    priority=data.get('priority', 100)
+                    priority=data.get("priority", 100),
                 )
                 if success:
                     imported += 1
                     # Set enabled state if specified
-                    if not data.get('enabled', True):
-                        self.disable_shortcut(data['id'])
+                    if not data.get("enabled", True):
+                        self.disable_shortcut(data["id"])
             except Exception as e:
                 logger.error(f"Failed to import shortcut {data}: {e}")
 

@@ -24,10 +24,10 @@ class CommandRegistry:
     available to the system.
     """
 
-    _instance: Optional['CommandRegistry'] = None
+    _instance: Optional["CommandRegistry"] = None
     _lock = Lock()
 
-    def __new__(cls) -> 'CommandRegistry':
+    def __new__(cls) -> "CommandRegistry":
         """Ensure singleton pattern."""
         if cls._instance is None:
             with cls._lock:
@@ -90,7 +90,7 @@ class CommandRegistry:
         self._index_keywords(command)
 
         # Notify observers
-        self._notify_observers('registered', command)
+        self._notify_observers("registered", command)
 
         logger.debug(f"Registered command: {command.id}")
 
@@ -130,7 +130,7 @@ class CommandRegistry:
         self._unindex_keywords(command)
 
         # Notify observers
-        self._notify_observers('unregistered', command)
+        self._notify_observers("unregistered", command)
 
         logger.debug(f"Unregistered command: {command_id}")
         return True
@@ -175,10 +175,11 @@ class CommandRegistry:
         Alias for backward compatibility.
         """
         import warnings
+
         warnings.warn(
             "get_commands_by_category is deprecated, use get_commands_for_category",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         return self.get_commands_for_category(category)
 
@@ -203,7 +204,9 @@ class CommandRegistry:
         """
         shortcut = self._normalize_shortcut(shortcut)
         command_ids = self._shortcuts.get(shortcut, [])
-        return [self._commands[cmd_id] for cmd_id in command_ids if cmd_id in self._commands]
+        return [
+            self._commands[cmd_id] for cmd_id in command_ids if cmd_id in self._commands
+        ]
 
     def search_commands(self, query: str, use_fuzzy: bool = True) -> list[Command]:
         """
@@ -349,7 +352,7 @@ class CommandRegistry:
         # Bonus for consecutive matches
         consecutive_bonus = 0
         for i in range(1, len(matches)):
-            if matches[i] == matches[i-1] + 1:
+            if matches[i] == matches[i - 1] + 1:
                 consecutive_bonus += 0.1
         score += min(consecutive_bonus, 0.3)
 
@@ -364,7 +367,7 @@ class CommandRegistry:
         if len(matches) > 1:
             spread = matches[-1] - matches[0] + 1
             density = len(matches) / spread
-            score *= (0.5 + 0.5 * density)
+            score *= 0.5 + 0.5 * density
 
         return min(score, 1.0)
 
@@ -427,13 +430,13 @@ class CommandRegistry:
             Normalized shortcut
         """
         # Convert to lowercase and sort modifiers
-        parts = shortcut.lower().split('+')
+        parts = shortcut.lower().split("+")
         modifiers = []
-        key = ''
+        key = ""
 
         for part in parts:
             part = part.strip()
-            if part in ['ctrl', 'alt', 'shift', 'cmd', 'meta']:
+            if part in ["ctrl", "alt", "shift", "cmd", "meta"]:
                 modifiers.append(part)
             else:
                 key = part
@@ -442,7 +445,7 @@ class CommandRegistry:
         modifiers.sort()
 
         if modifiers:
-            return '+'.join(modifiers) + '+' + key
+            return "+".join(modifiers) + "+" + key
         return key
 
     def _index_keywords(self, command: Command) -> None:

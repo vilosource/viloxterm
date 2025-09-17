@@ -16,18 +16,21 @@ from services.ui_service import UIService
 from services.workspace_service import WorkspaceService
 
 __all__ = [
-    'Service',
-    'ServiceEvent',
-    'ServiceLocator',
-    'WorkspaceService',
-    'UIService',
-    'TerminalService',
-    'StateService',
-    'EditorService',
-    'ThemeService',
+    "Service",
+    "ServiceEvent",
+    "ServiceLocator",
+    "WorkspaceService",
+    "UIService",
+    "TerminalService",
+    "StateService",
+    "EditorService",
+    "ThemeService",
 ]
 
-def initialize_services(main_window=None, workspace=None, sidebar=None, activity_bar=None):
+
+def initialize_services(
+    main_window=None, workspace=None, sidebar=None, activity_bar=None
+):
     """
     Initialize all services with application context.
 
@@ -47,6 +50,7 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
 
     # Import SettingsService here to avoid circular imports
     from core.settings.service import SettingsService
+
     settings_service = SettingsService()
 
     workspace_service = WorkspaceService(workspace)
@@ -65,15 +69,16 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
 
     # Create theme provider after theme service is registered
     from ui.themes.theme_provider import ThemeProvider
+
     theme_provider = ThemeProvider(theme_service)
     theme_service.set_theme_provider(theme_provider)
 
     # Initialize all services with context
     context = {
-        'main_window': main_window,
-        'workspace': workspace,
-        'sidebar': sidebar,
-        'activity_bar': activity_bar
+        "main_window": main_window,
+        "workspace": workspace,
+        "sidebar": sidebar,
+        "activity_bar": activity_bar,
     }
 
     for service in locator.get_all():

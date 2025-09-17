@@ -32,14 +32,12 @@ class TestCommandBasics:
 
     def test_command_creation(self):
         """Test creating a command."""
+
         def handler(context: CommandContext) -> CommandResult:
             return CommandResult(success=True, value="test")
 
         cmd = Command(
-            id="test.command",
-            title="Test Command",
-            category="Test",
-            handler=handler
+            id="test.command", title="Test Command", category="Test", handler=handler
         )
 
         assert cmd.id == "test.command"
@@ -49,11 +47,8 @@ class TestCommandBasics:
 
     def test_command_registration(self):
         """Test registering a command."""
-        @command(
-            id="test.register",
-            title="Test Register",
-            category="Test"
-        )
+
+        @command(id="test.register", title="Test Register", category="Test")
         def test_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=True)
 
@@ -66,11 +61,7 @@ class TestCommandBasics:
         """Test executing a command."""
         executed = False
 
-        @command(
-            id="test.execute",
-            title="Test Execute",
-            category="Test"
-        )
+        @command(id="test.execute", title="Test Execute", category="Test")
         def test_command(context: CommandContext) -> CommandResult:
             nonlocal executed
             executed = True
@@ -84,13 +75,10 @@ class TestCommandBasics:
 
     def test_command_with_args(self):
         """Test command with arguments."""
-        @command(
-            id="test.args",
-            title="Test Args",
-            category="Test"
-        )
+
+        @command(id="test.args", title="Test Args", category="Test")
         def test_command(context: CommandContext) -> CommandResult:
-            name = context.args.get('name', 'default')
+            name = context.args.get("name", "default")
             return CommandResult(success=True, value=f"Hello {name}")
 
         result = command_executor.execute("test.args", name="World")
@@ -101,11 +89,9 @@ class TestCommandBasics:
 
     def test_command_search(self):
         """Test searching for commands."""
+
         @command(
-            id="file.new",
-            title="New File",
-            category="File",
-            keywords=["create", "add"]
+            id="file.new", title="New File", category="File", keywords=["create", "add"]
         )
         def new_file(context):
             return CommandResult(success=True)
@@ -114,7 +100,7 @@ class TestCommandBasics:
             id="file.open",
             title="Open File",
             category="File",
-            keywords=["load", "read"]
+            keywords=["load", "read"],
         )
         def open_file(context):
             return CommandResult(success=True)
@@ -151,11 +137,13 @@ class TestContextSystem:
 
     def test_context_update(self):
         """Test updating multiple context values."""
-        context_manager.update({
-            ContextKey.EDITOR_FOCUS: True,
-            ContextKey.TERMINAL_FOCUS: False,
-            ContextKey.SIDEBAR_VISIBLE: True
-        })
+        context_manager.update(
+            {
+                ContextKey.EDITOR_FOCUS: True,
+                ContextKey.TERMINAL_FOCUS: False,
+                ContextKey.SIDEBAR_VISIBLE: True,
+            }
+        )
 
         assert context_manager.get(ContextKey.EDITOR_FOCUS)
         assert not context_manager.get(ContextKey.TERMINAL_FOCUS)
@@ -200,11 +188,7 @@ class TestWhenClauseEvaluation:
 
     def test_logical_operators(self):
         """Test AND and OR operators."""
-        context = {
-            "editorFocus": True,
-            "terminalFocus": False,
-            "hasSelection": True
-        }
+        context = {"editorFocus": True, "terminalFocus": False, "hasSelection": True}
 
         # AND
         assert WhenClauseEvaluator.evaluate("editorFocus && hasSelection", context)
@@ -216,10 +200,7 @@ class TestWhenClauseEvaluation:
 
     def test_comparisons(self):
         """Test comparison operators."""
-        context = {
-            "paneCount": 3,
-            "platform": "linux"
-        }
+        context = {"paneCount": 3, "platform": "linux"}
 
         assert WhenClauseEvaluator.evaluate("paneCount == 3", context)
         assert WhenClauseEvaluator.evaluate("paneCount != 2", context)
@@ -237,19 +218,17 @@ class TestWhenClauseEvaluation:
             "editorFocus": True,
             "terminalFocus": False,
             "hasSelection": True,
-            "paneCount": 3
+            "paneCount": 3,
         }
 
         # Parentheses
         assert WhenClauseEvaluator.evaluate(
-            "(editorFocus || terminalFocus) && hasSelection",
-            context
+            "(editorFocus || terminalFocus) && hasSelection", context
         )
 
         # Complex nested
         assert WhenClauseEvaluator.evaluate(
-            "editorFocus && (paneCount > 2 || hasSelection)",
-            context
+            "editorFocus && (paneCount > 2 || hasSelection)", context
         )
 
     def test_command_with_when_clause(self):
@@ -260,7 +239,7 @@ class TestWhenClauseEvaluation:
             id="test.conditional",
             title="Conditional Command",
             category="Test",
-            when="editorFocus && hasSelection"
+            when="editorFocus && hasSelection",
         )
         def conditional_command(context):
             return CommandResult(success=True)
@@ -305,7 +284,7 @@ class TestUndoRedo:
             handler=increment,
             undo_handler=decrement,
             redo_handler=increment,
-            supports_undo=True
+            supports_undo=True,
         )
 
         command_registry.register(cmd)
@@ -328,13 +307,9 @@ class TestUndoRedo:
         """Test undo stack management."""
         values = []
 
-        @command(
-            id="test.append",
-            title="Append",
-            category="Test"
-        )
+        @command(id="test.append", title="Append", category="Test")
         def append_command(context):
-            value = context.args.get('value')
+            value = context.args.get("value")
             values.append(value)
             return CommandResult(success=True)
 

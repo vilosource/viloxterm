@@ -12,10 +12,10 @@ from .widget_test_helpers import (
 )
 
 __all__ = [
-    'MockSyncWidget',
-    'MockAsyncWidget',
-    'MockErrorWidget',
-    'WidgetTestHelper',
-    'WidgetTestFixtures',
-    'pytest_fixtures'
+    "MockSyncWidget",
+    "MockAsyncWidget",
+    "MockErrorWidget",
+    "WidgetTestHelper",
+    "WidgetTestFixtures",
+    "pytest_fixtures",
 ]

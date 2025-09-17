@@ -40,12 +40,16 @@ class StateService(Service):
         """Initialize the service with application context."""
         super().initialize(context)
 
-        self._main_window = context.get('main_window')
-        self._workspace = context.get('workspace')
+        self._main_window = context.get("main_window")
+        self._workspace = context.get("workspace")
 
         # Load autosave preferences
-        self._autosave_enabled = self._settings.value("autosave_enabled", True, type=bool)
-        self._autosave_interval = self._settings.value("autosave_interval", 60000, type=int)
+        self._autosave_enabled = self._settings.value(
+            "autosave_enabled", True, type=bool
+        )
+        self._autosave_interval = self._settings.value(
+            "autosave_interval", 60000, type=int
+        )
 
         logger.info(f"StateService initialized (autosave: {self._autosave_enabled})")
 
@@ -73,12 +77,16 @@ class StateService(Service):
             self._settings.setValue("window_state", self._main_window.saveState())
 
             # Save splitter sizes
-            if hasattr(self._main_window, 'main_splitter'):
-                self._settings.setValue("splitter_sizes", self._main_window.main_splitter.sizes())
+            if hasattr(self._main_window, "main_splitter"):
+                self._settings.setValue(
+                    "splitter_sizes", self._main_window.main_splitter.sizes()
+                )
 
             # Save maximized/fullscreen state
             self._settings.setValue("window_maximized", self._main_window.isMaximized())
-            self._settings.setValue("window_fullscreen", self._main_window.isFullScreen())
+            self._settings.setValue(
+                "window_fullscreen", self._main_window.isFullScreen()
+            )
 
             self._settings.sync()
 
@@ -109,7 +117,7 @@ class StateService(Service):
                 self._main_window.restoreState(state)
 
             # Restore splitter sizes
-            if hasattr(self._main_window, 'main_splitter'):
+            if hasattr(self._main_window, "main_splitter"):
                 sizes = self._settings.value("splitter_sizes")
                 if sizes:
                     self._main_window.main_splitter.setSizes(sizes)
@@ -195,7 +203,7 @@ class StateService(Service):
             self._settings.sync()
 
             # Notify observers
-            self.notify('preference_saved', {'key': key, 'value': value})
+            self.notify("preference_saved", {"key": key, "value": value})
 
         except Exception as e:
             logger.error(f"Failed to save preference {key}: {e}")
@@ -251,10 +259,12 @@ class StateService(Service):
         """
         try:
             session = {
-                'window_state': self._get_window_state_dict(),
-                'workspace_state': self._workspace.get_state() if self._workspace else {},
-                'ui_state': self._get_ui_state(),
-                'timestamp': self._get_timestamp()
+                "window_state": self._get_window_state_dict(),
+                "workspace_state": (
+                    self._workspace.get_state() if self._workspace else {}
+                ),
+                "ui_state": self._get_ui_state(),
+                "timestamp": self._get_timestamp(),
             }
 
             json_session = json.dumps(session)
@@ -262,7 +272,7 @@ class StateService(Service):
             self._settings.sync()
 
             # Notify observers
-            self.notify('session_saved', {'name': name})
+            self.notify("session_saved", {"name": name})
 
             logger.info(f"Session '{name}' saved")
             return True
@@ -290,17 +300,17 @@ class StateService(Service):
             session = json.loads(json_session)
 
             # Restore components
-            if 'window_state' in session:
-                self._restore_window_state_dict(session['window_state'])
+            if "window_state" in session:
+                self._restore_window_state_dict(session["window_state"])
 
-            if 'workspace_state' in session and self._workspace:
-                self._workspace.set_state(session['workspace_state'])
+            if "workspace_state" in session and self._workspace:
+                self._workspace.set_state(session["workspace_state"])
 
-            if 'ui_state' in session:
-                self._restore_ui_state(session['ui_state'])
+            if "ui_state" in session:
+                self._restore_ui_state(session["ui_state"])
 
             # Notify observers
-            self.notify('session_restored', {'name': name})
+            self.notify("session_restored", {"name": name})
 
             logger.info(f"Session '{name}' restored")
             return True
@@ -335,7 +345,7 @@ class StateService(Service):
         self._settings.sync()
 
         # Notify observers
-        self.notify('session_deleted', {'name': name})
+        self.notify("session_deleted", {"name": name})
 
         logger.info(f"Session '{name}' deleted")
         return True
@@ -377,7 +387,7 @@ class StateService(Service):
             self._settings.sync()
 
             # Notify observers
-            self.notify('state_reset', {})
+            self.notify("state_reset", {})
 
             logger.info("All state reset to defaults")
 
@@ -392,9 +402,9 @@ class StateService(Service):
             return {}
 
         return {
-            'geometry': self._main_window.geometry().getRect(),
-            'maximized': self._main_window.isMaximized(),
-            'fullscreen': self._main_window.isFullScreen()
+            "geometry": self._main_window.geometry().getRect(),
+            "maximized": self._main_window.isMaximized(),
+            "fullscreen": self._main_window.isFullScreen(),
         }
 
     def _restore_window_state_dict(self, state: dict[str, Any]) -> None:
@@ -402,13 +412,13 @@ class StateService(Service):
         if not self._main_window or not state:
             return
 
-        if 'geometry' in state:
-            rect = state['geometry']
+        if "geometry" in state:
+            rect = state["geometry"]
             self._main_window.setGeometry(rect[0], rect[1], rect[2], rect[3])
 
-        if state.get('maximized'):
+        if state.get("maximized"):
             self._main_window.showMaximized()
-        elif state.get('fullscreen'):
+        elif state.get("fullscreen"):
             self._main_window.showFullScreen()
 
     def _get_ui_state(self) -> dict[str, Any]:
@@ -446,6 +456,7 @@ class StateService(Service):
     def _get_timestamp(self) -> str:
         """Get current timestamp."""
         from datetime import datetime
+
         return datetime.now().isoformat()
 
     def get_autosave_enabled(self) -> bool:
@@ -458,7 +469,7 @@ class StateService(Service):
         self._settings.setValue("autosave_enabled", enabled)
 
         # Notify observers
-        self.notify('autosave_changed', {'enabled': enabled})
+        self.notify("autosave_changed", {"enabled": enabled})
 
     # ============= Tab & Pane Naming =============
 

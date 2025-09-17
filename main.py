@@ -20,13 +20,16 @@ logger = logging.getLogger(__name__)
 # Configure environment BEFORE any Qt imports
 try:
     from core.environment_detector import EnvironmentConfigurator
+
     env_configurator = EnvironmentConfigurator()
     env_configurator.apply_configuration()
 
     # Log environment info
     env_info, strategy = env_configurator.get_info()
-    logger.info(f"Environment: OS={env_info.os_type}, WSL={env_info.is_wsl}, "
-                f"Docker={env_info.is_docker}, GPU={env_info.gpu_available}")
+    logger.info(
+        f"Environment: OS={env_info.os_type}, WSL={env_info.is_wsl}, "
+        f"Docker={env_info.is_docker}, GPU={env_info.gpu_available}"
+    )
 except ImportError:
     logger.warning("Environment detector not available, using defaults")
 except Exception as e:
@@ -56,6 +59,7 @@ except ImportError:
 # Register built-in widgets with AppWidgetManager
 try:
     from core.app_widget_registry import register_builtin_widgets
+
     register_builtin_widgets()
     logger.info("Registered built-in widgets with AppWidgetManager")
 except ImportError as e:
@@ -77,14 +81,15 @@ def main():
         get_settings_info,
         initialize_settings_from_cli,
     )
+
     initialize_settings_from_cli()
 
     # Log settings information
     settings_info = get_settings_info()
     logger.info(f"Settings location: {settings_info['location']}")
-    if settings_info['is_portable']:
+    if settings_info["is_portable"]:
         logger.info("Running in portable mode")
-    elif settings_info['is_temporary']:
+    elif settings_info["is_temporary"]:
         logger.info("Using temporary settings (will not persist)")
 
     # Set application metadata
@@ -116,7 +121,9 @@ def main():
     # Debug: List all keys to see what's stored
     all_keys = settings.allKeys()
     if "UI/FramelessMode" in all_keys:
-        logger.info(f"UI/FramelessMode found in settings with value: {settings.value('UI/FramelessMode')}")
+        logger.info(
+            f"UI/FramelessMode found in settings with value: {settings.value('UI/FramelessMode')}"
+        )
     else:
         logger.info("UI/FramelessMode not found in settings, using default (False)")
 

@@ -56,12 +56,14 @@ class ThemePreviewWidget(QWidget):
         # Create preview container with border
         preview_container = QFrame()
         preview_container.setFrameStyle(QFrame.Box)
-        preview_container.setStyleSheet("""
+        preview_container.setStyleSheet(
+            """
             QFrame {
                 border: 1px solid #3c3c3c;
                 border-radius: 4px;
             }
-        """)
+        """
+        )
 
         container_layout = QVBoxLayout()
         container_layout.setContentsMargins(0, 0, 0, 0)
@@ -220,10 +222,18 @@ class ThemePreviewWidget(QWidget):
         tab_widget.setObjectName("editorTabs")
 
         # Add editor tabs
-        for _i, (name, content) in enumerate([
-            ("main.py", "#!/usr/bin/env python3\n\ndef main():\n    print('Hello, World!')\n\nif __name__ == '__main__':\n    main()"),
-            ("config.json", '{\n  "theme": "dark",\n  "fontSize": 14,\n  "autoSave": true\n}')
-        ]):
+        for _i, (name, content) in enumerate(
+            [
+                (
+                    "main.py",
+                    "#!/usr/bin/env python3\n\ndef main():\n    print('Hello, World!')\n\nif __name__ == '__main__':\n    main()",
+                ),
+                (
+                    "config.json",
+                    '{\n  "theme": "dark",\n  "fontSize": 14,\n  "autoSave": true\n}',
+                ),
+            ]
+        ):
             editor = QTextEdit()
             editor.setObjectName("editor")
             editor.setPlainText(content)
@@ -332,6 +342,7 @@ $ _"""
         Returns:
             CSS stylesheet string
         """
+
         # Helper to get color with fallback
         def get_color(key: str, fallback: str = "#000000") -> str:
             return colors.get(key, fallback)

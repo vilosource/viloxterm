@@ -18,9 +18,9 @@ class TestAppStatusBar:
         qtbot.addWidget(status_bar)
 
         assert status_bar.objectName() == "appStatusBar"
-        assert hasattr(status_bar, 'status_label')
-        assert hasattr(status_bar, 'position_label')
-        assert hasattr(status_bar, 'encoding_label')
+        assert hasattr(status_bar, "status_label")
+        assert hasattr(status_bar, "position_label")
+        assert hasattr(status_bar, "encoding_label")
 
     def test_status_widgets_created(self, qtbot):
         """Test all status widgets are created."""

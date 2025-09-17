@@ -11,7 +11,7 @@ from ui.main_window import MainWindow
 class TestStatePersistence:
     """Test cases for application state persistence."""
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_window_geometry_persistence(self, mock_settings_class, qtbot):
         """Test window geometry is saved and restored."""
         mock_settings = Mock()
@@ -22,7 +22,7 @@ class TestStatePersistence:
         qtbot.addWidget(main_window)
 
         # Mock geometry data
-        mock_geometry = b'mock_geometry_data'
+        mock_geometry = b"mock_geometry_data"
         main_window.saveGeometry = Mock(return_value=mock_geometry)
 
         # Save state
@@ -42,7 +42,7 @@ class TestStatePersistence:
         # Verify geometry was restored
         main_window.restoreGeometry.assert_called_once_with(mock_geometry)
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_window_state_persistence(self, mock_settings_class, qtbot):
         """Test window state is saved and restored."""
         mock_settings = Mock()
@@ -52,7 +52,7 @@ class TestStatePersistence:
         qtbot.addWidget(main_window)
 
         # Mock window state data
-        mock_state = b'mock_window_state'
+        mock_state = b"mock_window_state"
         main_window.saveState = Mock(return_value=mock_state)
 
         # Save state
@@ -72,7 +72,7 @@ class TestStatePersistence:
         # Verify window state was restored
         main_window.restoreState.assert_called_once_with(mock_state)
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_splitter_state_persistence(self, mock_settings_class, qtbot):
         """Test splitter state is saved and restored."""
         mock_settings = Mock()
@@ -82,7 +82,7 @@ class TestStatePersistence:
         qtbot.addWidget(main_window)
 
         # Mock splitter state data
-        mock_splitter_state = b'mock_splitter_state'
+        mock_splitter_state = b"mock_splitter_state"
         main_window.main_splitter.saveState = Mock(return_value=mock_splitter_state)
 
         # Save state
@@ -100,9 +100,11 @@ class TestStatePersistence:
         main_window.restore_state()
 
         # Verify splitter state was restored
-        main_window.main_splitter.restoreState.assert_called_once_with(mock_splitter_state)
+        main_window.main_splitter.restoreState.assert_called_once_with(
+            mock_splitter_state
+        )
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_menu_bar_visibility_persistence(self, mock_settings_class, qtbot):
         """Test menu bar visibility is saved and restored."""
         mock_settings = Mock()
@@ -129,7 +131,7 @@ class TestStatePersistence:
         # Verify menu bar visibility was restored
         main_window.menuBar().setVisible.assert_called_once_with(False)
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_settings_group_usage(self, mock_settings_class, qtbot):
         """Test settings are properly grouped under MainWindow."""
         mock_settings = Mock()
@@ -152,7 +154,7 @@ class TestStatePersistence:
         assert mock_settings.beginGroup.call_count == 2
         assert mock_settings.endGroup.call_count == 2
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_restore_with_no_saved_data(self, mock_settings_class, qtbot):
         """Test restore works correctly with no saved data."""
         mock_settings = Mock()
@@ -177,7 +179,7 @@ class TestStatePersistence:
         main_window.restoreState.assert_not_called()
         main_window.main_splitter.restoreState.assert_not_called()
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_close_event_saves_state(self, mock_settings_class, qtbot):
         """Test close event automatically saves state."""
         mock_settings = Mock()
@@ -187,9 +189,9 @@ class TestStatePersistence:
         qtbot.addWidget(main_window)
 
         # Mock save methods
-        main_window.saveGeometry = Mock(return_value=b'geometry')
-        main_window.saveState = Mock(return_value=b'state')
-        main_window.main_splitter.saveState = Mock(return_value=b'splitter')
+        main_window.saveGeometry = Mock(return_value=b"geometry")
+        main_window.saveState = Mock(return_value=b"state")
+        main_window.main_splitter.saveState = Mock(return_value=b"splitter")
         main_window.menuBar().isVisible = Mock(return_value=True)
 
         # Create mock close event
@@ -205,7 +207,7 @@ class TestStatePersistence:
         assert mock_settings.endGroup.called
         assert close_event.accept.called
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_multiple_save_restore_cycles(self, mock_settings_class, qtbot):
         """Test multiple save/restore cycles work correctly."""
         mock_settings = Mock()
@@ -215,8 +217,8 @@ class TestStatePersistence:
         qtbot.addWidget(main_window)
 
         # Mock data for multiple cycles
-        geometries = [b'geo1', b'geo2', b'geo3']
-        states = [b'state1', b'state2', b'state3']
+        geometries = [b"geo1", b"geo2", b"geo3"]
+        states = [b"state1", b"state2", b"state3"]
 
         for i, (geo, state) in enumerate(zip(geometries, states)):
             # Mock save methods
@@ -229,7 +231,7 @@ class TestStatePersistence:
             # Mock restore methods for next iteration
             mock_settings.value.side_effect = lambda key, default=None, type=None: {
                 "geometry": geo,
-                "windowState": state
+                "windowState": state,
             }.get(key, default)
 
             main_window.restoreGeometry = Mock()
@@ -243,7 +245,7 @@ class TestStatePersistence:
                 main_window.restoreGeometry.assert_called_with(geo)
                 main_window.restoreState.assert_called_with(state)
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_theme_persistence_integration(self, mock_settings_class, qtbot):
         """Test theme state integrates with other persistence."""
         mock_settings = Mock()
@@ -253,7 +255,7 @@ class TestStatePersistence:
         qtbot.addWidget(main_window)
 
         # Mock theme manager
-        with patch('ui.main_window.get_icon_manager') as mock_get_manager:
+        with patch("ui.main_window.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_manager.theme = "dark"
             mock_get_manager.return_value = mock_manager
@@ -267,7 +269,7 @@ class TestStatePersistence:
             # Verify theme manager was called
             mock_manager.toggle_theme.assert_called_once()
 
-    @patch('ui.main_window.QSettings')
+    @patch("ui.main_window.QSettings")
     def test_settings_error_handling(self, mock_settings_class, qtbot):
         """Test error handling in settings operations."""
         # Mock settings that raises exception
@@ -279,8 +281,8 @@ class TestStatePersistence:
         qtbot.addWidget(main_window)
 
         # Mock save methods
-        main_window.saveGeometry = Mock(return_value=b'geometry')
-        main_window.saveState = Mock(return_value=b'state')
+        main_window.saveGeometry = Mock(return_value=b"geometry")
+        main_window.saveState = Mock(return_value=b"state")
 
         # Save state should not crash even if settings fail
         try:

@@ -39,12 +39,12 @@ class TestTerminalWebPage:
         web_page = TerminalWebPage()
 
         # ACT & ASSERT - Test error logging
-        with patch('ui.terminal.terminal_widget.logger') as mock_logger:
+        with patch("ui.terminal.terminal_widget.logger") as mock_logger:
             web_page.javaScriptConsoleMessage(
                 QWebEnginePage.JavaScriptConsoleMessageLevel.ErrorMessageLevel,
                 "Test error message",
                 42,
-                "test.js"
+                "test.js",
             )
 
             mock_logger.error.assert_called_once_with(
@@ -57,12 +57,12 @@ class TestTerminalWebPage:
         web_page = TerminalWebPage()
 
         # ACT & ASSERT - Test warning logging
-        with patch('ui.terminal.terminal_widget.logger') as mock_logger:
+        with patch("ui.terminal.terminal_widget.logger") as mock_logger:
             web_page.javaScriptConsoleMessage(
                 QWebEnginePage.JavaScriptConsoleMessageLevel.WarningMessageLevel,
                 "Test warning",
                 0,
-                ""
+                "",
             )
 
             mock_logger.warning.assert_called_once_with("JS Warning: Test warning")
@@ -73,12 +73,12 @@ class TestTerminalWebPage:
         web_page = TerminalWebPage()
 
         # ACT & ASSERT - Test debug logging
-        with patch('ui.terminal.terminal_widget.logger') as mock_logger:
+        with patch("ui.terminal.terminal_widget.logger") as mock_logger:
             web_page.javaScriptConsoleMessage(
                 QWebEnginePage.JavaScriptConsoleMessageLevel.InfoMessageLevel,
                 "Test info",
                 0,
-                ""
+                "",
             )
 
             mock_logger.debug.assert_called_once_with("JS: Test info")
@@ -93,7 +93,9 @@ class TestTerminalWidget:
         # Mock terminal server
         self.mock_terminal_server = Mock()
         self.mock_terminal_server.create_session.return_value = "test_session_123"
-        self.mock_terminal_server.get_session_url.return_value = "http://localhost:8000/terminal/test_session_123"
+        self.mock_terminal_server.get_session_url.return_value = (
+            "http://localhost:8000/terminal/test_session_123"
+        )
 
         # Mock terminal config
         self.mock_config = Mock(spec=TerminalConfig)
@@ -105,8 +107,10 @@ class TestTerminalWidget:
         self.mock_config.line_height = 1.2
 
         # Patch the terminal server import
-        with patch('ui.terminal.terminal_widget.terminal_server', self.mock_terminal_server):
-            with patch('ui.terminal.terminal_widget.terminal_config', self.mock_config):
+        with patch(
+            "ui.terminal.terminal_widget.terminal_server", self.mock_terminal_server
+        ):
+            with patch("ui.terminal.terminal_widget.terminal_config", self.mock_config):
                 yield
 
     def test_terminal_widget_creation_shows_deprecation_warning(self, qtbot):
@@ -149,9 +153,7 @@ class TestTerminalWidget:
 
         # ACT - Create widget with custom config
         widget = TerminalWidget(
-            config=custom_config,
-            command="/usr/bin/fish",
-            args="--login"
+            config=custom_config, command="/usr/bin/fish", args="--login"
         )
         qtbot.addWidget(widget)
 
@@ -168,15 +170,16 @@ class TestTerminalWidget:
 
         # ASSERT - Session was created
         self.mock_terminal_server.create_session.assert_called_once_with(
-            command="/bin/bash",
-            cmd_args=""
+            command="/bin/bash", cmd_args=""
         )
-        self.mock_terminal_server.get_session_url.assert_called_once_with("test_session_123")
+        self.mock_terminal_server.get_session_url.assert_called_once_with(
+            "test_session_123"
+        )
 
     def test_terminal_widget_loads_session_url_in_web_view(self, qtbot):
         """Test that TerminalWidget loads session URL in web view."""
         # ARRANGE - Mock web view load method
-        with patch.object(QWebEngineView, 'load') as mock_load:
+        with patch.object(QWebEngineView, "load") as mock_load:
             # ACT - Create widget
             widget = TerminalWidget()
             qtbot.addWidget(widget)
@@ -185,9 +188,14 @@ class TestTerminalWidget:
             mock_load.assert_called_once()
             loaded_url = mock_load.call_args[0][0]
             assert isinstance(loaded_url, QUrl)
-            assert loaded_url.toString() == "http://localhost:8000/terminal/test_session_123"
+            assert (
+                loaded_url.toString()
+                == "http://localhost:8000/terminal/test_session_123"
+            )
 
-    def test_terminal_widget_web_view_load_finished_success_emits_ready_signal(self, qtbot):
+    def test_terminal_widget_web_view_load_finished_success_emits_ready_signal(
+        self, qtbot
+    ):
         """Test that web view load finished success emits ready signal."""
         # ARRANGE - Create widget and connect signal
         widget = TerminalWidget()
@@ -211,8 +219,11 @@ class TestTerminalWidget:
 
         # ASSERT - Error message displayed
         layout = widget.layout()
-        error_widgets = [layout.itemAt(i).widget() for i in range(layout.count())
-                        if isinstance(layout.itemAt(i).widget(), QLabel)]
+        error_widgets = [
+            layout.itemAt(i).widget()
+            for i in range(layout.count())
+            if isinstance(layout.itemAt(i).widget(), QLabel)
+        ]
 
         assert len(error_widgets) > 0
         error_label = error_widgets[-1]  # Last added widget should be error
@@ -433,10 +444,10 @@ class TestTerminalWidget:
 
         # ASSERT - State contains expected values
         assert isinstance(state, dict)
-        assert state['session_id'] == "test_session_123"
-        assert state['command'] == "/bin/zsh"
-        assert state['args'] == "--login"
-        assert state['is_dark_theme'] is False
+        assert state["session_id"] == "test_session_123"
+        assert state["command"] == "/bin/zsh"
+        assert state["args"] == "--login"
+        assert state["is_dark_theme"] is False
 
     def test_terminal_widget_restore_state_recreates_session(self, qtbot):
         """Test that restore_state recreates session with restored settings."""
@@ -449,21 +460,23 @@ class TestTerminalWidget:
 
         # Prepare state to restore
         state = {
-            'command': '/bin/fish',
-            'args': '--interactive',
-            'is_dark_theme': False
+            "command": "/bin/fish",
+            "args": "--interactive",
+            "is_dark_theme": False,
         }
 
         # ACT - Restore state
         widget.restore_state(state)
 
         # ASSERT - State was restored
-        assert widget.command == '/bin/fish'
-        assert widget.args == '--interactive'
+        assert widget.command == "/bin/fish"
+        assert widget.args == "--interactive"
         assert widget.is_dark_theme is False
         widget.close_terminal.assert_called_once()
 
-    def test_terminal_widget_close_terminal_destroys_session_and_emits_signal(self, qtbot):
+    def test_terminal_widget_close_terminal_destroys_session_and_emits_signal(
+        self, qtbot
+    ):
         """Test that close_terminal destroys session and emits terminal_closed signal."""
         # ARRANGE - Create widget
         widget = TerminalWidget()
@@ -474,7 +487,9 @@ class TestTerminalWidget:
             widget.close_terminal()
 
         # ASSERT - Session was destroyed and signal emitted
-        self.mock_terminal_server.destroy_session.assert_called_once_with("test_session_123")
+        self.mock_terminal_server.destroy_session.assert_called_once_with(
+            "test_session_123"
+        )
         assert blocker.args[0] == "test_session_123"
         assert widget.session_id is None
 
@@ -505,6 +520,7 @@ class TestTerminalWidget:
 
         # Create a close event
         from PySide6.QtGui import QCloseEvent
+
         close_event = QCloseEvent()
 
         # ACT - Call closeEvent
@@ -521,7 +537,9 @@ class TestTerminalWidget:
 
         # Mock the terminal server to raise an exception during cleanup
         original_destroy = self.mock_terminal_server.destroy_session
-        self.mock_terminal_server.destroy_session = Mock(side_effect=RuntimeError("Server error"))
+        self.mock_terminal_server.destroy_session = Mock(
+            side_effect=RuntimeError("Server error")
+        )
 
         # ACT & ASSERT - Destructor should not raise exceptions
         try:
@@ -535,12 +553,14 @@ class TestTerminalWidget:
     def test_terminal_widget_error_handling_during_session_creation(self, qtbot):
         """Test that terminal widget handles errors during session creation."""
         # ARRANGE - Create fresh mocks for this test to avoid interference
-        with patch('ui.terminal.terminal_widget.terminal_server') as mock_server:
-            with patch('ui.terminal.terminal_widget.terminal_config') as mock_config:
+        with patch("ui.terminal.terminal_widget.terminal_server") as mock_server:
+            with patch("ui.terminal.terminal_widget.terminal_config") as mock_config:
                 # Setup mocks
                 mock_config.get_shell_command.return_value = "/bin/bash"
                 mock_config.shell_args = ""
-                mock_server.create_session.side_effect = RuntimeError("Server not available")
+                mock_server.create_session.side_effect = RuntimeError(
+                    "Server not available"
+                )
 
                 # ACT - Create widget (should not crash)
                 widget = TerminalWidget()
@@ -551,8 +571,11 @@ class TestTerminalWidget:
 
                 # Should show error message in layout
                 layout = widget.layout()
-                error_widgets = [layout.itemAt(i).widget() for i in range(layout.count())
-                                if isinstance(layout.itemAt(i).widget(), QLabel)]
+                error_widgets = [
+                    layout.itemAt(i).widget()
+                    for i in range(layout.count())
+                    if isinstance(layout.itemAt(i).widget(), QLabel)
+                ]
 
                 assert len(error_widgets) > 0
                 error_label = error_widgets[-1]
@@ -604,18 +627,25 @@ class TestTerminalWidgetEdgeCases:
         self.mock_terminal_server = Mock()
         self.mock_config = Mock(spec=TerminalConfig)
 
-        with patch('ui.terminal.terminal_widget.terminal_server', self.mock_terminal_server):
-            with patch('ui.terminal.terminal_widget.terminal_config', self.mock_config):
+        with patch(
+            "ui.terminal.terminal_widget.terminal_server", self.mock_terminal_server
+        ):
+            with patch("ui.terminal.terminal_widget.terminal_config", self.mock_config):
                 yield
 
-    @pytest.mark.parametrize("command,args,expected_command,expected_args", [
-        (None, None, "mock_shell", ""),
-        ("", "", "mock_shell", ""),
-        ("/custom/shell", "", "/custom/shell", ""),
-        (None, "--login", "mock_shell", "--login"),
-        ("/bin/zsh", "-l --interactive", "/bin/zsh", "-l --interactive"),
-    ])
-    def test_terminal_widget_handles_various_command_configurations(self, qtbot, command, args, expected_command, expected_args):
+    @pytest.mark.parametrize(
+        "command,args,expected_command,expected_args",
+        [
+            (None, None, "mock_shell", ""),
+            ("", "", "mock_shell", ""),
+            ("/custom/shell", "", "/custom/shell", ""),
+            (None, "--login", "mock_shell", "--login"),
+            ("/bin/zsh", "-l --interactive", "/bin/zsh", "-l --interactive"),
+        ],
+    )
+    def test_terminal_widget_handles_various_command_configurations(
+        self, qtbot, command, args, expected_command, expected_args
+    ):
         """Test terminal widget handles various command configurations."""
         # ARRANGE - Setup mock to return specific shell
         self.mock_config.get_shell_command.return_value = "mock_shell"
@@ -631,16 +661,19 @@ class TestTerminalWidgetEdgeCases:
         assert widget.command == expected_command
         assert widget.args == expected_args
 
-    @pytest.mark.parametrize("text_input", [
-        "",  # Empty string
-        "simple text",  # Normal text
-        "text with 'quotes'",  # Single quotes
-        'text with "double quotes"',  # Double quotes
-        "text with\nnewlines\n",  # Newlines
-        "text with\\backslashes\\",  # Backslashes
-        "complex 'text' with \"quotes\" and\nnewlines\\backslashes",  # Complex
-        "unicode: ñáéíóú 🚀 💻",  # Unicode characters
-    ])
+    @pytest.mark.parametrize(
+        "text_input",
+        [
+            "",  # Empty string
+            "simple text",  # Normal text
+            "text with 'quotes'",  # Single quotes
+            'text with "double quotes"',  # Double quotes
+            "text with\nnewlines\n",  # Newlines
+            "text with\\backslashes\\",  # Backslashes
+            "complex 'text' with \"quotes\" and\nnewlines\\backslashes",  # Complex
+            "unicode: ñáéíóú 🚀 💻",  # Unicode characters
+        ],
+    )
     def test_terminal_widget_handles_various_text_inputs(self, qtbot, text_input):
         """Test terminal widget handles various text inputs correctly."""
         # ARRANGE - Create widget and mark as ready
@@ -670,14 +703,17 @@ class TestTerminalWidgetEdgeCases:
     def test_terminal_widget_web_view_creation_failure_raises_exception(self, qtbot):
         """Test terminal widget raises exception when web view creation fails."""
         # ARRANGE - Mock terminal server and config, then mock QWebEngineView to raise exception
-        with patch('ui.terminal.terminal_widget.terminal_server') as mock_server:
-            with patch('ui.terminal.terminal_widget.terminal_config') as mock_config:
+        with patch("ui.terminal.terminal_widget.terminal_server") as mock_server:
+            with patch("ui.terminal.terminal_widget.terminal_config") as mock_config:
                 mock_config.get_shell_command.return_value = "/bin/bash"
                 mock_config.shell_args = ""
                 mock_server.create_session.return_value = "test_session"
                 mock_server.get_session_url.return_value = "http://test"
 
-                with patch('ui.terminal.terminal_widget.QWebEngineView', side_effect=RuntimeError("Web engine not available")):
+                with patch(
+                    "ui.terminal.terminal_widget.QWebEngineView",
+                    side_effect=RuntimeError("Web engine not available"),
+                ):
                     # ACT & ASSERT - Widget creation should raise the web engine exception
                     with pytest.raises(RuntimeError, match="Web engine not available"):
                         widget = TerminalWidget()
@@ -740,9 +776,11 @@ class TestTerminalWidgetIntegration:
         from ui.terminal.terminal_config import terminal_config
 
         # Mock only the server to avoid actual server startup
-        with patch('ui.terminal.terminal_widget.terminal_server') as mock_server:
+        with patch("ui.terminal.terminal_widget.terminal_server") as mock_server:
             mock_server.create_session.return_value = "integration_test_session"
-            mock_server.get_session_url.return_value = "http://localhost:8080/terminal/integration_test_session"
+            mock_server.get_session_url.return_value = (
+                "http://localhost:8080/terminal/integration_test_session"
+            )
 
             # ACT - Create widget with real config
             widget = TerminalWidget(config=terminal_config)
@@ -756,9 +794,11 @@ class TestTerminalWidgetIntegration:
     def test_terminal_widget_color_scheme_integration(self, qtbot):
         """Test terminal widget integrates correctly with color schemes."""
         # ARRANGE - Create widget with real color schemes
-        with patch('ui.terminal.terminal_widget.terminal_server') as mock_server:
+        with patch("ui.terminal.terminal_widget.terminal_server") as mock_server:
             mock_server.create_session.return_value = "color_test_session"
-            mock_server.get_session_url.return_value = "http://localhost:8080/terminal/color_test_session"
+            mock_server.get_session_url.return_value = (
+                "http://localhost:8080/terminal/color_test_session"
+            )
 
             widget = TerminalWidget()
             qtbot.addWidget(widget)
@@ -766,6 +806,7 @@ class TestTerminalWidgetIntegration:
 
             # Mock JavaScript execution to capture theme data
             theme_js_calls = []
+
             def capture_js(js_code):
                 theme_js_calls.append(js_code)
 
@@ -780,8 +821,8 @@ class TestTerminalWidgetIntegration:
 
             # Check dark theme contains expected colors
             dark_js = theme_js_calls[0]
-            assert "background: '#1e1e1e'" in dark_js or '#1e1e1e' in dark_js
+            assert "background: '#1e1e1e'" in dark_js or "#1e1e1e" in dark_js
 
             # Check light theme contains expected colors
             light_js = theme_js_calls[1]
-            assert "background: '#ffffff'" in light_js or '#ffffff' in light_js
+            assert "background: '#ffffff'" in light_js or "#ffffff" in light_js

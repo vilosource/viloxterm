@@ -46,7 +46,7 @@ class TestThemeManagementCommands:
             description="Test theme",
             colors={"background": "#000000"},
             version="1.0.0",
-            author="Test Author"
+            author="Test Author",
         )
         self.sample_theme.is_custom = True  # Set as attribute
 
@@ -56,7 +56,7 @@ class TestThemeManagementCommands:
             description="Built-in theme",
             colors={"background": "#1e1e1e"},
             version="1.0.0",
-            author="Microsoft"
+            author="Microsoft",
         )
         self.builtin_theme.is_custom = False  # Set as attribute
 
@@ -86,8 +86,7 @@ class TestThemeManagementCommands:
         self.mock_theme_service.get_theme.return_value = self.sample_theme
 
         result = get_theme_command._original_func(
-            self.mock_context,
-            theme_id="test-theme"
+            self.mock_context, theme_id="test-theme"
         )
 
         assert result.success
@@ -99,8 +98,7 @@ class TestThemeManagementCommands:
         self.mock_theme_service.get_theme.return_value = None
 
         result = get_theme_command._original_func(
-            self.mock_context,
-            theme_id="nonexistent"
+            self.mock_context, theme_id="nonexistent"
         )
 
         assert not result.success
@@ -109,8 +107,7 @@ class TestThemeManagementCommands:
     def test_apply_theme(self):
         """Test applying a theme."""
         result = apply_theme_command._original_func(
-            self.mock_context,
-            theme_id="test-theme"
+            self.mock_context, theme_id="test-theme"
         )
 
         assert result.success
@@ -122,30 +119,34 @@ class TestThemeManagementCommands:
         theme_data = self.sample_theme.to_dict()
         self.mock_theme_service.save_custom_theme.return_value = True
 
-        with patch('core.commands.builtin.theme_management_commands.Theme') as MockTheme:
+        with patch(
+            "core.commands.builtin.theme_management_commands.Theme"
+        ) as MockTheme:
             MockTheme.from_dict.return_value = self.sample_theme
 
             result = save_custom_theme_command._original_func(
-                self.mock_context,
-                theme_data=theme_data
+                self.mock_context, theme_data=theme_data
             )
 
             assert result.success
             assert result.value["theme_id"] == "test-theme"
             MockTheme.from_dict.assert_called_once_with(theme_data)
-            self.mock_theme_service.save_custom_theme.assert_called_once_with(self.sample_theme)
+            self.mock_theme_service.save_custom_theme.assert_called_once_with(
+                self.sample_theme
+            )
 
     def test_save_custom_theme_failure(self):
         """Test saving a custom theme when save fails."""
         theme_data = self.sample_theme.to_dict()
         self.mock_theme_service.save_custom_theme.return_value = False
 
-        with patch('core.commands.builtin.theme_management_commands.Theme') as MockTheme:
+        with patch(
+            "core.commands.builtin.theme_management_commands.Theme"
+        ) as MockTheme:
             MockTheme.from_dict.return_value = self.sample_theme
 
             result = save_custom_theme_command._original_func(
-                self.mock_context,
-                theme_data=theme_data
+                self.mock_context, theme_data=theme_data
             )
 
             assert not result.success
@@ -159,15 +160,13 @@ class TestThemeManagementCommands:
             self.mock_context,
             base_theme_id="vscode-dark",
             name="My Theme",
-            description="Custom theme"
+            description="Custom theme",
         )
 
         assert result.success
         assert result.value["theme"] == self.sample_theme
         self.mock_theme_service.create_custom_theme.assert_called_once_with(
-            "vscode-dark",
-            "My Theme",
-            "Custom theme"
+            "vscode-dark", "My Theme", "Custom theme"
         )
 
     def test_delete_custom_theme(self):
@@ -175,21 +174,21 @@ class TestThemeManagementCommands:
         self.mock_theme_service.delete_custom_theme.return_value = True
 
         result = delete_custom_theme_command._original_func(
-            self.mock_context,
-            theme_id="test-theme"
+            self.mock_context, theme_id="test-theme"
         )
 
         assert result.success
         assert result.value["theme_id"] == "test-theme"
-        self.mock_theme_service.delete_custom_theme.assert_called_once_with("test-theme")
+        self.mock_theme_service.delete_custom_theme.assert_called_once_with(
+            "test-theme"
+        )
 
     def test_delete_custom_theme_failure(self):
         """Test deleting a theme that can't be deleted."""
         self.mock_theme_service.delete_custom_theme.return_value = False
 
         result = delete_custom_theme_command._original_func(
-            self.mock_context,
-            theme_id="vscode-dark"
+            self.mock_context, theme_id="vscode-dark"
         )
 
         assert not result.success
@@ -200,49 +199,46 @@ class TestThemeManagementCommands:
         self.mock_theme_service.import_theme.return_value = "imported-theme"
 
         result = import_theme_command._original_func(
-            self.mock_context,
-            file_path="/path/to/theme.json"
+            self.mock_context, file_path="/path/to/theme.json"
         )
 
         assert result.success
         assert result.value["theme_id"] == "imported-theme"
-        self.mock_theme_service.import_theme.assert_called_once_with(Path("/path/to/theme.json"))
+        self.mock_theme_service.import_theme.assert_called_once_with(
+            Path("/path/to/theme.json")
+        )
 
     def test_export_theme(self):
         """Test exporting a theme to file."""
         self.mock_theme_service.export_theme.return_value = True
 
         result = export_theme_command._original_func(
-            self.mock_context,
-            theme_id="test-theme",
-            file_path="/path/to/export.json"
+            self.mock_context, theme_id="test-theme", file_path="/path/to/export.json"
         )
 
         assert result.success
         assert result.value["theme_id"] == "test-theme"
         assert result.value["file_path"] == "/path/to/export.json"
         self.mock_theme_service.export_theme.assert_called_once_with(
-            "test-theme",
-            Path("/path/to/export.json")
+            "test-theme", Path("/path/to/export.json")
         )
 
     def test_apply_typography_preset(self):
         """Test applying a typography preset."""
         result = apply_typography_preset_command._original_func(
-            self.mock_context,
-            preset="compact"
+            self.mock_context, preset="compact"
         )
 
         assert result.success
         assert result.value["preset"] == "compact"
-        self.mock_theme_service.apply_typography_preset.assert_called_once_with("compact")
+        self.mock_theme_service.apply_typography_preset.assert_called_once_with(
+            "compact"
+        )
 
     def test_get_typography(self):
         """Test getting typography settings."""
         typography = ThemeTypography(
-            font_family="monospace",
-            font_size_base=14,
-            line_height=1.5
+            font_family="monospace", font_size_base=14, line_height=1.5
         )
         self.mock_theme_service.get_typography.return_value = typography
 
@@ -258,14 +254,14 @@ class TestThemeManagementCommands:
         typography = {"font_size_base": 16}
 
         result = apply_theme_preview_command._original_func(
-            self.mock_context,
-            colors=colors,
-            typography=typography
+            self.mock_context, colors=colors, typography=typography
         )
 
         assert result.success
         assert result.value["preview_applied"] is True
-        self.mock_theme_service.apply_theme_preview.assert_called_once_with(colors, typography)
+        self.mock_theme_service.apply_theme_preview.assert_called_once_with(
+            colors, typography
+        )
 
     def test_update_theme_colors(self):
         """Test updating theme colors."""
@@ -275,9 +271,7 @@ class TestThemeManagementCommands:
         colors = {"background": "#ffffff", "foreground": "#000000"}
 
         result = update_theme_colors_command._original_func(
-            self.mock_context,
-            theme_id="test-theme",
-            colors=colors
+            self.mock_context, theme_id="test-theme", colors=colors
         )
 
         assert result.success
@@ -291,9 +285,7 @@ class TestThemeManagementCommands:
         self.mock_theme_service.get_theme.return_value = None
 
         result = update_theme_colors_command._original_func(
-            self.mock_context,
-            theme_id="nonexistent",
-            colors={"background": "#ffffff"}
+            self.mock_context, theme_id="nonexistent", colors={"background": "#ffffff"}
         )
 
         assert not result.success
@@ -317,8 +309,7 @@ class TestThemeManagementCommands:
         self.mock_theme_service.apply_theme.side_effect = Exception("Test error")
 
         result = apply_theme_command._original_func(
-            self.mock_context,
-            theme_id="test-theme"
+            self.mock_context, theme_id="test-theme"
         )
 
         assert not result.success

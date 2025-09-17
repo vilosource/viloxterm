@@ -28,12 +28,12 @@ def get_log_level(production_mode: bool = False) -> str:
         Log level string (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     """
     # Check environment variable override first
-    env_level = os.environ.get('VILOAPP_LOG_LEVEL', '').upper()
-    if env_level in ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'):
+    env_level = os.environ.get("VILOAPP_LOG_LEVEL", "").upper()
+    if env_level in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
         return env_level
 
     # Default based on mode
-    return 'INFO' if production_mode else 'DEBUG'
+    return "INFO" if production_mode else "DEBUG"
 
 
 def get_log_file_path() -> Optional[Path]:
@@ -44,19 +44,19 @@ def get_log_file_path() -> Optional[Path]:
         Path to log directory or None if file logging is disabled
     """
     # Check if file logging is disabled
-    if os.environ.get('VILOAPP_NO_FILE_LOG', '').lower() in ('1', 'true', 'yes'):
+    if os.environ.get("VILOAPP_NO_FILE_LOG", "").lower() in ("1", "true", "yes"):
         return None
 
     # Check for custom log directory
-    log_dir = os.environ.get('VILOAPP_LOG_DIR')
+    log_dir = os.environ.get("VILOAPP_LOG_DIR")
     if log_dir:
         return Path(log_dir)
 
     # Default log directory
-    if sys.platform == 'win32':
-        log_dir = Path(os.environ.get('LOCALAPPDATA', '')) / 'ViloxTerm' / 'logs'
+    if sys.platform == "win32":
+        log_dir = Path(os.environ.get("LOCALAPPDATA", "")) / "ViloxTerm" / "logs"
     else:
-        log_dir = Path.home() / '.local' / 'share' / 'ViloxTerm' / 'logs'
+        log_dir = Path.home() / ".local" / "share" / "ViloxTerm" / "logs"
 
     return log_dir
 
@@ -76,148 +76,133 @@ def get_logging_config(production_mode: bool = False) -> dict[str, Any]:
 
     # Base configuration
     config = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'detailed': {
-                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                'datefmt': '%Y-%m-%d %H:%M:%S'
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "detailed": {
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
             },
-            'simple': {
-                'format': '%(levelname)s - %(name)s - %(message)s'
+            "simple": {"format": "%(levelname)s - %(name)s - %(message)s"},
+            "production": {
+                "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
             },
-            'production': {
-                'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-                'datefmt': '%Y-%m-%d %H:%M:%S'
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "level": log_level,
+                "formatter": "production" if production_mode else "detailed",
+                "stream": "ext://sys.stdout",
             }
         },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'level': log_level,
-                'formatter': 'production' if production_mode else 'detailed',
-                'stream': 'ext://sys.stdout'
-            }
-        },
-        'loggers': {
+        "loggers": {
             # Core modules
-            'core': {
-                'level': log_level,
-                'handlers': ['console'],
-                'propagate': False
+            "core": {"level": log_level, "handlers": ["console"], "propagate": False},
+            "core.commands": {
+                "level": log_level,
+                "handlers": ["console"],
+                "propagate": False,
             },
-            'core.commands': {
-                'level': log_level,
-                'handlers': ['console'],
-                'propagate': False
+            "core.keyboard": {
+                "level": log_level,
+                "handlers": ["console"],
+                "propagate": False,
             },
-            'core.keyboard': {
-                'level': log_level,
-                'handlers': ['console'],
-                'propagate': False
+            "core.settings": {
+                "level": log_level,
+                "handlers": ["console"],
+                "propagate": False,
             },
-            'core.settings': {
-                'level': log_level,
-                'handlers': ['console'],
-                'propagate': False
+            "core.context": {
+                "level": "INFO" if production_mode else "DEBUG",
+                "handlers": ["console"],
+                "propagate": False,
             },
-            'core.context': {
-                'level': 'INFO' if production_mode else 'DEBUG',
-                'handlers': ['console'],
-                'propagate': False
-            },
-
             # UI modules
-            'ui': {
-                'level': log_level,
-                'handlers': ['console'],
-                'propagate': False
+            "ui": {"level": log_level, "handlers": ["console"], "propagate": False},
+            "ui.terminal": {
+                "level": "INFO" if production_mode else "DEBUG",
+                "handlers": ["console"],
+                "propagate": False,
             },
-            'ui.terminal': {
-                'level': 'INFO' if production_mode else 'DEBUG',
-                'handlers': ['console'],
-                'propagate': False
+            "ui.widgets": {
+                "level": log_level,
+                "handlers": ["console"],
+                "propagate": False,
             },
-            'ui.widgets': {
-                'level': log_level,
-                'handlers': ['console'],
-                'propagate': False
+            "ui.command_palette": {
+                "level": log_level,
+                "handlers": ["console"],
+                "propagate": False,
             },
-            'ui.command_palette': {
-                'level': log_level,
-                'handlers': ['console'],
-                'propagate': False
-            },
-
             # Services
-            'services': {
-                'level': log_level,
-                'handlers': ['console'],
-                'propagate': False
+            "services": {
+                "level": log_level,
+                "handlers": ["console"],
+                "propagate": False,
             },
-
             # Silence noisy third-party libraries in production
-            'werkzeug': {
-                'level': 'WARNING' if production_mode else 'INFO',
-                'handlers': ['console'],
-                'propagate': False
+            "werkzeug": {
+                "level": "WARNING" if production_mode else "INFO",
+                "handlers": ["console"],
+                "propagate": False,
             },
-            'engineio': {
-                'level': 'WARNING' if production_mode else 'INFO',
-                'handlers': ['console'],
-                'propagate': False
+            "engineio": {
+                "level": "WARNING" if production_mode else "INFO",
+                "handlers": ["console"],
+                "propagate": False,
             },
-            'socketio': {
-                'level': 'WARNING' if production_mode else 'INFO',
-                'handlers': ['console'],
-                'propagate': False
-            }
+            "socketio": {
+                "level": "WARNING" if production_mode else "INFO",
+                "handlers": ["console"],
+                "propagate": False,
+            },
         },
-        'root': {
-            'level': log_level,
-            'handlers': ['console']
-        }
+        "root": {"level": log_level, "handlers": ["console"]},
     }
 
     # Add file handler if enabled
     if log_file_path:
         # Create log directory if it doesn't exist
         log_file_path.mkdir(parents=True, exist_ok=True)
-        log_file = log_file_path / 'viloxterm.log'
+        log_file = log_file_path / "viloxterm.log"
 
-        config['handlers']['file'] = {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'level': log_level,
-            'formatter': 'detailed',
-            'filename': str(log_file),
-            'maxBytes': 10 * 1024 * 1024,  # 10MB
-            'backupCount': 5,
-            'encoding': 'utf-8'
+        config["handlers"]["file"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": log_level,
+            "formatter": "detailed",
+            "filename": str(log_file),
+            "maxBytes": 10 * 1024 * 1024,  # 10MB
+            "backupCount": 5,
+            "encoding": "utf-8",
         }
 
         # Add file handler to all loggers
-        for logger_config in config['loggers'].values():
-            if 'file' not in logger_config['handlers']:
-                logger_config['handlers'].append('file')
-        config['root']['handlers'].append('file')
+        for logger_config in config["loggers"].values():
+            if "file" not in logger_config["handlers"]:
+                logger_config["handlers"].append("file")
+        config["root"]["handlers"].append("file")
 
     # Try to use colorlog for colored console output in development
     if not production_mode:
         try:
             import colorlog
-            config['formatters']['colored'] = {
-                '()': 'colorlog.ColoredFormatter',
-                'format': '%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                'datefmt': '%Y-%m-%d %H:%M:%S',
-                'log_colors': {
-                    'DEBUG': 'cyan',
-                    'INFO': 'green',
-                    'WARNING': 'yellow',
-                    'ERROR': 'red',
-                    'CRITICAL': 'red,bg_white',
-                }
+
+            config["formatters"]["colored"] = {
+                "()": "colorlog.ColoredFormatter",
+                "format": "%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+                "log_colors": {
+                    "DEBUG": "cyan",
+                    "INFO": "green",
+                    "WARNING": "yellow",
+                    "ERROR": "red",
+                    "CRITICAL": "red,bg_white",
+                },
             }
-            config['handlers']['console']['formatter'] = 'colored'
+            config["handlers"]["console"]["formatter"] = "colored"
         except ImportError:
             # colorlog not available, use regular formatter
             pass
@@ -237,10 +222,15 @@ def setup_logging(production_mode: Optional[bool] = None):
     if production_mode is None:
         try:
             from core.app_config import app_config
+
             production_mode = app_config.production_mode
         except ImportError:
             # Fallback to environment variable check
-            production_mode = os.environ.get('VILOAPP_PRODUCTION', '').lower() in ('1', 'true', 'yes')
+            production_mode = os.environ.get("VILOAPP_PRODUCTION", "").lower() in (
+                "1",
+                "true",
+                "yes",
+            )
 
     # Get and apply configuration
     config = get_logging_config(production_mode)
@@ -250,9 +240,9 @@ def setup_logging(production_mode: Optional[bool] = None):
     logger = logging.getLogger(__name__)
     logger.info(
         "Logging configured: mode=%s, level=%s, file_logging=%s",
-        'PRODUCTION' if production_mode else 'DEVELOPMENT',
+        "PRODUCTION" if production_mode else "DEVELOPMENT",
         get_log_level(production_mode),
-        'ENABLED' if get_log_file_path() else 'DISABLED'
+        "ENABLED" if get_log_file_path() else "DISABLED",
     )
 
 

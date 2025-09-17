@@ -36,7 +36,7 @@ class TestFramelessWindow:
         assert flags & Qt.WindowMinMaxButtonsHint
 
         # Check that custom title bar exists
-        assert hasattr(window, 'custom_title_bar')
+        assert hasattr(window, "custom_title_bar")
         assert isinstance(window.custom_title_bar, CustomTitleBar)
 
         # Check title bar height
@@ -48,17 +48,17 @@ class TestFramelessWindow:
         qtbot.addWidget(title_bar)
 
         # Check menu button
-        assert hasattr(title_bar, 'menu_button')
+        assert hasattr(title_bar, "menu_button")
         assert title_bar.menu_button.text() == "☰"
 
         # Check title label
-        assert hasattr(title_bar, 'title_label')
+        assert hasattr(title_bar, "title_label")
         assert title_bar.title_label.text() == "ViloxTerm"
 
         # Check window control buttons
-        assert hasattr(title_bar, 'min_button')
-        assert hasattr(title_bar, 'max_button')
-        assert hasattr(title_bar, 'close_button')
+        assert hasattr(title_bar, "min_button")
+        assert hasattr(title_bar, "max_button")
+        assert hasattr(title_bar, "close_button")
 
         # Check button texts
         assert title_bar.min_button.text() == "─"
@@ -92,6 +92,7 @@ class TestFramelessWindow:
 
         # Test close button emits signal
         signal_emitted = False
+
         def on_signal():
             nonlocal signal_emitted
             signal_emitted = True
@@ -114,12 +115,16 @@ class TestFramelessWindow:
 
         # Double click to maximize
         title_pos = window.custom_title_bar.title_label.rect().center()
-        QTest.mouseDClick(window.custom_title_bar.title_label, Qt.LeftButton, pos=title_pos)
+        QTest.mouseDClick(
+            window.custom_title_bar.title_label, Qt.LeftButton, pos=title_pos
+        )
         qtbot.wait(100)
         assert window.isMaximized()
 
         # Double click to restore
-        QTest.mouseDClick(window.custom_title_bar.title_label, Qt.LeftButton, pos=title_pos)
+        QTest.mouseDClick(
+            window.custom_title_bar.title_label, Qt.LeftButton, pos=title_pos
+        )
         qtbot.wait(100)
         assert not window.isMaximized()
 
@@ -132,7 +137,7 @@ class TestFramelessWindow:
 
         # Mock startSystemMove since it requires window manager
         mock_start_move = MagicMock()
-        monkeypatch.setattr(window.windowHandle(), 'startSystemMove', mock_start_move)
+        monkeypatch.setattr(window.windowHandle(), "startSystemMove", mock_start_move)
 
         # Simulate drag on title bar
         title_bar = window.custom_title_bar
@@ -151,18 +156,26 @@ class TestFramelessWindow:
 
         # Mock startSystemResize
         mock_start_resize = MagicMock()
-        monkeypatch.setattr(window.windowHandle(), 'startSystemResize', mock_start_resize)
+        monkeypatch.setattr(
+            window.windowHandle(), "startSystemResize", mock_start_resize
+        )
 
         # Test positions for each edge
         test_cases = [
-            (QPoint(3, 300), Qt.Edge.LeftEdge),           # Left edge
-            (QPoint(797, 300), Qt.Edge.RightEdge),        # Right edge
-            (QPoint(400, 3), Qt.Edge.TopEdge),            # Top edge
-            (QPoint(400, 597), Qt.Edge.BottomEdge),       # Bottom edge
-            (QPoint(3, 3), Qt.Edge.TopEdge | Qt.Edge.LeftEdge),       # Top-left corner
-            (QPoint(797, 3), Qt.Edge.TopEdge | Qt.Edge.RightEdge),    # Top-right corner
-            (QPoint(3, 597), Qt.Edge.BottomEdge | Qt.Edge.LeftEdge),  # Bottom-left corner
-            (QPoint(797, 597), Qt.Edge.BottomEdge | Qt.Edge.RightEdge) # Bottom-right corner
+            (QPoint(3, 300), Qt.Edge.LeftEdge),  # Left edge
+            (QPoint(797, 300), Qt.Edge.RightEdge),  # Right edge
+            (QPoint(400, 3), Qt.Edge.TopEdge),  # Top edge
+            (QPoint(400, 597), Qt.Edge.BottomEdge),  # Bottom edge
+            (QPoint(3, 3), Qt.Edge.TopEdge | Qt.Edge.LeftEdge),  # Top-left corner
+            (QPoint(797, 3), Qt.Edge.TopEdge | Qt.Edge.RightEdge),  # Top-right corner
+            (
+                QPoint(3, 597),
+                Qt.Edge.BottomEdge | Qt.Edge.LeftEdge,
+            ),  # Bottom-left corner
+            (
+                QPoint(797, 597),
+                Qt.Edge.BottomEdge | Qt.Edge.RightEdge,
+            ),  # Bottom-right corner
         ]
 
         for pos, expected_edge in test_cases:
@@ -175,7 +188,9 @@ class TestFramelessWindow:
             # Verify correct edge was detected
             if mock_start_resize.called:
                 actual_edge = mock_start_resize.call_args[0][0]
-                assert actual_edge == expected_edge, f"Position {pos} should trigger edge {expected_edge}"
+                assert (
+                    actual_edge == expected_edge
+                ), f"Position {pos} should trigger edge {expected_edge}"
 
     def test_cursor_changes_on_edges(self, qtbot):
         """Test that cursor changes when hovering over resize edges."""
@@ -187,25 +202,21 @@ class TestFramelessWindow:
 
         # Test cursor changes
         cursor_tests = [
-            (QPoint(3, 300), Qt.SizeHorCursor),      # Left edge
-            (QPoint(797, 300), Qt.SizeHorCursor),    # Right edge
-            (QPoint(400, 3), Qt.SizeVerCursor),      # Top edge
-            (QPoint(400, 597), Qt.SizeVerCursor),    # Bottom edge
-            (QPoint(3, 3), Qt.SizeFDiagCursor),      # Top-left corner
-            (QPoint(797, 3), Qt.SizeBDiagCursor),    # Top-right corner
-            (QPoint(3, 597), Qt.SizeBDiagCursor),    # Bottom-left corner
+            (QPoint(3, 300), Qt.SizeHorCursor),  # Left edge
+            (QPoint(797, 300), Qt.SizeHorCursor),  # Right edge
+            (QPoint(400, 3), Qt.SizeVerCursor),  # Top edge
+            (QPoint(400, 597), Qt.SizeVerCursor),  # Bottom edge
+            (QPoint(3, 3), Qt.SizeFDiagCursor),  # Top-left corner
+            (QPoint(797, 3), Qt.SizeBDiagCursor),  # Top-right corner
+            (QPoint(3, 597), Qt.SizeBDiagCursor),  # Bottom-left corner
             (QPoint(797, 597), Qt.SizeFDiagCursor),  # Bottom-right corner
-            (QPoint(400, 300), Qt.ArrowCursor),      # Center (no resize)
+            (QPoint(400, 300), Qt.ArrowCursor),  # Center (no resize)
         ]
 
         for pos, _expected_cursor in cursor_tests:
             # Simulate mouse move
             event = QMouseEvent(
-                QEvent.MouseMove,
-                pos,
-                Qt.NoButton,
-                Qt.NoButton,
-                Qt.NoModifier
+                QEvent.MouseMove, pos, Qt.NoButton, Qt.NoButton, Qt.NoModifier
             )
             window.mouseMoveEvent(event)
 
@@ -288,7 +299,7 @@ class TestFramelessWindow:
         qtbot.waitForWindowShown(window)
 
         # Click menu button
-        with patch.object(window, 'show_title_bar_menu') as mock_show_menu:
+        with patch.object(window, "show_title_bar_menu") as mock_show_menu:
             QTest.mouseClick(window.custom_title_bar.menu_button, Qt.LeftButton)
             mock_show_menu.assert_called_once()
 
@@ -300,7 +311,7 @@ class TestFramelessWindow:
         qtbot.waitForWindowShown(window)
 
         # Verify workspace exists and functions
-        assert hasattr(window, 'workspace')
+        assert hasattr(window, "workspace")
 
         # Add a tab
         execute_command("file.newTerminalTab")
@@ -362,7 +373,7 @@ class TestNormalVsFrameless:
         assert not (flags & Qt.FramelessWindowHint)
 
         # Should not have custom title bar
-        assert not hasattr(window, 'custom_title_bar')
+        assert not hasattr(window, "custom_title_bar")
 
     def test_both_windows_share_workspace_functionality(self, qtbot):
         """Test that both window types have same workspace features."""
@@ -373,16 +384,16 @@ class TestNormalVsFrameless:
         qtbot.addWidget(frameless_window)
 
         # Both should have workspace
-        assert hasattr(normal_window, 'workspace')
-        assert hasattr(frameless_window, 'workspace')
+        assert hasattr(normal_window, "workspace")
+        assert hasattr(frameless_window, "workspace")
 
         # Both should have same sidebar
-        assert hasattr(normal_window, 'sidebar')
-        assert hasattr(frameless_window, 'sidebar')
+        assert hasattr(normal_window, "sidebar")
+        assert hasattr(frameless_window, "sidebar")
 
         # Both should have same status bar
-        assert hasattr(normal_window, 'status_bar')
-        assert hasattr(frameless_window, 'status_bar')
+        assert hasattr(normal_window, "status_bar")
+        assert hasattr(frameless_window, "status_bar")
 
 
 if __name__ == "__main__":

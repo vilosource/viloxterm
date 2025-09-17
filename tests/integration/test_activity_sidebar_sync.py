@@ -158,7 +158,7 @@ class TestActivitySidebarSync:
         main_window.activity_bar.update_icons = Mock()
 
         # Mock icon manager
-        with patch('ui.main_window.get_icon_manager') as mock_get_manager:
+        with patch("ui.main_window.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_manager.theme = "light"
             mock_get_manager.return_value = mock_manager

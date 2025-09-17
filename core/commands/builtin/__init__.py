@@ -44,19 +44,20 @@ def register_all_builtin_commands():
     register_sidebar_commands()
     register_theme_commands()
 
+
 __all__ = [
-    'register_all_builtin_commands',
-    'register_file_commands',
-    'register_view_commands',
-    'register_workspace_commands',
-    'register_edit_commands',
-    'register_navigation_commands',
-    'register_debug_commands',
-    'register_settings_commands',
-    'register_palette_commands',
-    'register_terminal_commands',
-    'register_tab_commands',
-    'register_pane_commands',
-    'register_sidebar_commands',
-    'register_theme_commands',
+    "register_all_builtin_commands",
+    "register_file_commands",
+    "register_view_commands",
+    "register_workspace_commands",
+    "register_edit_commands",
+    "register_navigation_commands",
+    "register_debug_commands",
+    "register_settings_commands",
+    "register_palette_commands",
+    "register_terminal_commands",
+    "register_tab_commands",
+    "register_pane_commands",
+    "register_sidebar_commands",
+    "register_theme_commands",
 ]

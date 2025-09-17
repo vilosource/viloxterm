@@ -13,8 +13,10 @@ class TestThemeIntegration:
 
     def test_theme_toggle_updates_activity_bar(self, qtbot):
         """Test theme toggle updates activity bar icons."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager, \
-             patch('ui.main_window.get_icon_manager') as mock_main_manager:
+        with (
+            patch("ui.activity_bar.get_icon_manager") as mock_get_manager,
+            patch("ui.main_window.get_icon_manager") as mock_main_manager,
+        ):
 
             mock_manager = Mock()
             mock_manager.theme = "light"
@@ -36,7 +38,7 @@ class TestThemeIntegration:
 
     def test_icon_manager_theme_change_signal_propagates(self, qtbot):
         """Test icon manager theme change signal propagates to components."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch("ui.activity_bar.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_manager.theme = "light"
             mock_manager.get_icon.return_value = Mock()
@@ -60,8 +62,10 @@ class TestThemeIntegration:
 
     def test_theme_consistency_across_components(self, qtbot):
         """Test theme consistency across all UI components."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_activity_manager, \
-             patch('ui.main_window.get_icon_manager') as mock_main_manager:
+        with (
+            patch("ui.activity_bar.get_icon_manager") as mock_activity_manager,
+            patch("ui.main_window.get_icon_manager") as mock_main_manager,
+        ):
 
             # Create single manager instance
             mock_manager = Mock()
@@ -81,7 +85,7 @@ class TestThemeIntegration:
 
     def test_status_bar_shows_theme_change_message(self, qtbot):
         """Test status bar shows message when theme changes."""
-        with patch('ui.main_window.get_icon_manager') as mock_get_manager:
+        with patch("ui.main_window.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_manager.theme = "light"
             mock_get_manager.return_value = mock_manager
@@ -109,7 +113,7 @@ class TestThemeIntegration:
         manager = IconManager()
         qtbot.addWidget(manager)  # For cleanup
 
-        with patch('ui.icon_manager.QIcon') as mock_qicon:
+        with patch("ui.icon_manager.QIcon") as mock_qicon:
             mock_icon = Mock()
             mock_qicon.return_value = mock_icon
 
@@ -132,7 +136,7 @@ class TestThemeIntegration:
 
     def test_keyboard_shortcut_theme_toggle(self, qtbot):
         """Test Ctrl+T keyboard shortcut toggles theme."""
-        with patch('ui.main_window.get_icon_manager') as mock_get_manager:
+        with patch("ui.main_window.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_manager.theme = "light"
             mock_get_manager.return_value = mock_manager
@@ -167,7 +171,7 @@ class TestThemeIntegration:
 
     def test_theme_system_initialization(self, qtbot):
         """Test theme system initializes correctly on startup."""
-        with patch('ui.activity_bar.get_icon_manager') as mock_get_manager:
+        with patch("ui.activity_bar.get_icon_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_manager.theme = "light"
             mock_manager.get_icon.return_value = Mock()
@@ -190,7 +194,6 @@ class TestThemeIntegration:
         manager = IconManager()
         qtbot.addWidget(manager)
 
-
         # Toggle multiple times
         for i in range(5):
             with qtbot.waitSignal(manager.theme_changed, timeout=1000):
@@ -206,7 +209,7 @@ class TestThemeIntegration:
         manager = IconManager()
         qtbot.addWidget(manager)
 
-        with patch('ui.icon_manager.QIcon') as mock_qicon:
+        with patch("ui.icon_manager.QIcon") as mock_qicon:
             mock_icon = Mock()
             mock_qicon.return_value = mock_icon
 
@@ -235,7 +238,7 @@ class TestThemeIntegration:
 
     def test_theme_integration_error_handling(self, qtbot):
         """Test theme system handles errors gracefully."""
-        with patch('ui.main_window.get_icon_manager') as mock_get_manager:
+        with patch("ui.main_window.get_icon_manager") as mock_get_manager:
             # Mock icon manager that raises exception
             mock_manager = Mock()
             mock_manager.theme = "light"

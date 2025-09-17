@@ -24,7 +24,10 @@ def test_sidebar_collapse(qtbot):
     sidebar.collapse()
 
     # Wait for animation to complete
-    qtbot.waitUntil(lambda: sidebar.animation.state() == QPropertyAnimation.State.Stopped, timeout=1000)
+    qtbot.waitUntil(
+        lambda: sidebar.animation.state() == QPropertyAnimation.State.Stopped,
+        timeout=1000,
+    )
     assert sidebar.is_collapsed
     assert sidebar.maximumWidth() == 0
 
@@ -41,14 +44,20 @@ def test_sidebar_expand(qtbot):
     # First collapse it
     sidebar.collapse()
     # Wait for animation to finish
-    qtbot.waitUntil(lambda: sidebar.animation.state() == QPropertyAnimation.State.Stopped, timeout=1000)
+    qtbot.waitUntil(
+        lambda: sidebar.animation.state() == QPropertyAnimation.State.Stopped,
+        timeout=1000,
+    )
     assert sidebar.is_collapsed
     assert sidebar.maximumWidth() == 0
 
     # Then expand it
     sidebar.expand()
     # Wait for animation to finish
-    qtbot.waitUntil(lambda: sidebar.animation.state() == QPropertyAnimation.State.Stopped, timeout=1000)
+    qtbot.waitUntil(
+        lambda: sidebar.animation.state() == QPropertyAnimation.State.Stopped,
+        timeout=1000,
+    )
     assert not sidebar.is_collapsed
     assert sidebar.maximumWidth() == sidebar.expanded_width
 

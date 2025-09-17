@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     description="Cut selected text to clipboard",
     shortcut="ctrl+x",
     icon="scissors",
-    when="editorFocus && editorHasSelection"
+    when="editorFocus && editorHasSelection",
 )
 def cut_command(context: CommandContext) -> CommandResult:
     """Cut selected text using EditorService."""
@@ -47,7 +47,7 @@ def cut_command(context: CommandContext) -> CommandResult:
     description="Copy selected text to clipboard",
     shortcut="ctrl+c",
     icon="copy",
-    when="editorFocus && editorHasSelection"
+    when="editorFocus && editorHasSelection",
 )
 def copy_command(context: CommandContext) -> CommandResult:
     """Copy selected text using EditorService."""
@@ -75,7 +75,7 @@ def copy_command(context: CommandContext) -> CommandResult:
     description="Paste text from clipboard",
     shortcut="ctrl+v",
     icon="clipboard",
-    when="editorFocus"
+    when="editorFocus",
 )
 def paste_command(context: CommandContext) -> CommandResult:
     """Paste text using EditorService."""
@@ -103,7 +103,7 @@ def paste_command(context: CommandContext) -> CommandResult:
     description="Select all text in the editor",
     shortcut="ctrl+a",
     icon="select-all",
-    when="editorFocus"
+    when="editorFocus",
 )
 def select_all_command(context: CommandContext) -> CommandResult:
     """Select all text using EditorService."""
@@ -131,7 +131,7 @@ def select_all_command(context: CommandContext) -> CommandResult:
     description="Undo last edit operation",
     shortcut="ctrl+z",
     icon="undo",
-    when="editorFocus"
+    when="editorFocus",
 )
 def undo_command(context: CommandContext) -> CommandResult:
     """Undo last operation using EditorService."""
@@ -159,7 +159,7 @@ def undo_command(context: CommandContext) -> CommandResult:
     description="Redo last undone operation",
     shortcut="ctrl+shift+z",
     icon="redo",
-    when="editorFocus"
+    when="editorFocus",
 )
 def redo_command(context: CommandContext) -> CommandResult:
     """Redo last undone operation using EditorService."""
@@ -187,7 +187,7 @@ def redo_command(context: CommandContext) -> CommandResult:
     description="Find text in the editor",
     shortcut="ctrl+f",
     icon="search",
-    when="editorFocus"
+    when="editorFocus",
 )
 def find_command(context: CommandContext) -> CommandResult:
     """Find text in editor using EditorService."""
@@ -196,28 +196,26 @@ def find_command(context: CommandContext) -> CommandResult:
         if not editor_service:
             return CommandResult(success=False, error="EditorService not available")
 
-        search_term = context.args.get('search_term', '')
-        case_sensitive = context.args.get('case_sensitive', False)
-        whole_word = context.args.get('whole_word', False)
+        search_term = context.args.get("search_term", "")
+        case_sensitive = context.args.get("case_sensitive", False)
+        whole_word = context.args.get("whole_word", False)
 
         if not search_term:
             # Get selected text as default search term
-            search_term = editor_service.get_selected_text() or ''
+            search_term = editor_service.get_selected_text() or ""
 
         if search_term:
             matches = editor_service.find_text(
-                search_term,
-                case_sensitive=case_sensitive,
-                whole_word=whole_word
+                search_term, case_sensitive=case_sensitive, whole_word=whole_word
             )
 
             return CommandResult(
                 success=True,
                 value={
-                    'search_term': search_term,
-                    'matches': matches,
-                    'count': len(matches)
-                }
+                    "search_term": search_term,
+                    "matches": matches,
+                    "count": len(matches),
+                },
             )
         else:
             return CommandResult(success=False, error="No search term provided")
@@ -234,7 +232,7 @@ def find_command(context: CommandContext) -> CommandResult:
     description="Replace text in the editor",
     shortcut="ctrl+h",
     icon="replace",
-    when="editorFocus"
+    when="editorFocus",
 )
 def replace_command(context: CommandContext) -> CommandResult:
     """Replace text in editor using EditorService."""
@@ -243,19 +241,17 @@ def replace_command(context: CommandContext) -> CommandResult:
         if not editor_service:
             return CommandResult(success=False, error="EditorService not available")
 
-        search_term = context.args.get('search_term', '')
-        replace_term = context.args.get('replace_term', '')
-        all_occurrences = context.args.get('all', False)
+        search_term = context.args.get("search_term", "")
+        replace_term = context.args.get("replace_term", "")
+        all_occurrences = context.args.get("all", False)
 
         if search_term:
             count = editor_service.replace_text(
-                search_term,
-                replace_term,
-                all_occurrences=all_occurrences
+                search_term, replace_term, all_occurrences=all_occurrences
             )
 
             # Show status message
-            if context.main_window and hasattr(context.main_window, 'status_bar'):
+            if context.main_window and hasattr(context.main_window, "status_bar"):
                 if count > 0:
                     msg = f"Replaced {count} occurrence{'s' if count > 1 else ''}"
                 else:
@@ -265,10 +261,10 @@ def replace_command(context: CommandContext) -> CommandResult:
             return CommandResult(
                 success=True,
                 value={
-                    'search_term': search_term,
-                    'replace_term': replace_term,
-                    'count': count
-                }
+                    "search_term": search_term,
+                    "replace_term": replace_term,
+                    "count": count,
+                },
             )
         else:
             return CommandResult(success=False, error="No search term provided")

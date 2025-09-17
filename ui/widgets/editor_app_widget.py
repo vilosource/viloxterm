@@ -68,7 +68,8 @@ class EditorAppWidget(AppWidget):
         self.editor.setFont(font)
 
         # Set colors (VSCode dark theme style)
-        self.editor.setStyleSheet("""
+        self.editor.setStyleSheet(
+            """
             QPlainTextEdit {
                 background-color: #1e1e1e;
                 color: #d4d4d4;
@@ -76,7 +77,8 @@ class EditorAppWidget(AppWidget):
                 selection-background-color: #264f78;
                 selection-color: #ffffff;
             }
-        """)
+        """
+        )
 
         # Set tab width
         self.editor.setTabStopDistance(40)  # Approximately 4 spaces
@@ -110,7 +112,7 @@ class EditorAppWidget(AppWidget):
         # Scroll position
         state["scroll_position"] = {
             "horizontal": self.editor.horizontalScrollBar().value(),
-            "vertical": self.editor.verticalScrollBar().value()
+            "vertical": self.editor.verticalScrollBar().value(),
         }
 
         return state
@@ -139,13 +141,18 @@ class EditorAppWidget(AppWidget):
 
         # Restore scroll position
         if "scroll_position" in state:
-            self.editor.horizontalScrollBar().setValue(state["scroll_position"].get("horizontal", 0))
-            self.editor.verticalScrollBar().setValue(state["scroll_position"].get("vertical", 0))
+            self.editor.horizontalScrollBar().setValue(
+                state["scroll_position"].get("horizontal", 0)
+            )
+            self.editor.verticalScrollBar().setValue(
+                state["scroll_position"].get("vertical", 0)
+            )
 
     def get_title(self) -> str:
         """Get editor title."""
         if self.file_path:
             import os
+
             name = os.path.basename(self.file_path)
             return f"{name}{'*' if self.is_modified else ''}"
         return f"Untitled{'*' if self.is_modified else ''}"
@@ -159,7 +166,7 @@ class EditorAppWidget(AppWidget):
     def load_file(self, file_path: str):
         """Load a file into the editor."""
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
             self.editor.setPlainText(content)
             self.file_path = file_path
@@ -178,7 +185,7 @@ class EditorAppWidget(AppWidget):
             return False
 
         try:
-            with open(self.file_path, 'w', encoding='utf-8') as f:
+            with open(self.file_path, "w", encoding="utf-8") as f:
                 f.write(self.editor.toPlainText())
             self.is_modified = False
             self.notify_state_change({"file_saved": self.file_path})

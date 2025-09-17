@@ -40,7 +40,7 @@ class TestPaneContent:
         # Check basic attributes
         assert pane.leaf_node == mock_leaf_node
         assert not pane.is_active
-        assert hasattr(pane, 'header_bar')
+        assert hasattr(pane, "header_bar")
 
         # Check unique IDs through leaf nodes
         leaf2 = Mock(spec=LeafNode)
@@ -74,7 +74,7 @@ class TestPaneContent:
         # Test horizontal split request
         pane.request_split("horizontal")
         mock_leaf_node.app_widget.request_action.assert_called_with(
-            'split', {'orientation': 'horizontal', 'leaf_id': mock_leaf_node.id}
+            "split", {"orientation": "horizontal", "leaf_id": mock_leaf_node.id}
         )
 
     def test_pane_content_request_close(self, qtbot, mock_leaf_node):
@@ -85,7 +85,7 @@ class TestPaneContent:
         # Test close request
         pane.request_close()
         mock_leaf_node.app_widget.request_action.assert_called_with(
-            'close', {'leaf_id': mock_leaf_node.id}
+            "close", {"leaf_id": mock_leaf_node.id}
         )
 
     def test_pane_content_layout(self, qtbot, mock_leaf_node):
@@ -109,13 +109,14 @@ class TestPaneContent:
         # Simulate mouse press
         from PySide6.QtCore import QPointF
         from PySide6.QtGui import QMouseEvent
+
         event = QMouseEvent(
             QMouseEvent.Type.MouseButtonPress,
             QPointF(10, 10),
             QPointF(10, 10),  # global position
             Qt.MouseButton.LeftButton,
             Qt.MouseButton.LeftButton,
-            Qt.KeyboardModifier.NoModifier
+            Qt.KeyboardModifier.NoModifier,
         )
 
         # Should request focus through app widget
@@ -131,7 +132,7 @@ class TestPaneContent:
         new_type = WidgetType.TERMINAL
         pane.change_widget_type(new_type)
         mock_leaf_node.app_widget.request_action.assert_called_with(
-            'change_type', {'leaf_id': mock_leaf_node.id, 'new_type': new_type}
+            "change_type", {"leaf_id": mock_leaf_node.id, "new_type": new_type}
         )
 
 
@@ -361,16 +362,32 @@ class TestSplitPaneWidget:
         qtbot.addWidget(widget)
 
         # Verify all documented signals exist
-        assert hasattr(widget, 'pane_added'), "SplitPaneWidget must have pane_added signal"
-        assert hasattr(widget, 'pane_removed'), "SplitPaneWidget must have pane_removed signal"
-        assert hasattr(widget, 'active_pane_changed'), "SplitPaneWidget must have active_pane_changed signal"
-        assert hasattr(widget, 'layout_changed'), "SplitPaneWidget must have layout_changed signal"
+        assert hasattr(
+            widget, "pane_added"
+        ), "SplitPaneWidget must have pane_added signal"
+        assert hasattr(
+            widget, "pane_removed"
+        ), "SplitPaneWidget must have pane_removed signal"
+        assert hasattr(
+            widget, "active_pane_changed"
+        ), "SplitPaneWidget must have active_pane_changed signal"
+        assert hasattr(
+            widget, "layout_changed"
+        ), "SplitPaneWidget must have layout_changed signal"
 
         # Verify signals are actually Signal objects
-        assert hasattr(type(widget), 'pane_added'), "pane_added must be a Signal class attribute"
-        assert hasattr(type(widget), 'pane_removed'), "pane_removed must be a Signal class attribute"
-        assert hasattr(type(widget), 'active_pane_changed'), "active_pane_changed must be a Signal class attribute"
-        assert hasattr(type(widget), 'layout_changed'), "layout_changed must be a Signal class attribute"
+        assert hasattr(
+            type(widget), "pane_added"
+        ), "pane_added must be a Signal class attribute"
+        assert hasattr(
+            type(widget), "pane_removed"
+        ), "pane_removed must be a Signal class attribute"
+        assert hasattr(
+            type(widget), "active_pane_changed"
+        ), "active_pane_changed must be a Signal class attribute"
+        assert hasattr(
+            type(widget), "layout_changed"
+        ), "layout_changed must be a Signal class attribute"
 
     def test_pane_added_signal_emission(self, qtbot):
         """Test pane_added signal is emitted when splitting panes."""
@@ -437,9 +454,9 @@ class TestSplitPaneWidget:
             widget.split_horizontal(active_pane_id)
 
         # Verify signal was emitted (no args expected for layout_changed)
-        assert blocker.args == [], (
-            f"Expected layout_changed signal with no args, but got {blocker.args}"
-        )
+        assert (
+            blocker.args == []
+        ), f"Expected layout_changed signal with no args, but got {blocker.args}"
 
     def test_multiple_signal_emissions_during_split(self, qtbot):
         """Test multiple signals are emitted correctly during split operations."""
@@ -447,7 +464,9 @@ class TestSplitPaneWidget:
         qtbot.addWidget(widget)
 
         # Test multiple signals emitted during one operation
-        with qtbot.waitSignals([widget.pane_added, widget.layout_changed], timeout=1000):
+        with qtbot.waitSignals(
+            [widget.pane_added, widget.layout_changed], timeout=1000
+        ):
             active_pane_id = widget.active_pane_id
             new_pane_id = widget.split_horizontal(active_pane_id)
 
@@ -472,7 +491,9 @@ class TestSplitPaneWidget:
 
         # Verify both signals were emitted
         assert len(pane_added_spy) >= 1, "pane_added signal should have been emitted"
-        assert len(layout_changed_spy) >= 1, "layout_changed signal should have been emitted"
+        assert (
+            len(layout_changed_spy) >= 1
+        ), "layout_changed signal should have been emitted"
 
     def test_no_signal_emission_on_failed_operations(self, qtbot):
         """Test signals are not emitted when operations fail."""
@@ -488,9 +509,9 @@ class TestSplitPaneWidget:
         qtbot.wait(100)
 
         # Should not have emitted pane_removed signal for invalid operation
-        assert len(pane_removed_spy) == 0, (
-            "pane_removed signal should not be emitted for invalid pane ID"
-        )
+        assert (
+            len(pane_removed_spy) == 0
+        ), "pane_removed signal should not be emitted for invalid pane ID"
 
     def test_signal_emission_during_state_restoration(self, qtbot):
         """Test signals are properly handled during state restoration."""

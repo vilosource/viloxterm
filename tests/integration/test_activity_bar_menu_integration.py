@@ -17,7 +17,7 @@ class TestActivityBarMenuIntegration:
         window.show()
 
         # Check menu action exists
-        assert hasattr(window.activity_bar, 'menu_action')
+        assert hasattr(window.activity_bar, "menu_action")
         assert window.activity_bar.menu_action.isVisible()
         assert window.activity_bar.menu_action.text() == "Menu"
 
@@ -28,7 +28,7 @@ class TestActivityBarMenuIntegration:
         window.show()
 
         # Check the action exists
-        assert hasattr(window, 'auto_hide_menubar_action')
+        assert hasattr(window, "auto_hide_menubar_action")
         assert window.auto_hide_menubar_action.isCheckable()
 
         # Initially menu bar should be visible
@@ -57,7 +57,9 @@ class TestActivityBarMenuIntegration:
         # Get menu bar menus
         menubar = window.menuBar()
         menubar_actions = menubar.actions()
-        menubar_menu_names = [action.text() for action in menubar_actions if action.menu()]
+        menubar_menu_names = [
+            action.text() for action in menubar_actions if action.menu()
+        ]
 
         # We should have File, View, Debug menus
         assert "File" in menubar_menu_names

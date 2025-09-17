@@ -24,24 +24,20 @@ HARD_CODED_FALLBACKS = {
     "workspace.close_last_tab_behavior": "create_default",
     "workspace.restore_tabs_on_startup": True,
     "workspace.confirm_close_unsaved_tab": True,
-
     "pane.default_split_direction": "horizontal",
     "pane.default_split_ratio": 0.5,
     "pane.minimum_width": 200,
     "pane.minimum_height": 100,
     "pane.focus_new_on_split": True,
     "pane.default_widget": "same",
-
     "terminal.default_shell": "auto",
     "terminal.starting_directory": "home",
     "terminal.inherit_environment": True,
     "terminal.close_on_exit": "always",
-
     "editor.default_file_type": "text",
     "editor.default_encoding": "utf-8",
     "editor.create_untitled": True,
     "editor.auto_detect_language": True,
-
     "ui.default_window_width": 1200,
     "ui.default_window_height": 800,
     "ui.window_position": "center",
@@ -50,7 +46,6 @@ HARD_CODED_FALLBACKS = {
     "ui.sidebar_visible_on_start": True,
     "ui.default_sidebar_width": 300,
     "ui.show_status_bar": True,
-
     "ux.confirm_app_exit": True,
     "ux.confirm_reload_window": True,
     "ux.show_notifications": True,
@@ -66,7 +61,16 @@ class AppDefaultsValidator:
     @staticmethod
     def get_available_widget_types() -> list[str]:
         """Get list of valid widget types."""
-        return ["terminal", "editor", "theme_editor", "explorer", "output", "placeholder", "settings", "shortcuts"]
+        return [
+            "terminal",
+            "editor",
+            "theme_editor",
+            "explorer",
+            "output",
+            "placeholder",
+            "settings",
+            "shortcuts",
+        ]
 
     @staticmethod
     def validate_widget_type(value: str) -> tuple[bool, str]:
@@ -91,7 +95,9 @@ class AppDefaultsValidator:
             return (False, 0.5)
 
     @staticmethod
-    def validate_positive_int(value: Any, max_val: int = 100, default: int = 20) -> tuple[bool, int]:
+    def validate_positive_int(
+        value: Any, max_val: int = 100, default: int = 20
+    ) -> tuple[bool, int]:
         """Validate positive integer setting."""
         try:
             num = int(value)
@@ -140,31 +146,60 @@ class AppDefaultsValidator:
         validators = {
             # Workspace settings
             "workspace.default_new_tab_widget": AppDefaultsValidator.validate_widget_type,
-            "workspace.max_tabs": lambda v: AppDefaultsValidator.validate_positive_int(v, 100, 20),
+            "workspace.max_tabs": lambda v: AppDefaultsValidator.validate_positive_int(
+                v, 100, 20
+            ),
             "workspace.close_last_tab_behavior": AppDefaultsValidator.validate_close_behavior,
-            "workspace.restore_tabs_on_startup": lambda v: AppDefaultsValidator.validate_bool(v, True),
-            "workspace.confirm_close_unsaved_tab": lambda v: AppDefaultsValidator.validate_bool(v, True),
-
+            "workspace.restore_tabs_on_startup": lambda v: AppDefaultsValidator.validate_bool(
+                v, True
+            ),
+            "workspace.confirm_close_unsaved_tab": lambda v: AppDefaultsValidator.validate_bool(
+                v, True
+            ),
             # Pane settings
             "pane.default_split_ratio": AppDefaultsValidator.validate_split_ratio,
-            "pane.minimum_width": lambda v: AppDefaultsValidator.validate_positive_int(v, 1000, 200),
-            "pane.minimum_height": lambda v: AppDefaultsValidator.validate_positive_int(v, 1000, 100),
-            "pane.focus_new_on_split": lambda v: AppDefaultsValidator.validate_bool(v, True),
-
+            "pane.minimum_width": lambda v: AppDefaultsValidator.validate_positive_int(
+                v, 1000, 200
+            ),
+            "pane.minimum_height": lambda v: AppDefaultsValidator.validate_positive_int(
+                v, 1000, 100
+            ),
+            "pane.focus_new_on_split": lambda v: AppDefaultsValidator.validate_bool(
+                v, True
+            ),
             # UI settings
-            "ui.default_window_width": lambda v: AppDefaultsValidator.validate_positive_int(v, 4000, 1200),
-            "ui.default_window_height": lambda v: AppDefaultsValidator.validate_positive_int(v, 2000, 800),
-            "ui.sidebar_visible_on_start": lambda v: AppDefaultsValidator.validate_bool(v, True),
-            "ui.default_sidebar_width": lambda v: AppDefaultsValidator.validate_positive_int(v, 800, 300),
+            "ui.default_window_width": lambda v: AppDefaultsValidator.validate_positive_int(
+                v, 4000, 1200
+            ),
+            "ui.default_window_height": lambda v: AppDefaultsValidator.validate_positive_int(
+                v, 2000, 800
+            ),
+            "ui.sidebar_visible_on_start": lambda v: AppDefaultsValidator.validate_bool(
+                v, True
+            ),
+            "ui.default_sidebar_width": lambda v: AppDefaultsValidator.validate_positive_int(
+                v, 800, 300
+            ),
             "ui.show_status_bar": lambda v: AppDefaultsValidator.validate_bool(v, True),
-            "ui.start_maximized": lambda v: AppDefaultsValidator.validate_bool(v, False),
-            "ui.start_fullscreen": lambda v: AppDefaultsValidator.validate_bool(v, False),
-
+            "ui.start_maximized": lambda v: AppDefaultsValidator.validate_bool(
+                v, False
+            ),
+            "ui.start_fullscreen": lambda v: AppDefaultsValidator.validate_bool(
+                v, False
+            ),
             # UX settings
-            "ux.confirm_app_exit": lambda v: AppDefaultsValidator.validate_bool(v, True),
-            "ux.confirm_reload_window": lambda v: AppDefaultsValidator.validate_bool(v, True),
-            "ux.show_notifications": lambda v: AppDefaultsValidator.validate_bool(v, True),
-            "ux.enable_animations": lambda v: AppDefaultsValidator.validate_bool(v, True),
+            "ux.confirm_app_exit": lambda v: AppDefaultsValidator.validate_bool(
+                v, True
+            ),
+            "ux.confirm_reload_window": lambda v: AppDefaultsValidator.validate_bool(
+                v, True
+            ),
+            "ux.show_notifications": lambda v: AppDefaultsValidator.validate_bool(
+                v, True
+            ),
+            "ux.enable_animations": lambda v: AppDefaultsValidator.validate_bool(
+                v, True
+            ),
         }
 
         # Use specific validator if available
@@ -205,7 +240,9 @@ class AppDefaults:
             value = self._settings.value(settings_key)
 
             # Validate the value
-            is_valid, safe_value = AppDefaultsValidator.validate_and_sanitize(key, value)
+            is_valid, safe_value = AppDefaultsValidator.validate_and_sanitize(
+                key, value
+            )
 
             if is_valid:
                 self._cache[key] = safe_value
@@ -335,15 +372,12 @@ class AppDefaults:
             "UI/ShowStatusBar": "ui.show_status_bar",
             "UI/ShowMenuBar": "ui.show_menu_bar",
             "UI/FramelessMode": "ui.frameless_mode",
-
             # Theme settings
             "Theme/Current": "appearance.theme",
             "Theme/FontFamily": "appearance.font_family",
             "Theme/FontSize": "appearance.font_size",
-
             # Workspace settings
             "Workspace/RestoreOnStartup": "workspace.restore_tabs_on_startup",
-
             # Terminal settings
             "Terminal/Shell": "terminal.default_shell",
             "Terminal/FontSize": "terminal.font_size",
@@ -465,8 +499,12 @@ if __name__ == "__main__":
 
     # Test validation
     print("\nValidation tests:")
-    print(f"Set invalid widget type: {set_app_default('workspace.default_new_tab_widget', 'invalid')}")
-    print(f"Set valid widget type: {set_app_default('workspace.default_new_tab_widget', 'editor')}")
+    print(
+        f"Set invalid widget type: {set_app_default('workspace.default_new_tab_widget', 'invalid')}"
+    )
+    print(
+        f"Set valid widget type: {set_app_default('workspace.default_new_tab_widget', 'editor')}"
+    )
     print(f"New default: {get_default_widget_type()}")
 
     # Test window state

@@ -30,8 +30,8 @@ class SettingsService(Service):
 
     # Signals for settings changes
     setting_changed = Signal(str, str, object)  # category, key, new_value
-    category_changed = Signal(str, dict)        # category, new_settings
-    settings_reset = Signal()                   # all settings reset
+    category_changed = Signal(str, dict)  # category, new_settings
+    settings_reset = Signal()  # all settings reset
 
     def __init__(self):
         """Initialize the settings service."""
@@ -122,13 +122,17 @@ class SettingsService(Service):
                 temp_settings = copy.deepcopy(self._settings)
                 temp_settings[category][key] = value
 
-                is_valid, errors = self._schema_validator.validate_category(category, temp_settings[category])
+                is_valid, errors = self._schema_validator.validate_category(
+                    category, temp_settings[category]
+                )
                 if not is_valid:
                     logger.warning(f"Invalid setting {category}.{key}: {errors}")
                     return False
 
             # Special validation for keyboard shortcuts
-            if category == "keyboard_shortcuts" and not validate_keyboard_shortcut(value):
+            if category == "keyboard_shortcuts" and not validate_keyboard_shortcut(
+                value
+            ):
                 logger.warning(f"Invalid keyboard shortcut: {value}")
                 return False
 
@@ -166,7 +170,9 @@ class SettingsService(Service):
         """
         return self._settings.get(category, {}).copy()
 
-    def set_category(self, category: str, settings: dict[str, Any], validate: bool = True) -> bool:
+    def set_category(
+        self, category: str, settings: dict[str, Any], validate: bool = True
+    ) -> bool:
         """
         Set all settings for a category.
 
@@ -181,7 +187,9 @@ class SettingsService(Service):
         try:
             # Validate if requested
             if validate:
-                is_valid, errors = self._schema_validator.validate_category(category, settings)
+                is_valid, errors = self._schema_validator.validate_category(
+                    category, settings
+                )
                 if not is_valid:
                     logger.warning(f"Invalid settings for {category}: {errors}")
                     return False
@@ -342,7 +350,9 @@ class SettingsService(Service):
 
     # ============= Change Listeners =============
 
-    def add_change_listener(self, category: str, key: str, callback: Callable[[Any], None]) -> None:
+    def add_change_listener(
+        self, category: str, key: str, callback: Callable[[Any], None]
+    ) -> None:
         """
         Add a listener for setting changes.
 
@@ -357,7 +367,9 @@ class SettingsService(Service):
 
         self._change_listeners[listener_key].append(callback)
 
-    def remove_change_listener(self, category: str, key: str, callback: Callable[[Any], None]) -> None:
+    def remove_change_listener(
+        self, category: str, key: str, callback: Callable[[Any], None]
+    ) -> None:
         """
         Remove a setting change listener.
 
@@ -430,7 +442,9 @@ class SettingsService(Service):
                 # Reset specific categories
                 for category in categories:
                     if category in DEFAULT_SETTINGS:
-                        self._settings[category] = copy.deepcopy(DEFAULT_SETTINGS[category])
+                        self._settings[category] = copy.deepcopy(
+                            DEFAULT_SETTINGS[category]
+                        )
                         self.category_changed.emit(category, self._settings[category])
             else:
                 # Reset all settings
@@ -474,17 +488,23 @@ class SettingsService(Service):
 
             # Load each category
             for category in DEFAULT_SETTINGS.keys():
-                saved_settings = self._state_service.get_preference(f"settings.{category}")
+                saved_settings = self._state_service.get_preference(
+                    f"settings.{category}"
+                )
 
                 if saved_settings:
                     # Validate loaded settings
-                    is_valid, errors = self._schema_validator.validate_category(category, saved_settings)
+                    is_valid, errors = self._schema_validator.validate_category(
+                        category, saved_settings
+                    )
 
                     if is_valid:
                         self._settings[category] = saved_settings
                         loaded_any = True
                     else:
-                        logger.warning(f"Invalid saved settings for {category}, using defaults: {errors}")
+                        logger.warning(
+                            f"Invalid saved settings for {category}, using defaults: {errors}"
+                        )
 
             if loaded_any:
                 logger.info("Settings loaded from storage")
@@ -508,9 +528,11 @@ class SettingsService(Service):
     def get_service_info(self) -> dict[str, Any]:
         """Get service information for debugging."""
         return {
-            'categories': list(self._settings.keys()),
-            'total_settings': sum(len(s) if isinstance(s, dict) else 1 for s in self._settings.values()),
-            'change_listeners': len(self._change_listeners),
-            'has_state_service': self._state_service is not None,
-            'validation_available': self._schema_validator._jsonschema_available
+            "categories": list(self._settings.keys()),
+            "total_settings": sum(
+                len(s) if isinstance(s, dict) else 1 for s in self._settings.values()
+            ),
+            "change_listeners": len(self._change_listeners),
+            "has_state_service": self._state_service is not None,
+            "validation_available": self._schema_validator._jsonschema_available,
         }
