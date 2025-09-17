@@ -569,15 +569,33 @@ class Workspace(QWidget):
 
     def split_active_pane_horizontal(self):
         """Split the active pane in the current tab horizontally."""
-        widget = self.get_current_split_widget()
-        if widget and widget.active_pane_id:
-            widget.split_horizontal(widget.active_pane_id)
+        # Delegate to WorkspaceService for consistent code path
+        from services.service_locator import get_service
+        from services.workspace_service import WorkspaceService
+
+        workspace_service = get_service(WorkspaceService)
+        if workspace_service:
+            workspace_service.split_active_pane("horizontal")
+        else:
+            # Fallback to direct method if service not available
+            widget = self.get_current_split_widget()
+            if widget and widget.active_pane_id:
+                widget.split_horizontal(widget.active_pane_id)
 
     def split_active_pane_vertical(self):
         """Split the active pane in the current tab vertically."""
-        widget = self.get_current_split_widget()
-        if widget and widget.active_pane_id:
-            widget.split_vertical(widget.active_pane_id)
+        # Delegate to WorkspaceService for consistent code path
+        from services.service_locator import get_service
+        from services.workspace_service import WorkspaceService
+
+        workspace_service = get_service(WorkspaceService)
+        if workspace_service:
+            workspace_service.split_active_pane("vertical")
+        else:
+            # Fallback to direct method if service not available
+            widget = self.get_current_split_widget()
+            if widget and widget.active_pane_id:
+                widget.split_vertical(widget.active_pane_id)
 
     def close_active_pane(self, show_message=True):
         """Close the active pane in the current tab."""
