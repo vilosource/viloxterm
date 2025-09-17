@@ -570,10 +570,10 @@ class Workspace(QWidget):
     def split_active_pane_horizontal(self):
         """Split the active pane in the current tab horizontally."""
         # Delegate to WorkspaceService for consistent code path
-        from services.service_locator import get_service
+        from services.service_locator import ServiceLocator
         from services.workspace_service import WorkspaceService
 
-        workspace_service = get_service(WorkspaceService)
+        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
         if workspace_service:
             workspace_service.split_active_pane("horizontal")
         else:
@@ -585,10 +585,10 @@ class Workspace(QWidget):
     def split_active_pane_vertical(self):
         """Split the active pane in the current tab vertically."""
         # Delegate to WorkspaceService for consistent code path
-        from services.service_locator import get_service
+        from services.service_locator import ServiceLocator
         from services.workspace_service import WorkspaceService
 
-        workspace_service = get_service(WorkspaceService)
+        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
         if workspace_service:
             workspace_service.split_active_pane("vertical")
         else:
