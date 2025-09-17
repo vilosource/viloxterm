@@ -46,13 +46,11 @@ class TerminalBridge(QObject):
     @Slot()
     def js_terminal_clicked(self):
         """Called from JavaScript when terminal is clicked."""
-        logger.debug("Terminal clicked (from JavaScript)")
         self.terminalClicked.emit()
 
     @Slot()
     def js_terminal_focused(self):
         """Called from JavaScript when terminal gains focus."""
-        logger.debug("Terminal focused (from JavaScript)")
         self.terminalFocused.emit()
 
     @Slot(str)

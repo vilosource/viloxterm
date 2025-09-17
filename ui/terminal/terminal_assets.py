@@ -201,8 +201,9 @@ class TerminalAssetBundler:
                 term = new Terminal({{
                     ...window.terminalConfig,
                     theme: currentTheme,
-                    // Performance optimization for Canvas2D
-                    rendererType: 'canvas',
+                    // Use DOM renderer to avoid Canvas2D warnings
+                    // DOM renderer is more compatible and doesn't trigger getImageData warnings
+                    rendererType: 'dom',
                     allowTransparency: false
                 }});
 
