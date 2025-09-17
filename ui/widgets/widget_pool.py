@@ -13,6 +13,7 @@ from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QSplitter, QWidget
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -54,12 +55,13 @@ class WidgetPool:
 
         logger.info(f"WidgetPool initialized with max_pool_size={max_pool_size}")
 
-    def acquire_splitter(self, orientation: Qt.Orientation) -> QSplitter:
+    def acquire_splitter(self, orientation: Qt.Orientation, parent: Optional[QWidget] = None) -> QSplitter:
         """
         Acquire a QSplitter from the pool or create a new one.
 
         Args:
             orientation: Qt.Horizontal or Qt.Vertical
+            parent: Optional parent widget to set immediately (prevents flash on Windows)
 
         Returns:
             A configured QSplitter ready for use
@@ -79,10 +81,14 @@ class WidgetPool:
                 break
 
         if not splitter:
-            # Create new splitter
-            splitter = QSplitter(orientation)
+            # Create new splitter with parent to prevent flash on Windows
+            splitter = QSplitter(orientation, parent)
             self._stats["creations"] += 1
             logger.debug(f"Creating new QSplitter (orientation={orientation})")
+        else:
+            # Set parent for reused splitter
+            if parent:
+                splitter.setParent(parent)
 
         # Configure splitter for optimal performance
         splitter.setOpaqueResize(True)
@@ -92,6 +98,11 @@ class WidgetPool:
         while splitter.count() > 0:
             widget = splitter.widget(0)
             widget.setParent(None)
+
+        # Windows-specific optimizations to prevent flashing
+        if sys.platform == "win32":
+            splitter.setAttribute(Qt.WA_DontCreateNativeAncestors, True)
+            splitter.setAttribute(Qt.WA_OpaquePaintEvent, True)
 
         # Make sure the splitter is visible (it was hidden when pooled)
         splitter.show()

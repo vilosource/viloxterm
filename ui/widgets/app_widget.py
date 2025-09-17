@@ -58,6 +58,13 @@ class AppWidget(QWidget):
         self.widget_id = widget_id
         self.widget_type = widget_type
         self.leaf_node = None  # Back-reference to tree node (set by model)
+
+        # Windows-specific optimizations to prevent flashing during creation
+        import sys
+        from PySide6.QtCore import Qt
+        if sys.platform == "win32":
+            self.setAttribute(Qt.WA_DontCreateNativeAncestors, True)
+            self.setAttribute(Qt.WA_OpaquePaintEvent, True)
         self._metadata = None  # Will be set by AppWidgetManager during creation
 
         # Lifecycle state management

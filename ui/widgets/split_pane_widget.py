@@ -59,10 +59,18 @@ class PaneContent(QWidget):
         self.header_bar = None
         self.is_active = False
 
-        # Configure widget attributes to prevent white flash
+        # Configure widget attributes to prevent white flash and window creation issues
         self.setAttribute(Qt.WA_OpaquePaintEvent, True)  # Widget paints all pixels
         self.setAttribute(Qt.WA_NoSystemBackground, True)  # No system background
         self.setAutoFillBackground(False)  # No automatic background fill
+
+        # Windows-specific optimizations to prevent flashing
+        import sys
+        if sys.platform == "win32":
+            # Prevent this widget from creating native ancestors
+            self.setAttribute(Qt.WA_DontCreateNativeAncestors, True)
+            # Only create native window if absolutely necessary
+            self.setAttribute(Qt.WA_NativeWindow, False)
 
         self.setup_ui()
 
@@ -482,8 +490,8 @@ class SplitPaneWidget(QWidget):
                 self.widget_pool.release(splitter)
             self.splitters.clear()
 
-            # Render the model's tree
-            root_widget = self.render_node(self.model.root)
+            # Render the model's tree with self as parent to prevent flash
+            root_widget = self.render_node(self.model.root, parent_widget=self)
             if root_widget:
                 self.layout.addWidget(root_widget)
 
@@ -555,8 +563,8 @@ class SplitPaneWidget(QWidget):
                 self.refresh_view()
                 return
 
-            # Create the new splitter widget for this split node
-            new_splitter = self.render_node(split_node)
+            # Create the new splitter widget for this split node with parent to prevent flash
+            new_splitter = self.render_node(split_node, parent_widget=parent_widget)
             if not new_splitter:
                 logger.warning(
                     "Failed to render split node, falling back to full refresh"
@@ -650,13 +658,14 @@ class SplitPaneWidget(QWidget):
         return None
 
     def render_node(
-        self, node: Optional[Union[LeafNode, SplitNode]]
+        self, node: Optional[Union[LeafNode, SplitNode]], parent_widget: Optional[QWidget] = None
     ) -> Optional[QWidget]:
         """
         Render a node from the model as Qt widgets.
 
         Args:
             node: Node to render
+            parent_widget: Parent widget for the created widget (prevents flash on Windows)
 
         Returns:
             QWidget representing the node
@@ -665,8 +674,10 @@ class SplitPaneWidget(QWidget):
             return None
 
         if isinstance(node, LeafNode):
-            # Create view wrapper for the AppWidget
-            wrapper = PaneContent(node)
+            # Create view wrapper for the AppWidget with parent to prevent flash
+            # Parent will be set properly when added to layout, but having a temporary
+            # parent prevents the widget from appearing as a top-level window on Windows
+            wrapper = PaneContent(node, parent=parent_widget)
             self.pane_wrappers[node.id] = wrapper
 
             # Set initial active state if this is the active pane
@@ -684,7 +695,8 @@ class SplitPaneWidget(QWidget):
             orientation = (
                 Qt.Horizontal if node.orientation == "horizontal" else Qt.Vertical
             )
-            splitter = self.widget_pool.acquire_splitter(orientation)
+            # Pass parent to prevent flash on Windows
+            splitter = self.widget_pool.acquire_splitter(orientation, parent=parent_widget)
 
             # Pool already configures optimal settings, but ensure they're set
             splitter.setOpaqueResize(
@@ -697,14 +709,14 @@ class SplitPaneWidget(QWidget):
             # Apply styling
             splitter.setStyleSheet(self._get_splitter_stylesheet())
 
-            # Render children
+            # Render children with splitter as parent to prevent flash
             if node.first:
-                first_widget = self.render_node(node.first)
+                first_widget = self.render_node(node.first, parent_widget=splitter)
                 if first_widget:
                     splitter.addWidget(first_widget)
 
             if node.second:
-                second_widget = self.render_node(node.second)
+                second_widget = self.render_node(node.second, parent_widget=splitter)
                 if second_widget:
                     splitter.addWidget(second_widget)
 
