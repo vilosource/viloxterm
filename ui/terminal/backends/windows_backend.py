@@ -62,13 +62,15 @@ class WindowsTerminalBackend(TerminalBackend):
             logger.debug(f"Windows backend: Working directory: {session.cwd or os.getcwd()}")
             logger.debug(f"Windows backend: Initial dimensions: {session.rows}x{session.cols}")
 
-            # Build full command with arguments
+            # Build command as a list for pywinpty
             if session.cmd_args:
-                full_cmd = f'"{cmd}" {" ".join(session.cmd_args)}'
+                # Pass as list when there are arguments
+                spawn_cmd = [cmd] + session.cmd_args
+                logger.debug(f"Windows backend: Command list: {spawn_cmd}")
             else:
-                full_cmd = cmd
-
-            logger.debug(f"Windows backend: Full command: {full_cmd}")
+                # Pass as simple string when no arguments
+                spawn_cmd = cmd
+                logger.debug(f"Windows backend: Command string: {spawn_cmd}")
 
             # Create PTY process with proper environment
             env = os.environ.copy()
@@ -84,7 +86,7 @@ class WindowsTerminalBackend(TerminalBackend):
                 env['OutputEncoding'] = 'utf-8'
 
             proc = winpty.PtyProcess.spawn(
-                full_cmd,
+                spawn_cmd,
                 cwd=session.cwd or os.getcwd(),
                 dimensions=(session.rows, session.cols),
                 env=env

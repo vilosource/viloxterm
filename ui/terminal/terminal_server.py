@@ -90,7 +90,7 @@ class TerminalServerManager(QObject):
             return terminal_asset_bundler.get_bundled_html(session_id, self.port)
 
         @self.socketio.on("connect", namespace="/terminal")
-        def handle_connect():
+        def handle_connect(auth=None):
             """Handle client connection."""
             session_id = request.args.get("session_id")
             if not session_id or session_id not in self.sessions:
