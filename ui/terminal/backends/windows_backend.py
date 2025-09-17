@@ -88,12 +88,33 @@ class WindowsTerminalBackend(TerminalBackend):
                 session.active = False
                 return None
 
-            # Read available output (non-blocking)
-            output = proc.read(max_bytes, blocking=False)
-            if output:
+            # For pywinpty, we need to handle reading differently
+            # The read() method in pywinpty can block, so we use a different approach
+            # We'll read in smaller chunks and use exception handling
+            output = ""
+            chunk_size = 1024  # Read in smaller chunks
+
+            # Try to read a chunk
+            # Note: This will return immediately if no data is available
+            chunk = proc.read(chunk_size)
+            if chunk:
+                output = chunk
                 session.last_activity = time.time()
+
+                # Try to read more if available (up to max_bytes)
+                while len(output) < max_bytes:
+                    try:
+                        more_data = proc.read(min(chunk_size, max_bytes - len(output)))
+                        if not more_data:
+                            break
+                        output += more_data
+                    except:
+                        # No more data available
+                        break
+
                 # Windows uses \r\n, but xterm.js expects \n
                 return output.replace('\r\n', '\n')
+
             return None
 
         except EOFError:
@@ -101,8 +122,14 @@ class WindowsTerminalBackend(TerminalBackend):
             logger.debug(f"Process ended for session {session.session_id}")
             session.active = False
             return None
+        except TimeoutError:
+            # No data available right now
+            return None
         except Exception as e:
-            logger.error(f"Read error for session {session.session_id}: {e}")
+            # Log only if it's not a known "no data" situation
+            error_msg = str(e).lower()
+            if "timeout" not in error_msg and "would block" not in error_msg:
+                logger.error(f"Read error for session {session.session_id}: {e}")
             return None
 
     def write_input(self, session: TerminalSession, data: str) -> bool:
