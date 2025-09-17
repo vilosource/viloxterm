@@ -107,6 +107,40 @@ class WorkspacePaneManager:
         logger.info(f"Closed pane {pane_id}")
         return True
 
+    def close_pane(self, pane_id: str) -> bool:
+        """
+        Close a specific pane by its ID.
+
+        Args:
+            pane_id: ID of the pane to close
+
+        Returns:
+            True if pane was closed
+        """
+        if not self._workspace:
+            return False
+
+        # Get current split widget
+        widget = self._workspace.get_current_split_widget()
+        if not widget:
+            logger.warning("No split widget available")
+            return False
+
+        # Can't close if it's the only pane
+        if widget.get_pane_count() <= 1:
+            logger.info("Cannot close the last pane in tab")
+            return False
+
+        # Close the specific pane
+        result = widget.close_pane(pane_id)
+
+        if result:
+            logger.info(f"Closed pane {pane_id}")
+        else:
+            logger.warning(f"Failed to close pane {pane_id}")
+
+        return result
+
     def focus_pane(self, pane_id: str) -> bool:
         """
         Focus a specific pane.

@@ -113,8 +113,22 @@ def close_pane_command(context: CommandContext) -> CommandResult:
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
 
-        # Use WorkspaceService for consistent code path
-        result = workspace_service.close_active_pane()
+        # Get the pane from context if provided
+        pane = context.args.get("pane")
+        pane_id = None
+
+        # Extract pane_id from the pane object if it has a leaf_node
+        if pane and hasattr(pane, "leaf_node") and hasattr(pane.leaf_node, "id"):
+            pane_id = pane.leaf_node.id
+            logger.debug(f"Closing specific pane with ID: {pane_id}")
+
+        # If we have a specific pane ID, close that pane
+        if pane_id:
+            result = workspace_service.close_pane(pane_id)
+        else:
+            # Fall back to closing active pane if no specific pane provided
+            result = workspace_service.close_active_pane()
+
         if result:
             return CommandResult(success=True, value={"action": "close_pane"})
         else:

@@ -414,6 +414,25 @@ class WorkspaceService(Service):
 
         return success
 
+    def close_pane(self, pane_id: str) -> bool:
+        """Close a specific pane by its ID."""
+        self.validate_initialized()
+
+        # Delegate to pane manager
+        success = self._pane_manager.close_pane(pane_id)
+
+        if success:
+            # Notify observers
+            self.notify("pane_closed", {"pane_id": pane_id})
+
+            # Update context
+            from core.context.manager import context_manager
+
+            context_manager.set("workbench.pane.count", self.get_pane_count())
+            context_manager.set("workbench.pane.hasMultiple", self.get_pane_count() > 1)
+
+        return success
+
     def focus_pane(self, pane_id: str) -> bool:
         """Focus a specific pane."""
         self.validate_initialized()

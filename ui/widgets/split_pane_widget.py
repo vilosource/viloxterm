@@ -356,7 +356,7 @@ class SplitPaneWidget(QWidget):
 
         # Connect controller signals to our signals
         self.controller.pane_added.connect(self.pane_added)
-        self.controller.pane_removed.connect(self.pane_removed)
+        self.controller.pane_removed.connect(self._handle_pane_removed)
         self.controller.active_pane_changed.connect(self.active_pane_changed)
         self.controller.layout_changed.connect(lambda: self.refresh_view())
         self.controller.pane_split.connect(self.incremental_update_for_split)
@@ -816,6 +816,21 @@ class SplitPaneWidget(QWidget):
     def close_pane(self, pane_id: str):
         """Close a pane - delegate to controller."""
         return self.controller.close_pane(pane_id)
+
+    def _handle_pane_removed(self, pane_id: str):
+        """
+        Handle pane removal with incremental update instead of full refresh.
+
+        Args:
+            pane_id: ID of the pane that was removed
+        """
+        # Simply refresh the view for now - the model has already been updated
+        # We refresh instead of trying to surgically remove widgets because
+        # the tree structure has changed and splitters need to be reorganized
+        self.refresh_view()
+
+        # Emit signal for external listeners
+        self.pane_removed.emit(pane_id)
 
     def on_terminal_close_requested(self, pane_id: str):
         """

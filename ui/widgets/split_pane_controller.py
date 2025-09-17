@@ -201,7 +201,7 @@ class SplitPaneController(QObject):
         """
         if self.model.close_pane(pane_id):
             self.pane_removed.emit(pane_id)
-            self.layout_changed.emit()
+            # Don't emit layout_changed here - pane_removed will handle incremental update
             return True
 
         return False
