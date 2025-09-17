@@ -9,50 +9,24 @@ import logging
 import os
 import shlex
 import signal
-import struct
 import sys
 import threading
-
-# Platform-specific imports
-if sys.platform != 'win32':
-    import pty
-    import select
-    import termios
-else:
-    # Windows doesn't have these modules
-    pty = None
-    select = None
-    termios = None
 import time
 import uuid
-from dataclasses import dataclass, field
 from typing import Optional
 
 from flask import Flask, request
 from flask_socketio import SocketIO, join_room, leave_room
 from PySide6.QtCore import QObject, Signal
 
+from ui.terminal.backends import TerminalBackendFactory, TerminalSession
 from ui.terminal.terminal_assets import terminal_asset_bundler
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class TerminalSession:
-    """Represents a single terminal session."""
-
-    session_id: str
-    fd: Optional[int] = None
-    child_pid: Optional[int] = None
-    command: str = "bash"
-    cmd_args: list = field(default_factory=list)
-    cwd: Optional[str] = None
-    created_at: float = field(default_factory=time.time)
-    last_activity: float = field(default_factory=time.time)
-    rows: int = 24
-    cols: int = 80
-    active: bool = True
+# TerminalSession is now imported from backends.base
 
 
 class TerminalServerManager(QObject):
@@ -90,6 +64,7 @@ class TerminalServerManager(QObject):
         self.sessions: dict[str, TerminalSession] = {}
         self.running = False
         self.max_sessions = 20  # Increased limit for better UX
+        self.backend = None  # Will be initialized when needed
         self._setup_flask_app()
         self._initialized = True
 
@@ -152,12 +127,11 @@ class TerminalServerManager(QObject):
             session_id = data.get("session_id")
             if session_id and session_id in self.sessions:
                 session = self.sessions[session_id]
-                if session.fd:
-                    session.last_activity = time.time()
-                    os.write(session.fd, data["input"].encode())
-                    logger.debug(
-                        f"Input to session {session_id}: {data['input'][:20]}..."
-                    )
+                if self.backend and session:
+                    if self.backend.write_input(session, data["input"]):
+                        logger.debug(
+                            f"Input to session {session_id}: {data['input'][:20]}..."
+                        )
 
         @self.socketio.on("resize", namespace="/terminal")
         def handle_resize(data):
@@ -165,13 +139,13 @@ class TerminalServerManager(QObject):
             session_id = data.get("session_id")
             if session_id and session_id in self.sessions:
                 session = self.sessions[session_id]
-                if session.fd:
-                    session.rows = data.get("rows", 24)
-                    session.cols = data.get("cols", 80)
-                    self._set_winsize(session.fd, session.rows, session.cols)
-                    logger.debug(
-                        f"Resized session {session_id} to {session.rows}x{session.cols}"
-                    )
+                if self.backend and session:
+                    rows = data.get("rows", 24)
+                    cols = data.get("cols", 80)
+                    if self.backend.resize(session, rows, cols):
+                        logger.debug(
+                            f"Resized session {session_id} to {rows}x{cols}"
+                        )
 
     def _start_terminal_process(self, session_id: str):
         """Start a terminal process for a session."""
@@ -179,85 +153,64 @@ class TerminalServerManager(QObject):
         if not session or session.child_pid:
             return
 
-        if sys.platform == 'win32':
-            # Windows doesn't support pty.fork()
-            # This would require using Windows-specific APIs like ConPTY
-            logger.error("Terminal sessions are not supported on Windows yet")
-            return
+        # Initialize backend if not already done
+        if not self.backend:
+            try:
+                self.backend = TerminalBackendFactory.create_backend()
+            except Exception as e:
+                logger.error(f"Failed to create terminal backend: {e}")
+                return
 
-        # Fork PTY (Unix/Linux/Mac only)
-        child_pid, fd = pty.fork()
-        if child_pid == 0:
-            # Child process - execute shell
-            # Change to working directory if specified
-            if session.cwd and os.path.exists(session.cwd):
-                os.chdir(session.cwd)
-            subprocess_cmd = [session.command] + session.cmd_args
-            os.execvp(subprocess_cmd[0], subprocess_cmd)
-        else:
-            # Parent process - store session info
-            session.fd = fd
-            session.child_pid = child_pid
-            self._set_winsize(fd, session.rows, session.cols)
-
+        # Start the process using the backend
+        if self.backend.start_process(session):
             # Start background task to read output
             self.socketio.start_background_task(
                 target=self._read_and_forward_pty_output, session_id=session_id
             )
             logger.info(
-                f"Started terminal process for session {session_id}, PID: {child_pid}"
+                f"Started terminal process for session {session_id}, PID: {session.child_pid}"
             )
 
     def _read_and_forward_pty_output(self, session_id: str):
         """Read PTY output and forward to client."""
-        max_read_bytes = 1024 * 20
         session = self.sessions.get(session_id)
 
         while self.running and session and session.active:
-            if not session.fd:
+            if not self.backend:
                 break
 
             try:
-                if sys.platform == 'win32':
-                    # Windows doesn't support select on file descriptors
-                    logger.warning("Terminal output reading not supported on Windows")
+                # Use backend to poll and read output
+                if self.backend.poll_process(session, timeout=0.01):
+                    output = self.backend.read_output(session)
+                    if output:
+                        self.socketio.emit(
+                            "pty-output",
+                            {"output": output, "session_id": session_id},
+                            namespace="/terminal",
+                            room=session_id,
+                        )
+
+                # Check if process is still alive
+                if not self.backend.is_process_alive(session):
+                    logger.info(f"Terminal process ended for session {session_id}")
+                    session.active = False
+                    # Emit signal to notify UI that terminal session ended
+                    self.session_ended.emit(session_id)
                     break
 
-                # Use select to check if data is available (Unix/Linux/Mac)
-                timeout_sec = 0.01
-                data_ready, _, _ = select.select([session.fd], [], [], timeout_sec)
-
-                if data_ready:
-                    output = os.read(session.fd, max_read_bytes).decode(errors="ignore")
-                    self.socketio.emit(
-                        "pty-output",
-                        {"output": output, "session_id": session_id},
-                        namespace="/terminal",
-                        room=session_id,
-                    )
-                    session.last_activity = time.time()
-            except OSError:
-                # Terminal process ended
-                logger.info(f"Terminal process ended for session {session_id}")
+            except Exception as e:
+                logger.error(f"Error reading terminal output: {e}")
                 session.active = False
-                # Emit signal to notify UI that terminal session ended
                 self.session_ended.emit(session_id)
                 break
 
             self.socketio.sleep(0.01)
 
-    def _set_winsize(self, fd: int, rows: int, cols: int, xpix: int = 0, ypix: int = 0):
-        """Set terminal window size."""
-        if sys.platform != 'win32':
-            # Unix/Linux/Mac - use fcntl
-            import fcntl
-            winsize = struct.pack("HHHH", rows, cols, xpix, ypix)
-            fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
-        else:
-            # Windows - pty.fork() doesn't work on Windows anyway
-            # This is a placeholder - full Windows support would require
-            # using Windows-specific APIs like ConPTY
-            logger.warning("Terminal resize not fully supported on Windows")
+    def _set_winsize(self, session: TerminalSession, rows: int, cols: int):
+        """Set terminal window size using backend."""
+        if self.backend:
+            self.backend.resize(session, rows, cols)
 
     def create_session(
         self, command: str = "bash", cmd_args: str = "", cwd: Optional[str] = None
@@ -298,23 +251,9 @@ class TerminalServerManager(QObject):
 
         session.active = False
 
-        # Kill terminal process
-        if session.child_pid:
-            try:
-                os.kill(session.child_pid, signal.SIGTERM)
-                # Give it time to terminate gracefully
-                time.sleep(0.1)
-                # Force kill if still alive
-                os.kill(session.child_pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-
-        # Close file descriptor
-        if session.fd:
-            try:
-                os.close(session.fd)
-            except OSError:
-                pass
+        # Use backend to clean up the session
+        if self.backend:
+            self.backend.cleanup(session)
 
         # Remove from sessions
         del self.sessions[session_id]
@@ -372,6 +311,10 @@ class TerminalServerManager(QObject):
         for session_id in session_ids:
             self.destroy_session(session_id)
 
+        # Reset the backend factory to clean up backend
+        TerminalBackendFactory.reset()
+        self.backend = None
+
         # Stop server
         if self.socketio:
             try:
@@ -406,7 +349,9 @@ class TerminalServerManager(QObject):
             if current_time - session.last_activity > timeout_seconds:
                 sessions_to_remove.append(session_id)
             # Also clean up sessions where the process has died
-            elif session.child_pid and not session.active:
+            elif self.backend and not self.backend.is_process_alive(session):
+                sessions_to_remove.append(session_id)
+            elif not session.active:
                 sessions_to_remove.append(session_id)
 
         for session_id in sessions_to_remove:

@@ -11,6 +11,7 @@ simple-websocket>=1.0.0
 
 # Cross-platform Support
 portalocker>=2.8.0  # Cross-platform file locking
+pywinpty>=2.0.0 ; sys_platform == 'win32'  # Windows terminal support
 
 # Testing Dependencies
 pytest>=8.0.0
