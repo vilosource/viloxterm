@@ -116,8 +116,11 @@ class PaneContent(QWidget):
         # Add the AppWidget from the model
         if self.leaf_node.app_widget:
             layout.addWidget(self.leaf_node.app_widget)
+            # Ensure AppWidget is visible after being added to layout
+            # This is especially important after refresh operations where widgets are reparented
+            self.leaf_node.app_widget.show()
             logger.debug(
-                f"Added AppWidget {self.leaf_node.app_widget.widget_id} to PaneContent"
+                f"Added AppWidget {self.leaf_node.app_widget.widget_id} to PaneContent and made visible"
             )
         else:
             logger.error(
