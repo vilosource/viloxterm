@@ -3,11 +3,11 @@
 Theme data model and related classes.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, Optional, List, Tuple
-from pathlib import Path
 import json
 import logging
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Optional
 
 from .typography import ThemeTypography
 
@@ -24,7 +24,7 @@ class ThemeInfo:
     author: str = "ViloxTerm"
     extends: Optional[str] = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
             'id': self.id,
@@ -46,7 +46,7 @@ class Theme:
     version: str
     author: str
     extends: Optional[str] = None
-    colors: Dict[str, str] = field(default_factory=dict)
+    colors: dict[str, str] = field(default_factory=dict)
     typography: Optional[ThemeTypography] = None
 
     def get_color(self, key: str, fallback: str = "#000000") -> str:
@@ -73,7 +73,7 @@ class Theme:
             return self.typography
         return ThemeTypography()  # Return default typography
 
-    def validate(self) -> Tuple[bool, List[str]]:
+    def validate(self) -> tuple[bool, list[str]]:
         """
         Validate theme has required colors.
 
@@ -160,7 +160,7 @@ class Theme:
 
             self.typography = ThemeTypography.from_dict(child_typography_dict)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert theme to dictionary."""
         result = {
             'id': self.id,
@@ -182,7 +182,7 @@ class Theme:
         return json.dumps(self.to_dict(), indent=2)
 
     @classmethod
-    def from_dict(cls, data: Dict) -> 'Theme':
+    def from_dict(cls, data: dict) -> 'Theme':
         """
         Create theme from dictionary.
 
@@ -232,7 +232,7 @@ class Theme:
         Returns:
             Theme instance
         """
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, encoding='utf-8') as f:
             data = json.load(f)
         return cls.from_dict(data)
 

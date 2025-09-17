@@ -4,14 +4,12 @@ Test script for ViloxTerm deployment.
 Verifies that the deployed executable works correctly.
 """
 
-import os
-import sys
-import subprocess
 import platform
+import subprocess
+import sys
 import time
 from pathlib import Path
-import json
-import tempfile
+
 
 class DeploymentTester:
     """Test deployed ViloxTerm executable."""
@@ -49,10 +47,10 @@ class DeploymentTester:
         try:
             result = test_func()
             if result:
-                print(f"  ✓ PASSED")
+                print("  ✓ PASSED")
                 self.test_results.append((name, True, None))
             else:
-                print(f"  ✗ FAILED")
+                print("  ✗ FAILED")
                 self.test_results.append((name, False, "Test returned False"))
         except Exception as e:
             print(f"  ✗ FAILED: {e}")

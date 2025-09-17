@@ -9,7 +9,7 @@ throughout the application, ensuring consistency and type safety.
 
 class CommandID:
     """Command ID constants organized by category."""
-    
+
     # ========== File Commands ==========
     class File:
         NEW_FILE = "file.new"
@@ -23,7 +23,7 @@ class CommandID:
         CLOSE_ALL_TABS = "file.closeAllTabs"
         REOPEN_CLOSED_TAB = "file.reopenClosedTab"
         EXIT = "file.exit"
-    
+
     # ========== Edit Commands ==========
     class Edit:
         UNDO = "editor.undo"
@@ -35,7 +35,7 @@ class CommandID:
         FIND = "editor.find"
         REPLACE = "editor.replace"
         GO_TO_LINE = "editor.goToLine"
-    
+
     # ========== View Commands ==========
     class View:
         TOGGLE_SIDEBAR = "view.toggleSidebar"
@@ -50,7 +50,7 @@ class CommandID:
         SHOW_SEARCH = "view.showSearch"
         SHOW_GIT = "view.showGit"
         SHOW_EXTENSIONS = "view.showExtensions"
-    
+
     # ========== Workspace Commands ==========
     class Workspace:
         SPLIT_RIGHT = "workbench.action.splitRight"
@@ -64,7 +64,7 @@ class CommandID:
         FOCUS_BELOW_PANE = "workbench.action.focusBelowPane"
         MAXIMIZE_PANE = "workbench.action.maximizePane"
         RESTORE_PANE = "workbench.action.restorePane"
-    
+
     # ========== Navigation Commands ==========
     class Navigation:
         NEXT_TAB = "workbench.action.nextTab"
@@ -80,7 +80,7 @@ class CommandID:
         OPEN_EDITOR_AT_INDEX_9 = "workbench.action.openEditorAtIndex9"
         FOCUS_NEXT_GROUP = "workbench.action.focusNextGroup"
         FOCUS_PREVIOUS_GROUP = "workbench.action.focusPreviousGroup"
-    
+
     # ========== Terminal Commands ==========
     class Terminal:
         CLEAR = "terminal.clear"
@@ -91,19 +91,19 @@ class CommandID:
         RESTART = "terminal.restart"
         FOCUS = "terminal.focus"
         SPLIT = "terminal.split"
-    
+
     # ========== Command Palette ==========
     class CommandPalette:
         SHOW = "commandPalette.show"
         SHOW_RECENT = "commandPalette.showRecent"
         CLEAR_RECENT = "commandPalette.clearRecent"
-    
+
     # ========== Quick Open ==========
     class QuickOpen:
         SHOW = "quickOpen.show"
         SHOW_FILES = "quickOpen.showFiles"
         SHOW_SYMBOLS = "quickOpen.showSymbols"
-    
+
     # ========== Settings ==========
     class Settings:
         OPEN = "settings.open"
@@ -113,7 +113,7 @@ class CommandID:
         TOGGLE_AUTO_SAVE = "settings.toggleAutoSave"
         SET_THEME = "settings.setTheme"
         SET_KEYMAP = "settings.setKeymap"
-    
+
     # ========== Debug Commands ==========
     class Debug:
         SHOW_CONTEXT = "debug.showContext"
@@ -123,7 +123,7 @@ class CommandID:
         RELOAD_WINDOW = "debug.reloadWindow"
         TOGGLE_DEV_TOOLS = "debug.toggleDevTools"
         SHOW_LOGS = "debug.showLogs"
-    
+
     # ========== Help Commands ==========
     class Help:
         ABOUT = "help.about"
@@ -157,40 +157,40 @@ COMMAND_PALETTE_SHOW = CommandID.CommandPalette.SHOW
 def validate_command_id(command_id: str) -> bool:
     """
     Validate that a command ID follows the naming convention.
-    
+
     Args:
         command_id: Command ID to validate
-        
+
     Returns:
         True if valid, False otherwise
     """
     if not command_id:
         return False
-    
+
     # Command IDs should be in format: category.action or category.subcategory.action
     parts = command_id.split('.')
     if len(parts) < 2 or len(parts) > 4:
         return False
-    
+
     # Each part should be non-empty and contain only alphanumeric characters
     for part in parts:
         if not part or not part.replace('_', '').replace('-', '').isalnum():
             return False
-    
+
     return True
 
 
 def get_command_category(command_id: str) -> str:
     """
     Extract the category from a command ID.
-    
+
     Args:
         command_id: Command ID
-        
+
     Returns:
         Category name or empty string if invalid
     """
     if not validate_command_id(command_id):
         return ""
-    
+
     return command_id.split('.')[0]

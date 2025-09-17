@@ -6,10 +6,10 @@ This module defines JSON schemas for validating settings data and provides
 validation functions to ensure settings conform to expected structure and types.
 """
 
-from typing import Dict, Any, List, Optional, Union
-import logging
 import json
+import logging
 from pathlib import Path
+from typing import Any, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ KEYBOARD_SHORTCUTS_SCHEMA = {
 }
 
 THEME_SCHEMA = {
-    "type": "object", 
+    "type": "object",
     "properties": {
         "theme": {"type": "string", "enum": ["light", "dark", "auto"]},
         "accent_color": {"type": "string", "pattern": r"^#[0-9A-Fa-f]{6}$"},
@@ -187,7 +187,7 @@ SETTINGS_SCHEMA = {
 
 class SettingsSchema:
     """Settings schema validator with detailed error reporting."""
-    
+
     def __init__(self):
         """Initialize schema validator."""
         self.schemas = {
@@ -202,7 +202,7 @@ class SettingsSchema:
             "privacy": PRIVACY_SCHEMA,
             "root": SETTINGS_SCHEMA
         }
-        
+
         # Try to import jsonschema for validation
         try:
             import jsonschema
@@ -212,14 +212,14 @@ class SettingsSchema:
             logger.warning("jsonschema not available, using basic validation")
             self.validator = None
             self._jsonschema_available = False
-    
-    def validate_settings(self, settings: Dict[str, Any]) -> tuple[bool, List[str]]:
+
+    def validate_settings(self, settings: dict[str, Any]) -> tuple[bool, list[str]]:
         """
         Validate complete settings dictionary.
-        
+
         Args:
             settings: Settings dictionary to validate
-            
+
         Returns:
             Tuple of (is_valid, error_messages)
         """
@@ -227,92 +227,92 @@ class SettingsSchema:
             return self._validate_with_jsonschema(settings, SETTINGS_SCHEMA)
         else:
             return self._validate_basic(settings)
-    
-    def validate_category(self, category: str, data: Dict[str, Any]) -> tuple[bool, List[str]]:
+
+    def validate_category(self, category: str, data: dict[str, Any]) -> tuple[bool, list[str]]:
         """
         Validate settings for a specific category.
-        
+
         Args:
             category: Category name
             data: Settings data for category
-            
+
         Returns:
             Tuple of (is_valid, error_messages)
         """
         if category not in self.schemas:
             return False, [f"Unknown settings category: {category}"]
-        
+
         schema = self.schemas[category]
-        
+
         if self._jsonschema_available:
             return self._validate_with_jsonschema(data, schema)
         else:
             return self._validate_category_basic(category, data)
-    
-    def _validate_with_jsonschema(self, data: Dict[str, Any], schema: Dict[str, Any]) -> tuple[bool, List[str]]:
+
+    def _validate_with_jsonschema(self, data: dict[str, Any], schema: dict[str, Any]) -> tuple[bool, list[str]]:
         """Validate using jsonschema library."""
         try:
             import jsonschema
             validator = jsonschema.Draft7Validator(schema)
             errors = list(validator.iter_errors(data))
-            
+
             if not errors:
                 return True, []
-            
+
             error_messages = []
             for error in errors:
                 path = ".".join(str(p) for p in error.path) if error.path else "root"
                 error_messages.append(f"{path}: {error.message}")
-            
+
             return False, error_messages
-            
+
         except Exception as e:
             logger.error(f"Schema validation error: {e}")
             return False, [f"Validation error: {e}"]
-    
-    def _validate_basic(self, settings: Dict[str, Any]) -> tuple[bool, List[str]]:
+
+    def _validate_basic(self, settings: dict[str, Any]) -> tuple[bool, list[str]]:
         """Basic validation without jsonschema."""
         errors = []
-        
+
         # Check required structure
         if not isinstance(settings, dict):
             return False, ["Settings must be a dictionary"]
-        
+
         # Validate each category
         for category, data in settings.items():
             if category in ["settings_version", "last_migration"]:
                 continue  # Skip meta fields
-                
+
             if category not in self.schemas:
                 errors.append(f"Unknown category: {category}")
                 continue
-            
+
             is_valid, category_errors = self._validate_category_basic(category, data)
             if not is_valid:
                 errors.extend(f"{category}.{err}" for err in category_errors)
-        
+
         return len(errors) == 0, errors
-    
-    def _validate_category_basic(self, category: str, data: Dict[str, Any]) -> tuple[bool, List[str]]:
+
+    def _validate_category_basic(self, category: str, data: dict[str, Any]) -> tuple[bool, list[str]]:
         """Basic category validation."""
         errors = []
-        
+
         if not isinstance(data, dict):
             return False, ["Category data must be a dictionary"]
-        
+
         # Basic type checking for known critical settings
         if category == "command_palette":
             if "max_results" in data and not isinstance(data["max_results"], int):
                 errors.append("max_results must be an integer")
             if "show_recent_commands" in data and not isinstance(data["show_recent_commands"], bool):
                 errors.append("show_recent_commands must be a boolean")
-                
+
         elif category == "theme":
             if "theme" in data and data["theme"] not in ["light", "dark", "auto"]:
                 errors.append("theme must be 'light', 'dark', or 'auto'")
             if "font_size" in data and not isinstance(data["font_size"], int):
                 errors.append("font_size must be an integer")
-                
+
         elif category == "keyboard_shortcuts":
             if not isinstance(data, dict):
                 errors.append("keyboard_shortcuts must be a dictionary")
@@ -320,17 +320,17 @@ class SettingsSchema:
                 for cmd_id, shortcut in data.items():
                     if not isinstance(shortcut, str):
                         errors.append(f"{cmd_id}: shortcut must be a string")
-        
+
         return len(errors) == 0, errors
 
 
-def validate_settings(settings: Dict[str, Any]) -> tuple[bool, List[str]]:
+def validate_settings(settings: dict[str, Any]) -> tuple[bool, list[str]]:
     """
     Validate settings dictionary against schema.
-    
+
     Args:
         settings: Settings to validate
-        
+
     Returns:
         Tuple of (is_valid, error_messages)
     """
@@ -341,29 +341,29 @@ def validate_settings(settings: Dict[str, Any]) -> tuple[bool, List[str]]:
 def validate_keyboard_shortcut(shortcut: str) -> bool:
     """
     Validate a keyboard shortcut string.
-    
+
     Args:
         shortcut: Shortcut string to validate
-        
+
     Returns:
         True if shortcut is valid
     """
     if not shortcut or shortcut.strip() == "":
         return True  # Empty shortcuts are valid (disabled)
-    
+
     # Basic validation - should contain only valid key combinations
     import re
     pattern = r"^(ctrl\+|alt\+|shift\+|meta\+)*[a-zA-Z0-9\+\-\\\[\]\/;'`~,\.<>\?:\"{}|!@#$%^&*()_=]$"
     return re.match(pattern, shortcut.lower()) is not None
 
 
-def get_schema_for_category(category: str) -> Optional[Dict[str, Any]]:
+def get_schema_for_category(category: str) -> Optional[dict[str, Any]]:
     """
     Get JSON schema for a specific category.
-    
+
     Args:
         category: Category name
-        
+
     Returns:
         Schema dictionary or None if not found
     """
@@ -374,22 +374,22 @@ def get_schema_for_category(category: str) -> Optional[Dict[str, Any]]:
 def export_schemas_json(output_path: Union[str, Path]) -> bool:
     """
     Export all schemas to JSON file for documentation.
-    
+
     Args:
         output_path: Path to output JSON file
-        
+
     Returns:
         True if export successful
     """
     try:
         schema_obj = SettingsSchema()
-        
+
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(schema_obj.schemas, f, indent=2, sort_keys=True)
-        
+
         logger.info(f"Schemas exported to {output_path}")
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to export schemas: {e}")
         return False
@@ -398,21 +398,21 @@ def export_schemas_json(output_path: Union[str, Path]) -> bool:
 if __name__ == "__main__":
     # Test schema validation
     from .defaults import DEFAULT_SETTINGS
-    
+
     schema = SettingsSchema()
     is_valid, errors = schema.validate_settings(DEFAULT_SETTINGS)
-    
+
     print(f"Default settings validation: {'PASS' if is_valid else 'FAIL'}")
     if errors:
         for error in errors:
             print(f"  - {error}")
-    
+
     # Test individual categories
     print("\nCategory validation:")
     for category, data in DEFAULT_SETTINGS.items():
         if category in ["settings_version", "last_migration"]:
             continue
-        
+
         is_valid, errors = schema.validate_category(category, data)
         status = "PASS" if is_valid else "FAIL"
         print(f"  {category}: {status}")

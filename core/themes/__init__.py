@@ -8,8 +8,8 @@ This module provides theme management capabilities including:
 - Theme constants and schemas
 """
 
-from core.themes.theme import Theme, ThemeInfo
 from core.themes.constants import ThemeColors
+from core.themes.theme import Theme, ThemeInfo
 
 __all__ = [
     'Theme',

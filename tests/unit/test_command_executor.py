@@ -11,16 +11,14 @@ This test module follows Test Monkey principles:
 - Add edge cases for all inputs
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
 from collections import deque
-import logging
+from datetime import datetime
+from unittest.mock import Mock, patch
 
+from core.commands.base import Command, CommandCategory, CommandContext, CommandResult
 from core.commands.executor import CommandExecutor, CommandHistoryEntry, execute_command
-from core.commands.base import Command, CommandContext, CommandResult, CommandCategory
 from core.commands.registry import command_registry
-from core.commands.validation import ValidationError, CommandValidationSpec, ParameterSpec, String
+from core.commands.validation import ValidationError
 
 
 class TestCommandHistoryEntry:

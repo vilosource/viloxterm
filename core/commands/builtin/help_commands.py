@@ -5,9 +5,10 @@ Help-related commands for ViloxTerm.
 Provides commands for help, about, and documentation access.
 """
 
-from core.commands.decorators import command
-from core.commands.base import CommandContext, CommandResult
 import logging
+
+from core.commands.base import CommandContext, CommandResult
+from core.commands.decorators import command
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +22,8 @@ logger = logging.getLogger(__name__)
 def show_about_command(context: CommandContext) -> CommandResult:
     """Show the About dialog."""
     try:
-        from ui.dialogs.about_dialog import AboutDialog
         from services.ui_service import UIService
+        from ui.dialogs.about_dialog import AboutDialog
 
         ui_service = context.get_service(UIService)
         if not ui_service:
@@ -64,8 +65,9 @@ def show_about_command(context: CommandContext) -> CommandResult:
 def open_documentation_command(context: CommandContext) -> CommandResult:
     """Open the documentation in the default browser."""
     try:
-        from PySide6.QtGui import QDesktopServices
         from PySide6.QtCore import QUrl
+        from PySide6.QtGui import QDesktopServices
+
         from core.version import APP_URL
 
         # For now, open the GitHub repository
@@ -95,8 +97,9 @@ def open_documentation_command(context: CommandContext) -> CommandResult:
 def report_issue_command(context: CommandContext) -> CommandResult:
     """Open the issue tracker in the default browser."""
     try:
-        from PySide6.QtGui import QDesktopServices
         from PySide6.QtCore import QUrl
+        from PySide6.QtGui import QDesktopServices
+
         from core.version import APP_URL
 
         issues_url = f"{APP_URL}/issues"
@@ -125,8 +128,9 @@ def check_for_updates_command(context: CommandContext) -> CommandResult:
     """Check for application updates."""
     try:
         from PySide6.QtWidgets import QMessageBox
+
+        from core.version import APP_NAME, __version__
         from services.ui_service import UIService
-        from core.version import __version__, APP_NAME
 
         ui_service = context.get_service(UIService)
         if not ui_service:

@@ -12,14 +12,14 @@ through specialized manager components. Follows Test Monkey principles:
 - Test edge cases for all operations
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch, call
-from typing import Dict, Any
+from unittest.mock import Mock, patch
 
-from services.workspace_service import WorkspaceService
-from services.workspace_widget_registry import WorkspaceWidgetRegistry
-from services.workspace_tab_manager import WorkspaceTabManager
+import pytest
+
 from services.workspace_pane_manager import WorkspacePaneManager
+from services.workspace_service import WorkspaceService
+from services.workspace_tab_manager import WorkspaceTabManager
+from services.workspace_widget_registry import WorkspaceWidgetRegistry
 
 
 class TestWorkspaceServiceInitialization:

@@ -5,7 +5,7 @@ Theme property categorization.
 Organizes theme properties into logical categories for the theme editor.
 """
 
-from typing import Dict, List, Tuple
+
 from core.themes.constants import ThemeColors
 
 
@@ -13,7 +13,7 @@ class ThemePropertyCategories:
     """Organize theme properties into logical categories."""
 
     @staticmethod
-    def get_categories() -> Dict[str, Dict[str, List[Tuple[str, str]]]]:
+    def get_categories() -> dict[str, dict[str, list[tuple[str, str]]]]:
         """
         Get hierarchical categorization of theme properties.
 
@@ -242,7 +242,7 @@ class ThemePropertyCategories:
         }
 
     @staticmethod
-    def get_all_properties() -> List[Tuple[str, str, str, str]]:
+    def get_all_properties() -> list[tuple[str, str, str, str]]:
         """
         Get flat list of all properties with full categorization.
 
@@ -260,7 +260,7 @@ class ThemePropertyCategories:
         return result
 
     @staticmethod
-    def get_properties_by_category(category: str, subcategory: str = None) -> List[Tuple[str, str]]:
+    def get_properties_by_category(category: str, subcategory: str = None) -> list[tuple[str, str]]:
         """
         Get properties for a specific category/subcategory.
 
@@ -286,7 +286,7 @@ class ThemePropertyCategories:
         return result
 
     @staticmethod
-    def search_properties(query: str) -> List[Tuple[str, str, str, str]]:
+    def search_properties(query: str) -> list[tuple[str, str, str, str]]:
         """
         Search properties by key or description.
 
@@ -306,7 +306,7 @@ class ThemePropertyCategories:
         return result
 
     @staticmethod
-    def get_required_properties() -> List[str]:
+    def get_required_properties() -> list[str]:
         """
         Get list of required theme properties.
 

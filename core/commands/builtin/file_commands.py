@@ -3,13 +3,13 @@
 File-related commands using the service layer.
 """
 
-from core.commands.base import Command, CommandResult, CommandContext
-from core.commands.registry import CommandRegistry
-from core.commands.decorators import command
-from services.workspace_service import WorkspaceService
-from services.terminal_service import TerminalService
-from services.state_service import StateService
 import logging
+
+from core.commands.base import CommandContext, CommandResult
+from core.commands.decorators import command
+from services.state_service import StateService
+from services.terminal_service import TerminalService
+from services.workspace_service import WorkspaceService
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +28,10 @@ def new_editor_tab_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         name = context.args.get('name')
         index = workspace_service.add_editor_tab(name)
-        
+
         return CommandResult(
             success=True,
             value={'index': index, 'name': name or f"Editor {index + 1}"}
@@ -54,22 +54,22 @@ def new_terminal_tab_command(context: CommandContext) -> CommandResult:
     try:
         workspace_service = context.get_service(WorkspaceService)
         terminal_service = context.get_service(TerminalService)
-        
+
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         # Ensure terminal server is running
         if terminal_service and not terminal_service.is_server_running():
             terminal_service.start_server()
-        
+
         name = context.args.get('name')
         index = workspace_service.add_terminal_tab(name)
-        
+
         # Create a terminal session for this tab
         if terminal_service:
             session_id = terminal_service.create_session()
             logger.debug(f"Created terminal session {session_id} for tab {index}")
-        
+
         return CommandResult(
             success=True,
             value={'index': index, 'name': name or f"Terminal {index + 1}"}
@@ -106,15 +106,15 @@ def close_tab_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         index = context.args.get('index')  # Optional specific tab index
         success = workspace_service.close_tab(index)
-        
+
         if success:
             return CommandResult(success=True)
         else:
             return CommandResult(success=False, error="Failed to close tab")
-            
+
     except Exception as e:
         logger.error(f"Failed to close tab: {e}")
         return CommandResult(success=False, error=str(e))
@@ -133,15 +133,15 @@ def save_state_command(context: CommandContext) -> CommandResult:
         state_service = context.get_service(StateService)
         if not state_service:
             return CommandResult(success=False, error="StateService not available")
-        
+
         state_service.save_all_state()
-        
+
         # Show status message
         if context.main_window and hasattr(context.main_window, 'status_bar'):
             context.main_window.status_bar.set_message("State saved", 2000)
-        
+
         return CommandResult(success=True)
-        
+
     except Exception as e:
         logger.error(f"Failed to save state: {e}")
         return CommandResult(success=False, error=str(e))

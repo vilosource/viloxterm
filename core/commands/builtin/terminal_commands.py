@@ -6,7 +6,6 @@ Provides commands for terminal operations like clearing, creating new terminals,
 copying/pasting, and managing terminal sessions.
 """
 
-from typing import Optional, Dict, Any
 import logging
 
 from core.commands.base import Command, CommandContext, CommandResult
@@ -25,12 +24,12 @@ def clear_terminal_handler(context: CommandContext) -> CommandResult:
                     success=False,
                     message="Main window not available"
                 )
-            
+
             # Get the active terminal widget
             workspace = main_window.workspace
             if workspace and hasattr(workspace, 'get_current_widget'):
                 current_widget = workspace.get_current_widget()
-                
+
                 # Check if it's a terminal widget
                 if current_widget and hasattr(current_widget, 'clear_terminal'):
                     current_widget.clear_terminal()
@@ -38,12 +37,12 @@ def clear_terminal_handler(context: CommandContext) -> CommandResult:
                         success=True,
                         message="Terminal cleared"
                     )
-            
+
             return CommandResult(
                 success=False,
                 message="No active terminal to clear"
             )
-            
+
         except Exception as e:
             logger.error(f"Failed to clear terminal: {e}")
             return CommandResult(
@@ -61,7 +60,7 @@ def new_terminal_handler(context: CommandContext) -> CommandResult:
                     success=False,
                     message="Main window not available"
                 )
-            
+
             # Use the existing new_terminal_tab method
             if hasattr(main_window, 'new_terminal_tab'):
                 main_window.new_terminal_tab()
@@ -69,12 +68,12 @@ def new_terminal_handler(context: CommandContext) -> CommandResult:
                     success=True,
                     message="New terminal created"
                 )
-            
+
             return CommandResult(
                 success=False,
                 message="Terminal creation not available"
             )
-            
+
         except Exception as e:
             logger.error(f"Failed to create new terminal: {e}")
             return CommandResult(
@@ -92,11 +91,11 @@ def copy_terminal_handler(context: CommandContext) -> CommandResult:
                     success=False,
                     message="Main window not available"
                 )
-            
+
             workspace = main_window.workspace
             if workspace and hasattr(workspace, 'get_current_widget'):
                 current_widget = workspace.get_current_widget()
-                
+
                 # Check if it's a terminal widget and has copy method
                 if current_widget and hasattr(current_widget, 'copy_selection'):
                     current_widget.copy_selection()
@@ -104,12 +103,12 @@ def copy_terminal_handler(context: CommandContext) -> CommandResult:
                         success=True,
                         message="Copied to clipboard"
                     )
-            
+
             return CommandResult(
                 success=False,
                 message="No active terminal to copy from"
             )
-            
+
         except Exception as e:
             logger.error(f"Failed to copy from terminal: {e}")
             return CommandResult(
@@ -122,18 +121,18 @@ def paste_terminal_handler(context: CommandContext) -> CommandResult:
         """Paste to terminal."""
         try:
             from PySide6.QtWidgets import QApplication
-            
+
             main_window = ServiceLocator.get_service("main_window")
             if not main_window:
                 return CommandResult(
                     success=False,
                     message="Main window not available"
                 )
-            
+
             workspace = main_window.workspace
             if workspace and hasattr(workspace, 'get_current_widget'):
                 current_widget = workspace.get_current_widget()
-                
+
                 # Check if it's a terminal widget
                 if current_widget and hasattr(current_widget, 'paste_to_terminal'):
                     clipboard = QApplication.clipboard()
@@ -149,12 +148,12 @@ def paste_terminal_handler(context: CommandContext) -> CommandResult:
                             success=False,
                             message="Clipboard is empty"
                         )
-            
+
             return CommandResult(
                 success=False,
                 message="No active terminal to paste to"
             )
-            
+
         except Exception as e:
             logger.error(f"Failed to paste to terminal: {e}")
             return CommandResult(
@@ -172,7 +171,7 @@ def kill_terminal_handler(context: CommandContext) -> CommandResult:
                     success=False,
                     message="Main window not available"
                 )
-            
+
             workspace = main_window.workspace
             if workspace and hasattr(workspace, 'close_current_tab'):
                 # Check if current tab is a terminal
@@ -183,12 +182,12 @@ def kill_terminal_handler(context: CommandContext) -> CommandResult:
                         success=True,
                         message="Terminal closed"
                     )
-            
+
             return CommandResult(
                 success=False,
                 message="No active terminal to close"
             )
-            
+
         except Exception as e:
             logger.error(f"Failed to kill terminal: {e}")
             return CommandResult(
@@ -206,11 +205,11 @@ def restart_terminal_handler(context: CommandContext) -> CommandResult:
                     success=False,
                     message="Main window not available"
                 )
-            
+
             workspace = main_window.workspace
             if workspace and hasattr(workspace, 'get_current_widget'):
                 current_widget = workspace.get_current_widget()
-                
+
                 # Check if it's a terminal widget
                 if current_widget and hasattr(current_widget, 'restart_terminal'):
                     current_widget.restart_terminal()
@@ -218,12 +217,12 @@ def restart_terminal_handler(context: CommandContext) -> CommandResult:
                         success=True,
                         message="Terminal restarted"
                     )
-            
+
             return CommandResult(
                 success=False,
                 message="No active terminal to restart"
             )
-            
+
         except Exception as e:
             logger.error(f"Failed to restart terminal: {e}")
             return CommandResult(
@@ -288,8 +287,8 @@ def register_terminal_commands():
             keywords=["restart", "reset", "reload"]
         ),
     ]
-    
+
     for command in commands:
         command_registry.register(command)
-    
+
     logger.info(f"Registered {len(commands)} terminal commands")

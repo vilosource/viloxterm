@@ -7,10 +7,11 @@ including split/close actions, widget type changes, and model interactions.
 """
 
 import logging
-from typing import Optional, Dict, Any, Callable
-from PySide6.QtCore import QObject, Signal, QTimer
+from typing import Callable, Optional
 
-from ui.widgets.split_pane_model import SplitPaneModel, LeafNode
+from PySide6.QtCore import QObject, QTimer, Signal
+
+from ui.widgets.split_pane_model import LeafNode, SplitPaneModel
 from ui.widgets.widget_registry import WidgetType
 from ui.widgets.widget_state import WidgetState
 
@@ -45,7 +46,7 @@ class SplitPaneController(QObject):
         """
         super().__init__(parent)
         self.model = model
-        self._focus_callbacks: Dict[str, Callable] = {}
+        self._focus_callbacks: dict[str, Callable] = {}
         self._terminal_close_callback: Optional[Callable] = None
 
         # Set up terminal close callback

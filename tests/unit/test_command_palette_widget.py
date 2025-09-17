@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 """Unit tests for CommandPaletteWidget focusing on signal testing following Test Monkey principles."""
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QKeyEvent
-from PySide6.QtTest import QTest
 
-from ui.command_palette.palette_widget import CommandPaletteWidget, CommandListWidget
+import pytest
+from PySide6.QtCore import Qt
+
 from core.commands.base import Command
+from ui.command_palette.palette_widget import CommandListWidget, CommandPaletteWidget
 
 
 @pytest.fixture
@@ -55,7 +52,6 @@ class TestCommandListWidget:
         assert hasattr(widget, 'command_activated'), "CommandListWidget must have command_activated signal"
 
         # Verify signals are actually Signal class attributes
-        from PySide6.QtCore import Signal
         assert hasattr(type(widget), 'command_activated'), "command_activated must be a Signal class attribute"
 
     def test_command_activated_signal_emission_on_enter(self, qtbot, mock_commands):
@@ -154,7 +150,6 @@ class TestCommandPaletteWidget:
         assert hasattr(widget, 'palette_closed'), "CommandPaletteWidget must have palette_closed signal"
 
         # Verify signals are actually Signal class attributes
-        from PySide6.QtCore import Signal
         assert hasattr(type(widget), 'command_executed'), "command_executed must be a Signal class attribute"
         assert hasattr(type(widget), 'palette_closed'), "palette_closed must be a Signal class attribute"
 
@@ -258,7 +253,7 @@ class TestCommandPaletteWidget:
 
         # Set up spies to track signal emissions
         command_executed_spy = qtbot.spy(widget.command_executed)
-        palette_closed_spy = qtbot.spy(widget.palette_closed)
+        qtbot.spy(widget.palette_closed)
 
         # Try to execute command on hidden palette
         test_command = mock_commands[0]
@@ -332,7 +327,7 @@ class TestCommandPaletteWidget:
         assert blocker.args == [], "palette_closed should work with empty command list"
 
         # Test with None command (error case)
-        command_executed_spy = qtbot.spy(widget.command_executed)
+        qtbot.spy(widget.command_executed)
 
         # This should not crash the widget (implementation dependent)
         try:

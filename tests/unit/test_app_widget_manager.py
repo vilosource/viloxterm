@@ -6,12 +6,14 @@ Tests the centralized widget management system including registration,
 creation, and querying of widgets.
 """
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch, call
+
 from core.app_widget_manager import AppWidgetManager
 from core.app_widget_metadata import AppWidgetMetadata, WidgetCategory
-from ui.widgets.widget_registry import WidgetType
 from ui.widgets.app_widget import AppWidget
+from ui.widgets.widget_registry import WidgetType
 
 
 @pytest.fixture

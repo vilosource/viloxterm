@@ -3,10 +3,11 @@
 Unit tests for AppWidget lifecycle functionality.
 """
 
-import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
+
 from PySide6.QtCore import QTimer
 from PySide6.QtTest import QSignalSpy
+
 from ui.widgets.app_widget import AppWidget
 from ui.widgets.widget_registry import WidgetType
 from ui.widgets.widget_state import WidgetState
@@ -51,7 +52,7 @@ class TestMockAppWidgetLifecycle:
         assert widget.widget_id == "test-widget-1"
         assert widget.widget_type == WidgetType.TEXT_EDITOR
         assert widget.widget_state == WidgetState.CREATED
-        assert widget._pending_focus == False
+        assert not widget._pending_focus
         assert widget._error_count == 0
         assert widget._signal_manager is not None
 
@@ -194,7 +195,7 @@ class TestMockAppWidgetLifecycle:
 
         # Request focus
         result = widget.focus_widget()
-        assert result == True
+        assert result
         assert widget.has_focus  # Use our property instead of Qt's hasFocus()
 
     def test_focus_queued_when_not_ready(self, qtbot):
@@ -204,8 +205,8 @@ class TestMockAppWidgetLifecycle:
 
         # Widget in CREATED state
         result = widget.focus_widget()
-        assert result == False
-        assert widget._pending_focus == True
+        assert not result
+        assert widget._pending_focus
         assert not widget.has_focus
 
         # Initialize
@@ -213,8 +214,8 @@ class TestMockAppWidgetLifecycle:
 
         # Still not ready
         result = widget.focus_widget()
-        assert result == False
-        assert widget._pending_focus == True
+        assert not result
+        assert widget._pending_focus
 
     def test_pending_focus_processed_on_ready(self, qtbot):
         """Test pending focus is processed when widget becomes ready."""
@@ -223,7 +224,7 @@ class TestMockAppWidgetLifecycle:
 
         # Request focus before ready
         widget.focus_widget()
-        assert widget._pending_focus == True
+        assert widget._pending_focus
 
         # Initialize
         widget.initialize()
@@ -239,7 +240,7 @@ class TestMockAppWidgetLifecycle:
             callback = mock_timer.call_args[0][1]
             assert callback == widget.focus_widget
 
-        assert widget._pending_focus == False
+        assert not widget._pending_focus
 
     def test_focus_rejected_in_error_state(self, qtbot):
         """Test focus is rejected when widget is in error state."""
@@ -252,7 +253,7 @@ class TestMockAppWidgetLifecycle:
 
         # Try to focus
         result = widget.focus_widget()
-        assert result == False
+        assert not result
         assert not widget._pending_focus
         assert not widget.has_focus
 

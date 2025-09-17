@@ -6,8 +6,8 @@ This component handles tab creation, closing, switching, and related
 tab-based operations in the workspace.
 """
 
-from typing import Optional, Dict, Any
 import logging
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -242,7 +242,7 @@ class WorkspaceTabManager:
 
         return self.switch_to_tab(tab_index)
 
-    def get_tab_info(self) -> Dict[str, Any]:
+    def get_tab_info(self) -> dict[str, Any]:
         """
         Get information about tabs.
 

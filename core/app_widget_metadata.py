@@ -7,10 +7,11 @@ including their capabilities, requirements, and UI properties.
 """
 
 from dataclasses import dataclass, field
-from typing import Type, Callable, Optional, List, Dict, Any
 from enum import Enum
-from ui.widgets.widget_registry import WidgetType
+from typing import Any, Callable, Optional
+
 from core.widget_placement import WidgetPlacement
+from ui.widgets.widget_registry import WidgetType
 
 
 class WidgetCategory(Enum):
@@ -44,15 +45,15 @@ class AppWidgetMetadata:
     category: WidgetCategory  # Category for organization
 
     # === Technical ===
-    widget_class: Type['AppWidget']  # The actual widget class
+    widget_class: type['AppWidget']  # The actual widget class
     factory: Optional[Callable[[str], 'AppWidget']] = None  # Optional factory function
 
     # === Commands ===
     open_command: Optional[str] = None  # Command ID to open this widget
-    associated_commands: List[str] = field(default_factory=list)  # Related commands
+    associated_commands: list[str] = field(default_factory=list)  # Related commands
 
     # Context-specific commands (for different placement intents)
-    commands: Dict[str, str] = field(default_factory=dict)
+    commands: dict[str, str] = field(default_factory=dict)
     # Expected keys: "open_new_tab", "replace_pane", "open_smart"
 
     # === Behavior ===
@@ -76,9 +77,9 @@ class AppWidgetMetadata:
     default_height: Optional[int] = None
 
     # === Requirements & Capabilities ===
-    requires_services: List[str] = field(default_factory=list)  # Required services
-    provides_capabilities: List[str] = field(default_factory=list)  # Provided capabilities
-    supported_file_types: List[str] = field(default_factory=list)  # File extensions
+    requires_services: list[str] = field(default_factory=list)  # Required services
+    provides_capabilities: list[str] = field(default_factory=list)  # Provided capabilities
+    supported_file_types: list[str] = field(default_factory=list)  # File extensions
 
     # === Plugin preparation ===
     source: str = "builtin"  # "builtin" or "plugin"
@@ -87,9 +88,9 @@ class AppWidgetMetadata:
     min_app_version: Optional[str] = None  # Minimum app version required
 
     # === Future plugin fields ===
-    activation_events: List[str] = field(default_factory=list)  # When to activate
-    permissions: List[str] = field(default_factory=list)  # Required permissions
-    configuration_schema: Optional[Dict[str, Any]] = None  # Settings schema
+    activation_events: list[str] = field(default_factory=list)  # When to activate
+    permissions: list[str] = field(default_factory=list)  # Required permissions
+    configuration_schema: Optional[dict[str, Any]] = None  # Settings schema
 
     # === State management ===
     supports_state_save: bool = True  # Can save/restore state
@@ -112,7 +113,7 @@ class AppWidgetMetadata:
             if "." not in self.widget_id:
                 self.widget_id = f"com.viloapp.{self.widget_id}"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metadata to dictionary for serialization."""
         return {
             "widget_id": self.widget_id,

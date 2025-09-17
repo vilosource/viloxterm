@@ -6,14 +6,18 @@ Tests the Settings AppWidget UI including tab navigation,
 setting changes, and integration with the app defaults system.
 """
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import MagicMock, patch, call
-from PySide6.QtWidgets import QApplication, QTabWidget, QPushButton, QComboBox, QCheckBox, QSlider, QMessageBox
-from PySide6.QtCore import Qt
-from PySide6.QtTest import QTest
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QMessageBox,
+    QSlider,
+    QTabWidget,
+)
 
 from ui.widgets.settings_app_widget import SettingsAppWidget
-from core.settings.app_defaults import get_app_defaults
 
 
 @pytest.fixture

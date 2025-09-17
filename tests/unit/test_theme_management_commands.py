@@ -5,28 +5,29 @@ Unit tests for theme management commands.
 Tests that theme commands properly manage themes through the service layer.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-from core.commands.base import CommandContext, CommandResult
+import pytest
+
+from core.commands.base import CommandContext
 from core.commands.builtin.theme_management_commands import (
+    apply_theme_command,
+    apply_theme_preview_command,
+    apply_typography_preset_command,
+    create_custom_theme_command,
+    delete_custom_theme_command,
+    export_theme_command,
     get_available_themes_command,
     get_current_theme_command,
     get_theme_command,
-    apply_theme_command,
-    save_custom_theme_command,
-    create_custom_theme_command,
-    delete_custom_theme_command,
-    import_theme_command,
-    export_theme_command,
-    apply_typography_preset_command,
     get_typography_command,
-    apply_theme_preview_command,
-    update_theme_colors_command
+    import_theme_command,
+    save_custom_theme_command,
+    update_theme_colors_command,
 )
-from services.theme_service import ThemeService, Theme
 from core.themes.typography import ThemeTypography
+from services.theme_service import Theme, ThemeService
 
 
 class TestThemeManagementCommands:

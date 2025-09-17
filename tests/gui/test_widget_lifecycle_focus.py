@@ -3,16 +3,11 @@
 GUI integration tests for widget lifecycle and focus behavior.
 """
 
-import pytest
-from unittest.mock import Mock, patch
-from PySide6.QtCore import QTimer, Qt
-from PySide6.QtTest import QTest, QSignalSpy
-from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QTimer
+
 from ui.widgets.app_widget import AppWidget
 from ui.widgets.widget_registry import WidgetType
 from ui.widgets.widget_state import WidgetState
-from ui.widgets.split_pane_widget import SplitPaneWidget
-from ui.widgets.split_pane_model import SplitPaneModel
 
 
 class AsyncTestWidget(AppWidget):
@@ -61,8 +56,8 @@ class TestWidgetLifecycleFocus:
 
         # Request focus while loading
         result = widget.focus_widget()
-        assert result == False
-        assert widget._pending_focus == True
+        assert not result
+        assert widget._pending_focus
         assert not widget.hasFocus()
 
         # Wait for widget to become ready
@@ -77,7 +72,7 @@ class TestWidgetLifecycleFocus:
         qtbot.wait(10)
 
         # Pending focus should be cleared
-        assert widget._pending_focus == False
+        assert not widget._pending_focus
 
     def test_sync_widget_immediate_focus(self, qtbot):
         """Test that sync widgets can receive focus immediately."""
@@ -89,7 +84,7 @@ class TestWidgetLifecycleFocus:
 
         # Focus should work immediately
         result = widget.focus_widget()
-        assert result == True
+        assert result
         assert widget.hasFocus()
 
     def test_multiple_async_widgets_focus(self, qtbot):
@@ -105,7 +100,7 @@ class TestWidgetLifecycleFocus:
 
         # Request focus on widget2 (longer delay)
         widget2.focus_widget()
-        assert widget2._pending_focus == True
+        assert widget2._pending_focus
 
         # Wait for widget1 to be ready
         with qtbot.waitSignal(widget1.widget_ready, timeout=200):
@@ -113,7 +108,7 @@ class TestWidgetLifecycleFocus:
 
         # Focus widget1 (now ready)
         result = widget1.focus_widget()
-        assert result == True
+        assert result
         assert widget1.hasFocus()
 
         # Wait for widget2 to be ready
@@ -125,7 +120,7 @@ class TestWidgetLifecycleFocus:
 
         # Widget2's pending focus should be processed, but widget1 still has focus
         # unless widget2's pending focus takes it
-        assert widget2._pending_focus == False
+        assert not widget2._pending_focus
 
     def test_widget_state_transitions_with_focus(self, qtbot):
         """Test focus behavior during state transitions."""
@@ -137,8 +132,8 @@ class TestWidgetLifecycleFocus:
 
         # Focus should queue in CREATED state
         result = widget.focus_widget()
-        assert result == False
-        assert widget._pending_focus == True
+        assert not result
+        assert widget._pending_focus
 
         # Start loading
         widget.start_loading()
@@ -147,8 +142,8 @@ class TestWidgetLifecycleFocus:
         # Focus request during INITIALIZING should maintain pending status
         widget._pending_focus = False  # Reset
         result = widget.focus_widget()
-        assert result == False
-        assert widget._pending_focus == True
+        assert not result
+        assert widget._pending_focus
 
         # Wait for ready
         with qtbot.waitSignal(widget.widget_ready, timeout=200):
@@ -172,7 +167,7 @@ class TestWidgetLifecycleFocus:
 
         # Focus should work after resume
         result = widget.focus_widget()
-        assert result == True
+        assert result
 
     def test_error_state_focus_behavior(self, qtbot):
         """Test focus behavior when widget enters error state."""
@@ -188,8 +183,8 @@ class TestWidgetLifecycleFocus:
 
         # Focus should be rejected in error state
         result = widget.focus_widget()
-        assert result == False
-        assert widget._pending_focus == False
+        assert not result
+        assert not widget._pending_focus
         assert not widget.hasFocus()
 
     def test_cleanup_with_pending_focus(self, qtbot):
@@ -200,7 +195,7 @@ class TestWidgetLifecycleFocus:
         # Start loading and request focus
         widget.start_loading()
         widget.focus_widget()
-        assert widget._pending_focus == True
+        assert widget._pending_focus
 
         # Cleanup before ready
         widget.cleanup()
@@ -222,7 +217,7 @@ class TestWidgetLifecycleFocus:
             widget.focus_widget()
 
         # Should still have single pending focus
-        assert widget._pending_focus == True
+        assert widget._pending_focus
 
         # Wait for ready
         with qtbot.waitSignal(widget.widget_ready, timeout=200):
@@ -231,7 +226,7 @@ class TestWidgetLifecycleFocus:
         qtbot.wait(10)
 
         # Focus should be set once
-        assert widget._pending_focus == False
+        assert not widget._pending_focus
 
     def test_widget_visibility_and_focus(self, qtbot):
         """Test interaction between visibility and focus."""
@@ -255,7 +250,7 @@ class TestWidgetLifecycleFocus:
 
         # Focus should work after showing
         result = widget.focus_widget()
-        assert result == True
+        assert result
 
     def test_parent_child_focus_propagation(self, qtbot):
         """Test focus behavior with parent-child widget relationships."""
@@ -268,7 +263,7 @@ class TestWidgetLifecycleFocus:
 
         # Focus on child
         child.focus_widget()
-        assert child._pending_focus == True
+        assert child._pending_focus
 
         # Wait for child ready
         with qtbot.waitSignal(child.widget_ready, timeout=200):
@@ -277,4 +272,4 @@ class TestWidgetLifecycleFocus:
         qtbot.wait(10)
 
         # Child should process pending focus
-        assert child._pending_focus == False
+        assert not child._pending_focus

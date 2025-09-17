@@ -14,18 +14,20 @@ This test suite validates the TerminalWidget class following Test Monkey princip
 Uses qtbot for Qt testing and proper mocking of external dependencies.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch, PropertyMock
 import warnings
-from typing import Optional, Dict, Any
+from unittest.mock import Mock, patch
 
-from PySide6.QtCore import Qt, QUrl, QTimer, Signal
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
-from PySide6.QtWebEngineWidgets import QWebEngineView
+import pytest
+from PySide6.QtCore import Qt, QUrl
 from PySide6.QtWebEngineCore import QWebEnginePage
+from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtWidgets import QLabel, QVBoxLayout
 
-from ui.terminal.terminal_widget import TerminalWidget, TerminalWebPage
-from ui.terminal.terminal_config import TerminalConfig, ColorScheme, VSCODE_DARK_THEME, VSCODE_LIGHT_THEME
+from ui.terminal.terminal_config import (
+    VSCODE_DARK_THEME,
+    TerminalConfig,
+)
+from ui.terminal.terminal_widget import TerminalWebPage, TerminalWidget
 
 
 class TestTerminalWebPage:
@@ -192,7 +194,7 @@ class TestTerminalWidget:
         qtbot.addWidget(widget)
 
         # ACT & ASSERT - Simulate successful load
-        with qtbot.waitSignal(widget.ready, timeout=1000) as blocker:
+        with qtbot.waitSignal(widget.ready, timeout=1000):
             widget._on_load_finished(True)
 
         # ASSERT - Widget is ready

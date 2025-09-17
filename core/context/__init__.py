@@ -6,9 +6,9 @@ This package provides context tracking and when clause evaluation
 for determining when commands and shortcuts are available.
 """
 
-from core.context.manager import context_manager, ContextProvider
-from core.context.keys import ContextKey, ContextValue
 from core.context.evaluator import WhenClauseEvaluator
+from core.context.keys import ContextKey, ContextValue
+from core.context.manager import ContextProvider, context_manager
 
 __all__ = [
     'context_manager',

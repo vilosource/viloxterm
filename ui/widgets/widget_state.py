@@ -7,7 +7,6 @@ and provides validation for state transitions.
 """
 
 from enum import Enum
-from typing import List, Optional
 
 
 class WidgetState(Enum):
@@ -82,7 +81,7 @@ class WidgetStateValidator:
         return to_state in valid_states
 
     @classmethod
-    def get_valid_transitions(cls, from_state: WidgetState) -> List[WidgetState]:
+    def get_valid_transitions(cls, from_state: WidgetState) -> list[WidgetState]:
         """
         Get list of valid states to transition to.
 

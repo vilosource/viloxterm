@@ -7,10 +7,15 @@ all application actions, enabling keyboard shortcuts, command palette,
 and programmatic execution.
 """
 
-from core.commands.base import Command, CommandContext, CommandResult, CommandCategory
-from core.commands.registry import command_registry
+from core.commands.base import Command, CommandCategory, CommandContext, CommandResult
+from core.commands.decorators import (
+    batch_register,
+    command,
+    command_handler,
+    create_command_group,
+)
 from core.commands.executor import command_executor
-from core.commands.decorators import command, command_handler, batch_register, create_command_group
+from core.commands.registry import command_registry
 
 __all__ = [
     'Command',

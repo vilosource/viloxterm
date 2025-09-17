@@ -6,16 +6,17 @@ Tests that commands properly manage the widget registry instead of
 direct service manipulation.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from core.commands.base import CommandContext, CommandResult
+import pytest
+
+from core.commands.base import CommandContext
 from core.commands.builtin.registry_commands import (
+    get_widget_tab_index_command,
+    is_widget_registered_command,
     register_widget_command,
     unregister_widget_command,
     update_registry_after_close_command,
-    get_widget_tab_index_command,
-    is_widget_registered_command
 )
 from services.workspace_service import WorkspaceService
 

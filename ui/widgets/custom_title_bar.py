@@ -4,13 +4,17 @@ Custom title bar widget for frameless window mode.
 Provides window controls and drag functionality.
 """
 
+import logging
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QToolButton, QLabel, QPushButton,
-    QSizePolicy, QMenu
+    QHBoxLayout,
+    QLabel,
+    QMenu,
+    QPushButton,
+    QToolButton,
+    QWidget,
 )
-from PySide6.QtGui import QIcon, QAction
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -83,8 +87,9 @@ class CustomTitleBar(QWidget):
 
     def apply_styles(self):
         """Apply styling to the title bar."""
+        from PySide6.QtGui import QColor, QPalette
+
         from core.app_config import app_config
-        from PySide6.QtGui import QPalette, QColor
 
         # Use red background for dev mode
         title_bar_bg = "#8B0000" if app_config.dev_mode else "#2d2d30"
@@ -96,40 +101,40 @@ class CustomTitleBar(QWidget):
         palette.setColor(QPalette.Window, QColor(title_bar_bg))
         self.setPalette(palette)
 
-        self.setStyleSheet(f"""
+        self.setStyleSheet("""
 
             /* Title label */
-            #titleLabel {{
+            #titleLabel {
                 color: #cccccc;
                 font-size: 13px;
                 padding: 0 8px;
-            }}
+            }
 
             /* Common button style */
-            QToolButton {{
+            QToolButton {
                 background-color: transparent;
                 color: #cccccc;
                 border: none;
                 padding: 4px 8px;
                 font-size: 14px;
                 font-weight: bold;
-            }}
+            }
 
-            QToolButton:hover {{
+            QToolButton:hover {
                 background-color: #3e3e42;
-            }}
+            }
 
             /* Close button special styling */
-            #closeButton:hover {{
+            #closeButton:hover {
                 background-color: #e81123;
                 color: white;
-            }}
+            }
 
             /* Menu button */
-            #menuButton {{
+            #menuButton {
                 font-size: 16px;
                 padding: 4px 6px;
-            }}
+            }
         """)
 
     def on_menu_clicked(self):

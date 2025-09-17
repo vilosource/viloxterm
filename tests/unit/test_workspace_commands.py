@@ -6,12 +6,14 @@ Tests the new unified workspace.newTab commands and their integration
 with the application defaults system.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, call
+
 from core.commands.base import CommandContext, CommandResult
 from core.commands.builtin import workspace_commands
-from services.workspace_service import WorkspaceService
 from services.terminal_service import TerminalService
+from services.workspace_service import WorkspaceService
 
 
 class TestNewTabCommand:
@@ -205,7 +207,7 @@ class TestNewTabWithTypeCommand:
         with patch.object(workspace_commands.new_tab_command, '_original_func') as mock_new_tab:
             mock_new_tab.return_value = CommandResult(success=True)
 
-            result = workspace_commands.new_tab_with_type_command._original_func(context)
+            workspace_commands.new_tab_with_type_command._original_func(context)
 
         # Check that Settings was mapped correctly
         assert context.args['widget_type'] == 'settings'

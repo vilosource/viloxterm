@@ -4,14 +4,14 @@ Test Review Script - Analyzes test coverage and quality for changed files.
 Used by the Test Guardian agent to verify testing methodology compliance.
 """
 
-import subprocess
-import sys
-import os
-import re
-from pathlib import Path
-from typing import List, Dict, Tuple, Optional
 import ast
 import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import Optional
+
 
 class TestReviewer:
     """Analyzes test coverage and quality for changed files."""
@@ -26,7 +26,7 @@ class TestReviewer:
             "suggestion": []
         }
 
-    def get_changed_files(self) -> List[Path]:
+    def get_changed_files(self) -> list[Path]:
         """Get list of changed Python files using git diff."""
         try:
             result = subprocess.run(
@@ -80,7 +80,7 @@ class TestReviewer:
         except subprocess.CalledProcessError:
             return False
 
-    def analyze_test_file(self, test_file: Path) -> Dict:
+    def analyze_test_file(self, test_file: Path) -> dict:
         """Analyze a test file for quality metrics."""
         metrics = {
             "total_tests": 0,
@@ -102,7 +102,7 @@ class TestReviewer:
         }
 
         try:
-            with open(test_file, 'r') as f:
+            with open(test_file) as f:
                 content = f.read()
                 tree = ast.parse(content)
 
@@ -152,12 +152,12 @@ class TestReviewer:
 
         return metrics
 
-    def check_qt_compliance(self, test_file: Path) -> List[str]:
+    def check_qt_compliance(self, test_file: Path) -> list[str]:
         """Check for Qt/PySide6 specific testing patterns."""
         issues = []
 
         try:
-            with open(test_file, 'r') as f:
+            with open(test_file) as f:
                 content = f.read()
 
             # Check for missing qtbot.addWidget()
@@ -193,7 +193,6 @@ class TestReviewer:
         report.append(f"Changed Files: {len(changed_files)}")
         report.append("")
 
-        total_coverage = 0
         files_with_tests = 0
 
         for source_file in changed_files:
@@ -216,7 +215,7 @@ class TestReviewer:
             # Analyze test quality
             metrics = self.analyze_test_file(test_file)
 
-            report.append(f"  📊 Test Metrics:")
+            report.append("  📊 Test Metrics:")
             report.append(f"     - Total tests: {metrics['total_tests']}")
             report.append(f"     - Assertions: {metrics['assertions']['total']} "
                          f"(strong: {metrics['assertions']['strong']}, "
@@ -227,7 +226,7 @@ class TestReviewer:
 
             # Qt patterns
             if test_file.parent.name == 'gui' or 'widget' in str(test_file).lower():
-                report.append(f"  🎯 Qt/PySide6 Patterns:")
+                report.append("  🎯 Qt/PySide6 Patterns:")
                 report.append(f"     - qtbot usage: {metrics['qt_patterns']['qtbot_usage']}")
                 report.append(f"     - Signal tests: {metrics['qt_patterns']['signal_tests']}")
                 report.append(f"     - Wait patterns: {metrics['qt_patterns']['wait_usage']}")
@@ -238,7 +237,7 @@ class TestReviewer:
                 # Check Qt compliance
                 qt_issues = self.check_qt_compliance(test_file)
                 if qt_issues:
-                    report.append(f"  ⚠️  Qt Compliance Issues:")
+                    report.append("  ⚠️  Qt Compliance Issues:")
                     for issue in qt_issues:
                         report.append(f"     - {issue}")
                         self.issues["warning"].append(f"{test_file.name}: {issue}")
@@ -251,7 +250,7 @@ class TestReviewer:
 
             # Anti-patterns
             if metrics['anti_patterns']:
-                report.append(f"  ❌ Anti-patterns detected:")
+                report.append("  ❌ Anti-patterns detected:")
                 for pattern in metrics['anti_patterns']:
                     report.append(f"     - {pattern}")
                     self.issues["critical"].append(pattern)
@@ -292,7 +291,7 @@ class TestReviewer:
 
         return "\n".join(report)
 
-    def calculate_grade(self, changed_files: List[Path], files_with_tests: int) -> str:
+    def calculate_grade(self, changed_files: list[Path], files_with_tests: int) -> str:
         """Calculate an overall grade for test quality."""
         if not changed_files:
             return "N/A"

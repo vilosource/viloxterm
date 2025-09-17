@@ -3,14 +3,13 @@
 Unit tests for theme editor components.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt
+from unittest.mock import MagicMock, Mock, patch
 
-from core.themes.theme import Theme
-from core.themes.property_categories import ThemePropertyCategories
+import pytest
+
 from core.themes.importers import VSCodeThemeImporter
+from core.themes.property_categories import ThemePropertyCategories
+from core.themes.theme import Theme
 
 
 class TestThemePropertyCategories:
@@ -203,8 +202,8 @@ class TestThemeEditorWidget:
 
         assert widget.widget_id == "test_editor"
         assert widget.get_title() == "Theme Editor"
-        assert widget._modified == False
-        assert widget._updating == False
+        assert not widget._modified
+        assert not widget._updating
 
     @patch('services.service_locator.ServiceLocator')
     @patch('services.theme_service.ThemeService')
@@ -235,7 +234,7 @@ class TestThemeEditorWidget:
         widget._load_theme(mock_theme)
 
         assert widget._current_theme == mock_theme
-        assert widget._modified == False
+        assert not widget._modified
 
     @patch('services.service_locator.ServiceLocator')
     @patch('services.theme_service.ThemeService')
@@ -259,7 +258,7 @@ class TestThemeEditorWidget:
         widget._on_color_changed("editor.background", "#ffffff", True)
 
         # Should not mark as modified when updating
-        assert widget._modified == False
+        assert not widget._modified
 
     @patch('services.service_locator.ServiceLocator')
     @patch('services.theme_service.ThemeService')

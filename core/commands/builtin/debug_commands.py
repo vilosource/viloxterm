@@ -3,14 +3,15 @@
 Debug-related commands using the service layer.
 """
 
-from core.commands.base import Command, CommandResult, CommandContext
+import logging
+
+from PySide6.QtWidgets import QMessageBox
+
+from core.commands.base import CommandContext, CommandResult
 from core.commands.decorators import command
 from services.state_service import StateService
 from services.ui_service import UIService
 from services.workspace_service import WorkspaceService
-from services.terminal_service import TerminalService
-from PySide6.QtWidgets import QMessageBox
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -36,30 +37,30 @@ def reset_app_state_command(context: CommandContext) -> CommandResult:
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No
             )
-            
+
             if reply != QMessageBox.Yes:
                 return CommandResult(success=False, error="User cancelled reset")
-        
+
         state_service = context.get_service(StateService)
         if not state_service:
             return CommandResult(success=False, error="StateService not available")
-        
+
         # Reset all saved state
         state_service.reset_all_state()
-        
+
         # Reset UI to defaults
         ui_service = context.get_service(UIService)
         if ui_service:
             ui_service.reset_layout()
-        
+
         # Show confirmation message
         if context.main_window and hasattr(context.main_window, 'status_bar'):
             context.main_window.status_bar.set_message(
                 "Application state reset to defaults", 3000
             )
-        
+
         return CommandResult(success=True)
-        
+
     except Exception as e:
         logger.error(f"Failed to reset app state: {e}")
         return CommandResult(success=False, error=str(e))
@@ -76,22 +77,22 @@ def show_service_info_command(context: CommandContext) -> CommandResult:
     """Show information about all services."""
     try:
         from services.service_locator import ServiceLocator
-        
+
         locator = ServiceLocator.get_instance()
         services = locator.get_all()
-        
+
         info = {
             'service_count': len(services),
             'services': []
         }
-        
+
         for service in services:
             service_info = {
                 'name': service.name,
                 'type': type(service).__name__,
                 'initialized': service.is_initialized
             }
-            
+
             # Get service-specific info if available
             if hasattr(service, 'get_service_info'):
                 try:
@@ -101,17 +102,17 @@ def show_service_info_command(context: CommandContext) -> CommandResult:
                     logger = logging.getLogger(__name__)
                     logger.debug(f"Failed to get service info from {service.name}: {e}")
                     # Service info not available, continue without it
-                    
+
             info['services'].append(service_info)
-        
+
         # Show in status bar
         if context.main_window and hasattr(context.main_window, 'status_bar'):
             context.main_window.status_bar.set_message(
                 f"Services: {len(services)} registered", 3000
             )
-        
+
         return CommandResult(success=True, value=info)
-        
+
     except Exception as e:
         logger.error(f"Failed to get service info: {e}")
         return CommandResult(success=False, error=str(e))
@@ -128,22 +129,22 @@ def show_command_info_command(context: CommandContext) -> CommandResult:
     """Show information about all commands."""
     try:
         from core.commands.registry import CommandRegistry
-        
+
         registry = CommandRegistry()
         commands = registry.get_all_commands()
-        
+
         info = {
             'command_count': len(commands),
             'categories': {},
             'shortcuts': {}
         }
-        
+
         # Group by category
         for command in commands:
             category = command.category
             if category not in info['categories']:
                 info['categories'][category] = []
-            
+
             cmd_info = {
                 'id': command.id,
                 'title': command.title,
@@ -151,11 +152,11 @@ def show_command_info_command(context: CommandContext) -> CommandResult:
                 'when': command.when
             }
             info['categories'][category].append(cmd_info)
-            
+
             # Track shortcuts
             if command.shortcut:
                 info['shortcuts'][command.shortcut] = command.id
-        
+
         # Show in status bar
         if context.main_window and hasattr(context.main_window, 'status_bar'):
             categories = len(info['categories'])
@@ -163,9 +164,9 @@ def show_command_info_command(context: CommandContext) -> CommandResult:
             context.main_window.status_bar.set_message(
                 f"Commands: {len(commands)} total, {categories} categories, {shortcuts} shortcuts", 3000
             )
-        
+
         return CommandResult(success=True, value=info)
-        
+
     except Exception as e:
         logger.error(f"Failed to get command info: {e}")
         return CommandResult(success=False, error=str(e))
@@ -184,9 +185,9 @@ def show_workspace_info_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         info = workspace_service.get_workspace_info()
-        
+
         # Show summary in status bar
         if context.main_window and hasattr(context.main_window, 'status_bar'):
             if info['available']:
@@ -194,9 +195,9 @@ def show_workspace_info_command(context: CommandContext) -> CommandResult:
             else:
                 msg = "Workspace: not available"
             context.main_window.status_bar.set_message(msg, 3000)
-        
+
         return CommandResult(success=True, value=info)
-        
+
     except Exception as e:
         logger.error(f"Failed to get workspace info: {e}")
         return CommandResult(success=False, error=str(e))
@@ -205,7 +206,7 @@ def show_workspace_info_command(context: CommandContext) -> CommandResult:
 @command(
     id="debug.testCommand",
     title="Test Command",
-    category="Debug", 
+    category="Debug",
     description="Test command for debugging the command system",
     icon="test-tube"
 )
@@ -213,15 +214,15 @@ def test_command(context: CommandContext) -> CommandResult:
     """Simple test command for debugging."""
     try:
         test_message = context.args.get('message', 'Test command executed successfully!')
-        
+
         # Show in status bar
         if context.main_window and hasattr(context.main_window, 'status_bar'):
             context.main_window.status_bar.set_message(test_message, 2000)
-        
+
         logger.info(f"Test command executed: {test_message}")
-        
+
         return CommandResult(success=True, value={'message': test_message})
-        
+
     except Exception as e:
         logger.error(f"Test command failed: {e}")
         return CommandResult(success=False, error=str(e))
@@ -240,16 +241,16 @@ def reload_window_command(context: CommandContext) -> CommandResult:
     try:
         # This is a placeholder - in a real implementation,
         # this might trigger a window refresh or restart
-        
+
         if context.main_window and hasattr(context.main_window, 'status_bar'):
             context.main_window.status_bar.set_message(
                 "Window reload triggered (development feature)", 2000
             )
-        
+
         logger.info("Window reload command executed")
-        
+
         return CommandResult(success=True)
-        
+
     except Exception as e:
         logger.error(f"Failed to reload window: {e}")
         return CommandResult(success=False, error=str(e))
@@ -267,28 +268,28 @@ def toggle_dev_mode_command(context: CommandContext) -> CommandResult:
     try:
         # This would toggle development features like extra logging,
         # debug panels, etc. For now, just a placeholder
-        
+
         state_service = context.get_service(StateService)
         current_dev_mode = False
-        
+
         if state_service:
             current_dev_mode = state_service.get_preference('dev_mode', False)
             new_dev_mode = not current_dev_mode
             state_service.save_preference('dev_mode', new_dev_mode)
         else:
             new_dev_mode = not current_dev_mode
-        
+
         # Show status
         if context.main_window and hasattr(context.main_window, 'status_bar'):
             status = "enabled" if new_dev_mode else "disabled"
             context.main_window.status_bar.set_message(
                 f"Developer mode {status}", 2000
             )
-        
+
         logger.info(f"Developer mode {'enabled' if new_dev_mode else 'disabled'}")
-        
+
         return CommandResult(success=True, value={'dev_mode': new_dev_mode})
-        
+
     except Exception as e:
         logger.error(f"Failed to toggle dev mode: {e}")
         return CommandResult(success=False, error=str(e))

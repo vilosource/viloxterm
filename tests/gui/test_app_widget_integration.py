@@ -6,20 +6,19 @@ Tests the integration of AppWidgetManager with UI components,
 including menu generation and widget creation in panes.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, call
-from PySide6.QtWidgets import QApplication, QMenu
-from PySide6.QtGui import QAction
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtTest import QTest
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QMenu
 
 from core.app_widget_manager import AppWidgetManager
 from core.app_widget_metadata import AppWidgetMetadata, WidgetCategory
 from core.app_widget_registry import register_builtin_widgets
-from ui.widgets.widget_registry import WidgetType
 from ui.widgets.app_widget import AppWidget
 from ui.widgets.pane_header import PaneHeaderBar
-from ui.widgets.split_pane_model import SplitPaneModel, LeafNode
+from ui.widgets.split_pane_model import LeafNode, SplitPaneModel
+from ui.widgets.widget_registry import WidgetType
 
 
 @pytest.fixture
@@ -157,7 +156,7 @@ class TestBuiltinWidgetRegistration:
         manager.clear()
 
         # Register built-in widgets
-        with patch('core.app_widget_registry.logger') as mock_logger:
+        with patch('core.app_widget_registry.logger'):
             register_builtin_widgets()
 
             # Check that widgets were registered

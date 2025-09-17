@@ -3,8 +3,6 @@
 UI-related commands.
 """
 
-from core.commands.base import CommandResult, CommandContext
-from core.commands.decorators import command
 import logging
 
 logger = logging.getLogger(__name__)

@@ -6,9 +6,10 @@ This module provides the bridge between the ThemeService and UI components,
 managing stylesheet generation and caching.
 """
 
-from typing import Dict, Optional
-from PySide6.QtCore import QObject, Signal
 import logging
+from typing import Optional
+
+from PySide6.QtCore import QObject, Signal
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class ThemeProvider(QObject):
         """
         super().__init__()
         self._theme_service = theme_service
-        self._stylesheet_cache: Dict[str, str] = {}
+        self._stylesheet_cache: dict[str, str] = {}
         self._stylesheet_generator = None
 
         # Connect to theme changes
@@ -45,7 +46,7 @@ class ThemeProvider(QObject):
         from ui.themes.stylesheet_generator import StylesheetGenerator
         self._stylesheet_generator = StylesheetGenerator(theme_service)
 
-    def _on_theme_changed(self, colors: Dict[str, str]) -> None:
+    def _on_theme_changed(self, colors: dict[str, str]) -> None:
         """
         Handle theme change from service.
 
@@ -88,7 +89,7 @@ class ThemeProvider(QObject):
         """
         return self._theme_service.get_color(key, fallback)
 
-    def get_colors(self) -> Dict[str, str]:
+    def get_colors(self) -> dict[str, str]:
         """
         Get all colors from the current theme.
 

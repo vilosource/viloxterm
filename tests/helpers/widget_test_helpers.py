@@ -7,11 +7,12 @@ for testing widget lifecycle behavior.
 """
 
 import time
-from typing import Optional, List, Callable, Any
-from unittest.mock import Mock, patch
-from PySide6.QtCore import QTimer, Qt, QObject, Signal
+from typing import Callable
+from unittest.mock import Mock
+
+from PySide6.QtCore import QTimer
 from PySide6.QtTest import QSignalSpy
-from PySide6.QtWidgets import QWidget
+
 from ui.widgets.app_widget import AppWidget
 from ui.widgets.widget_registry import WidgetType
 from ui.widgets.widget_state import WidgetState
@@ -200,20 +201,20 @@ class WidgetTestHelper:
         # Test focus when ready
         if widget.widget_state == WidgetState.READY:
             result = widget.focus_widget()
-            assert result == True
+            assert result
             assert widget.has_focus
 
         # Test focus when not ready
         elif widget.widget_state in [WidgetState.CREATED, WidgetState.INITIALIZING]:
             result = widget.focus_widget()
-            assert result == False
-            assert widget._pending_focus == True
+            assert not result
+            assert widget._pending_focus
             assert not widget.has_focus
 
         # Test focus in error state
         elif widget.widget_state == WidgetState.ERROR:
             result = widget.focus_widget()
-            assert result == False
+            assert not result
             assert not widget._pending_focus
             assert not widget.has_focus
 
@@ -225,7 +226,7 @@ class WidgetTestHelper:
         Args:
             widget: The widget to test
         """
-        initial_count = widget._signal_manager.get_connection_count()
+        widget._signal_manager.get_connection_count()
 
         # Perform cleanup
         widget.cleanup()

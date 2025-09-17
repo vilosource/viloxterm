@@ -7,24 +7,28 @@ in the application through an intuitive interface.
 """
 
 import logging
-from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass
+from typing import Optional
 
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QFont, QKeySequence
 from PySide6.QtWidgets import (
-    QVBoxLayout, QHBoxLayout, QTreeWidget, QTreeWidgetItem,
-    QPushButton, QLineEdit, QLabel, QWidget, QMessageBox,
-    QHeaderView, QComboBox, QGroupBox, QSplitter
+    QComboBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QVBoxLayout,
+    QWidget,
 )
-from PySide6.QtCore import Qt, Signal, QTimer
-from PySide6.QtGui import QKeySequence, QFont, QColor
 
+from core.commands.registry import command_registry
 from ui.widgets.app_widget import AppWidget
 from ui.widgets.widget_registry import WidgetType
-from core.commands.registry import command_registry
-from core.commands.base import Command
-from core.keyboard.service import KeyboardService
-from core.settings.service import SettingsService
-
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +44,7 @@ class ShortcutItem:
     current_shortcut: str
     new_shortcut: Optional[str] = None
     has_conflict: bool = False
-    conflicting_commands: List[str] = None
+    conflicting_commands: list[str] = None
 
     def __post_init__(self):
         if self.conflicting_commands is None:
@@ -157,9 +161,9 @@ class ShortcutConfigAppWidget(AppWidget):
         self.settings_service = None
 
         # Data storage
-        self.shortcut_items: Dict[str, ShortcutItem] = {}
-        self.tree_items: Dict[str, QTreeWidgetItem] = {}
-        self.modified_shortcuts: Dict[str, str] = {}  # command_id -> new_shortcut
+        self.shortcut_items: dict[str, ShortcutItem] = {}
+        self.tree_items: dict[str, QTreeWidgetItem] = {}
+        self.modified_shortcuts: dict[str, str] = {}  # command_id -> new_shortcut
 
         # UI elements
         self.tree_widget = None
@@ -231,14 +235,14 @@ class ShortcutConfigAppWidget(AppWidget):
         # Conflict warning area
         self.conflict_label = QLabel()
         # Use warning color from theme for conflict display
-        self.conflict_label.setStyleSheet(f"""
-            QLabel {{
+        self.conflict_label.setStyleSheet("""
+            QLabel {
                 background-color: rgba(244, 135, 113, 0.1);
                 color: #f48771;
                 padding: 8px;
                 border: 1px solid #f48771;
                 border-radius: 4px;
-            }}
+            }
         """)
         self.conflict_label.setWordWrap(True)
         self.conflict_label.hide()

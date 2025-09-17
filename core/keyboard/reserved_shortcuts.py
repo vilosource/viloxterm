@@ -16,29 +16,29 @@ WEBENGINE_RESERVED_SHORTCUTS = [
     "Ctrl+T",          # Toggle theme
     "Ctrl+Shift+M",    # Toggle menu bar
     "F11",             # Toggle fullscreen
-    
+
     # Directional pane navigation
     "Alt+Left",        # Navigate to pane on the left
     "Alt+Right",       # Navigate to pane on the right
     "Alt+Up",          # Navigate to pane above
     "Alt+Down",        # Navigate to pane below
-    
+
     # Workspace/pane commands
     "Ctrl+\\",         # Split horizontal
     "Ctrl+Shift+\\",   # Split vertical
     "Ctrl+W",          # Close tab/pane
     "Ctrl+K",          # Chord sequence starter
     "F2",              # Rename pane
-    
+
     # Command palette
     "Ctrl+Shift+P",    # Show command palette
-    
+
     # File operations
     "Ctrl+N",          # New terminal tab (default)
     "Ctrl+Shift+N",    # New editor tab
     "Ctrl+`",          # New terminal tab (alternative)
     "Ctrl+S",          # Save
-    
+
     # Navigation
     "Ctrl+Tab",        # Next tab
     "Ctrl+Shift+Tab",  # Previous tab
@@ -53,7 +53,7 @@ WEBENGINE_RESERVED_SHORTCUTS = [
     "Ctrl+7",          # Go to tab 7 (future: go to pane 7)
     "Ctrl+8",          # Go to tab 8 (future: go to pane 8)
     "Ctrl+9",          # Go to tab 9 (future: go to pane 9)
-    
+
     # Debug/development
     "Ctrl+R",          # Reload window
     "Ctrl+Shift+R",    # Reset app state
@@ -62,7 +62,7 @@ WEBENGINE_RESERVED_SHORTCUTS = [
 def get_reserved_shortcuts():
     """
     Get the list of reserved shortcuts.
-    
+
     Returns:
         List of shortcut strings that should be reserved for application handling
     """
@@ -71,7 +71,7 @@ def get_reserved_shortcuts():
 def add_reserved_shortcut(shortcut: str):
     """
     Add a shortcut to the reserved list.
-    
+
     Args:
         shortcut: String representation of the shortcut (e.g., "Alt+P")
     """
@@ -81,7 +81,7 @@ def add_reserved_shortcut(shortcut: str):
 def remove_reserved_shortcut(shortcut: str):
     """
     Remove a shortcut from the reserved list.
-    
+
     Args:
         shortcut: String representation of the shortcut
     """

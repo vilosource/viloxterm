@@ -1,8 +1,10 @@
 """State management for the main window."""
 
-from PySide6.QtCore import QSettings
-from ui.qt_compat import safe_splitter_collapse_setting
 import json
+
+from PySide6.QtCore import QSettings
+
+from ui.qt_compat import safe_splitter_collapse_setting
 
 
 class MainWindowStateManager:

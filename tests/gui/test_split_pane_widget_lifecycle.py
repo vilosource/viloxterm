@@ -4,13 +4,14 @@ GUI integration tests for SplitPaneWidget with widget lifecycle.
 Tests focus handling during split operations with async widgets.
 """
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from PySide6.QtCore import QTimer, Qt
-from PySide6.QtTest import QTest, QSignalSpy
-from ui.widgets.split_pane_widget import SplitPaneWidget
-from ui.widgets.split_pane_model import SplitPaneModel
+from PySide6.QtCore import QTimer
+from PySide6.QtTest import QSignalSpy
+
 from ui.widgets.app_widget import AppWidget
+from ui.widgets.split_pane_widget import SplitPaneWidget
 from ui.widgets.widget_registry import WidgetType
 from ui.widgets.widget_state import WidgetState
 

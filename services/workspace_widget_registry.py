@@ -6,8 +6,8 @@ This component manages the mapping between widget IDs and their
 tab indices, providing singleton widget support and focus operations.
 """
 
-from typing import Dict, Optional
 import logging
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class WorkspaceWidgetRegistry:
     def __init__(self):
         """Initialize the widget registry."""
         # Track widget IDs to tab indices for singleton support
-        self._widget_registry: Dict[str, int] = {}  # widget_id -> tab_index
+        self._widget_registry: dict[str, int] = {}  # widget_id -> tab_index
 
     def has_widget(self, widget_id: str) -> bool:
         """
@@ -123,7 +123,7 @@ class WorkspaceWidgetRegistry:
         """Clear all widget registrations."""
         self._widget_registry.clear()
 
-    def get_all_widgets(self) -> Dict[str, int]:
+    def get_all_widgets(self) -> dict[str, int]:
         """
         Get all registered widgets.
 

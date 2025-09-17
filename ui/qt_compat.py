@@ -1,8 +1,9 @@
 """Qt/PySide6 compatibility utilities for handling version differences."""
 
-from PySide6.QtCore import QObject, Signal
-from PySide6 import __version__ as pyside_version
 import logging
+
+from PySide6 import __version__ as pyside_version
+from PySide6.QtCore import QObject, Signal
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +20,13 @@ def get_pyside_version():
 
 def check_signal_receivers(signal: Signal) -> bool:
     """Check if a signal has any receivers/connections.
-    
+
     This handles the difference between PyQt5 and PySide6 where
     the receivers() method doesn't exist in PySide6.
-    
+
     Args:
         signal: The signal to check
-        
+
     Returns:
         True if the signal can accept connections (always true for valid signals)
     """
@@ -41,26 +42,26 @@ def check_signal_receivers(signal: Signal) -> bool:
 
 def safe_key_sequence_to_key(key_sequence_str: str):
     """Safely convert a key sequence string to Qt key and modifiers.
-    
+
     This avoids the overflow issues with QKeySequence.toCombined() in some
     PySide6 versions.
-    
+
     Args:
         key_sequence_str: String like "Ctrl+T" or "Ctrl+Shift+M"
-        
+
     Returns:
         Tuple of (key, modifiers) suitable for qtbot.keyClick()
     """
     from PySide6.QtCore import Qt
-    
+
     parts = key_sequence_str.split('+')
     if not parts:
         raise ValueError(f"Invalid key sequence: {key_sequence_str}")
-    
+
     # Build modifier flags
     modifiers = Qt.KeyboardModifier.NoModifier
     key = None
-    
+
     for part in parts:
         part = part.strip().lower()
         if part in ('ctrl', 'control'):
@@ -82,26 +83,26 @@ def safe_key_sequence_to_key(key_sequence_str: str):
                     key = ord(part.upper())
                 else:
                     raise ValueError(f"Unknown key: {part}")
-    
+
     if key is None:
         raise ValueError(f"No key found in sequence: {key_sequence_str}")
-    
+
     return key, modifiers
 
 
 def safe_splitter_collapse_setting(splitter, collapsible: bool):
     """Safely set splitter children collapsible property.
-    
+
     Some Qt versions may not properly respect this setting when
     state is restored, so this ensures it's applied correctly.
-    
+
     Args:
         splitter: QSplitter instance
         collapsible: Whether children should be collapsible
     """
     try:
         splitter.setChildrenCollapsible(collapsible)
-        
+
         # For older Qt versions, we might need to set minimum sizes
         if not collapsible:
             # Ensure each widget has a minimum size to prevent collapse
@@ -109,19 +110,19 @@ def safe_splitter_collapse_setting(splitter, collapsible: bool):
                 widget = splitter.widget(i)
                 if widget and widget.minimumWidth() == 0:
                     widget.setMinimumWidth(50)  # Reasonable minimum
-                    
+
     except Exception as e:
         logger.warning(f"Failed to set splitter collapse settings: {e}")
 
 
 def get_qt_version_info():
     """Get comprehensive Qt/PySide6 version information.
-    
+
     Returns:
         Dict with version information
     """
     from PySide6.QtCore import qVersion
-    
+
     return {
         'pyside_version': pyside_version,
         'pyside_tuple': get_pyside_version(),

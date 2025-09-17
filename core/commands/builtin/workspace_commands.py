@@ -3,15 +3,23 @@
 Workspace-related commands using the service layer.
 """
 
-from core.commands.base import Command, CommandResult, CommandContext
-from core.commands.decorators import command
-from core.commands.validation import validate, ParameterSpec, Range, OneOf, Optional, Type, String
-from services.workspace_service import WorkspaceService
-from services.terminal_service import TerminalService
-from core.settings.app_defaults import get_app_default, get_default_widget_type
-from ui.widgets.widget_registry import WidgetType
-import uuid
 import logging
+import uuid
+
+from core.commands.base import CommandContext, CommandResult
+from core.commands.decorators import command
+from core.commands.validation import (
+    OneOf,
+    Optional,
+    ParameterSpec,
+    Range,
+    String,
+    validate,
+)
+from core.settings.app_defaults import get_default_widget_type
+from services.terminal_service import TerminalService
+from services.workspace_service import WorkspaceService
+from ui.widgets.widget_registry import WidgetType
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +53,11 @@ def new_tab_command(context: CommandContext) -> CommandResult:
         name = context.args.get('name')
 
         # Map string widget type to WidgetType enum and widget ID
-        # Note: theme_editor and shortcuts also use WidgetType.SETTINGS
+        # Note: shortcuts uses WidgetType.SETTINGS, theme_editor uses CUSTOM
         widget_type_map = {
             "terminal": (WidgetType.TERMINAL, None),
             "editor": (WidgetType.TEXT_EDITOR, None),
-            "theme_editor": (WidgetType.SETTINGS, "com.viloapp.theme_editor"),
+            "theme_editor": (WidgetType.CUSTOM, "com.viloapp.theme_editor"),
             "explorer": (WidgetType.EXPLORER, None),
             "output": (WidgetType.OUTPUT, None),
             "settings": (WidgetType.SETTINGS, "com.viloapp.settings"),
@@ -183,10 +191,10 @@ def split_pane_right_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         orientation = context.args.get('orientation', 'horizontal')
         new_pane_id = workspace_service.split_active_pane(orientation)
-        
+
         if new_pane_id:
             return CommandResult(
                 success=True,
@@ -194,7 +202,7 @@ def split_pane_right_command(context: CommandContext) -> CommandResult:
             )
         else:
             return CommandResult(success=False, error="Failed to split pane")
-            
+
     except Exception as e:
         logger.error(f"Failed to split pane right: {e}")
         return CommandResult(success=False, error=str(e))
@@ -215,9 +223,9 @@ def split_pane_down_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         new_pane_id = workspace_service.split_active_pane("vertical")
-        
+
         if new_pane_id:
             return CommandResult(
                 success=True,
@@ -225,7 +233,7 @@ def split_pane_down_command(context: CommandContext) -> CommandResult:
             )
         else:
             return CommandResult(success=False, error="Failed to split pane")
-            
+
     except Exception as e:
         logger.error(f"Failed to split pane down: {e}")
         return CommandResult(success=False, error=str(e))
@@ -246,14 +254,14 @@ def close_active_pane_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         success = workspace_service.close_active_pane()
-        
+
         if success:
             return CommandResult(success=True)
         else:
             return CommandResult(success=False, error="Cannot close the last pane")
-            
+
     except Exception as e:
         logger.error(f"Failed to close active pane: {e}")
         return CommandResult(success=False, error=str(e))
@@ -275,10 +283,10 @@ def toggle_pane_numbers_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         # Enter command mode which shows pane numbers and activates focus sink
         success = workspace_service.enter_pane_command_mode()
-        
+
         if success:
             return CommandResult(
                 success=True,
@@ -289,7 +297,7 @@ def toggle_pane_numbers_command(context: CommandContext) -> CommandResult:
                 success=False,
                 error="Could not enter pane command mode (no panes available)"
             )
-        
+
     except Exception as e:
         logger.error(f"Failed to enter pane command mode: {e}")
         return CommandResult(success=False, error=str(e))
@@ -309,14 +317,14 @@ def focus_next_pane_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         success = workspace_service.navigate_to_next_pane()
-        
+
         if success:
             return CommandResult(success=True)
         else:
             return CommandResult(success=False, error="Failed to navigate to next pane")
-            
+
     except Exception as e:
         logger.error(f"Failed to focus next pane: {e}")
         return CommandResult(success=False, error=str(e))
@@ -336,14 +344,14 @@ def focus_previous_pane_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         success = workspace_service.navigate_to_previous_pane()
-        
+
         if success:
             return CommandResult(success=True)
         else:
             return CommandResult(success=False, error="Failed to navigate to previous pane")
-            
+
     except Exception as e:
         logger.error(f"Failed to focus previous pane: {e}")
         return CommandResult(success=False, error=str(e))
@@ -363,19 +371,19 @@ def next_tab_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         current = workspace_service.get_current_tab_index()
         count = workspace_service.get_tab_count()
-        
+
         if count > 1:
             next_index = (current + 1) % count
             success = workspace_service.switch_to_tab(next_index)
-            
+
             if success:
                 return CommandResult(success=True, value={'tab_index': next_index})
-        
+
         return CommandResult(success=False, error="No other tabs to switch to")
-        
+
     except Exception as e:
         logger.error(f"Failed to switch to next tab: {e}")
         return CommandResult(success=False, error=str(e))
@@ -401,20 +409,20 @@ def select_tab_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         tab_index = context.args.get('tab_index')
         if tab_index is None:
             return CommandResult(success=False, error="No tab index provided")
-        
+
         count = workspace_service.get_tab_count()
         if 0 <= tab_index < count:
             success = workspace_service.switch_to_tab(tab_index)
-            
+
             if success:
                 return CommandResult(success=True, value={'tab_index': tab_index})
-        
+
         return CommandResult(success=False, error=f"Invalid tab index: {tab_index}")
-        
+
     except Exception as e:
         logger.error(f"Failed to select tab: {e}")
         return CommandResult(success=False, error=str(e))
@@ -434,19 +442,19 @@ def previous_tab_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         current = workspace_service.get_current_tab_index()
         count = workspace_service.get_tab_count()
-        
+
         if count > 1:
             prev_index = (current - 1) % count
             success = workspace_service.switch_to_tab(prev_index)
-            
+
             if success:
                 return CommandResult(success=True, value={'tab_index': prev_index})
-        
+
         return CommandResult(success=False, error="No other tabs to switch to")
-        
+
     except Exception as e:
         logger.error(f"Failed to switch to previous tab: {e}")
         return CommandResult(success=False, error=str(e))
@@ -465,15 +473,15 @@ def save_layout_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         layout = workspace_service.save_layout()
-        
+
         # Show status message
         if context.main_window and hasattr(context.main_window, 'status_bar'):
             context.main_window.status_bar.set_message("Layout saved", 2000)
-        
+
         return CommandResult(success=True, value={'layout': layout})
-        
+
     except Exception as e:
         logger.error(f"Failed to save layout: {e}")
         return CommandResult(success=False, error=str(e))
@@ -492,21 +500,21 @@ def restore_layout_command(context: CommandContext) -> CommandResult:
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
-        
+
         # Get layout from context args or use saved one
         layout = context.args.get('layout')
         if layout:
             success = workspace_service.restore_layout(layout)
-            
+
             if success:
                 # Show status message
                 if context.main_window and hasattr(context.main_window, 'status_bar'):
                     context.main_window.status_bar.set_message("Layout restored", 2000)
-                
+
                 return CommandResult(success=True)
-        
+
         return CommandResult(success=False, error="No layout to restore")
-        
+
     except Exception as e:
         logger.error(f"Failed to restore layout: {e}")
         return CommandResult(success=False, error=str(e))

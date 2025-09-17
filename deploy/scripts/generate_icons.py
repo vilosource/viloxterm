@@ -4,10 +4,10 @@ Generate application icons from SVG source for all platforms.
 Creates .ico (Windows), .icns (macOS), and .png (Linux) files.
 """
 
-import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
+
 
 def check_dependencies():
     """Check if required tools are installed."""

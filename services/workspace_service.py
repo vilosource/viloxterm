@@ -6,19 +6,14 @@ This service coordinates workspace-related operations through specialized
 managers for tabs, panes, and widget registry.
 """
 
-from typing import Optional, Dict, Any, List, Tuple
 import logging
+from typing import Any, Optional
 
+from core.settings.app_defaults import get_default_split_direction
 from services.base import Service
-from services.workspace_widget_registry import WorkspaceWidgetRegistry
-from services.workspace_tab_manager import WorkspaceTabManager
 from services.workspace_pane_manager import WorkspacePaneManager
-from core.settings.app_defaults import (
-    get_app_default,
-    get_default_widget_type,
-    get_default_split_direction,
-    get_default_split_ratio
-)
+from services.workspace_tab_manager import WorkspaceTabManager
+from services.workspace_widget_registry import WorkspaceWidgetRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -45,29 +40,29 @@ class WorkspaceService(Service):
         self._widget_registry = WorkspaceWidgetRegistry()
         self._tab_manager = WorkspaceTabManager(workspace, self._widget_registry)
         self._pane_manager = WorkspacePaneManager(workspace)
-    
+
     def get_workspace(self):
         """Get the workspace instance."""
         return self._workspace
-    
+
     def set_workspace(self, workspace):
         """Set the workspace instance."""
         self._workspace = workspace
         # Update all managers with new workspace
         self._tab_manager.set_workspace(workspace)
         self._pane_manager.set_workspace(workspace)
-        
-    def initialize(self, context: Dict[str, Any]) -> None:
+
+    def initialize(self, context: dict[str, Any]) -> None:
         """Initialize the service with application context."""
         super().initialize(context)
-        
+
         # Get workspace from context if not provided
         if not self._workspace:
             self._workspace = context.get('workspace')
-        
+
         if not self._workspace:
             logger.warning("WorkspaceService initialized without workspace reference")
-    
+
     def cleanup(self) -> None:
         """Cleanup service resources."""
         self._workspace = None
@@ -126,7 +121,7 @@ class WorkspaceService(Service):
         context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
 
         return index
-    
+
     def add_terminal_tab(self, name: Optional[str] = None) -> int:
         """Add a new terminal tab to the workspace."""
         self.validate_initialized()
@@ -167,7 +162,7 @@ class WorkspaceService(Service):
             context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
 
         return success
-    
+
     def close_tab(self, index: Optional[int] = None) -> bool:
         """Close a tab."""
         self.validate_initialized()
@@ -196,15 +191,15 @@ class WorkspaceService(Service):
             context_manager.set('workbench.tabs.hasMultiple', self.get_tab_count() > 1)
 
         return success
-    
+
     def get_current_tab_index(self) -> int:
         """Get the index of the current tab."""
         return self._tab_manager.get_current_tab_index()
-    
+
     def get_tab_count(self) -> int:
         """Get the number of open tabs."""
         return self._tab_manager.get_tab_count()
-    
+
     def switch_to_tab(self, index: int) -> bool:
         """Switch to a specific tab."""
         self.validate_initialized()
@@ -216,7 +211,7 @@ class WorkspaceService(Service):
             self.notify('tab_switched', {'index': index})
 
         return success
-    
+
     # ============= Pane Operations (Delegated) =============
 
     def split_active_pane(self, orientation: Optional[str] = None) -> Optional[str]:
@@ -241,7 +236,7 @@ class WorkspaceService(Service):
             context_manager.set('workbench.pane.hasMultiple', self.get_pane_count() > 1)
 
         return new_id
-    
+
     def close_active_pane(self) -> bool:
         """Close the active pane in the current tab."""
         self.validate_initialized()
@@ -262,7 +257,7 @@ class WorkspaceService(Service):
             context_manager.set('workbench.pane.hasMultiple', self.get_pane_count() > 1)
 
         return success
-    
+
     def focus_pane(self, pane_id: str) -> bool:
         """Focus a specific pane."""
         self.validate_initialized()
@@ -275,7 +270,7 @@ class WorkspaceService(Service):
             self.notify('pane_focused', {'pane_id': pane_id})
 
         return success
-    
+
     def toggle_pane_numbers(self) -> bool:
         """Toggle the visibility of pane identification numbers."""
         self.validate_initialized()
@@ -291,35 +286,35 @@ class WorkspaceService(Service):
         self.notify('pane_numbers_toggled', {'visible': visible})
 
         return visible
-    
+
     def show_pane_numbers(self) -> bool:
         """Show pane identification numbers."""
         self.validate_initialized()
         return self._pane_manager.show_pane_numbers()
-    
+
     def hide_pane_numbers(self) -> bool:
         """Hide pane identification numbers."""
         self.validate_initialized()
         return self._pane_manager.hide_pane_numbers()
-    
+
     def switch_to_pane_by_number(self, number: int) -> bool:
         """Switch to a pane by its displayed number."""
         self.validate_initialized()
         return self._pane_manager.switch_to_pane_by_number(number)
-    
+
     def enter_pane_command_mode(self) -> bool:
         """Enter command mode for pane navigation."""
         self.validate_initialized()
         return self._pane_manager.enter_pane_command_mode()
-    
+
     def get_pane_count(self) -> int:
         """Get the number of panes in the current tab."""
         return self._pane_manager.get_pane_count()
-    
+
     def get_active_pane_id(self) -> Optional[str]:
         """Get the ID of the active pane."""
         return self._pane_manager.get_active_pane_id()
-    
+
     def navigate_in_direction(self, direction: str) -> bool:
         """Navigate to a pane in the specified direction."""
         self.validate_initialized()
@@ -339,61 +334,61 @@ class WorkspaceService(Service):
             })
 
         return success
-    
+
     # ============= Layout Operations =============
-    
-    def save_layout(self) -> Dict[str, Any]:
+
+    def save_layout(self) -> dict[str, Any]:
         """
         Save the current workspace layout.
-        
+
         Returns:
             Dictionary containing layout state
         """
         if not self._workspace:
             return {}
-        
+
         return self._workspace.get_state()
-    
-    def restore_layout(self, state: Dict[str, Any]) -> bool:
+
+    def restore_layout(self, state: dict[str, Any]) -> bool:
         """
         Restore a workspace layout.
-        
+
         Args:
             state: Layout state dictionary
-            
+
         Returns:
             True if layout was restored
         """
         self.validate_initialized()
-        
+
         if not self._workspace:
             return False
-        
+
         try:
             self._workspace.set_state(state)
-            
+
             self.notify('layout_restored', {'state': state})
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to restore layout: {e}")
             return False
-    
+
     # ============= Navigation =============
-    
+
     def navigate_to_next_pane(self) -> bool:
         """Navigate to the next pane in the current tab."""
         self.validate_initialized()
         return self._pane_manager.navigate_to_next_pane()
-    
+
     def navigate_to_previous_pane(self) -> bool:
         """Navigate to the previous pane in the current tab."""
         self.validate_initialized()
         return self._pane_manager.navigate_to_previous_pane()
-    
+
     # ============= Utility Methods =============
-    
-    def get_workspace_info(self) -> Dict[str, Any]:
+
+    def get_workspace_info(self) -> dict[str, Any]:
         """Get comprehensive workspace information."""
         if not self._workspace:
             return {

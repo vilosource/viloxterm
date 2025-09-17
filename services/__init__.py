@@ -7,13 +7,13 @@ enabling better testability, reusability, and maintainability.
 """
 
 from services.base import Service, ServiceEvent
-from services.service_locator import ServiceLocator
-from services.workspace_service import WorkspaceService
-from services.ui_service import UIService
-from services.terminal_service import TerminalService
-from services.state_service import StateService
 from services.editor_service import EditorService
+from services.service_locator import ServiceLocator
+from services.state_service import StateService
+from services.terminal_service import TerminalService
 from services.theme_service import ThemeService
+from services.ui_service import UIService
+from services.workspace_service import WorkspaceService
 
 __all__ = [
     'Service',
@@ -30,7 +30,7 @@ __all__ = [
 def initialize_services(main_window=None, workspace=None, sidebar=None, activity_bar=None):
     """
     Initialize all services with application context.
-    
+
     Args:
         main_window: MainWindow instance
         workspace: Workspace instance
@@ -38,7 +38,7 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
         activity_bar: ActivityBar instance
     """
     locator = ServiceLocator.get_instance()
-    
+
     # Create and register services (order matters - StateService before SettingsService)
     state_service = StateService()
 
@@ -67,7 +67,7 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
     from ui.themes.theme_provider import ThemeProvider
     theme_provider = ThemeProvider(theme_service)
     theme_service.set_theme_provider(theme_provider)
-    
+
     # Initialize all services with context
     context = {
         'main_window': main_window,
@@ -75,8 +75,8 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
         'sidebar': sidebar,
         'activity_bar': activity_bar
     }
-    
+
     for service in locator.get_all():
         service.initialize(context)
-    
+
     return locator

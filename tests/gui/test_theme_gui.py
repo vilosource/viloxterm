@@ -6,17 +6,18 @@ Tests theme switching, widget updates, and UI integration
 using pytest-qt for non-blocking GUI testing.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from PySide6.QtWidgets import QApplication, QWidget, QLabel
-from PySide6.QtCore import QTimer
+from unittest.mock import Mock, patch
 
-from services.theme_service import ThemeService
-from services.service_locator import ServiceLocator
-from ui.themes.theme_provider import ThemeProvider
-from ui.main_window import MainWindow
-from ui.widgets.split_pane_widget import SplitPaneWidget
+import pytest
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QLabel, QWidget
+
 from core.themes.theme import Theme
+from services.service_locator import ServiceLocator
+from services.theme_service import ThemeService
+from ui.main_window import MainWindow
+from ui.themes.theme_provider import ThemeProvider
+from ui.widgets.split_pane_widget import SplitPaneWidget
 
 
 class TestThemeGUI:

@@ -5,24 +5,25 @@ Terminal implementation as an AppWidget.
 This replaces the old TerminalWidget with a proper AppWidget implementation.
 """
 
-import os
 import logging
-from typing import Dict, Any, Optional
-from PySide6.QtWidgets import QVBoxLayout
-from PySide6.QtCore import Slot, QUrl, Signal
-from PySide6.QtGui import QColor
+import os
+from typing import Any
 
-from ui.widgets.app_widget import AppWidget
-from ui.widgets.widget_registry import WidgetType
+from PySide6.QtCore import QUrl, Signal
+from PySide6.QtGui import QColor
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from ui.terminal.terminal_server import terminal_server
-from ui.terminal.terminal_config import TerminalConfig
-from ui.terminal.terminal_themes import get_terminal_theme
+from PySide6.QtWidgets import QVBoxLayout
+
+from core.keyboard.reserved_shortcuts import get_reserved_shortcuts
+from core.keyboard.web_shortcut_guard import WebShortcutGuard
+from ui.icon_manager import get_icon_manager
 from ui.terminal.terminal_assets import terminal_asset_bundler
 from ui.terminal.terminal_bridge import TerminalBridge
-from ui.icon_manager import get_icon_manager
-from core.keyboard.web_shortcut_guard import WebShortcutGuard
-from core.keyboard.reserved_shortcuts import get_reserved_shortcuts
+from ui.terminal.terminal_config import TerminalConfig
+from ui.terminal.terminal_server import terminal_server
+from ui.terminal.terminal_themes import get_terminal_theme
+from ui.widgets.app_widget import AppWidget
+from ui.widgets.widget_registry import WidgetType
 
 logger = logging.getLogger(__name__)
 
@@ -30,13 +31,13 @@ logger = logging.getLogger(__name__)
 class TerminalAppWidget(AppWidget):
     """
     Terminal widget that extends AppWidget.
-    
+
     Manages its own terminal session and WebEngine view.
     """
-    
+
     # Signal emitted when terminal process exits and pane should be closed
     pane_close_requested = Signal()
-    
+
     def __init__(self, widget_id: str, parent=None):
         """Initialize the terminal widget."""
         super().__init__(widget_id, WidgetType.TERMINAL, parent)
@@ -67,27 +68,27 @@ class TerminalAppWidget(AppWidget):
         # Start initialization
         self.initialize()
         self.setup_terminal()
-        
+
     def setup_terminal(self):
         """Set up the terminal UI and session."""
         # Create layout
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        
+
         # Create standard web view
         self.web_view = QWebEngineView()
-        
+
         # Install event filter to guard application shortcuts from being consumed by xterm.js
         self._shortcut_guard = WebShortcutGuard(self)
         self._shortcut_guard.set_reserved_shortcuts(get_reserved_shortcuts())
         self.web_view.installEventFilter(self._shortcut_guard)
-        
+
         # Also install on focus proxy if it exists (WebEngine uses a focus proxy widget)
         focus_proxy = self.web_view.focusProxy()
         if focus_proxy:
             focus_proxy.installEventFilter(self._shortcut_guard)
-        
+
         # Set background color to match dark theme immediately
         self.web_view.setStyleSheet("""
             QWebEngineView {
@@ -95,10 +96,10 @@ class TerminalAppWidget(AppWidget):
                 border: none;
             }
         """)
-        
+
         # Set the page background color before any content loads
         self.web_view.page().setBackgroundColor(QColor("#1e1e1e"))
-        
+
         # Allow local content to be loaded
         from PySide6.QtWebEngineCore import QWebEngineSettings
         settings = self.web_view.settings()
@@ -108,41 +109,40 @@ class TerminalAppWidget(AppWidget):
         settings.setAttribute(QWebEngineSettings.JavascriptEnabled, True)
         settings.setAttribute(QWebEngineSettings.JavascriptCanOpenWindows, True)
         settings.setAttribute(QWebEngineSettings.ErrorPageEnabled, True)
-        
+
         # Don't hide the web view - let it show with dark background
         # self.web_view.hide()  # REMOVED - causes white flash on re-render
-        
+
         # Create bridge object for clean QWebChannel communication
         self.bridge = TerminalBridge(self)
-        
+
         # Connect bridge signals to our methods
         self.bridge.terminalClicked.connect(lambda: self.request_focus())
         self.bridge.terminalFocused.connect(lambda: self.request_focus())
         self.bridge.shortcutPressed.connect(self.on_shortcut_from_js)
-        
+
         # Set initial theme in bridge
         theme_data = get_terminal_theme(self.current_theme)
         self.bridge.set_theme(theme_data)
-        
+
         # Set up JavaScript communication channel with bridge
         from PySide6.QtWebChannel import QWebChannel
         self.channel = QWebChannel()
         self.channel.registerObject("terminal", self.bridge)  # Register bridge, not self
         self.web_view.page().setWebChannel(self.channel)
-        
+
         # Connect to log when terminal loads (no longer need to show/hide)
         self.web_view.loadFinished.connect(self.on_terminal_loaded)
-        
+
         # Add JavaScript console message handler for debugging
-        from PySide6.QtWebEngineCore import QWebEnginePage
         page = self.web_view.page()
         page.javaScriptConsoleMessage = self.handle_console_message
-        
+
         layout.addWidget(self.web_view)
-        
+
         # Start terminal session
         self.start_terminal_session()
-        
+
     def mousePressEvent(self, event):
         """Handle mouse press to focus this terminal."""
         logger.debug(f"TerminalAppWidget.mousePressEvent called for widget {self.widget_id}")
@@ -150,7 +150,7 @@ class TerminalAppWidget(AppWidget):
         self.request_focus()
         logger.debug(f"request_focus() called for terminal {self.widget_id}")
         super().mousePressEvent(event)
-        
+
     def focus_widget(self):
         """Set keyboard focus on the terminal web view and terminal element."""
         # Use base class to check state and handle pending focus
@@ -163,17 +163,17 @@ class TerminalAppWidget(AppWidget):
                     self.bridge.focus_terminal_element(self.web_view)
             return True
         return False
-    
+
     def handle_console_message(self, level, msg, line, source):
         """Handle JavaScript console messages for debugging."""
         level_map = {
             0: "INFO",
-            1: "WARNING", 
+            1: "WARNING",
             2: "ERROR"
         }
         level_str = level_map.get(level, str(level))
         logger.info(f"JS Console [{level_str}] {source}:{line}: {msg}")
-    
+
     def on_web_view_focus_in(self, event):
         """Handle web view focus in event - this should fire when user clicks on terminal."""
         logger.debug(f"WebView focusInEvent for terminal {self.widget_id}")
@@ -181,8 +181,8 @@ class TerminalAppWidget(AppWidget):
         self.request_focus()
         # Call the original focusInEvent
         QWebEngineView.focusInEvent(self.web_view, event)
-    
-        
+
+
     def on_terminal_loaded(self, success: bool):
         """Called when the web view finishes loading terminal content."""
         if success:
@@ -203,34 +203,34 @@ class TerminalAppWidget(AppWidget):
             logger.error(f"Failed URL was: {url}")
             # Mark widget as in error state
             self.set_error(error_msg)
-        
+
     def start_terminal_session(self):
         """Start a new terminal session."""
         try:
             # Get initial directory
             initial_dir = self.config.get_initial_directory()
-            
+
             # Create session
             self.session_id = terminal_server.create_session(
                 command=self.config.shell,
                 cmd_args=self.config.shell_args,
                 cwd=initial_dir
             )
-            
+
             # Get bundled HTML instead of using URL
             bundled_html = terminal_asset_bundler.get_bundled_html(
-                self.session_id, 
+                self.session_id,
                 terminal_server.port
             )
-            
+
             # Set base URL for Socket.IO to work correctly
             base_url = QUrl(f"http://127.0.0.1:{terminal_server.port}/")
-            
+
             logger.info(f"Loading bundled terminal HTML for session: {self.session_id}")
             self.web_view.setHtml(bundled_html, base_url)
-            
+
             logger.info(f"Terminal session started: {self.session_id}")
-            
+
         except Exception as e:
             logger.error(f"Failed to start terminal: {e}")
             # Show error in the web view
@@ -244,7 +244,7 @@ class TerminalAppWidget(AppWidget):
             </html>
             """
             self.web_view.setHtml(error_html)
-            
+
     def on_cleanup(self):
         """Clean up terminal session when widget is destroyed."""
         if self.session_id:
@@ -255,11 +255,11 @@ class TerminalAppWidget(AppWidget):
                 logger.error(f"Error cleaning up terminal session: {e}")
             finally:
                 self.session_id = None
-                
-    def get_state(self) -> Dict[str, Any]:
+
+    def get_state(self) -> dict[str, Any]:
         """Get terminal state for persistence."""
         state = super().get_state()
-        
+
         # Add terminal-specific state
         if self.session_id:
             # Try to get current working directory from terminal
@@ -271,47 +271,47 @@ class TerminalAppWidget(AppWidget):
                 logger = logging.getLogger(__name__)
                 logger.debug(f"Failed to get current working directory: {e}")
                 # Unable to get CWD, skip saving it
-                
+
         return state
-        
-    def set_state(self, state: Dict[str, Any]):
+
+    def set_state(self, state: dict[str, Any]):
         """Restore terminal state."""
         super().set_state(state)
-        
+
         # Could restore working directory if saved
         if "cwd" in state:
             # Would need to send cd command to terminal
             pass
-            
+
     def get_title(self) -> str:
         """Get terminal title."""
         # Could enhance to show current directory or running command
         return "Terminal"
-        
+
     def can_close(self) -> bool:
         """Check if terminal can be closed."""
         # Could check for running processes
         # For now, always allow close (with cleanup)
         return True
-        
+
     def reload(self):
         """Reload the terminal (reconnect to session)."""
         if self.session_id and self.web_view:
             # Get bundled HTML
             bundled_html = terminal_asset_bundler.get_bundled_html(
-                self.session_id, 
+                self.session_id,
                 terminal_server.port
             )
             # Set base URL for Socket.IO
             base_url = QUrl(f"http://127.0.0.1:{terminal_server.port}/")
             self.web_view.setHtml(bundled_html, base_url)
-            
+
     def execute_command(self, command: str):
         """Execute a command in the terminal."""
         # This would require WebChannel or similar to communicate with xterm.js
         # For now, this is a placeholder
         pass
-    
+
     def on_app_theme_changed(self, theme_name: str):
         """
         Handle theme change from IconManager.
@@ -320,11 +320,11 @@ class TerminalAppWidget(AppWidget):
         logger.info(f"Terminal theme changing to: {theme_name}")
         self.current_theme = theme_name
         theme_data = get_terminal_theme(theme_name)
-        
+
         # Update bridge with new theme
         if self.bridge:
             self.bridge.set_theme(theme_data)
-    
+
     def on_shortcut_from_js(self, shortcut: str):
         """
         Handle shortcut notification from JavaScript.
@@ -337,7 +337,7 @@ class TerminalAppWidget(AppWidget):
             main_window = self.window()
             if isinstance(main_window, MainWindow):
                 main_window.execute_command("workbench.action.togglePaneNumbers")
-                
+
     def retry_initialization(self):
         """Retry loading terminal on error."""
         if self.web_view and self.session_id:
@@ -351,7 +351,7 @@ class TerminalAppWidget(AppWidget):
     def on_session_ended(self, ended_session_id: str):
         """
         Handle terminal session ended signal from terminal server.
-        
+
         Args:
             ended_session_id: The session ID that ended
         """

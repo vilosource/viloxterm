@@ -8,7 +8,8 @@ Supports importing themes from VSCode and other popular editors.
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Optional, Any
+from typing import Any, Optional
+
 from core.themes.theme import Theme
 
 logger = logging.getLogger(__name__)
@@ -160,7 +161,7 @@ class VSCodeThemeImporter:
             Converted Theme object or None if import failed
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 vscode_data = json.load(f)
 
             theme_name = file_path.stem
@@ -173,7 +174,7 @@ class VSCodeThemeImporter:
             return None
 
     @classmethod
-    def convert_vscode_theme(cls, vscode_data: Dict[str, Any], theme_name: str) -> Theme:
+    def convert_vscode_theme(cls, vscode_data: dict[str, Any], theme_name: str) -> Theme:
         """
         Convert VSCode theme data to ViloxTerm Theme.
 
@@ -389,7 +390,7 @@ class ThemeImporter:
             Format identifier ('vscode', 'textmate', etc.)
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 data = json.load(f)
 
             # Check for VSCode theme markers

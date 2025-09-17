@@ -6,21 +6,19 @@ Tests the custom title bar, window controls, dragging, resizing,
 and mode switching between normal and frameless windows.
 """
 
-import pytest
-from PySide6.QtCore import Qt, QPoint, QSettings, QEvent
-from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QMouseEvent
-from PySide6.QtTest import QTest
 from unittest.mock import MagicMock, patch
 
+import pytest
+from PySide6.QtCore import QEvent, QPoint, QSettings, Qt
+from PySide6.QtGui import QMouseEvent
+from PySide6.QtTest import QTest
+
+# Import window commands to ensure they're registered
+from core.commands.executor import execute_command
+from services.ui_service import UIService
 from ui.frameless_window import FramelessWindow
 from ui.main_window import MainWindow
 from ui.widgets.custom_title_bar import CustomTitleBar
-from services.ui_service import UIService
-from core.commands.executor import execute_command
-
-# Import window commands to ensure they're registered
-import core.commands.builtin.window_commands
 
 
 class TestFramelessWindow:
@@ -75,7 +73,7 @@ class TestFramelessWindow:
         qtbot.waitForWindowShown(window)
 
         # Test minimize
-        initial_state = window.windowState()
+        window.windowState()
         QTest.mouseClick(window.custom_title_bar.min_button, Qt.LeftButton)
         assert window.isMinimized()
 
@@ -200,7 +198,7 @@ class TestFramelessWindow:
             (QPoint(400, 300), Qt.ArrowCursor),      # Center (no resize)
         ]
 
-        for pos, expected_cursor in cursor_tests:
+        for pos, _expected_cursor in cursor_tests:
             # Simulate mouse move
             event = QMouseEvent(
                 QEvent.MouseMove,
@@ -245,7 +243,7 @@ class TestFramelessWindow:
 
         # Create UI service and check it reads the setting
         ui_service = UIService()
-        assert ui_service.is_frameless_mode_enabled() == True
+        assert ui_service.is_frameless_mode_enabled()
 
         # Toggle and verify persistence
         ui_service.toggle_frameless_mode()
@@ -253,7 +251,7 @@ class TestFramelessWindow:
 
         # Create new service instance to test persistence
         new_ui_service = UIService()
-        assert new_ui_service.is_frameless_mode_enabled() == False
+        assert not new_ui_service.is_frameless_mode_enabled()
 
         # Clean up
         settings.setValue("UI/FramelessMode", False)

@@ -3,15 +3,15 @@
 Unit tests for registry commands using proper service methods.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
-from core.commands.base import CommandContext, CommandResult
+from unittest.mock import MagicMock
+
+from core.commands.base import CommandContext
 from core.commands.builtin.registry_commands import (
+    get_widget_tab_index_command,
+    is_widget_registered_command,
     register_widget_command,
     unregister_widget_command,
     update_registry_after_close_command,
-    get_widget_tab_index_command,
-    is_widget_registered_command,
 )
 from services.workspace_service import WorkspaceService
 

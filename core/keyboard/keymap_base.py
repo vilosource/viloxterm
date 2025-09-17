@@ -6,18 +6,19 @@ This module provides the common shortcuts that are consistent across
 all keymap providers, avoiding duplication and ensuring consistency.
 """
 
-from typing import Dict, Any, List
+from typing import Any
+
 from core.commands.constants import CommandID
 
 
 class BaseKeymapShortcuts:
     """Base shortcuts shared across all keymap schemes."""
-    
+
     @staticmethod
-    def get_common_shortcuts() -> List[Dict[str, Any]]:
+    def get_common_shortcuts() -> list[dict[str, Any]]:
         """
         Get shortcuts that are common across all keymap schemes.
-        
+
         These are the core shortcuts that should be consistent
         regardless of which keymap (Default, VSCode, Vim) is active.
         """
@@ -29,44 +30,44 @@ class BaseKeymapShortcuts:
             {"id": "file.save", "sequence": "ctrl+s", "command_id": CommandID.File.SAVE},
             {"id": "file.save_as", "sequence": "ctrl+shift+s", "command_id": CommandID.File.SAVE_AS},
             {"id": "file.close", "sequence": "ctrl+w", "command_id": "file.closeTab"},
-            
+
             # ========== Edit Operations ==========
             {"id": "edit.cut", "sequence": "ctrl+x", "command_id": CommandID.Edit.CUT},
             {"id": "edit.copy", "sequence": "ctrl+c", "command_id": CommandID.Edit.COPY},
             {"id": "edit.paste", "sequence": "ctrl+v", "command_id": CommandID.Edit.PASTE},
             {"id": "edit.undo", "sequence": "ctrl+z", "command_id": CommandID.Edit.UNDO},
             {"id": "edit.select_all", "sequence": "ctrl+a", "command_id": CommandID.Edit.SELECT_ALL},
-            
+
             # ========== View Operations ==========
             {"id": "view.sidebar", "sequence": "ctrl+b", "command_id": CommandID.View.TOGGLE_SIDEBAR},
             {"id": "view.terminal", "sequence": "ctrl+`", "command_id": CommandID.View.TOGGLE_TERMINAL},
             {"id": "view.fullscreen", "sequence": "f11", "command_id": CommandID.View.TOGGLE_FULLSCREEN},
             {"id": "view.theme", "sequence": "ctrl+t", "command_id": CommandID.View.TOGGLE_THEME},
             {"id": "view.command_palette", "sequence": "ctrl+shift+p", "command_id": CommandID.CommandPalette.SHOW},
-            
+
             # ========== Workspace Operations ==========
             {"id": "workspace.split_horizontal", "sequence": "ctrl+\\", "command_id": "workbench.action.splitRight"},
             {"id": "workspace.split_vertical", "sequence": "ctrl+shift+\\", "command_id": "workbench.action.splitDown"},
-            
+
             # ========== Terminal Operations ==========
             {"id": "terminal.new", "sequence": "ctrl+shift+`", "command_id": "file.newTerminalTab"},
             {"id": "terminal.clear", "sequence": "ctrl+l", "command_id": "terminal.clear"},
-            
+
             # ========== Navigation ==========
             {"id": "nav.next_tab", "sequence": "ctrl+tab", "command_id": "workbench.action.nextTab"},
             {"id": "nav.prev_tab", "sequence": "ctrl+shift+tab", "command_id": "workbench.action.previousTab"},
-            
+
             # ========== Focus Navigation ==========
             {"id": "focus.next_group", "sequence": "f6", "command_id": "workbench.action.focusNextGroup"},
             {"id": "focus.prev_group", "sequence": "shift+f6", "command_id": "workbench.action.focusPreviousGroup"},
-            
+
             # ========== Help ==========
             {"id": "help.about", "sequence": "f1", "command_id": "help.about"},
             {"id": "help.shortcuts", "sequence": "ctrl+k ctrl+s", "command_id": "help.keyboardShortcuts"},
         ]
-    
+
     @staticmethod
-    def get_default_extensions() -> List[Dict[str, Any]]:
+    def get_default_extensions() -> list[dict[str, Any]]:
         """Get default-specific extensions to the base shortcuts."""
         return [
             # Default ViloApp specific shortcuts
@@ -74,9 +75,9 @@ class BaseKeymapShortcuts:
             {"id": "workspace.next_pane", "sequence": "ctrl+k ctrl+right", "command_id": "workbench.action.focusNextPane"},
             {"id": "workspace.prev_pane", "sequence": "ctrl+k ctrl+left", "command_id": "workbench.action.focusPreviousPane"},
         ]
-    
+
     @staticmethod
-    def get_vscode_extensions() -> List[Dict[str, Any]]:
+    def get_vscode_extensions() -> list[dict[str, Any]]:
         """Get VSCode-specific extensions to the base shortcuts."""
         return [
             # VSCode specific overrides and additions
@@ -103,12 +104,12 @@ class BaseKeymapShortcuts:
             {"id": "focus.next_group", "sequence": "f6", "command_id": "workbench.action.focusNextGroup"},
             {"id": "focus.prev_group", "sequence": "shift+f6", "command_id": "workbench.action.focusPreviousGroup"},
         ]
-    
+
     @staticmethod
-    def get_vim_conditional_shortcuts() -> List[Dict[str, Any]]:
+    def get_vim_conditional_shortcuts() -> list[dict[str, Any]]:
         """
         Get Vim-specific shortcuts that are conditional on vim mode.
-        
+
         These shortcuts use 'when' clauses to only activate in vim mode.
         """
         return [

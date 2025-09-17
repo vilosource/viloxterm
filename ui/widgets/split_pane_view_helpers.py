@@ -7,9 +7,10 @@ including event filtering, focus management, visual updates, and widget renderin
 """
 
 import logging
-from typing import Dict, Optional, Union, List
-from PySide6.QtWidgets import QWidget, QSplitter
-from PySide6.QtCore import Qt, QEvent, QObject, Signal, QTimer
+from typing import Optional
+
+from PySide6.QtCore import QEvent, QObject, Qt, QTimer, Signal
+from PySide6.QtWidgets import QWidget
 
 logger = logging.getLogger(__name__)
 
@@ -31,11 +32,11 @@ class SplitPaneViewHelpers(QObject):
     def __init__(self, parent=None):
         """Initialize the view helpers."""
         super().__init__(parent)
-        self._pane_wrappers: Dict[str, QWidget] = {}
+        self._pane_wrappers: dict[str, QWidget] = {}
         self._focus_restoration_timer = None
         self._restoring_focus = False
 
-    def set_pane_wrappers(self, pane_wrappers: Dict[str, QWidget]):
+    def set_pane_wrappers(self, pane_wrappers: dict[str, QWidget]):
         """
         Set the pane wrappers dictionary for event filtering.
 
@@ -178,7 +179,7 @@ class SplitPaneViewHelpers(QObject):
         self._focus_restoration_timer.timeout.connect(restore_focus)
         self._focus_restoration_timer.start(delay_ms)
 
-    def find_widget_in_tree(self, root_widget: QWidget, target_class: type) -> List[QWidget]:
+    def find_widget_in_tree(self, root_widget: QWidget, target_class: type) -> list[QWidget]:
         """
         Find all widgets of a specific type in the widget tree.
 
@@ -200,7 +201,7 @@ class SplitPaneViewHelpers(QObject):
         search_recursive(root_widget)
         return found_widgets
 
-    def get_widget_hierarchy_info(self, widget: QWidget) -> Dict:
+    def get_widget_hierarchy_info(self, widget: QWidget) -> dict:
         """
         Get hierarchy information for a widget for debugging.
 
@@ -252,7 +253,7 @@ class SplitPaneViewHelpers(QObject):
         logger.debug("Widget tree structure:")
         log_recursive(root_widget)
 
-    def validate_widget_integrity(self, root_widget: QWidget) -> Dict[str, List[str]]:
+    def validate_widget_integrity(self, root_widget: QWidget) -> dict[str, list[str]]:
         """
         Validate widget tree integrity and report issues.
 

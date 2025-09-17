@@ -5,25 +5,29 @@ Theme editor widget for creating and customizing themes.
 Provides a complete interface for editing, previewing, and managing themes.
 """
 
-from typing import Dict, Optional, List, Tuple
-from pathlib import Path
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
-    QTabWidget, QPushButton, QLabel, QComboBox,
-    QScrollArea, QFrame, QGroupBox, QMessageBox,
-    QFileDialog, QLineEdit, QTextEdit, QToolBar,
-    QToolButton, QMenu, QSpinBox, QSlider, QFontComboBox
-)
-from PySide6.QtCore import Qt, Signal, QTimer
-from PySide6.QtGui import QAction, QIcon
-import json
 import logging
+from typing import Optional
 
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QAction, QIcon
+from PySide6.QtWidgets import (
+    QComboBox,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QSplitter,
+    QToolBar,
+    QVBoxLayout,
+    QWidget,
+)
+
+from core.themes.theme import Theme
 from ui.widgets.app_widget import AppWidget
-from ui.widgets.theme_preview_widget import ThemePreviewWidget
 from ui.widgets.theme_editor_controls import ThemeControlsWidget
 from ui.widgets.theme_persistence import ThemePersistenceManager
-from core.themes.theme import Theme
+from ui.widgets.theme_preview_widget import ThemePreviewWidget
 
 logger = logging.getLogger(__name__)
 
@@ -294,8 +298,13 @@ class ThemeEditorAppWidget(AppWidget):
         except Exception as e:
             logger.error(f"Failed to load themes: {e}")
 
-    def _load_theme(self, theme: Theme):
-        """Load theme into editor."""
+    def _load_theme(self, theme: Theme, mark_modified: bool = False):
+        """Load theme into editor.
+
+        Args:
+            theme: Theme to load
+            mark_modified: If True, mark the editor as modified (enables Apply button)
+        """
         if self._updating:
             return  # Prevent recursive updates
 
@@ -327,8 +336,8 @@ class ThemeEditorAppWidget(AppWidget):
             if self._preview_widget:
                 self._preview_widget.apply_theme_colors(theme.colors)
 
-            # Reset modified state
-            self._modified = False
+            # Set modified state based on parameter
+            self._modified = mark_modified
             self._update_button_states()
         finally:
             self._updating = False
@@ -359,7 +368,11 @@ class ThemeEditorAppWidget(AppWidget):
             if result.success and result.value:
                 theme = result.value.get("theme")
                 if theme:
-                    self._load_theme(theme)
+                    # Check if this is a different theme than currently loaded
+                    theme_changed = not self._current_theme or theme.id != self._current_theme.id
+
+                    # Load theme and mark as modified if it's a different theme
+                    self._load_theme(theme, mark_modified=theme_changed)
 
     def _on_color_changed(self, key: str, value: str, is_preview: bool):
         """Handle color change from picker."""
@@ -381,7 +394,7 @@ class ThemeEditorAppWidget(AppWidget):
         colors = self._get_current_colors()
         self._preview_widget.apply_theme_colors(colors)
 
-    def _get_current_colors(self) -> Dict[str, str]:
+    def _get_current_colors(self) -> dict[str, str]:
         """Get current colors from controls widget."""
         if self._controls_widget:
             return self._controls_widget.get_current_colors()
@@ -519,7 +532,7 @@ class ThemeEditorAppWidget(AppWidget):
         # which is available through the UI service
         pass
 
-    def _on_external_theme_change(self, colors: Dict[str, str]):
+    def _on_external_theme_change(self, colors: dict[str, str]):
         """Handle theme changes from outside the editor."""
         if self._updating:
             return  # Ignore if we're the ones updating

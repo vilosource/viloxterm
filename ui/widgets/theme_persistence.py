@@ -6,17 +6,15 @@ Handles all theme file operations including VSCode theme imports,
 custom theme management, and backup/restore functionality.
 """
 
-from typing import Dict, Optional, Tuple
-from pathlib import Path
-from PySide6.QtWidgets import (
-    QWidget, QMessageBox, QFileDialog, QInputDialog
-)
-from PySide6.QtCore import QObject, Signal
-import json
 import logging
+from pathlib import Path
+from typing import Optional
 
-from core.themes.theme import Theme
+from PySide6.QtCore import QObject, Signal
+from PySide6.QtWidgets import QFileDialog, QInputDialog, QMessageBox, QWidget
+
 from core.themes.importers import VSCodeThemeImporter
+from core.themes.theme import Theme
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +97,7 @@ class ThemePersistenceManager(QObject):
 
         return None
 
-    def duplicate_theme(self, theme: Theme, colors: Optional[Dict[str, str]] = None) -> Optional[str]:
+    def duplicate_theme(self, theme: Theme, colors: Optional[dict[str, str]] = None) -> Optional[str]:
         """
         Duplicate an existing theme.
 
@@ -202,7 +200,7 @@ class ThemePersistenceManager(QObject):
 
         return False
 
-    def save_theme(self, theme: Theme, colors: Dict[str, str], typography_data: Dict[str, any]) -> bool:
+    def save_theme(self, theme: Theme, colors: dict[str, str], typography_data: dict[str, any]) -> bool:
         """
         Save theme with current settings.
 
@@ -249,7 +247,7 @@ class ThemePersistenceManager(QObject):
             self.operation_failed.emit(f"Failed to save theme: {e}")
             return False
 
-    def apply_theme(self, theme: Theme, colors: Dict[str, str], typography_data: Dict[str, any]) -> bool:
+    def apply_theme(self, theme: Theme, colors: dict[str, str], typography_data: dict[str, any]) -> bool:
         """
         Apply theme to the application.
 
@@ -329,7 +327,7 @@ class ThemePersistenceManager(QObject):
 
         return None
 
-    def export_theme(self, theme: Theme, colors: Optional[Dict[str, str]] = None) -> bool:
+    def export_theme(self, theme: Theme, colors: Optional[dict[str, str]] = None) -> bool:
         """
         Export theme to file.
 
@@ -420,7 +418,7 @@ class ThemePersistenceManager(QObject):
 
         return None
 
-    def load_available_themes(self) -> Tuple[list, Optional[Theme]]:
+    def load_available_themes(self) -> tuple[list, Optional[Theme]]:
         """
         Load available themes and current theme.
 

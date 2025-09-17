@@ -8,10 +8,10 @@ This test ensures that the application follows the Command Pattern correctly:
 """
 
 import ast
-import os
-import pytest
-from pathlib import Path
 import re
+from pathlib import Path
+
+import pytest
 
 
 def get_python_files():
@@ -72,7 +72,7 @@ def test_commands_have_decorators():
 
     for file_path in command_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # Find functions that end with '_command'
@@ -123,7 +123,7 @@ def test_commands_return_command_result():
 
     for file_path in command_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # Parse the AST to find function definitions
@@ -195,7 +195,7 @@ def test_ui_uses_execute_command():
 
     for file_path in ui_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             lines = content.split('\n')
@@ -245,7 +245,7 @@ def test_command_ids_are_namespaced():
 
     for file_path in command_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # Find @command decorators with id parameter
@@ -293,7 +293,7 @@ def test_command_context_usage():
 
     for file_path in command_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             lines = content.split('\n')

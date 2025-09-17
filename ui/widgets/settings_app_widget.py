@@ -6,29 +6,44 @@ This AppWidget provides a tabbed interface for configuring all application
 settings including workspace defaults, appearance, keyboard shortcuts, and more.
 """
 
-from typing import Optional, Dict, Any
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTabWidget,
-    QGroupBox, QLabel, QComboBox, QSpinBox, QCheckBox,
-    QSlider, QRadioButton, QButtonGroup, QPushButton,
-    QLineEdit, QScrollArea, QFrame, QMessageBox, QFileDialog,
-    QProgressBar
-)
-from PySide6.QtCore import Qt, Signal, QTimer
-from PySide6.QtGui import QIcon
 import json
 import logging
+from typing import Any, Optional
 
-from ui.widgets.app_widget import AppWidget
-from ui.widgets.widget_registry import WidgetType
-from ui.widgets.theme_editor_widget import ThemeEditorAppWidget
-from ui.widgets.shortcut_config_app_widget import ShortcutConfigAppWidget
-from core.settings.app_defaults import (
-    get_app_defaults,
-    get_app_default,
-    set_app_default,
-    AppDefaultsValidator
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (
+    QButtonGroup,
+    QCheckBox,
+    QComboBox,
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QRadioButton,
+    QScrollArea,
+    QSlider,
+    QSpinBox,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
 )
+
+from core.settings.app_defaults import (
+    get_app_default,
+    get_app_defaults,
+    set_app_default,
+)
+from services.service_locator import ServiceLocator
+from services.theme_service import ThemeService
+from ui.widgets.app_widget import AppWidget
+from ui.widgets.shortcut_config_app_widget import ShortcutConfigAppWidget
+from ui.widgets.theme_editor_widget import ThemeEditorAppWidget
+from ui.widgets.widget_registry import WidgetType
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +74,45 @@ class SettingsAppWidget(AppWidget):
 
         self._defaults_manager = get_app_defaults()
         self._modified_settings = {}
+        self._theme_service = None
+        self._theme_provider = None
+
+        # Connect to theme service for theme updates
+        self._connect_to_theme_service()
+
         self._setup_ui()
+        self._apply_theme()
         self._load_current_settings()
+
+    def _connect_to_theme_service(self):
+        """Connect to theme service for theme updates."""
+        try:
+            # Get service locator
+            locator = ServiceLocator.get_instance()
+            if locator:
+                # Get theme service from locator
+                self._theme_service = locator.get(ThemeService)
+                if self._theme_service:
+                    # Get theme provider
+                    self._theme_provider = self._theme_service.get_theme_provider()
+                    if self._theme_provider:
+                        # Connect to theme change signal
+                        self._theme_provider.style_changed.connect(self._apply_theme)
+        except Exception as e:
+            logger.warning(f"Could not connect to theme service: {e}")
+
+    def _apply_theme(self):
+        """Apply theme to the widget."""
+        if self._theme_provider:
+            try:
+                # Apply settings widget stylesheet
+                stylesheet = self._theme_provider.get_stylesheet("settings_widget")
+                if stylesheet:
+                    # Apply to main widget only
+                    # Don't force styles on children - let them handle their own theming
+                    self.setStyleSheet(stylesheet)
+            except Exception as e:
+                logger.error(f"Failed to apply theme: {e}")
 
     def get_title(self) -> str:
         """Get widget title."""
@@ -191,8 +243,10 @@ class SettingsAppWidget(AppWidget):
             actual_widget = creator()
 
             # Replace the placeholder with the actual widget
+            # Get the tab text BEFORE removing the tab
+            tab_text = self._tabs.tabText(index)
             self._tabs.removeTab(index)
-            self._tabs.insertTab(index, actual_widget, self._tabs.tabText(index))
+            self._tabs.insertTab(index, actual_widget, tab_text)
             self._tabs.setCurrentIndex(index)
 
             # Mark as loaded
@@ -224,14 +278,17 @@ class SettingsAppWidget(AppWidget):
     def _create_general_tab(self) -> QWidget:
         """Create the general settings tab."""
         container = QWidget()
+        container.setObjectName("settingsTabContent")
         layout = QVBoxLayout()
 
         # Scrollable area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setObjectName("settingsScrollArea")
 
         scroll_content = QWidget()
+        scroll_content.setObjectName("settingsScrollContent")
         content_layout = QVBoxLayout()
 
         # Workspace Defaults group
@@ -413,6 +470,7 @@ class SettingsAppWidget(AppWidget):
     def _create_terminal_tab(self) -> QWidget:
         """Create the terminal settings tab."""
         container = QWidget()
+        container.setObjectName("settingsTabContent")
         layout = QVBoxLayout()
 
         # Terminal Settings group
@@ -464,6 +522,7 @@ class SettingsAppWidget(AppWidget):
     def _create_advanced_tab(self) -> QWidget:
         """Create the advanced settings tab."""
         container = QWidget()
+        container.setObjectName("settingsTabContent")
         layout = QVBoxLayout()
 
         # Confirmations group
@@ -691,7 +750,7 @@ class SettingsAppWidget(AppWidget):
 
         if file_path:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path) as f:
                     settings = json.load(f)
 
                 imported = self._defaults_manager.import_settings(settings)

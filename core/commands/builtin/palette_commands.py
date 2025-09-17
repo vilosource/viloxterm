@@ -3,9 +3,10 @@
 Command palette related commands.
 """
 
-from core.commands.base import Command, CommandResult, CommandContext
-from core.commands.decorators import command
 import logging
+
+from core.commands.base import CommandContext, CommandResult
+from core.commands.decorators import command
 
 logger = logging.getLogger(__name__)
 
@@ -25,14 +26,14 @@ def show_command_palette_command(context: CommandContext) -> CommandResult:
         # Check if main window has a command palette controller
         if not context.main_window or not hasattr(context.main_window, 'command_palette_controller'):
             return CommandResult(success=False, error="Command palette not available")
-        
+
         controller = context.main_window.command_palette_controller
-        
+
         # Show the palette
         controller.show_palette()
-        
+
         return CommandResult(success=True, value="Command palette shown")
-        
+
     except Exception as e:
         logger.error(f"Failed to show command palette: {e}")
         return CommandResult(success=False, error=str(e))
@@ -40,7 +41,7 @@ def show_command_palette_command(context: CommandContext) -> CommandResult:
 
 @command(
     id="commandPalette.hide",
-    title="Hide Command Palette", 
+    title="Hide Command Palette",
     category="View",
     description="Hide the command palette",
     shortcut="escape",
@@ -52,14 +53,14 @@ def hide_command_palette_command(context: CommandContext) -> CommandResult:
         # Check if main window has a command palette controller
         if not context.main_window or not hasattr(context.main_window, 'command_palette_controller'):
             return CommandResult(success=False, error="Command palette not available")
-        
+
         controller = context.main_window.command_palette_controller
-        
+
         # Hide the palette
         controller.hide_palette()
-        
+
         return CommandResult(success=True, value="Command palette hidden")
-        
+
     except Exception as e:
         logger.error(f"Failed to hide command palette: {e}")
         return CommandResult(success=False, error=str(e))
@@ -78,14 +79,14 @@ def refresh_command_palette_command(context: CommandContext) -> CommandResult:
         # Check if main window has a command palette controller
         if not context.main_window or not hasattr(context.main_window, 'command_palette_controller'):
             return CommandResult(success=False, error="Command palette not available")
-        
+
         controller = context.main_window.command_palette_controller
-        
+
         # Refresh commands
         controller.refresh_commands()
-        
+
         return CommandResult(success=True, value="Command palette refreshed")
-        
+
     except Exception as e:
         logger.error(f"Failed to refresh command palette: {e}")
         return CommandResult(success=False, error=str(e))

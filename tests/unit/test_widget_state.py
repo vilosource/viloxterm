@@ -3,7 +3,6 @@
 Unit tests for WidgetState and WidgetStateValidator.
 """
 
-import pytest
 from ui.widgets.widget_state import WidgetState, WidgetStateValidator
 
 

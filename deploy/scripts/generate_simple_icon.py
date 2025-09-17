@@ -33,7 +33,6 @@ def create_icon():
     )
 
     # Draw terminal prompt symbol (>)
-    prompt_size = 60
     prompt_x = 50
     prompt_y = size // 2 - 30
     draw.polygon([
@@ -44,7 +43,6 @@ def create_icon():
     ], fill=(0, 255, 0, 255))
 
     # Draw text lines (simulating terminal output)
-    line_height = 15
     line_y = prompt_y + 10
     for i, width in enumerate([80, 100, 70, 90]):
         draw.rectangle(
@@ -64,7 +62,7 @@ def create_icon():
     # Get text bounding box for centering
     bbox = draw.textbbox((0, 0), text, font=font)
     text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
+    bbox[3] - bbox[1]
     text_x = (size - text_width) // 2
     text_y = size - 80
 

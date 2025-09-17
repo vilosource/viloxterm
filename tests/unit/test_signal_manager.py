@@ -3,8 +3,8 @@
 Unit tests for SignalManager.
 """
 
-import pytest
-from PySide6.QtCore import QObject, Signal, Qt
+from PySide6.QtCore import QObject, Qt, Signal
+
 from ui.widgets.signal_manager import SignalManager
 
 
@@ -281,7 +281,7 @@ class TestSignalManager:
             description="Group A signal 2",
             group="groupA"
         )
-        conn3 = manager.connect(
+        manager.connect(
             emitter1.test_signal_with_arg,
             receiver.slot_one_arg,
             description="Group B signal",

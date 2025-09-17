@@ -1,0 +1,66 @@
+kuja@kuja:~/GitHub/viloapp$ make appimage
+.direnv/python-3.12.3/bin/pyside6-rcc resources/resources.qrc -o resources/resources_rc.py
+Resources compiled successfully!
+Building AppImage...
+cd builder && ./build.sh appimage
+[ViloxTerm Builder] Building AppImage...
+=========================================
+ViloxTerm Docker Build Environment
+Python: Python 3.12.11
+Nuitka: 2.7.11
+=========================================
+Starting ViloxTerm build...
+Preparing build environment...
+Compiling Qt resources...
+Resources compiled successfully!
+Building standalone distribution with pyside6-deploy...
+INFO:root:[DEPLOY] Start
+INFO:root:[DEPLOY] Using Python at /home/builder/venv/bin/python3.12
+INFO:root:[DEPLOY] Using existing config file /build/pysidedeploy.spec
+Using tomllib for parsing TOML content
+WARNING:root:[DEPLOY] Unable to resolve a valid project file. Proceeding without a project file. Details:
+No project file found in the current directory.
+<unknown>:74: SyntaxWarning: invalid escape sequence '\ '
+<unknown>:91: SyntaxWarning: invalid escape sequence '\ '
+Traceback (most recent call last):
+  File "/home/builder/venv/lib/python3.12/site-packages/PySide6/scripts/deploy_lib/dependency_util.py", line 154, in pyside_module_imports
+[DEPLOY] Unable to parse /build/ui/dialogs/about_dialog.py
+    tree = get_ast(py_file)
+           ^^^^^^^^^^^^^^^^
+  File "/home/builder/venv/lib/python3.12/site-packages/PySide6/scripts/deploy_lib/dependency_util.py", line 88, in get_ast
+    return tree
+           ^^^^
+UnboundLocalError: cannot access local variable 'tree' where it is not associated with a value
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/builder/venv/lib/python3.12/site-packages/PySide6/scripts/deploy.py", line 216, in <module>
+    main(args.main_file, args.name, args.config_file, args.init, args.loglevel, args.dry_run,
+  File "/home/builder/venv/lib/python3.12/site-packages/PySide6/scripts/deploy.py", line 109, in main
+    config = DesktopConfig(config_file=config_file, source_file=main_file, python_exe=python.exe,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/builder/venv/lib/python3.12/site-packages/PySide6/scripts/deploy_lib/config.py", line 432, in __init__
+    modules = self._find_pysidemodules()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/builder/venv/lib/python3.12/site-packages/PySide6/scripts/deploy_lib/config.py", line 390, in _find_pysidemodules
+    modules = find_pyside_modules(project_dir=self.project_dir,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/builder/venv/lib/python3.12/site-packages/PySide6/scripts/deploy_lib/dependency_util.py", line 191, in find_pyside_modules
+    all_modules = all_modules.union(pyside_module_imports(py_candidate))
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/builder/venv/lib/python3.12/site-packages/PySide6/scripts/deploy_lib/dependency_util.py", line 182, in pyside_module_imports
+    raise RuntimeError(f"[DEPLOY] Finding module import failed on file {str(py_file)} with "
+RuntimeError: [DEPLOY] Finding module import failed on file /build/ui/dialogs/about_dialog.py with error cannot access local variable 'tree' where it is not associated with a value
+Build failed! Trying alternative method...
+Nuitka-Options: Used command line options:
+Nuitka-Options:   --standalone --enable-plugin=pyside6 --include-module=flask --include-module=flask_socketio --include-module=socketio --include-module=engineio --include-module=simple_websocket --include-data-dir=resources/icons=resources/icons --include-data-dir=ui/terminal/static=ui/terminal/static --include-data-dir=deploy/icons=deploy/icons --output-dir=/output --assume-yes-for-downloads main.py
+Nuitka: Starting Python compilation with:
+Nuitka:   Version '2.7.11' on Python 3.12 (flavor 'Debian Python') commercial grade 'not installed'.
+Nuitka-Inclusion:WARNING: Cannot follow import to module 'ui.dialogs.about_dialog' because of 'IndentationError'.
+Nuitka-Plugins:anti-bloat: Not including '_json' automatically in order to avoid bloat, but this may cause: may slow down by using fallback implementation.
+Nuitka: Completed Python level compilation and optimization.
+Nuitka: Generating source code for C backend compiler.
+
+
+

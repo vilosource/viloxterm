@@ -3,14 +3,15 @@
 Integration tests for command validation framework.
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from core.commands.base import CommandContext, CommandResult
 from core.commands.decorators import command
-from core.commands.validation import validate, ParameterSpec, Range, OneOf, String
 from core.commands.executor import CommandExecutor
 from core.commands.registry import CommandRegistry
+from core.commands.validation import OneOf, ParameterSpec, Range, String, validate
 
 
 class TestValidationIntegration:

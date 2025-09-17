@@ -1,10 +1,9 @@
 """Unit tests for the icon manager component."""
 
-import pytest
 from unittest.mock import Mock, patch
-from pytestqt.qt_compat import qt_api
-from PySide6.QtGui import QIcon
-from PySide6.QtCore import QSize
+
+import pytest
+
 from ui.icon_manager import IconManager, get_icon_manager
 
 
@@ -16,7 +15,7 @@ class TestIconManager:
         """Test icon manager initializes correctly."""
         manager = IconManager()
         #qtbot.addWidget(manager)  # For proper cleanup
-        
+
         assert manager.theme == "dark"
         assert isinstance(manager._icon_cache, dict)
         assert len(manager._icon_cache) == 0
@@ -25,9 +24,9 @@ class TestIconManager:
         """Test theme property getter."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         assert manager.theme == "dark"
-        
+
         # Change theme internally and check getter
         manager._theme = "dark"
         assert manager.theme == "dark"
@@ -36,14 +35,14 @@ class TestIconManager:
         """Test theme property setter with valid values."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         # First set to light to have a different starting state
         manager.theme = "light"
-        
+
         # Test setting to dark (which should emit signal)
         with qtbot.waitSignal(manager.theme_changed, timeout=1000) as blocker:
             manager.theme = "dark"
-            
+
         assert manager.theme == "dark"
         assert blocker.args == ["dark"]
         assert len(manager._icon_cache) == 0  # Cache should be cleared
@@ -52,16 +51,16 @@ class TestIconManager:
         """Test theme property setter with invalid values."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         initial_theme = manager.theme
-        
+
         # Test invalid theme values
         manager.theme = "invalid"
         assert manager.theme == initial_theme  # Should not change
-        
+
         manager.theme = "blue"
         assert manager.theme == initial_theme  # Should not change
-        
+
         manager.theme = ""
         assert manager.theme == initial_theme  # Should not change
 
@@ -69,10 +68,10 @@ class TestIconManager:
         """Test theme property setter with same value doesn't emit signal."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         # Set same theme (should not emit signal)
         manager.theme = "dark"
-        
+
         # We can't easily test that signal was NOT emitted
         # but we can verify state is consistent
         assert manager.theme == "dark"
@@ -81,18 +80,18 @@ class TestIconManager:
         """Test get_icon caches icons properly."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         # Mock QIcon to avoid resource loading issues
         with patch('ui.icon_manager.QIcon') as mock_qicon:
             mock_icon = Mock()
             mock_qicon.return_value = mock_icon
-            
+
             # Get icon first time
             icon1 = manager.get_icon("explorer")
-            
+
             # Get same icon second time
             icon2 = manager.get_icon("explorer")
-            
+
             # Should return cached version (same instance)
             assert icon1 is icon2
             assert "dark_explorer" in manager._icon_cache  # Default theme is dark
@@ -101,21 +100,21 @@ class TestIconManager:
         """Test get_icon returns different icons for different themes."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         with patch('ui.icon_manager.QIcon') as mock_qicon:
             # Create different mock instances for each call
             mock_icon1 = Mock()
             mock_icon2 = Mock()
             mock_qicon.side_effect = [mock_icon1, mock_icon2]
-            
+
             # Get icon in light theme
             manager.theme = "light"
             light_icon = manager.get_icon("search")
-            
+
             # Get icon in dark theme
             manager.theme = "dark"
             dark_icon = manager.get_icon("search")
-            
+
             # Should be different instances due to theme change clearing cache
             assert light_icon is not dark_icon
             assert "dark_search" in manager._icon_cache
@@ -124,20 +123,20 @@ class TestIconManager:
         """Test get_icon creates pixmaps for different states."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         with patch('ui.icon_manager.QIcon') as mock_qicon:
             mock_icon = Mock()
             mock_qicon.return_value = mock_icon
-            
+
             # Get icon
             manager.get_icon("git")
-            
+
             # Check addPixmap was called (implementation uses addPixmap, not addFile)
             calls = mock_icon.addPixmap.call_args_list
-            
+
             # Should have calls for Normal, Active, and Selected states
             assert len(calls) == 3
-            
+
             # Just verify that addPixmap was called with proper arguments structure
             # Each call should have at least a pixmap as first argument
             for call in calls:
@@ -147,18 +146,18 @@ class TestIconManager:
         """Test get_icon_with_states creates icon with multiple states."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         with patch('ui.icon_manager.QIcon') as mock_qicon:
             mock_icon = Mock()
             mock_qicon.return_value = mock_icon
-            
+
             # Get icon with states
             icon = manager.get_icon_with_states("settings")
-            
+
             # Check addPixmap was called multiple times for different states
             calls = mock_icon.addPixmap.call_args_list
             assert len(calls) == 3  # Normal, Active, Selected (as per actual implementation)
-            
+
             # get_icon_with_states now just calls get_icon, so they should be the same
             regular_icon = manager.get_icon("settings")
             assert icon is regular_icon  # Should return same cached instance
@@ -167,13 +166,13 @@ class TestIconManager:
         """Test detect_system_theme sets theme to light."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         # Set theme to dark first
         manager._theme = "dark"
-        
+
         # Detect system theme
         manager.detect_system_theme()
-        
+
         # Should keep theme as dark (current implementation)
         assert manager.theme == "dark"
 
@@ -181,14 +180,14 @@ class TestIconManager:
         """Test toggle_theme switches from light to dark."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         # Start with light theme
         manager._theme = "light"
-        
+
         # Toggle theme
         with qtbot.waitSignal(manager.theme_changed, timeout=1000) as blocker:
             manager.toggle_theme()
-            
+
         assert manager.theme == "dark"
         assert blocker.args == ["dark"]
 
@@ -196,14 +195,14 @@ class TestIconManager:
         """Test toggle_theme switches from dark to light."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         # Start with dark theme
         manager._theme = "dark"
-        
+
         # Toggle theme
         with qtbot.waitSignal(manager.theme_changed, timeout=1000) as blocker:
             manager.toggle_theme()
-            
+
         assert manager.theme == "light"
         assert blocker.args == ["light"]
 
@@ -211,18 +210,18 @@ class TestIconManager:
         """Test cache is cleared when theme changes."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         with patch('ui.icon_manager.QIcon') as mock_qicon:
             mock_icon = Mock()
             mock_qicon.return_value = mock_icon
-            
+
             # Add item to cache
             manager.get_icon("explorer")
             assert len(manager._icon_cache) == 1
-            
+
             # Change theme to different value (light)
             manager.theme = "light"
-            
+
             # Cache should be cleared
             assert len(manager._icon_cache) == 0
 
@@ -230,7 +229,7 @@ class TestIconManager:
         """Test theme_changed signal is properly defined."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         assert hasattr(manager, 'theme_changed')
         # Signal should be connectable
         mock_slot = Mock()
@@ -240,23 +239,23 @@ class TestIconManager:
         """Test icon cache uses correct keys."""
         manager = IconManager()
         #qtbot.addWidget(manager)
-        
+
         with patch('ui.icon_manager.QIcon') as mock_qicon:
             mock_icon = Mock()
             mock_qicon.return_value = mock_icon
-            
+
             # Set light theme and get icon
             manager._theme = "light"
             manager.get_icon("search")
-            
+
             # Check cache key format
             assert "light_search" in manager._icon_cache
-            
+
             # Set dark theme and get icon
             manager._theme = "dark"
             manager._icon_cache.clear()  # Manually clear for test
             manager.get_icon("search")
-            
+
             # Check cache key format
             assert "dark_search" in manager._icon_cache
 
@@ -270,11 +269,11 @@ class TestGetIconManager:
         # Clear global instance for test
         import ui.icon_manager
         ui.icon_manager._icon_manager = None
-        
+
         # Get instance
         manager1 = get_icon_manager()
         manager2 = get_icon_manager()
-        
+
         # Should be same instance
         assert manager1 is manager2
         assert isinstance(manager1, IconManager)
@@ -284,10 +283,10 @@ class TestGetIconManager:
         # Clear global instance
         import ui.icon_manager
         ui.icon_manager._icon_manager = None
-        
+
         # Get instance
         manager = get_icon_manager()
-        
+
         # Should create and return instance
         assert isinstance(manager, IconManager)
         assert ui.icon_manager._icon_manager is manager
@@ -298,9 +297,9 @@ class TestGetIconManager:
         import ui.icon_manager
         original_manager = IconManager()
         ui.icon_manager._icon_manager = original_manager
-        
+
         # Get instance through function
         manager = get_icon_manager()
-        
+
         # Should return existing instance
         assert manager is original_manager

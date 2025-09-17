@@ -1,17 +1,18 @@
 """Pytest configuration and fixtures."""
 
-import warnings
-import pytest
 import os
-import sys
+import warnings
+
+import pytest
 
 # Set test mode environment variable BEFORE importing any app modules
 os.environ['VILOAPP_TEST_MODE'] = '1'
 os.environ['VILOAPP_SHOW_CONFIRMATIONS'] = '0'
 
 from PySide6.QtWidgets import QApplication
-from ui.main_window import MainWindow
+
 from core.app_config import app_config
+from ui.main_window import MainWindow
 
 
 def pytest_configure(config):
@@ -20,10 +21,10 @@ def pytest_configure(config):
     warnings.filterwarnings("ignore", message=".*is multi-threaded, use of forkpty.*", category=DeprecationWarning)
     warnings.filterwarnings("ignore", message=".*Release of profile requested.*", category=UserWarning)
     # Note: RuntimeError cannot be filtered as it's not a Warning subclass
-    
+
     # Register custom markers for test organization
     config.addinivalue_line("markers", "gui: GUI interaction tests using pytest-qt")
-    config.addinivalue_line("markers", "animation: Tests that involve animations or transitions") 
+    config.addinivalue_line("markers", "animation: Tests that involve animations or transitions")
     config.addinivalue_line("markers", "keyboard: Tests that involve keyboard shortcuts and input")
     config.addinivalue_line("markers", "mouse: Tests that involve mouse interactions")
     config.addinivalue_line("markers", "theme: Tests related to theme switching and visual states")

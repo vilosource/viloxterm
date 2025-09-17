@@ -7,7 +7,6 @@ User Action → Command → Service → UI Update
 """
 
 import logging
-from typing import Optional, Dict, Any
 
 from core.commands.base import CommandContext, CommandResult
 from core.commands.decorators import command

@@ -1,12 +1,11 @@
 """Unit tests for the main window component."""
 
-import pytest
 import json
-from unittest.mock import Mock, patch, call
-from pytestqt.qt_compat import qt_api
-from PySide6.QtWidgets import QApplication, QMessageBox
-from PySide6.QtCore import QSettings, Qt
-from PySide6.QtGui import QKeySequence
+from unittest.mock import Mock, patch
+
+import pytest
+from PySide6.QtWidgets import QMessageBox
+
 from ui.main_window import MainWindow
 
 
@@ -18,16 +17,16 @@ class TestMainWindow:
         """Test main window initializes correctly."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         assert window.windowTitle() == "ViloApp"
         assert window.size().width() == 1200
         assert window.size().height() == 800
-        
+
     def test_ui_components_created(self, qtbot):
         """Test all UI components are created."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         assert hasattr(window, 'activity_bar')
         assert hasattr(window, 'sidebar')
         assert hasattr(window, 'workspace')
@@ -42,24 +41,24 @@ class TestMainWindow:
         """Test menu bar is created with correct actions."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         menubar = window.menuBar()
         assert menubar is not None
-        
+
         # Check menu exists
         menus = [action.text() for action in menubar.actions()]
         assert "File" in menus
         assert "View" in menus
-        
+
     def test_global_shortcuts_created(self, qtbot):
         """Test global shortcuts are created."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Check keyboard service is initialized
         assert hasattr(window, 'keyboard_service')
         assert window.keyboard_service is not None
-        
+
         # Check that shortcuts are registered with the command system
         from core.commands.registry import command_registry
         toggle_menu_cmd = command_registry.get_command("view.toggleMenuBar")
@@ -70,7 +69,7 @@ class TestMainWindow:
         """Test splitter has correct initial sizes."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         sizes = window.main_splitter.sizes()
         assert len(sizes) == 2
         # Sidebar should be visible but exact size may vary
@@ -83,15 +82,15 @@ class TestMainWindow:
         """Test activity bar view change updates sidebar."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Mock sidebar methods
         window.sidebar.set_current_view = Mock()
         window.sidebar.expand = Mock()
         window.sidebar.is_collapsed = True
-        
+
         # Trigger signal
         window.on_activity_view_changed("search")
-        
+
         # Verify calls
         window.sidebar.set_current_view.assert_called_once_with("search")
         window.sidebar.expand.assert_called_once()
@@ -100,15 +99,15 @@ class TestMainWindow:
         """Test activity view change doesn't expand if sidebar not collapsed."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Mock sidebar methods
         window.sidebar.set_current_view = Mock()
         window.sidebar.expand = Mock()
         window.sidebar.is_collapsed = False
-        
+
         # Trigger signal
         window.on_activity_view_changed("git")
-        
+
         # Verify calls
         window.sidebar.set_current_view.assert_called_once_with("git")
         window.sidebar.expand.assert_not_called()
@@ -117,13 +116,13 @@ class TestMainWindow:
         """Test sidebar toggle functionality."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Mock sidebar toggle
         window.sidebar.toggle = Mock()
-        
+
         # Call toggle
         window.toggle_sidebar()
-        
+
         # Verify call
         window.sidebar.toggle.assert_called_once()
 
@@ -131,28 +130,28 @@ class TestMainWindow:
         """Test theme toggle functionality."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Mock execute_command to verify it's called with correct command
         window.execute_command = Mock(return_value=True)
-        
+
         # Call toggle theme
         result = window.toggle_theme()
-        
+
         # Verify execute_command was called with correct command
         window.execute_command.assert_called_once_with("view.toggleTheme")
-        assert result == True
+        assert result
 
     def test_toggle_menu_bar_hide(self, qtbot):
         """Test menu bar toggle command execution."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Mock execute_command to verify command is called
         window.execute_command = Mock(return_value={'success': True})
-        
+
         # Toggle menu bar
         window.toggle_menu_bar()
-        
+
         # Verify command was executed
         window.execute_command.assert_called_once_with("view.toggleMenuBar")
 
@@ -160,14 +159,13 @@ class TestMainWindow:
         """Test that toggle_menu_bar routes through command system."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Mock execute_command to verify command is called
-        original_execute = window.execute_command
         window.execute_command = Mock(return_value={'success': True})
-        
+
         # Call toggle_menu_bar
         result = window.toggle_menu_bar()
-        
+
         # Verify command was executed
         window.execute_command.assert_called_once_with("view.toggleMenuBar")
         assert result == {'success': True}
@@ -176,22 +174,22 @@ class TestMainWindow:
         """Test state saving functionality."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Mock methods
         window.saveGeometry = Mock(return_value=b'geometry_data')
         window.saveState = Mock(return_value=b'state_data')
         window.main_splitter.saveState = Mock(return_value=b'splitter_data')
         window.menuBar().isVisible = Mock(return_value=True)
         window.workspace.save_state = Mock(return_value={'tabs': []})
-        
+
         # Mock QSettings directly to verify calls
         with patch('ui.main_window.QSettings') as mock_settings_class:
             mock_settings = Mock()
             mock_settings_class.return_value = mock_settings
-            
+
             # Call save state
             window.save_state()
-            
+
             # Verify QSettings calls for MainWindow group
             calls = [call for call in mock_settings.beginGroup.call_args_list if call[0][0] == "MainWindow"]
             assert len(calls) >= 1
@@ -207,7 +205,7 @@ class TestMainWindow:
         """Test state restoration functionality."""
         mock_settings = Mock()
         mock_settings_class.return_value = mock_settings
-        
+
         # Mock settings values
         mock_settings.value.side_effect = lambda key, default=None, type=None: {
             "geometry": b'geometry_data',
@@ -215,19 +213,19 @@ class TestMainWindow:
             "splitterSizes": b'splitter_data',
             "menuBarVisible": True
         }.get(key, default)
-        
+
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Mock methods
         window.restoreGeometry = Mock()
         window.restoreState = Mock()
         window.main_splitter.restoreState = Mock()
         window.menuBar().setVisible = Mock()
-        
+
         # Call restore state
         window.restore_state()
-        
+
         # Verify restoration calls
         window.restoreGeometry.assert_called_once_with(b'geometry_data')
         window.restoreState.assert_called_once_with(b'state_data')
@@ -245,17 +243,17 @@ class TestMainWindow:
         """Test close event triggers state saving."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Mock save_state method
         window.save_state = Mock()
-        
+
         # Create mock close event
         close_event = Mock()
         close_event.accept = Mock()
-        
+
         # Call close event
         window.closeEvent(close_event)
-        
+
         # Verify save state called and event accepted
         window.save_state.assert_called_once()
         close_event.accept.assert_called_once()
@@ -264,50 +262,50 @@ class TestMainWindow:
         """Test signal connections are established."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Test by emitting signals and checking that handlers are called
         # Mock the handler methods
         window.on_activity_view_changed = Mock()
         window.toggle_sidebar = Mock()
-        
+
         # Re-connect signals to our mocks
         window.activity_bar.view_changed.disconnect()
         window.activity_bar.toggle_sidebar.disconnect()
         window.activity_bar.view_changed.connect(window.on_activity_view_changed)
         window.activity_bar.toggle_sidebar.connect(window.toggle_sidebar)
-        
+
         # Emit signals
         window.activity_bar.view_changed.emit("test_view")
         window.activity_bar.toggle_sidebar.emit()
-        
+
         # Verify handlers were called
         window.on_activity_view_changed.assert_called_once_with("test_view")
         window.toggle_sidebar.assert_called_once()
-        
+
     def test_menu_actions_shortcuts(self, qtbot):
         """Test menu actions have correct shortcuts."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         menubar = window.menuBar()
         view_menu = None
-        
+
         # Find view menu
         for action in menubar.actions():
             if action.text() == "View":
                 view_menu = action.menu()
                 break
-                
+
         assert view_menu is not None
-        
+
         # Check that actions exist (shortcuts are handled by command system now)
         actions = {action.text(): action for action in view_menu.actions()}
-        
+
         assert "Toggle Theme" in actions
         # Shortcuts are now handled by command system, not QAction
         # Check tooltip instead which shows the shortcut
         assert "Ctrl+T" in actions["Toggle Theme"].toolTip()
-        
+
         assert "Toggle Sidebar" in actions
         assert "Ctrl+B" in actions["Toggle Sidebar"].toolTip()
 
@@ -315,7 +313,7 @@ class TestMainWindow:
         """Test that debug menu exists with reset action."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Find debug menu
         menubar = window.menuBar()
         debug_menu = None
@@ -323,9 +321,9 @@ class TestMainWindow:
             if action.text() == "Debug":
                 debug_menu = action.menu()
                 break
-        
+
         assert debug_menu is not None
-        
+
         # Check reset action exists
         actions = {action.text(): action for action in debug_menu.actions()}
         assert "Reset App State" in actions
@@ -339,16 +337,16 @@ class TestMainWindow:
         mock_settings = Mock()
         mock_settings.value.side_effect = lambda key, default=None, type=None: default
         mock_settings_class.return_value = mock_settings
-        
+
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Mock execute_command to verify it's called
         window.execute_command = Mock(return_value={'success': True})
-        
+
         # Call reset
         result = window.reset_app_state()
-        
+
         # Verify command was executed
         window.execute_command.assert_called_once_with("debug.resetAppState")
         assert result == {'success': True}
@@ -359,21 +357,21 @@ class TestMainWindow:
         """Test reset app state when user cancels."""
         # Mock user clicking No
         mock_question.return_value = QMessageBox.No
-        
-        # Mock settings to return appropriate values during restore  
+
+        # Mock settings to return appropriate values during restore
         mock_settings = Mock()
         mock_settings.value.side_effect = lambda key, default=None, type=None: default
         mock_settings_class.return_value = mock_settings
-        
+
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Call reset
         window.reset_app_state()
-        
+
         # Verify confirmation dialog was shown
         mock_question.assert_called_once()
-        
+
         # Verify settings were NOT cleared
         mock_settings.clear.assert_not_called()
 
@@ -384,16 +382,16 @@ class TestMainWindow:
         mock_settings = Mock()
         mock_settings.value.side_effect = lambda key, default=None, type=None: default
         mock_settings_class.return_value = mock_settings
-        
+
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Mock execute_command to return an error
         window.execute_command = Mock(return_value={'success': False, 'error': 'Settings error'})
-        
+
         # Call reset
         result = window.reset_app_state()
-        
+
         # Verify command was executed and error returned
         window.execute_command.assert_called_once_with("debug.resetAppState")
         assert result == {'success': False, 'error': 'Settings error'}
@@ -402,7 +400,7 @@ class TestMainWindow:
         """Test _reset_to_defaults method."""
         window = MainWindow()
         qtbot.addWidget(window)
-        
+
         # Mock methods to avoid Qt operations in tests
         window.resize = Mock()
         window.move = Mock()
@@ -417,22 +415,22 @@ class TestMainWindow:
         window.sidebar.is_collapsed = False
         window.sidebar.expand = Mock()
         window.workspace.reset_to_default_layout = Mock()
-        
+
         # Mock icon manager
         with patch('ui.main_window.get_icon_manager') as mock_icon_manager:
             mock_manager = Mock()
             mock_manager.detect_system_theme = Mock()
             mock_icon_manager.return_value = mock_manager
-            
+
             # Call reset to defaults
             window._reset_to_defaults()
-            
+
             # Verify window was reset
             window.resize.assert_called_once_with(1200, 800)
             window.move.assert_called_once()
             window.main_splitter.setSizes.assert_called_once_with([250, 950])
             window.menuBar().setVisible.assert_called_once_with(True)
             window.workspace.reset_to_default_layout.assert_called_once()
-            
+
             # Verify theme detection was called
             mock_manager.detect_system_theme.assert_called_once()

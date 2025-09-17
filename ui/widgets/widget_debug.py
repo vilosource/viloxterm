@@ -6,14 +6,15 @@ This module provides tools for inspecting and debugging widget lifecycle
 state, signal connections, and performance metrics.
 """
 
-import time
 import logging
-from typing import Dict, List, Optional, Any
+import time
 from datetime import datetime
-from PySide6.QtCore import QObject, QTimer
+from typing import Any
+
+from PySide6.QtCore import QTimer
+
 from ui.widgets.app_widget import AppWidget
 from ui.widgets.widget_state import WidgetState
-
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +116,7 @@ class WidgetDebugger:
         if from_state == WidgetState.ERROR and to_state == WidgetState.INITIALIZING:
             metrics['retry_count'] += 1
 
-    def get_widget_info(self, widget: AppWidget) -> Dict[str, Any]:
+    def get_widget_info(self, widget: AppWidget) -> dict[str, Any]:
         """
         Get comprehensive debug information for a widget.
 
@@ -177,7 +178,7 @@ class WidgetDebugger:
         print(f"State Callbacks: {info['state_callbacks']}")
 
         if 'metrics' in info:
-            print(f"\nPerformance Metrics:")
+            print("\nPerformance Metrics:")
             metrics = info['metrics']
             if metrics['init_duration']:
                 print(f"  Init Duration: {metrics['init_duration']:.3f}s")
@@ -186,13 +187,13 @@ class WidgetDebugger:
             print(f"  Retry Count: {metrics['retry_count']}")
 
         if 'state_history' in info and len(info['state_history']) > 1:
-            print(f"\nState History (last 5):")
+            print("\nState History (last 5):")
             for entry in info['state_history'][-5:]:
                 print(f"  {entry['timestamp']}: {entry['state']}")
 
         print(f"{'='*60}\n")
 
-    def get_all_widgets_summary(self) -> List[Dict[str, Any]]:
+    def get_all_widgets_summary(self) -> list[dict[str, Any]]:
         """
         Get a summary of all tracked widgets.
 
@@ -273,7 +274,7 @@ class WidgetInspector:
     """
 
     @staticmethod
-    def inspect(widget: AppWidget) -> Dict[str, Any]:
+    def inspect(widget: AppWidget) -> dict[str, Any]:
         """
         Quick inspection of a widget's current state.
 
@@ -300,7 +301,7 @@ class WidgetInspector:
         }
 
     @staticmethod
-    def validate_state(widget: AppWidget) -> List[str]:
+    def validate_state(widget: AppWidget) -> list[str]:
         """
         Validate widget state consistency.
 
@@ -328,7 +329,7 @@ class WidgetInspector:
         return issues
 
     @staticmethod
-    def compare_widgets(widget1: AppWidget, widget2: AppWidget) -> Dict[str, Any]:
+    def compare_widgets(widget1: AppWidget, widget2: AppWidget) -> dict[str, Any]:
         """
         Compare two widgets for debugging.
 

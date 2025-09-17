@@ -1,12 +1,13 @@
 """Layout management for the main window."""
 
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QSplitter
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QHBoxLayout, QSplitter, QWidget
+
 from ui.activity_bar import ActivityBar
-from ui.sidebar import Sidebar
-from ui.workspace import Workspace
-from ui.status_bar import AppStatusBar
 from ui.qt_compat import safe_splitter_collapse_setting
+from ui.sidebar import Sidebar
+from ui.status_bar import AppStatusBar
+from ui.workspace import Workspace
 
 
 class MainWindowLayoutManager:

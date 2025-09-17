@@ -7,13 +7,14 @@ priorities, and complex focus scenarios in the widget system.
 """
 
 import logging
-from typing import Optional, List, Dict, Any, Callable
 from collections import deque
 from enum import Enum
-from PySide6.QtCore import QObject, Signal, QTimer, Qt, QTime
+from typing import Any, Callable, Optional
+
+from PySide6.QtCore import QObject, Qt, QTime, Signal
+
 from ui.widgets.app_widget import AppWidget
 from ui.widgets.widget_state import WidgetState
-
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +101,7 @@ class FocusManager(QObject):
         }
 
     def register_widget(self, widget: AppWidget, group: Optional[str] = None,
-                       policy: Optional[Dict[str, Any]] = None):
+                       policy: Optional[dict[str, Any]] = None):
         """
         Register a widget with the focus manager.
 
@@ -409,7 +410,7 @@ class FocusManager(QObject):
         """
         return self._current_focus
 
-    def get_focus_history(self, limit: int = 10) -> List[str]:
+    def get_focus_history(self, limit: int = 10) -> list[str]:
         """
         Get focus history.
 
@@ -424,7 +425,7 @@ class FocusManager(QObject):
             history = history[-limit:]
         return history
 
-    def get_statistics(self) -> Dict[str, int]:
+    def get_statistics(self) -> dict[str, int]:
         """
         Get focus management statistics.
 
@@ -433,7 +434,7 @@ class FocusManager(QObject):
         """
         return self._stats.copy()
 
-    def set_focus_policy(self, widget_id: str, policy: Dict[str, Any]):
+    def set_focus_policy(self, widget_id: str, policy: dict[str, Any]):
         """
         Set focus policy for a widget.
 
@@ -444,7 +445,7 @@ class FocusManager(QObject):
         self._focus_policies[widget_id] = policy
         logger.debug(f"Set focus policy for {widget_id}: {policy}")
 
-    def create_focus_group(self, group_name: str, widget_ids: List[str]):
+    def create_focus_group(self, group_name: str, widget_ids: list[str]):
         """
         Create a focus group for cycling.
 

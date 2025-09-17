@@ -6,14 +6,14 @@ Tests the public API of ThemeService focusing on the functionality
 that's actually used by the application.
 """
 
-import pytest
 import json
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import pytest
+
 from services.theme_service import ThemeService
-from core.themes.theme import Theme, ThemeInfo
 
 
 class TestThemeService:
@@ -159,7 +159,7 @@ class TestThemeService:
             assert tmp_path.exists()
 
             # Verify exported content
-            with open(tmp_path, 'r') as f:
+            with open(tmp_path) as f:
                 exported_data = json.load(f)
 
             assert exported_data["id"] == "monokai"
@@ -281,7 +281,7 @@ class TestThemeService:
         assert len(colors) > 0
 
         # Should have inherited editor background from vscode-dark
-        base_theme = initialized_theme_service.get_theme("vscode-dark")
+        initialized_theme_service.get_theme("vscode-dark")
         custom_applied_theme = initialized_theme_service.get_current_theme()
 
         # Custom theme should extend the base theme
@@ -300,7 +300,7 @@ class TestThemeService:
         try:
             initialized_theme_service._save_theme_preference("monokai")
             # Method should not crash
-        except Exception as e:
+        except Exception:
             # In test environment, QSettings might not work, which is OK
             pass
 

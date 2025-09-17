@@ -7,7 +7,7 @@ including splitter styling and theme application.
 """
 
 import logging
-from typing import Optional, Dict, Any
+
 from core.commands.executor import execute_command
 
 logger = logging.getLogger(__name__)
@@ -107,7 +107,7 @@ class SplitPaneThemeManager:
         """)
         logger.debug("Applied fallback theme to widget")
 
-    def get_theme_colors(self) -> Dict[str, str]:
+    def get_theme_colors(self) -> dict[str, str]:
         """
         Get current theme colors.
 

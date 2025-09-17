@@ -5,21 +5,18 @@ Unit tests for Application Defaults system.
 Tests the app defaults manager, validation system, and fallback chains.
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
-from PySide6.QtCore import QSettings
+
+import pytest
+
 from core.settings.app_defaults import (
     AppDefaults,
     AppDefaultsValidator,
-    get_app_defaults,
-    get_app_default,
-    set_app_default,
-    get_default_widget_type,
     get_default_split_direction,
     get_default_split_ratio,
-    should_restore_tabs,
+    get_default_widget_type,
     should_confirm_app_exit,
-    HARD_CODED_FALLBACKS
+    should_restore_tabs,
 )
 
 

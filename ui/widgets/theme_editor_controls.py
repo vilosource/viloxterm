@@ -6,18 +6,28 @@ Provides organized control panels for editing theme colors and typography settin
 with categorized inputs, search/filter capabilities, and preset management.
 """
 
-from typing import Dict, Optional, Tuple
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
-    QScrollArea, QFrame, QGroupBox, QLineEdit, QTabWidget,
-    QSpinBox, QSlider, QFontComboBox
-)
+import logging
+from typing import Optional
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
-import logging
+from PySide6.QtWidgets import (
+    QComboBox,
+    QFontComboBox,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QScrollArea,
+    QSlider,
+    QSpinBox,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
-from ui.widgets.color_picker_widget import ColorPickerField
 from core.themes.property_categories import ThemePropertyCategories
+from ui.widgets.color_picker_widget import ColorPickerField
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +55,7 @@ class ThemeControlsWidget(QWidget):
         """
         super().__init__(parent)
 
-        self._color_fields: Dict[str, ColorPickerField] = {}
+        self._color_fields: dict[str, ColorPickerField] = {}
         self._updating = False  # Flag to prevent recursive updates
 
         self._setup_ui()
@@ -343,18 +353,18 @@ class ThemeControlsWidget(QWidget):
             font.setStyleHint(QFont.Monospace)
             label.setFont(font)
 
-    def get_color_fields(self) -> Dict[str, ColorPickerField]:
+    def get_color_fields(self) -> dict[str, ColorPickerField]:
         """Get all color picker fields."""
         return self._color_fields.copy()
 
-    def get_current_colors(self) -> Dict[str, str]:
+    def get_current_colors(self) -> dict[str, str]:
         """Get current colors from all fields."""
         colors = {}
         for prop_key, field in self._color_fields.items():
             colors[prop_key] = field.get_color()
         return colors
 
-    def load_colors(self, colors: Dict[str, str]):
+    def load_colors(self, colors: dict[str, str]):
         """Load colors into all fields."""
         self._updating = True
         try:
@@ -364,7 +374,7 @@ class ThemeControlsWidget(QWidget):
         finally:
             self._updating = False
 
-    def get_typography_settings(self) -> Dict[str, any]:
+    def get_typography_settings(self) -> dict[str, any]:
         """Get current typography settings."""
         return {
             "font_family": self._font_family_combo.currentFont().family(),

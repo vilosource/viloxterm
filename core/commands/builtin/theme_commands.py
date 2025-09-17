@@ -3,41 +3,17 @@
 Theme-related commands for ViloxTerm.
 """
 
+import logging
+
 from core.commands.base import CommandContext, CommandResult
 from core.commands.decorators import command
 from services.theme_service import ThemeService
 from services.ui_service import UIService
-from ui.themes.theme_provider import ThemeProvider
-import logging
 
 logger = logging.getLogger(__name__)
 
-# Register theme editor widget factory when module is imported
-try:
-    from ui.widgets.theme_editor_widget import ThemeEditorAppWidget
-    from ui.widgets.widget_registry import widget_registry, WidgetType, WidgetConfig
-
-    def create_theme_editor_widget(widget_id: str) -> ThemeEditorAppWidget:
-        return ThemeEditorAppWidget(widget_id)
-
-    # NOTE: Widget registration now handled by AppWidgetManager in core/app_widget_registry.py
-    # This legacy registration is kept for backward compatibility but is deprecated
-    widget_registry.register_factory(WidgetType.CUSTOM, create_theme_editor_widget)
-
-    # Also register a config for CUSTOM type if not already present
-    if not widget_registry.get_config(WidgetType.CUSTOM):
-        config = WidgetConfig(
-            widget_class=None,  # Will use factory
-            factory=create_theme_editor_widget,
-            show_header=True,
-            allow_type_change=True,  # Allow changing to other widget types
-            default_content=""
-        )
-        widget_registry.register_widget_type(WidgetType.CUSTOM, config)
-
-    logger.debug("Registered theme editor widget factory")
-except ImportError as e:
-    logger.error(f"Failed to register theme editor widget: {e}")
+# Legacy widget registry registration removed
+# All widget registration is now handled by AppWidgetManager in core/app_widget_registry.py
 
 
 @command(
@@ -314,8 +290,8 @@ def reset_theme_command(context: CommandContext) -> CommandResult:
 def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
     """Replace current pane with theme editor."""
     try:
-        from ui.widgets.widget_registry import WidgetType
         from services.workspace_service import WorkspaceService
+        from ui.widgets.widget_registry import WidgetType
 
         # Get the pane and pane_id from context
         pane = context.args.get('pane')
@@ -433,8 +409,10 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
 def import_vscode_theme_command(context: CommandContext) -> CommandResult:
     """Import a VSCode theme."""
     try:
-        from PySide6.QtWidgets import QFileDialog, QMessageBox
         from pathlib import Path
+
+        from PySide6.QtWidgets import QFileDialog, QMessageBox
+
         from core.themes.importers import VSCodeThemeImporter
 
         theme_service = context.get_service(ThemeService)

@@ -7,8 +7,9 @@ to prevent memory leaks and ensure proper resource management.
 """
 
 import logging
-from typing import List, Any, Optional
 from dataclasses import dataclass
+from typing import Any, Optional
+
 from PySide6.QtCore import QObject, Qt
 
 logger = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ class SignalManager:
             owner: The QObject that owns these connections
         """
         self.owner = owner
-        self.connections: List[SignalConnection] = []
+        self.connections: list[SignalConnection] = []
         self._enabled = True
 
     def connect(self, signal: Any, slot: Any,
@@ -181,7 +182,7 @@ class SignalManager:
 
         return count
 
-    def get_group_connections(self, group: str) -> List[SignalConnection]:
+    def get_group_connections(self, group: str) -> list[SignalConnection]:
         """
         Get all connections in a group.
 
@@ -193,7 +194,7 @@ class SignalManager:
         """
         return [c for c in self.connections if c.group == group]
 
-    def get_groups(self) -> List[str]:
+    def get_groups(self) -> list[str]:
         """
         Get all group names.
 

@@ -3,16 +3,15 @@
 Theme service for managing application themes.
 """
 
-from typing import Dict, List, Optional
-from pathlib import Path
-from PySide6.QtCore import Signal, QFile, QTextStream
-import json
 import logging
+from pathlib import Path
+from typing import Optional
 
-from services.base import Service
+from PySide6.QtCore import QFile, QTextStream, Signal
+
 from core.themes.theme import Theme, ThemeInfo
-from core.themes.typography import ThemeTypography, TYPOGRAPHY_PRESETS
-from core.themes.schema import ThemeSchema
+from core.themes.typography import TYPOGRAPHY_PRESETS, ThemeTypography
+from services.base import Service
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +32,7 @@ class ThemeService(Service):
         """Initialize theme service."""
         super().__init__("ThemeService")
 
-        self._themes: Dict[str, Theme] = {}
+        self._themes: dict[str, Theme] = {}
         self._current_theme: Optional[Theme] = None
         self._user_themes_path = Path.home() / ".config/ViloxTerm/themes"
         self._theme_provider = None  # Will be set after initialization
@@ -41,12 +40,12 @@ class ThemeService(Service):
         # Preview mode state
         self._preview_mode = False
         self._preview_backup: Optional[Theme] = None
-        self._preview_colors: Dict[str, str] = {}
+        self._preview_colors: dict[str, str] = {}
 
         # Ensure user themes directory exists
         self._user_themes_path.mkdir(parents=True, exist_ok=True)
 
-    def initialize(self, context: Dict) -> None:
+    def initialize(self, context: dict) -> None:
         """
         Initialize the service.
 
@@ -59,8 +58,12 @@ class ThemeService(Service):
         self._load_builtin_themes()
         self._load_user_themes()
 
+        # Check if theme reset was requested via command line
+        from core.app_config import app_config
+        if app_config.reset_theme:
+            self.reset_to_default_theme()
         # Apply default theme
-        if not self._current_theme:
+        elif not self._current_theme:
             self.apply_theme("vscode-dark")
 
         logger.info(f"ThemeService initialized with {len(self._themes)} themes")
@@ -134,7 +137,7 @@ class ThemeService(Service):
         """Load custom user themes."""
         self._load_themes_from_directory(self._user_themes_path)
 
-    def get_available_themes(self) -> List[ThemeInfo]:
+    def get_available_themes(self) -> list[ThemeInfo]:
         """
         Get list of available themes.
 
@@ -217,7 +220,7 @@ class ThemeService(Service):
             return self._current_theme.get_color(key, fallback)
         return fallback
 
-    def get_colors(self) -> Dict[str, str]:
+    def get_colors(self) -> dict[str, str]:
         """
         Get all colors from the current theme.
 
@@ -262,7 +265,7 @@ class ThemeService(Service):
         typography = self.get_typography()
         return typography.font_family
 
-    def get_component_typography(self, component: str) -> Dict[str, any]:
+    def get_component_typography(self, component: str) -> dict[str, any]:
         """
         Get typography style for a specific component.
 
@@ -275,7 +278,7 @@ class ThemeService(Service):
         typography = self.get_typography()
         return typography.get_component_style(component)
 
-    def update_typography(self, typography_data: Dict) -> None:
+    def update_typography(self, typography_data: dict) -> None:
         """
         Update typography settings for current theme.
 
@@ -332,7 +335,7 @@ class ThemeService(Service):
         logger.info(f"Applied typography preset: {preset_name}")
         return True
 
-    def apply_theme_preview(self, colors: Dict[str, str], typography: Optional[ThemeTypography] = None) -> None:
+    def apply_theme_preview(self, colors: dict[str, str], typography: Optional[ThemeTypography] = None) -> None:
         """
         Apply temporary theme for preview without saving.
 
@@ -374,7 +377,7 @@ class ThemeService(Service):
         """Check if in preview mode."""
         return self._preview_mode
 
-    def get_preview_colors(self) -> Dict[str, str]:
+    def get_preview_colors(self) -> dict[str, str]:
         """Get colors being previewed."""
         return self._preview_colors.copy()
 
@@ -577,6 +580,35 @@ class ThemeService(Service):
     def get_theme_provider(self):
         """Get the theme provider."""
         return self._theme_provider
+
+    def reset_to_default_theme(self) -> bool:
+        """
+        Reset theme to the default VS Code theme.
+
+        Returns:
+            True if reset was successful
+        """
+        DEFAULT_THEME_ID = "vscode-dark"
+
+        try:
+            # Clear theme preference from settings
+            from core.settings.config import get_settings
+            settings = get_settings("ViloxTerm", "ViloxTerm")
+            settings.remove("theme/current")
+            settings.sync()
+
+            # Apply default theme
+            success = self.apply_theme(DEFAULT_THEME_ID)
+
+            if success:
+                logger.info(f"Theme reset to default: {DEFAULT_THEME_ID}")
+            else:
+                logger.error(f"Failed to reset theme to default: {DEFAULT_THEME_ID}")
+
+            return success
+        except Exception as e:
+            logger.error(f"Failed to reset theme: {e}")
+            return False
 
     def cleanup(self) -> None:
         """Clean up service resources."""

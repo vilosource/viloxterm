@@ -3,10 +3,11 @@
 Edit-related commands using the service layer.
 """
 
-from core.commands.base import Command, CommandResult, CommandContext
+import logging
+
+from core.commands.base import CommandContext, CommandResult
 from core.commands.decorators import command
 from services.editor_service import EditorService
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +27,14 @@ def cut_command(context: CommandContext) -> CommandResult:
         editor_service = context.get_service(EditorService)
         if not editor_service:
             return CommandResult(success=False, error="EditorService not available")
-        
+
         success = editor_service.cut()
-        
+
         if success:
             return CommandResult(success=True)
         else:
             return CommandResult(success=False, error="Failed to cut text")
-            
+
     except Exception as e:
         logger.error(f"Failed to cut: {e}")
         return CommandResult(success=False, error=str(e))
@@ -54,14 +55,14 @@ def copy_command(context: CommandContext) -> CommandResult:
         editor_service = context.get_service(EditorService)
         if not editor_service:
             return CommandResult(success=False, error="EditorService not available")
-        
+
         success = editor_service.copy()
-        
+
         if success:
             return CommandResult(success=True)
         else:
             return CommandResult(success=False, error="Failed to copy text")
-            
+
     except Exception as e:
         logger.error(f"Failed to copy: {e}")
         return CommandResult(success=False, error=str(e))
@@ -82,14 +83,14 @@ def paste_command(context: CommandContext) -> CommandResult:
         editor_service = context.get_service(EditorService)
         if not editor_service:
             return CommandResult(success=False, error="EditorService not available")
-        
+
         success = editor_service.paste()
-        
+
         if success:
             return CommandResult(success=True)
         else:
             return CommandResult(success=False, error="Failed to paste text")
-            
+
     except Exception as e:
         logger.error(f"Failed to paste: {e}")
         return CommandResult(success=False, error=str(e))
@@ -110,14 +111,14 @@ def select_all_command(context: CommandContext) -> CommandResult:
         editor_service = context.get_service(EditorService)
         if not editor_service:
             return CommandResult(success=False, error="EditorService not available")
-        
+
         success = editor_service.select_all()
-        
+
         if success:
             return CommandResult(success=True)
         else:
             return CommandResult(success=False, error="Failed to select all")
-            
+
     except Exception as e:
         logger.error(f"Failed to select all: {e}")
         return CommandResult(success=False, error=str(e))
@@ -138,14 +139,14 @@ def undo_command(context: CommandContext) -> CommandResult:
         editor_service = context.get_service(EditorService)
         if not editor_service:
             return CommandResult(success=False, error="EditorService not available")
-        
+
         success = editor_service.undo()
-        
+
         if success:
             return CommandResult(success=True)
         else:
             return CommandResult(success=False, error="Failed to undo")
-            
+
     except Exception as e:
         logger.error(f"Failed to undo: {e}")
         return CommandResult(success=False, error=str(e))
@@ -166,14 +167,14 @@ def redo_command(context: CommandContext) -> CommandResult:
         editor_service = context.get_service(EditorService)
         if not editor_service:
             return CommandResult(success=False, error="EditorService not available")
-        
+
         success = editor_service.redo()
-        
+
         if success:
             return CommandResult(success=True)
         else:
             return CommandResult(success=False, error="Failed to redo")
-            
+
     except Exception as e:
         logger.error(f"Failed to redo: {e}")
         return CommandResult(success=False, error=str(e))
@@ -194,22 +195,22 @@ def find_command(context: CommandContext) -> CommandResult:
         editor_service = context.get_service(EditorService)
         if not editor_service:
             return CommandResult(success=False, error="EditorService not available")
-        
+
         search_term = context.args.get('search_term', '')
         case_sensitive = context.args.get('case_sensitive', False)
         whole_word = context.args.get('whole_word', False)
-        
+
         if not search_term:
             # Get selected text as default search term
             search_term = editor_service.get_selected_text() or ''
-        
+
         if search_term:
             matches = editor_service.find_text(
                 search_term,
                 case_sensitive=case_sensitive,
                 whole_word=whole_word
             )
-            
+
             return CommandResult(
                 success=True,
                 value={
@@ -220,7 +221,7 @@ def find_command(context: CommandContext) -> CommandResult:
             )
         else:
             return CommandResult(success=False, error="No search term provided")
-            
+
     except Exception as e:
         logger.error(f"Failed to find text: {e}")
         return CommandResult(success=False, error=str(e))
@@ -241,18 +242,18 @@ def replace_command(context: CommandContext) -> CommandResult:
         editor_service = context.get_service(EditorService)
         if not editor_service:
             return CommandResult(success=False, error="EditorService not available")
-        
+
         search_term = context.args.get('search_term', '')
         replace_term = context.args.get('replace_term', '')
         all_occurrences = context.args.get('all', False)
-        
+
         if search_term:
             count = editor_service.replace_text(
                 search_term,
                 replace_term,
                 all_occurrences=all_occurrences
             )
-            
+
             # Show status message
             if context.main_window and hasattr(context.main_window, 'status_bar'):
                 if count > 0:
@@ -260,7 +261,7 @@ def replace_command(context: CommandContext) -> CommandResult:
                 else:
                     msg = "No occurrences found"
                 context.main_window.status_bar.set_message(msg, 2000)
-            
+
             return CommandResult(
                 success=True,
                 value={
@@ -271,7 +272,7 @@ def replace_command(context: CommandContext) -> CommandResult:
             )
         else:
             return CommandResult(success=False, error="No search term provided")
-            
+
     except Exception as e:
         logger.error(f"Failed to replace text: {e}")
         return CommandResult(success=False, error=str(e))

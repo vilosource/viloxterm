@@ -10,23 +10,22 @@ This package contains the fundamental building blocks of the application:
 
 # Import key components for easier access
 from core.commands.base import Command, CommandContext, CommandResult
-from core.commands.registry import command_registry
-from core.commands.executor import command_executor
 from core.commands.decorators import command
-
-from core.context.manager import context_manager
-from core.context.keys import ContextKey, ContextValue
+from core.commands.executor import command_executor
+from core.commands.registry import command_registry
 from core.context.evaluator import WhenClauseEvaluator
+from core.context.keys import ContextKey, ContextValue
+from core.context.manager import context_manager
 
 __all__ = [
     # Commands
     'Command',
-    'CommandContext', 
+    'CommandContext',
     'CommandResult',
     'command_registry',
     'command_executor',
     'command',
-    
+
     # Context
     'context_manager',
     'ContextKey',

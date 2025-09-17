@@ -6,10 +6,10 @@ This module manages global application settings that affect behavior,
 particularly for testing and development modes.
 """
 
-import os
 import argparse
-from typing import Optional, Dict, Any
 import logging
+import os
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +38,13 @@ class AppConfig:
             # Check if running from a built executable (production mode)
             is_production = self._is_production_build()
 
-            self._config: Dict[str, Any] = {
+            self._config: dict[str, Any] = {
                 'show_confirmations': True,  # Show confirmation dialogs
                 'test_mode': False,          # Running in test mode
                 'debug_mode': False,         # Debug logging enabled
                 'dev_mode': not is_production,  # Dev mode by default unless production build
                 'production_mode': is_production,  # Explicitly track production mode
+                'reset_theme': False,        # Whether to reset theme to default
             }
             self._initialized = True
             self._load_from_environment()
@@ -150,6 +151,13 @@ class AppConfig:
             help='Enable development mode features'
         )
 
+        parser.add_argument(
+            '--reset-theme',
+            action='store_true',
+            dest='reset_theme',
+            help='Reset theme to default VS Code theme (vscode-dark)'
+        )
+
         # Parse arguments
         parsed_args, unknown = parser.parse_known_args(args)
 
@@ -171,6 +179,10 @@ class AppConfig:
         if parsed_args.dev_mode:
             self._config['dev_mode'] = True
             logger.info("Development mode enabled")
+
+        if parsed_args.reset_theme:
+            self._config['reset_theme'] = True
+            logger.info("Theme reset requested")
 
         return parsed_args
 
@@ -199,6 +211,11 @@ class AppConfig:
         """Check if running in production mode."""
         return self._config.get('production_mode', False)
 
+    @property
+    def reset_theme(self) -> bool:
+        """Check if theme reset was requested."""
+        return self._config.get('reset_theme', False)
+
     def set_test_mode(self, enabled: bool = True):
         """
         Enable or disable test mode.
@@ -221,7 +238,7 @@ class AppConfig:
         self._config['show_confirmations'] = show
         logger.info("Confirmations %s", "enabled" if show else "disabled")
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         """Get the full configuration dictionary."""
         return self._config.copy()
 
@@ -230,7 +247,7 @@ class AppConfig:
         return (
             f"AppConfig(show_confirmations={self.show_confirmations}, "
             f"test_mode={self.test_mode}, debug_mode={self.debug_mode}, "
-            f"dev_mode={self.dev_mode})"
+            f"dev_mode={self.dev_mode}, reset_theme={self.reset_theme})"
         )
 
 

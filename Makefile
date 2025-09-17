@@ -138,8 +138,12 @@ lint-fix: ## Lint and auto-fix code with ruff
 typecheck: ## Run type checking with mypy
 	$(MYPY) .
 
+.PHONY: syntax-check
+syntax-check: ## Check Python syntax by compilation
+	find . -name "*.py" -not -path "./.direnv/*" -not -path "./venv/*" -exec $(PYTHON) -m py_compile {} \;
+
 .PHONY: check
-check: format lint typecheck ## Run all code quality checks
+check: syntax-check format lint typecheck ## Run all code quality checks
 
 .PHONY: clean
 clean: ## Clean up generated files
@@ -235,7 +239,16 @@ setup: ## Initial project setup
 	@echo "Setup complete! Run 'make run' to start the application."
 
 .PHONY: dev
-dev: ## Run application in development mode with auto-reload (if implemented)
+dev: ## Run application in development mode with debug logging
+	$(PYTHON) main.py --debug
+
+.PHONY: debug
+debug: ## Run with debug logging enabled
+	$(PYTHON) main.py --debug
+
+.PHONY: debug-file
+debug-file: ## Run with debug logging and show log file location
+	@echo "Debug logs will be written to: ~/.local/share/ViloxTerm/logs/viloxterm.log"
 	$(PYTHON) main.py --debug
 
 .PHONY: dist
@@ -285,6 +298,16 @@ debug: ## Run with Python debugger
 .PHONY: shell
 shell: ## Open Python shell with app context
 	$(PYTHON) -i -c "from main import *; from ui.main_window import *; from PySide6.QtWidgets import QApplication; import sys"
+
+.PHONY: pre-commit-install
+pre-commit-install: ## Install pre-commit hooks
+	$(PIP) install pre-commit
+	pre-commit install
+	@echo "Pre-commit hooks installed!"
+
+.PHONY: pre-commit-run
+pre-commit-run: ## Run pre-commit hooks on all files
+	pre-commit run --all-files
 
 .PHONY: validate
 validate: check test test-gui-fast ## Run all checks and tests

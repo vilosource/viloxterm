@@ -6,11 +6,11 @@ This component handles pane splitting, closing, navigation, and related
 pane-based operations in the workspace.
 """
 
-from typing import Optional, Dict, Any
 import logging
+from typing import Any, Optional
+
 from core.settings.app_defaults import (
     get_default_split_direction,
-    get_default_split_ratio
 )
 
 logger = logging.getLogger(__name__)
@@ -377,7 +377,7 @@ class WorkspacePaneManager:
 
         return self.focus_pane(panes[prev_index])
 
-    def get_pane_info(self) -> Dict[str, Any]:
+    def get_pane_info(self) -> dict[str, Any]:
         """
         Get information about panes in the current tab.
 

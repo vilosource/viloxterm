@@ -8,12 +8,14 @@ This is the foundation of our content widget architecture. All content widgets
 
 import logging
 import time
-from typing import Optional, Dict, Any
+from typing import Any, Optional
+
+from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Signal, QTimer
+
+from ui.widgets.signal_manager import SignalManager
 from ui.widgets.widget_registry import WidgetType
 from ui.widgets.widget_state import WidgetState, WidgetStateValidator
-from ui.widgets.signal_manager import SignalManager
 
 logger = logging.getLogger(__name__)
 
@@ -21,17 +23,17 @@ logger = logging.getLogger(__name__)
 class AppWidget(QWidget):
     """
     Base class for all application content widgets.
-    
+
     AppWidgets are the actual content (terminals, editors, etc.) that users interact with.
     They are owned by the model (stored in LeafNodes) and wrapped by the view (PaneContent).
-    
+
     Key principles:
     - AppWidgets don't know their position in the tree
     - They communicate through signals that bubble up the tree
     - They manage their own resources and cleanup
     - They can be moved between panes without recreation
     """
-    
+
     # Lifecycle signals
     widget_ready = Signal()  # Emitted when widget is fully initialized and ready
     widget_error = Signal(str)  # Emitted on initialization or runtime error
@@ -42,7 +44,7 @@ class AppWidget(QWidget):
     action_requested = Signal(str, dict)  # action_type, params
     state_changed = Signal(dict)  # state_data
     focus_requested = Signal()  # Request focus on this widget
-    
+
     def __init__(self, widget_id: str, widget_type: WidgetType, parent=None):
         """
         Initialize the AppWidget.
@@ -76,7 +78,7 @@ class AppWidget(QWidget):
 
         # Signal management
         self._signal_manager = SignalManager(self)
-        
+
     def initialize(self):
         """
         Start widget initialization (may be async).
@@ -164,11 +166,11 @@ class AppWidget(QWidget):
         self.on_cleanup()
 
         self._set_state(WidgetState.DESTROYED)
-        
-    def get_state(self) -> Dict[str, Any]:
+
+    def get_state(self) -> dict[str, Any]:
         """
         Get widget state for persistence.
-        
+
         Returns:
             Dictionary containing widget state that can be serialized
         """
@@ -176,47 +178,47 @@ class AppWidget(QWidget):
             "type": self.widget_type.value,
             "widget_id": self.widget_id
         }
-        
-    def set_state(self, state: Dict[str, Any]):
+
+    def set_state(self, state: dict[str, Any]):
         """
         Restore widget state from persisted data.
-        
+
         Args:
             state: Dictionary containing widget state to restore
         """
         pass  # Base implementation does nothing
-        
+
     def can_close(self) -> bool:
         """
         Check if widget can be closed safely.
-        
+
         Returns:
             True if widget can be closed, False if there are unsaved changes, etc.
         """
         return True
-        
-    def request_action(self, action: str, params: Optional[Dict[str, Any]] = None):
+
+    def request_action(self, action: str, params: Optional[dict[str, Any]] = None):
         """
         Request an action through the tree structure.
-        
+
         This is the primary way AppWidgets communicate with the system.
         Actions bubble up through the tree to be handled by the model/view.
-        
+
         Args:
             action: Action type (e.g., 'split', 'close', 'focus')
             params: Optional parameters for the action
         """
         self.action_requested.emit(action, params or {})
-        
-    def notify_state_change(self, state_data: Optional[Dict[str, Any]] = None):
+
+    def notify_state_change(self, state_data: Optional[dict[str, Any]] = None):
         """
         Notify that widget state has changed.
-        
+
         Args:
             state_data: Optional data about what changed
         """
         self.state_changed.emit(state_data or {})
-        
+
     def request_focus(self):
         """Request focus on this widget."""
         import logging
@@ -224,7 +226,7 @@ class AppWidget(QWidget):
         logger.debug(f"AppWidget.request_focus() called for widget {self.widget_id}")
         self.focus_requested.emit()
         logger.debug(f"focus_requested signal emitted for widget {self.widget_id}")
-        
+
     def focus_widget(self):
         """
         Set keyboard focus on the actual content widget.
@@ -249,16 +251,16 @@ class AppWidget(QWidget):
             # Widget in error/destroying state, cannot focus
             logger.warning(f"Cannot focus widget {self.widget_id} in state {self.widget_state.value}")
             return False
-        
+
     def get_title(self) -> str:
         """
         Get title/label for this widget.
-        
+
         Returns:
             String to display in tabs, headers, etc.
         """
         return f"{self.widget_type.value.replace('_', ' ').title()}"
-        
+
     def get_icon_name(self) -> Optional[str]:
         """
         Get icon name for this widget type.

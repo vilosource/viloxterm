@@ -7,9 +7,10 @@ including splitter movement tracking and ratio updates.
 """
 
 import logging
-from typing import Optional, Callable, Dict, Any
+from typing import Callable, Optional
+
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QSplitter
-from PySide6.QtCore import Qt, QObject, Signal
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +32,8 @@ class SplitPaneDragHandler(QObject):
     def __init__(self, parent=None):
         """Initialize the drag handler."""
         super().__init__(parent)
-        self._splitter_callbacks: Dict[str, Callable] = {}
-        self._node_splitter_map: Dict[str, QSplitter] = {}
+        self._splitter_callbacks: dict[str, Callable] = {}
+        self._node_splitter_map: dict[str, QSplitter] = {}
 
     def configure_splitter(self, splitter: QSplitter, node_id: str) -> None:
         """
@@ -196,7 +197,7 @@ class SplitPaneDragHandler(QObject):
         """
         return self._node_splitter_map.get(node_id)
 
-    def get_all_ratios(self) -> Dict[str, float]:
+    def get_all_ratios(self) -> dict[str, float]:
         """
         Get current ratios for all tracked splitters.
 
@@ -210,7 +211,7 @@ class SplitPaneDragHandler(QObject):
                 ratios[node_id] = ratio
         return ratios
 
-    def apply_ratios(self, ratios: Dict[str, float]) -> int:
+    def apply_ratios(self, ratios: dict[str, float]) -> int:
         """
         Apply multiple ratios to their corresponding splitters.
 

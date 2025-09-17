@@ -8,12 +8,11 @@ before execution, ensuring type safety and business logic constraints.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union, Callable, Set, Type, get_type_hints
-from abc import ABC, abstractmethod
-from functools import wraps
-from enum import Enum
 import logging
 import re
+from abc import ABC, abstractmethod
+from functools import wraps
+from typing import Any, Callable, List, Optional, Type
 
 from core.commands.base import CommandContext, CommandResult
 
@@ -87,7 +86,7 @@ class TypeValidator(Validator):
 class RangeValidator(Validator):
     """Validates that a numeric value is within a specified range."""
 
-    def __init__(self, min_value: Union[int, float] = None, max_value: Union[int, float] = None,
+    def __init__(self, min_value: int | float = None, max_value: int | float = None,
                  inclusive: bool = True, error_message: str = None):
         self.min_value = min_value
         self.max_value = max_value
@@ -136,7 +135,7 @@ class RangeValidator(Validator):
 class OneOfValidator(Validator):
     """Validates that a value is one of a set of allowed values."""
 
-    def __init__(self, allowed_values: Union[List, Set, tuple], error_message: str = None):
+    def __init__(self, allowed_values: List | set | tuple, error_message: str = None):
         self.allowed_values = set(allowed_values)
         super().__init__(error_message)
 
@@ -193,7 +192,7 @@ class StringValidator(Validator):
 
         if self.pattern and not self.pattern.match(value):
             self._raise_error(
-                f"String does not match required pattern",
+                "String does not match required pattern",
                 parameter_name,
                 value
             )
@@ -305,7 +304,7 @@ def String(min_length: int = None, max_length: int = None, pattern: str = None,
     return StringValidator(min_length, max_length, pattern, non_empty)
 
 
-def Range(min_value: Union[int, float] = None, max_value: Union[int, float] = None,
+def Range(min_value: int | float = None, max_value: int | float = None,
           inclusive: bool = True) -> RangeValidator:
     """Create a range validator."""
     return RangeValidator(min_value, max_value, inclusive)
@@ -371,7 +370,7 @@ class ParameterSpec:
 class CommandValidationSpec:
     """Complete validation specification for a command."""
 
-    def __init__(self, parameters: Dict[str, ParameterSpec] = None,
+    def __init__(self, parameters: dict[str, ParameterSpec] = None,
                  min_args: int = None, max_args: int = None):
         self.parameters = parameters or {}
         self.min_args = min_args
@@ -520,7 +519,7 @@ def get_validation_spec(command_or_func) -> Optional[CommandValidationSpec]:
     return None
 
 
-def validate_command_args(command_id: str, args: Dict[str, Any]) -> Dict[str, Any]:
+def validate_command_args(command_id: str, args: dict[str, Any]) -> dict[str, Any]:
     """
     Validate command arguments against a command's validation specification.
 

@@ -3,14 +3,14 @@
 Theme validation schema.
 """
 
-from typing import Dict, List, Any
+from typing import Any
 
 
 class ThemeSchema:
     """Schema for validating theme structure."""
 
     @staticmethod
-    def get_required_fields() -> List[str]:
+    def get_required_fields() -> list[str]:
         """Get list of required top-level fields."""
         return [
             "id",
@@ -22,7 +22,7 @@ class ThemeSchema:
         ]
 
     @staticmethod
-    def get_required_colors() -> List[str]:
+    def get_required_colors() -> list[str]:
         """Get list of required color keys."""
         return [
             "editor.background",
@@ -40,7 +40,7 @@ class ThemeSchema:
         ]
 
     @staticmethod
-    def validate_theme_data(data: Dict[str, Any]) -> tuple[bool, List[str]]:
+    def validate_theme_data(data: dict[str, Any]) -> tuple[bool, list[str]]:
         """
         Validate theme data structure.
 

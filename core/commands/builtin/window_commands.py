@@ -3,12 +3,14 @@
 Window-related commands for managing window state and frameless mode.
 """
 
-from core.commands.base import CommandResult, CommandContext
-from core.commands.decorators import command
-from core.app_config import should_show_confirmations
+import logging
+
 from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QMessageBox
-import logging
+
+from core.app_config import should_show_confirmations
+from core.commands.base import CommandContext, CommandResult
+from core.commands.decorators import command
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +54,9 @@ def toggle_frameless_mode(context: CommandContext) -> CommandResult:
 
             if reply == QMessageBox.Yes:
                 # Restart the application
-                import sys
                 import os
+                import sys
+
                 from PySide6.QtCore import QCoreApplication
 
                 # Save state before restart

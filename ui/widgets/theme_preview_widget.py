@@ -5,16 +5,23 @@ Theme preview widget for live visualization.
 Shows a miniature representation of the application with theme colors applied.
 """
 
-from typing import Dict, Optional
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QFrame, QScrollArea, QTabWidget, QTextEdit,
-    QListWidget, QListWidgetItem, QPushButton,
-    QLineEdit, QComboBox, QMenuBar, QMenu
-)
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QPalette, QColor, QFont
 import logging
+from typing import Optional
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QTabWidget,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +43,7 @@ class ThemePreviewWidget(QWidget):
         """
         super().__init__(parent)
 
-        self._current_colors: Dict[str, str] = {}
+        self._current_colors: dict[str, str] = {}
         self._setup_ui()
 
     def _setup_ui(self):
@@ -213,7 +220,7 @@ class ThemePreviewWidget(QWidget):
         tab_widget.setObjectName("editorTabs")
 
         # Add editor tabs
-        for i, (name, content) in enumerate([
+        for _i, (name, content) in enumerate([
             ("main.py", "#!/usr/bin/env python3\n\ndef main():\n    print('Hello, World!')\n\nif __name__ == '__main__':\n    main()"),
             ("config.json", '{\n  "theme": "dark",\n  "fontSize": 14,\n  "autoSave": true\n}')
         ]):
@@ -304,7 +311,7 @@ $ _"""
         status_bar.setLayout(layout)
         return status_bar
 
-    def apply_theme_colors(self, colors: Dict[str, str]):
+    def apply_theme_colors(self, colors: dict[str, str]):
         """
         Apply theme colors to preview.
 
@@ -315,7 +322,7 @@ $ _"""
         stylesheet = self._generate_stylesheet(colors)
         self.setStyleSheet(stylesheet)
 
-    def _generate_stylesheet(self, colors: Dict[str, str]) -> str:
+    def _generate_stylesheet(self, colors: dict[str, str]) -> str:
         """
         Generate stylesheet from theme colors.
 
@@ -485,7 +492,7 @@ $ _"""
 
         return stylesheet
 
-    def get_current_colors(self) -> Dict[str, str]:
+    def get_current_colors(self) -> dict[str, str]:
         """
         Get currently applied colors.
 

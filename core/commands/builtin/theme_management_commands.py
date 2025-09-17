@@ -8,7 +8,7 @@ User Action → Command → Service → UI Update
 
 import logging
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Any, Optional
 
 from core.commands.base import CommandContext, CommandResult
 from core.commands.decorators import command
@@ -68,6 +68,7 @@ def get_current_theme_command(context: CommandContext) -> CommandResult:
     title="Get Theme by ID",
     category="Theme",
     description="Get a specific theme by its ID",
+    visible=False  # Internal command, not for command palette
 )
 def get_theme_command(
     context: CommandContext,
@@ -100,6 +101,7 @@ def get_theme_command(
     title="Apply Theme",
     category="Theme",
     description="Apply a theme by its ID",
+    visible=False  # Internal command, requires theme_id parameter
 )
 def apply_theme_command(
     context: CommandContext,
@@ -126,10 +128,11 @@ def apply_theme_command(
     title="Save Custom Theme",
     category="Theme",
     description="Save a custom theme",
+    visible=False  # Internal command, requires theme_data parameter
 )
 def save_custom_theme_command(
     context: CommandContext,
-    theme_data: Dict[str, Any]
+    theme_data: dict[str, Any]
 ) -> CommandResult:
     """Save a custom theme."""
     theme_service = context.get_service(ThemeService)
@@ -162,6 +165,7 @@ def save_custom_theme_command(
     title="Create Custom Theme",
     category="Theme",
     description="Create a new custom theme based on an existing theme",
+    visible=False  # Internal command, requires multiple parameters
 )
 def create_custom_theme_command(
     context: CommandContext,
@@ -200,6 +204,7 @@ def create_custom_theme_command(
     title="Delete Custom Theme",
     category="Theme",
     description="Delete a custom theme",
+    visible=False  # Internal command, requires theme_id parameter
 )
 def delete_custom_theme_command(
     context: CommandContext,
@@ -232,6 +237,7 @@ def delete_custom_theme_command(
     title="Import Theme",
     category="Theme",
     description="Import a theme from a file",
+    visible=False  # Internal command, requires file_path parameter
 )
 def import_theme_command(
     context: CommandContext,
@@ -264,6 +270,7 @@ def import_theme_command(
     title="Export Theme",
     category="Theme",
     description="Export a theme to a file",
+    visible=False  # Internal command, requires parameters
 )
 def export_theme_command(
     context: CommandContext,
@@ -300,6 +307,7 @@ def export_theme_command(
     title="Apply Typography Preset",
     category="Theme",
     description="Apply a typography preset",
+    visible=False  # Internal command, requires preset parameter
 )
 def apply_typography_preset_command(
     context: CommandContext,
@@ -349,11 +357,12 @@ def get_typography_command(context: CommandContext) -> CommandResult:
     title="Apply Theme Preview",
     category="Theme",
     description="Apply a temporary theme preview",
+    visible=False  # Internal command, requires colors parameter
 )
 def apply_theme_preview_command(
     context: CommandContext,
-    colors: Dict[str, str],
-    typography: Optional[Dict[str, Any]] = None
+    colors: dict[str, str],
+    typography: Optional[dict[str, Any]] = None
 ) -> CommandResult:
     """Apply a theme preview."""
     theme_service = context.get_service(ThemeService)
@@ -427,11 +436,12 @@ def get_current_colors_command(context: CommandContext) -> CommandResult:
     title="Update Theme Colors",
     category="Theme",
     description="Update colors in the current theme",
+    visible=False  # Internal command, requires multiple parameters
 )
 def update_theme_colors_command(
     context: CommandContext,
     theme_id: str,
-    colors: Dict[str, str]
+    colors: dict[str, str]
 ) -> CommandResult:
     """Update theme colors."""
     theme_service = context.get_service(ThemeService)

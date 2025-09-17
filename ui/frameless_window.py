@@ -4,12 +4,13 @@ Frameless window implementation for maximizing screen real estate.
 Inherits from MainWindow to preserve all functionality.
 """
 
-from PySide6.QtCore import Qt, QPoint, QRect
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QMenuBar
-from PySide6.QtGui import QMouseEvent
+import logging
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QVBoxLayout, QWidget
+
 from ui.main_window import MainWindow
 from ui.widgets.custom_title_bar import CustomTitleBar
-import logging
 
 logger = logging.getLogger(__name__)
 

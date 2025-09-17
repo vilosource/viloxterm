@@ -5,16 +5,15 @@ GUI integration tests for widget registry management.
 Tests that the UI properly uses commands instead of direct service access.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, call
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QTabWidget
+from unittest.mock import MagicMock, call, patch
 
-from ui.workspace import Workspace
-from ui.widgets.split_pane_widget import SplitPaneWidget
+import pytest
+
 from core.commands.executor import execute_command
-from services.workspace_service import WorkspaceService
 from services.service_locator import ServiceLocator
+from services.workspace_service import WorkspaceService
+from ui.widgets.split_pane_widget import SplitPaneWidget
+from ui.workspace import Workspace
 
 
 @pytest.fixture

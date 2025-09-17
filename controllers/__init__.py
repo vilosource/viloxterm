@@ -7,16 +7,16 @@ architectural patterns.
 """
 
 from .state_controller import (
-    StateController,
     ApplicationStateController,
-    StateModel,
     SplitPaneStateModel,
-    WorkspaceStateModel
+    StateController,
+    StateModel,
+    WorkspaceStateModel,
 )
 
 __all__ = [
     'StateController',
-    'ApplicationStateController', 
+    'ApplicationStateController',
     'StateModel',
     'SplitPaneStateModel',
     'WorkspaceStateModel'

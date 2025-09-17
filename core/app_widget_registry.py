@@ -37,6 +37,7 @@ See WIDGET-ARCHITECTURE-GUIDE.md for complete documentation.
 
 import logging
 from typing import Optional
+
 from core.app_widget_manager import AppWidgetManager
 from core.app_widget_metadata import AppWidgetMetadata, WidgetCategory
 from ui.widgets.widget_registry import WidgetType
@@ -65,8 +66,8 @@ def register_builtin_widgets():
     # Instance ID Pattern: Generate unique IDs like "terminal_abc123"
     # Widget Commands: file.newTerminalTab (creates new instance each time)
     try:
-        from ui.terminal.terminal_app_widget import TerminalAppWidget
         from core.widget_placement import WidgetPlacement
+        from ui.terminal.terminal_app_widget import TerminalAppWidget
 
         metadata = AppWidgetMetadata(
             widget_id="com.viloapp.terminal",
@@ -170,7 +171,7 @@ def register_builtin_widgets():
 
         metadata = AppWidgetMetadata(
             widget_id="com.viloapp.theme_editor",
-            widget_type=WidgetType.SETTINGS,  # Using SETTINGS for now, should be THEME_EDITOR
+            widget_type=WidgetType.CUSTOM,  # Use CUSTOM to avoid factory conflict with SETTINGS
             display_name="Theme Editor",
             description="Visual theme customization tool with live preview",
             icon="palette",

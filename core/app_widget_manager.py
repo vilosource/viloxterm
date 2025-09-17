@@ -9,10 +9,11 @@ for all widget metadata and factories.
 
 import logging
 import warnings
-from typing import Dict, List, Optional, Callable, Type
+from typing import Callable, Optional
+
 from core.app_widget_metadata import AppWidgetMetadata, WidgetCategory
-from ui.widgets.widget_registry import WidgetType
 from ui.widgets.app_widget import AppWidget
+from ui.widgets.widget_registry import WidgetType
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +39,10 @@ class AppWidgetManager:
     def __init__(self):
         """Initialize the manager (only runs once due to singleton)."""
         if not self._initialized:
-            self._widgets: Dict[str, AppWidgetMetadata] = {}
-            self._type_mapping: Dict[WidgetType, str] = {}  # For backward compatibility
-            self._factories: Dict[str, Callable] = {}
-            self._category_cache: Dict[WidgetCategory, List[str]] = {}
+            self._widgets: dict[str, AppWidgetMetadata] = {}
+            self._type_mapping: dict[WidgetType, str] = {}  # For backward compatibility
+            self._factories: dict[str, Callable] = {}
+            self._category_cache: dict[WidgetCategory, list[str]] = {}
             self._initialized = True
             logger.info("AppWidgetManager initialized")
 
@@ -200,7 +201,7 @@ class AppWidgetManager:
             return self._widgets.get(widget_id)
         return None
 
-    def get_all_widgets(self) -> List[AppWidgetMetadata]:
+    def get_all_widgets(self) -> list[AppWidgetMetadata]:
         """
         Get all registered widgets.
 
@@ -209,7 +210,7 @@ class AppWidgetManager:
         """
         return list(self._widgets.values())
 
-    def get_widgets_by_category(self, category: WidgetCategory) -> List[AppWidgetMetadata]:
+    def get_widgets_by_category(self, category: WidgetCategory) -> list[AppWidgetMetadata]:
         """
         Get widgets in a specific category.
 
@@ -222,7 +223,7 @@ class AppWidgetManager:
         widget_ids = self._category_cache.get(category, [])
         return [self._widgets[wid] for wid in widget_ids if wid in self._widgets]
 
-    def get_widgets_by_source(self, source: str) -> List[AppWidgetMetadata]:
+    def get_widgets_by_source(self, source: str) -> list[AppWidgetMetadata]:
         """
         Get widgets by source (builtin/plugin).
 
@@ -234,7 +235,7 @@ class AppWidgetManager:
         """
         return [w for w in self._widgets.values() if w.source == source]
 
-    def get_widgets_with_capability(self, capability: str) -> List[AppWidgetMetadata]:
+    def get_widgets_with_capability(self, capability: str) -> list[AppWidgetMetadata]:
         """
         Get widgets that provide a specific capability.
 
@@ -246,7 +247,7 @@ class AppWidgetManager:
         """
         return [w for w in self._widgets.values() if capability in w.provides_capabilities]
 
-    def get_widgets_for_file_type(self, file_extension: str) -> List[AppWidgetMetadata]:
+    def get_widgets_for_file_type(self, file_extension: str) -> list[AppWidgetMetadata]:
         """
         Get widgets that support a file type.
 
@@ -259,7 +260,7 @@ class AppWidgetManager:
         ext = file_extension.lstrip('.')
         return [w for w in self._widgets.values() if ext in w.supported_file_types]
 
-    def get_available_widgets(self) -> List[AppWidgetMetadata]:
+    def get_available_widgets(self) -> list[AppWidgetMetadata]:
         """
         Get all currently available widgets.
 
@@ -268,7 +269,7 @@ class AppWidgetManager:
         """
         return [w for w in self._widgets.values() if w.is_available()]
 
-    def get_menu_widgets(self) -> List[AppWidgetMetadata]:
+    def get_menu_widgets(self) -> list[AppWidgetMetadata]:
         """
         Get widgets that should appear in menus.
 

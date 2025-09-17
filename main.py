@@ -10,9 +10,11 @@ from core.app_config import app_config
 
 # Set up centralized logging configuration
 from logging_config import setup_logging
+
 setup_logging()  # Will auto-detect production mode from app_config
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Configure environment BEFORE any Qt imports
@@ -31,13 +33,15 @@ except Exception as e:
     logger.error(f"Failed to configure environment: {e}")
 
 # NOW import Qt modules after environment is configured
+from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt, QCoreApplication, QSettings
-from ui.main_window import MainWindow
+
 from ui.frameless_window import FramelessWindow
+from ui.main_window import MainWindow
 
 # Start terminal server early to ensure it's ready before any widgets are created
 from ui.terminal.terminal_server import terminal_server
+
 logger.info("Starting terminal server...")
 terminal_server.start_server()
 logger.info("Terminal server initialization complete")
@@ -68,8 +72,12 @@ def main():
     logger.info(f"App configuration: {app_config}")
 
     # Initialize configurable settings system FIRST
-    from core.settings.config import initialize_settings_from_cli, get_settings, get_settings_info
-    settings_config = initialize_settings_from_cli()
+    from core.settings.config import (
+        get_settings,
+        get_settings_info,
+        initialize_settings_from_cli,
+    )
+    initialize_settings_from_cli()
 
     # Log settings information
     settings_info = get_settings_info()
@@ -78,20 +86,25 @@ def main():
         logger.info("Running in portable mode")
     elif settings_info['is_temporary']:
         logger.info("Using temporary settings (will not persist)")
-    
+
     # Set application metadata
     QCoreApplication.setApplicationName("ViloxTerm")
     QCoreApplication.setOrganizationName("ViloxTerm")
     QCoreApplication.setOrganizationDomain("viloxterm.local")
-    
+
     # Enable high DPI scaling
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
-    
+
     # Create application
     app = QApplication(sys.argv)
-    
+
+    # Handle theme reset if requested
+    if app_config.reset_theme:
+        logger.info("Theme reset requested via --reset-theme")
+        # Theme reset will be handled by ThemeService during initialization
+
     # Check if frameless mode is enabled
     settings = get_settings("ViloxTerm", "ViloxTerm")
     frameless_mode = settings.value("UI/FramelessMode", False, type=bool)
@@ -114,9 +127,9 @@ def main():
     else:
         logger.info("Creating MainWindow")
         window = MainWindow()
-    
+
     window.show()
-    
+
     # Run application
     sys.exit(app.exec())
 

@@ -3,12 +3,12 @@ Test helper utilities for ViloxTerm testing.
 """
 
 from .widget_test_helpers import (
-    MockSyncWidget,
     MockAsyncWidget,
     MockErrorWidget,
-    WidgetTestHelper,
+    MockSyncWidget,
     WidgetTestFixtures,
-    pytest_fixtures
+    WidgetTestHelper,
+    pytest_fixtures,
 )
 
 __all__ = [

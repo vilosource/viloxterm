@@ -1,0 +1,63 @@
+# Pre-commit hooks configuration for ViloxTerm
+# Install with: pip install pre-commit && pre-commit install
+
+repos:
+  # Basic Python syntax and style checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: debug-statements
+      - id: requirements-txt-fixer
+
+  # Python syntax checking (most important!)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-ast  # Verify Python AST (catches syntax errors)
+        language: python
+        files: \.py$
+
+  # Black code formatting
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        language: python
+        files: \.py$
+        args: [--check]  # Only check, don't auto-fix
+
+  # Ruff linting (includes syntax checking)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: \.py$
+
+  # MyPy type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        files: \.py$
+        args: [--ignore-missing-imports, --check-untyped-defs]
+        additional_dependencies: [PySide6, types-requests]
+
+  # Custom syntax compilation check
+  - repo: local
+    hooks:
+      - id: python-compile
+        name: Python syntax check
+        entry: python -m py_compile
+        language: python
+        files: \.py$
+        description: Check Python syntax by compiling

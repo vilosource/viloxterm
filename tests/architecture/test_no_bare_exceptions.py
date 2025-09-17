@@ -5,10 +5,10 @@ Bare exception handlers (except:) catch all exceptions including system exits
 and keyboard interrupts, making debugging difficult and potentially hiding bugs.
 """
 
-import os
 import re
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 def get_python_files():
@@ -41,12 +41,12 @@ def test_no_bare_except_handlers():
 
     for file_path in python_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             lines = content.split('\n')
             for line_num, line in enumerate(lines, 1):
-                stripped_line = line.strip()
+                line.strip()
 
                 # Check for bare except
                 if re.match(r'^\s*except\s*:\s*$', line) or re.match(r'^\s*except\s*:\s*#.*$', line):
@@ -81,7 +81,7 @@ def test_exception_handling_best_practices():
 
     for file_path in python_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             lines = content.split('\n')
@@ -167,7 +167,7 @@ def test_specific_exception_patterns():
 
     for file_path in python_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             lines = content.split('\n')

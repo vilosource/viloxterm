@@ -3,10 +3,11 @@
 View-related commands using the service layer.
 """
 
-from core.commands.base import Command, CommandResult, CommandContext
+import logging
+
+from core.commands.base import CommandContext, CommandResult
 from core.commands.decorators import command
 from services.ui_service import UIService
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +26,9 @@ def toggle_theme_command(context: CommandContext) -> CommandResult:
         ui_service = context.get_service(UIService)
         if not ui_service:
             return CommandResult(success=False, error="UIService not available")
-        
+
         new_theme = ui_service.toggle_theme()
-        
+
         return CommandResult(
             success=True,
             value={'theme': new_theme}
@@ -51,9 +52,9 @@ def toggle_sidebar_command(context: CommandContext) -> CommandResult:
         ui_service = context.get_service(UIService)
         if not ui_service:
             return CommandResult(success=False, error="UIService not available")
-        
+
         visible = ui_service.toggle_sidebar()
-        
+
         return CommandResult(
             success=True,
             value={'visible': visible}
@@ -77,9 +78,9 @@ def toggle_activity_bar_command(context: CommandContext) -> CommandResult:
         ui_service = context.get_service(UIService)
         if not ui_service:
             return CommandResult(success=False, error="UIService not available")
-        
+
         visible = ui_service.toggle_activity_bar()
-        
+
         return CommandResult(
             success=True,
             value={'visible': visible}
@@ -103,9 +104,9 @@ def toggle_menu_bar_command(context: CommandContext) -> CommandResult:
         ui_service = context.get_service(UIService)
         if not ui_service:
             return CommandResult(success=False, error="UIService not available")
-        
+
         visible = ui_service.toggle_menu_bar()
-        
+
         return CommandResult(
             success=True,
             value={'visible': visible}
@@ -129,9 +130,9 @@ def show_explorer_command(context: CommandContext) -> CommandResult:
         ui_service = context.get_service(UIService)
         if not ui_service:
             return CommandResult(success=False, error="UIService not available")
-        
+
         ui_service.set_sidebar_view("explorer")
-        
+
         return CommandResult(success=True)
     except Exception as e:
         logger.error(f"Failed to show explorer: {e}")
@@ -152,9 +153,9 @@ def show_search_command(context: CommandContext) -> CommandResult:
         ui_service = context.get_service(UIService)
         if not ui_service:
             return CommandResult(success=False, error="UIService not available")
-        
+
         ui_service.set_sidebar_view("search")
-        
+
         return CommandResult(success=True)
     except Exception as e:
         logger.error(f"Failed to show search: {e}")
@@ -175,9 +176,9 @@ def show_git_command(context: CommandContext) -> CommandResult:
         ui_service = context.get_service(UIService)
         if not ui_service:
             return CommandResult(success=False, error="UIService not available")
-        
+
         ui_service.set_sidebar_view("git")
-        
+
         return CommandResult(success=True)
     except Exception as e:
         logger.error(f"Failed to show git: {e}")
@@ -197,9 +198,9 @@ def show_settings_command(context: CommandContext) -> CommandResult:
         ui_service = context.get_service(UIService)
         if not ui_service:
             return CommandResult(success=False, error="UIService not available")
-        
+
         ui_service.set_sidebar_view("settings")
-        
+
         return CommandResult(success=True)
     except Exception as e:
         logger.error(f"Failed to show settings: {e}")
@@ -220,9 +221,9 @@ def toggle_fullscreen_command(context: CommandContext) -> CommandResult:
         ui_service = context.get_service(UIService)
         if not ui_service:
             return CommandResult(success=False, error="UIService not available")
-        
+
         is_fullscreen = ui_service.toggle_fullscreen()
-        
+
         return CommandResult(
             success=True,
             value={'fullscreen': is_fullscreen}
@@ -245,13 +246,13 @@ def reset_layout_command(context: CommandContext) -> CommandResult:
         ui_service = context.get_service(UIService)
         if not ui_service:
             return CommandResult(success=False, error="UIService not available")
-        
+
         ui_service.reset_layout()
-        
+
         # Show status message
         if context.main_window and hasattr(context.main_window, 'status_bar'):
             context.main_window.status_bar.set_message("Layout reset to defaults", 2000)
-        
+
         return CommandResult(success=True)
     except Exception as e:
         logger.error(f"Failed to reset layout: {e}")

@@ -7,9 +7,10 @@ the behavior of various features throughout the application. All settings
 are validated and have safe fallbacks to prevent crashes.
 """
 
-from typing import Dict, Any, Optional, Tuple, List, Callable
-from PySide6.QtCore import QSettings
 import logging
+from typing import Any, Callable
+
+from PySide6.QtCore import QSettings
 
 logger = logging.getLogger(__name__)
 
@@ -63,12 +64,12 @@ class AppDefaultsValidator:
     """Validates and sanitizes application settings."""
 
     @staticmethod
-    def get_available_widget_types() -> List[str]:
+    def get_available_widget_types() -> list[str]:
         """Get list of valid widget types."""
         return ["terminal", "editor", "theme_editor", "explorer", "output", "placeholder", "settings", "shortcuts"]
 
     @staticmethod
-    def validate_widget_type(value: str) -> Tuple[bool, str]:
+    def validate_widget_type(value: str) -> tuple[bool, str]:
         """Validate widget type setting."""
         valid_types = AppDefaultsValidator.get_available_widget_types()
         if value in valid_types:
@@ -77,7 +78,7 @@ class AppDefaultsValidator:
         return (False, "terminal")
 
     @staticmethod
-    def validate_split_ratio(value: Any) -> Tuple[bool, float]:
+    def validate_split_ratio(value: Any) -> tuple[bool, float]:
         """Validate split ratio (must be between 0.1 and 0.9)."""
         try:
             ratio = float(value)
@@ -90,7 +91,7 @@ class AppDefaultsValidator:
             return (False, 0.5)
 
     @staticmethod
-    def validate_positive_int(value: Any, max_val: int = 100, default: int = 20) -> Tuple[bool, int]:
+    def validate_positive_int(value: Any, max_val: int = 100, default: int = 20) -> tuple[bool, int]:
         """Validate positive integer setting."""
         try:
             num = int(value)
@@ -103,7 +104,7 @@ class AppDefaultsValidator:
             return (False, default)
 
     @staticmethod
-    def validate_close_behavior(value: str) -> Tuple[bool, str]:
+    def validate_close_behavior(value: str) -> tuple[bool, str]:
         """Validate close last tab behavior."""
         valid_behaviors = ["create_default", "close_window", "do_nothing"]
         if value in valid_behaviors:
@@ -112,7 +113,7 @@ class AppDefaultsValidator:
         return (False, "create_default")
 
     @staticmethod
-    def validate_bool(value: Any, default: bool = True) -> Tuple[bool, bool]:
+    def validate_bool(value: Any, default: bool = True) -> tuple[bool, bool]:
         """Validate boolean setting."""
         if isinstance(value, bool):
             return (True, value)
@@ -125,7 +126,7 @@ class AppDefaultsValidator:
         return (False, default)
 
     @staticmethod
-    def validate_and_sanitize(key: str, value: Any) -> Tuple[bool, Any]:
+    def validate_and_sanitize(key: str, value: Any) -> tuple[bool, Any]:
         """
         Validate a setting value and return sanitized version.
 
@@ -180,8 +181,8 @@ class AppDefaults:
     def __init__(self):
         """Initialize app defaults manager."""
         self._settings = QSettings()
-        self._cache: Dict[str, Any] = {}
-        self._validators: Dict[str, Callable] = {}
+        self._cache: dict[str, Any] = {}
+        self._validators: dict[str, Callable] = {}
 
     def get(self, key: str, fallback: Any = None) -> Any:
         """
@@ -277,7 +278,7 @@ class AppDefaults:
         # Clear cache
         self._cache.clear()
 
-    def export_settings(self) -> Dict[str, Any]:
+    def export_settings(self) -> dict[str, Any]:
         """
         Export all current settings.
 
@@ -294,7 +295,7 @@ class AppDefaults:
 
         return settings
 
-    def import_settings(self, settings: Dict[str, Any]) -> int:
+    def import_settings(self, settings: dict[str, Any]) -> int:
         """
         Import settings from dictionary.
 
@@ -437,7 +438,7 @@ def get_close_last_tab_behavior() -> str:
     return get_app_default("workspace.close_last_tab_behavior", "create_default")
 
 
-def get_startup_window_state() -> Dict[str, Any]:
+def get_startup_window_state() -> dict[str, Any]:
     """Get the default window state for startup."""
     return {
         "width": get_app_default("ui.default_window_width", 1200),

@@ -12,10 +12,9 @@ Version Format:
 - Additional labels for pre-release and build metadata
 """
 
-import os
 import subprocess
-from typing import Optional, Dict, Any
 from datetime import datetime
+from typing import Any, Optional
 
 # Semantic Version
 __version__ = "0.1.0"
@@ -34,7 +33,7 @@ BUILD_DATE = datetime.now().strftime("%Y-%m-%d")
 BUILD_TIME = datetime.now().strftime("%H:%M:%S")
 
 
-def get_git_info() -> Dict[str, Optional[str]]:
+def get_git_info() -> dict[str, Optional[str]]:
     """
     Get git repository information if available.
 
@@ -122,7 +121,7 @@ def get_version_string(include_git: bool = True,
     return version
 
 
-def get_full_version_info() -> Dict[str, Any]:
+def get_full_version_info() -> dict[str, Any]:
     """
     Get complete version information including build and git details.
 
@@ -160,7 +159,7 @@ def get_python_version() -> str:
     return f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
 
 
-def get_qt_version() -> Dict[str, str]:
+def get_qt_version() -> dict[str, str]:
     """Get Qt and PySide6 version information."""
     try:
         from PySide6 import __version__ as pyside_version
@@ -176,7 +175,7 @@ def get_qt_version() -> Dict[str, str]:
         }
 
 
-def get_platform_info() -> Dict[str, str]:
+def get_platform_info() -> dict[str, str]:
     """Get platform information."""
     import platform
     return {

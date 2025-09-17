@@ -8,9 +8,9 @@ Large files are often a sign of:
 - Difficult to maintain code
 """
 
-import os
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 def get_python_files():
@@ -40,7 +40,7 @@ def get_python_files():
 def count_lines_of_code(file_path):
     """Count lines of code, excluding comments and blank lines."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             lines = f.readlines()
 
         loc = 0

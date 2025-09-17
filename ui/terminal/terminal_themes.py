@@ -4,10 +4,10 @@ Terminal Theme Management
 Converts application themes to xterm.js format.
 """
 
-from typing import Dict, Any
+from typing import Any
 
 
-def get_dark_theme() -> Dict[str, Any]:
+def get_dark_theme() -> dict[str, Any]:
     """Get dark theme for xterm.js."""
     return {
         'background': '#1e1e1e',
@@ -34,7 +34,7 @@ def get_dark_theme() -> Dict[str, Any]:
     }
 
 
-def get_light_theme() -> Dict[str, Any]:
+def get_light_theme() -> dict[str, Any]:
     """Get light theme for xterm.js."""
     return {
         'background': '#ffffff',
@@ -61,7 +61,7 @@ def get_light_theme() -> Dict[str, Any]:
     }
 
 
-def get_terminal_theme_from_app_theme() -> Dict[str, Any]:
+def get_terminal_theme_from_app_theme() -> dict[str, Any]:
     """Get terminal theme based on current application theme."""
     from core.commands.executor import execute_command
 
@@ -102,7 +102,7 @@ def get_terminal_theme_from_app_theme() -> Dict[str, Any]:
     return get_dark_theme()
 
 
-def get_terminal_theme(theme_name: str = None) -> Dict[str, Any]:
+def get_terminal_theme(theme_name: str = None) -> dict[str, Any]:
     """
     Get terminal theme by name or current app theme.
 

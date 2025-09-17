@@ -4,8 +4,8 @@ Theme typography system for font customization.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional
 from enum import Enum
+from typing import Optional
 
 
 class FontFamily(Enum):
@@ -31,7 +31,7 @@ class ThemeTypography:
     font_weight_bold: int = 700
 
     # Size scale (relative to base)
-    size_scale: Dict[str, float] = field(default_factory=lambda: {
+    size_scale: dict[str, float] = field(default_factory=lambda: {
         "xs": 0.75,    # 75% of base
         "sm": 0.875,   # 87.5% of base
         "base": 1.0,   # 100% of base
@@ -42,7 +42,7 @@ class ThemeTypography:
     })
 
     # Component-specific overrides
-    overrides: Dict[str, Dict[str, any]] = field(default_factory=dict)
+    overrides: dict[str, dict[str, any]] = field(default_factory=dict)
 
     def get_font_size(self, scale_key: str = "base") -> int:
         """
@@ -71,7 +71,7 @@ class ThemeTypography:
             font_size = self.font_size_base
         return int(font_size * self.line_height)
 
-    def get_component_style(self, component: str) -> Dict[str, any]:
+    def get_component_style(self, component: str) -> dict[str, any]:
         """
         Get typography style for a specific component.
 
@@ -95,7 +95,7 @@ class ThemeTypography:
 
         return style
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert typography to dictionary."""
         return {
             "fontFamily": self.font_family,
@@ -109,7 +109,7 @@ class ThemeTypography:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> 'ThemeTypography':
+    def from_dict(cls, data: dict) -> 'ThemeTypography':
         """
         Create typography from dictionary.
 

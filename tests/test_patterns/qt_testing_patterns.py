@@ -5,11 +5,11 @@ This module provides reference implementations of proper Qt/PySide6 testing patt
 and validators to check test quality.
 """
 
-import pytest
-from PySide6.QtCore import Qt, QTimer, Signal, QObject
-from PySide6.QtWidgets import QWidget, QApplication, QPushButton, QDialog, QMessageBox
-from typing import Optional, Any, Callable
 import weakref
+from typing import Callable
+
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtWidgets import QDialog, QMessageBox, QPushButton, QWidget
 
 # ============================================================================
 # PATTERN 1: Signal/Slot Testing
@@ -337,7 +337,6 @@ class AntiPatterns:
     @staticmethod
     def anti_pattern_hardcoded_delays():
         """❌ ANTI-PATTERN: Using hardcoded sleep delays."""
-        import time
 
         widget = QWidget()
         widget.do_something_async()

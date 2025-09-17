@@ -5,14 +5,20 @@ Color picker widget for theme editor.
 Provides a compact color selection widget with preview, hex input, and dialog.
 """
 
-from typing import Optional
-from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QPushButton, QLineEdit,
-    QColorDialog, QLabel, QVBoxLayout
-)
-from PySide6.QtCore import Signal, Qt
-from PySide6.QtGui import QColor, QPalette, QRegularExpressionValidator
 import logging
+from typing import Optional
+
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor, QRegularExpressionValidator
+from PySide6.QtWidgets import (
+    QColorDialog,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 logger = logging.getLogger(__name__)
 

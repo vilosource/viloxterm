@@ -3,33 +3,18 @@
 Settings-related commands for managing application configuration.
 """
 
-from core.commands.base import Command, CommandResult, CommandContext
+import logging
+
+from PySide6.QtWidgets import QInputDialog, QMessageBox
+
+from core.commands.base import CommandContext, CommandResult
 from core.commands.decorators import command
 from core.settings.service import SettingsService
-from PySide6.QtWidgets import QMessageBox, QInputDialog
-import logging
 
 logger = logging.getLogger(__name__)
 
-# Register the shortcut configuration widget factory at module load time
-def _register_shortcut_config_widget():
-    """Register the shortcut configuration widget factory."""
-    try:
-        from ui.widgets.shortcut_config_app_widget import ShortcutConfigAppWidget
-        from ui.widgets.widget_registry import widget_registry, WidgetType
-
-        def create_shortcut_config_widget(widget_id: str) -> ShortcutConfigAppWidget:
-            return ShortcutConfigAppWidget(widget_id)
-
-        # NOTE: Widget registration now handled by AppWidgetManager in core/app_widget_registry.py
-        # This legacy registration is kept for backward compatibility but is deprecated
-        widget_registry.register_factory(WidgetType.SETTINGS, create_shortcut_config_widget)
-        logger.debug("Registered shortcut configuration widget factory (deprecated - now handled by AppWidgetManager)")
-    except ImportError as e:
-        logger.error(f"Failed to register shortcut config widget: {e}")
-
-# Register the factory when this module is imported
-_register_shortcut_config_widget()
+# Legacy widget registry registration removed
+# All widget registration is now handled by AppWidgetManager in core/app_widget_registry.py
 
 
 @command(
@@ -86,7 +71,7 @@ def reset_settings_command(context: CommandContext) -> CommandResult:
         settings_service = context.get_service(SettingsService)
         if not settings_service:
             return CommandResult(success=False, error="SettingsService not available")
-        
+
         # Show confirmation dialog
         if context.main_window:
             reply = QMessageBox.question(
@@ -97,22 +82,22 @@ def reset_settings_command(context: CommandContext) -> CommandResult:
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No
             )
-            
+
             if reply != QMessageBox.Yes:
                 return CommandResult(success=False, error="User cancelled reset")
-        
+
         # Reset settings
         success = settings_service.reset()
-        
+
         if success:
             message = "All settings reset to defaults"
             if context.main_window and hasattr(context.main_window, 'status_bar'):
                 context.main_window.status_bar.set_message(message, 3000)
-            
+
             return CommandResult(success=True, message=message)
         else:
             return CommandResult(success=False, error="Failed to reset settings")
-        
+
     except Exception as e:
         logger.error(f"Failed to reset settings: {e}")
         return CommandResult(success=False, error=str(e))
@@ -131,18 +116,18 @@ def show_settings_info_command(context: CommandContext) -> CommandResult:
         settings_service = context.get_service(SettingsService)
         if not settings_service:
             return CommandResult(success=False, error="SettingsService not available")
-        
+
         # Get settings info
         service_info = settings_service.get_service_info()
         all_settings = settings_service.get_all()
-        
+
         info = {
             'service_info': service_info,
             'categories': list(all_settings.keys()),
             'current_theme': settings_service.get_theme(),
             'current_font_size': settings_service.get_font_size(),
         }
-        
+
         # Show in status bar
         if context.main_window and hasattr(context.main_window, 'status_bar'):
             categories = len(service_info.get('categories', []))
@@ -150,9 +135,9 @@ def show_settings_info_command(context: CommandContext) -> CommandResult:
             context.main_window.status_bar.set_message(
                 f"Settings: {categories} categories, {total_settings} total settings", 3000
             )
-        
+
         return CommandResult(success=True, value=info)
-        
+
     except Exception as e:
         logger.error(f"Failed to get settings info: {e}")
         return CommandResult(success=False, error=str(e))
@@ -172,25 +157,25 @@ def toggle_theme_command(context: CommandContext) -> CommandResult:
         settings_service = context.get_service(SettingsService)
         if not settings_service:
             return CommandResult(success=False, error="SettingsService not available")
-        
+
         # Get current theme and toggle
         current_theme = settings_service.get_theme()
         new_theme = "light" if current_theme == "dark" else "dark"
-        
+
         # Update theme
         success = settings_service.set_theme(new_theme)
-        
+
         if success:
             message = f"Theme changed to {new_theme}"
-            
+
             # Show in status bar
             if context.main_window and hasattr(context.main_window, 'status_bar'):
                 context.main_window.status_bar.set_message(message, 2000)
-            
+
             return CommandResult(success=True, message=message, value={'theme': new_theme})
         else:
             return CommandResult(success=False, error="Failed to toggle theme")
-        
+
     except Exception as e:
         logger.error(f"Failed to toggle theme: {e}")
         return CommandResult(success=False, error=str(e))
@@ -209,10 +194,10 @@ def change_font_size_command(context: CommandContext) -> CommandResult:
         settings_service = context.get_service(SettingsService)
         if not settings_service:
             return CommandResult(success=False, error="SettingsService not available")
-        
+
         # Get current font size
         current_size = settings_service.get_font_size()
-        
+
         # Show input dialog
         if context.main_window:
             new_size, ok = QInputDialog.getInt(
@@ -223,27 +208,27 @@ def change_font_size_command(context: CommandContext) -> CommandResult:
                 8,  # minimum
                 72  # maximum
             )
-            
+
             if not ok:
                 return CommandResult(success=False, error="User cancelled")
         else:
             # If no main window, use provided size or increment
             new_size = context.args.get('size', current_size + 1)
-        
+
         # Update font size
         success = settings_service.set("theme", "font_size", new_size)
-        
+
         if success:
             message = f"Font size changed to {new_size}px"
-            
+
             # Show in status bar
             if context.main_window and hasattr(context.main_window, 'status_bar'):
                 context.main_window.status_bar.set_message(message, 2000)
-            
+
             return CommandResult(success=True, message=message, value={'font_size': new_size})
         else:
             return CommandResult(success=False, error="Failed to change font size")
-        
+
     except Exception as e:
         logger.error(f"Failed to change font size: {e}")
         return CommandResult(success=False, error=str(e))
@@ -252,7 +237,7 @@ def change_font_size_command(context: CommandContext) -> CommandResult:
 @command(
     id="settings.resetKeyboardShortcuts",
     title="Reset Keyboard Shortcuts",
-    category="Settings", 
+    category="Settings",
     description="Reset all keyboard shortcuts to defaults",
     icon="keyboard"
 )
@@ -262,7 +247,7 @@ def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
         settings_service = context.get_service(SettingsService)
         if not settings_service:
             return CommandResult(success=False, error="SettingsService not available")
-        
+
         # Show confirmation dialog
         if context.main_window:
             reply = QMessageBox.question(
@@ -273,24 +258,24 @@ def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No
             )
-            
+
             if reply != QMessageBox.Yes:
                 return CommandResult(success=False, error="User cancelled reset")
-        
+
         # Reset shortcuts
         success = settings_service.reset_keyboard_shortcuts()
-        
+
         if success:
             message = "Keyboard shortcuts reset to defaults"
-            
+
             # Show in status bar
             if context.main_window and hasattr(context.main_window, 'status_bar'):
                 context.main_window.status_bar.set_message(message, 3000)
-            
+
             return CommandResult(success=True, message=message)
         else:
             return CommandResult(success=False, error="Failed to reset keyboard shortcuts")
-        
+
     except Exception as e:
         logger.error(f"Failed to reset keyboard shortcuts: {e}")
         return CommandResult(success=False, error=str(e))
@@ -352,8 +337,8 @@ def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
 def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     """Replace current pane with keyboard shortcuts editor."""
     try:
-        from ui.widgets.widget_registry import WidgetType
         from services.workspace_service import WorkspaceService
+        from ui.widgets.widget_registry import WidgetType
 
         # Get the pane and pane_id from context
         pane = context.args.get('pane')
@@ -486,8 +471,8 @@ def set_keyboard_shortcut_command(context: CommandContext) -> CommandResult:
 def register_keyboard_shortcut_command(context: CommandContext) -> CommandResult:
     """Register a keyboard shortcut with the keyboard service."""
     try:
-        from core.keyboard.service import KeyboardService
         from core.commands.registry import command_registry
+        from core.keyboard.service import KeyboardService
 
         command_id = context.args.get('command_id')
         shortcut = context.args.get('shortcut')

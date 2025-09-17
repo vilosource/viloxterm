@@ -5,9 +5,9 @@ This test enforces the Command Pattern Architecture by ensuring UI components
 don't bypass the command system by directly accessing services.
 """
 
-import os
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 def get_ui_files():
@@ -31,7 +31,7 @@ def test_no_service_locator_imports_in_ui():
 
     for file_path in ui_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # Check for ServiceLocator imports
@@ -55,7 +55,7 @@ def test_no_service_locator_imports_in_ui():
                         'type': 'import'
                     })
 
-        except (UnicodeDecodeError, PermissionError) as e:
+        except (UnicodeDecodeError, PermissionError):
             # Skip files that can't be read
             continue
 
@@ -75,7 +75,7 @@ def test_no_service_locator_usage_in_ui():
 
     for file_path in ui_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             lines = content.split('\n')
@@ -105,7 +105,7 @@ def test_no_service_locator_usage_in_ui():
                         'type': 'usage'
                     })
 
-        except (UnicodeDecodeError, PermissionError) as e:
+        except (UnicodeDecodeError, PermissionError):
             continue
 
     if violations:
@@ -130,7 +130,7 @@ def test_ui_architecture_compliance():
 
     for file_path in ui_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # Skip main_window.py as it's allowed to bootstrap services

@@ -5,8 +5,8 @@ Stylesheet generator for theme system.
 This module generates Qt stylesheets dynamically based on the current theme.
 """
 
-from typing import Dict, Callable
 import logging
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class StylesheetGenerator:
         self._theme_service = theme_service
 
         # Map component names to generator methods
-        self._generators: Dict[str, Callable] = {
+        self._generators: dict[str, Callable] = {
             "main_window": self._main_window_style,
             "editor": self._editor_style,
             "terminal": self._terminal_style,
@@ -73,7 +73,7 @@ class StylesheetGenerator:
         """Helper to get font family from theme service."""
         return self._theme_service.get_font_family()
 
-    def _get_component_typography(self, component: str) -> Dict:
+    def _get_component_typography(self, component: str) -> dict:
         """Helper to get component-specific typography."""
         return self._theme_service.get_component_typography(component)
 
@@ -344,6 +344,21 @@ class StylesheetGenerator:
                 color: {self._get_color("editor.foreground")};
             }}
 
+            /* Specific settings tab content */
+            QWidget#settingsTabContent {{
+                background-color: {self._get_color("editor.background")};
+                color: {self._get_color("editor.foreground")};
+            }}
+
+            QScrollArea#settingsScrollArea {{
+                background-color: {self._get_color("editor.background")};
+                border: none;
+            }}
+
+            QWidget#settingsScrollContent {{
+                background-color: {self._get_color("editor.background")};
+            }}
+
             /* Tree/Table widgets */
             QTreeWidget, QTableWidget {{
                 background-color: {self._get_color("editor.background")};
@@ -458,6 +473,147 @@ class StylesheetGenerator:
                 border: 1px solid {self._get_color("input.border")};
                 selection-background-color: {self._get_color("list.activeSelectionBackground")};
                 selection-color: {self._get_color("list.activeSelectionForeground")};
+            }}
+
+            /* Group boxes */
+            QGroupBox {{
+                color: {self._get_color("editor.foreground")};
+                border: 1px solid {self._get_color("panel.border")};
+                border-radius: 4px;
+                margin-top: 1ex;
+                padding-top: 1ex;
+                font-family: {font_family};
+                font-size: {font_size}px;
+            }}
+
+            QGroupBox::title {{
+                color: {self._get_color("editor.foreground")};
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0 3px;
+                left: 10px;
+            }}
+
+            /* Scroll areas */
+            QScrollArea {{
+                background-color: {self._get_color("editor.background")};
+                border: none;
+            }}
+
+            QScrollArea > QWidget > QWidget {{
+                background-color: {self._get_color("editor.background")};
+            }}
+
+            /* CheckBoxes */
+            QCheckBox {{
+                color: {self._get_color("editor.foreground")};
+                font-family: {font_family};
+                font-size: {font_size}px;
+            }}
+
+            QCheckBox::indicator {{
+                width: 13px;
+                height: 13px;
+                border: 1px solid {self._get_color("input.border")};
+                background-color: {self._get_color("input.background")};
+                border-radius: 2px;
+            }}
+
+            QCheckBox::indicator:checked {{
+                background-color: {self._get_color("focusBorder")};
+                border-color: {self._get_color("focusBorder")};
+            }}
+
+            /* RadioButtons */
+            QRadioButton {{
+                color: {self._get_color("editor.foreground")};
+                font-family: {font_family};
+                font-size: {font_size}px;
+            }}
+
+            QRadioButton::indicator {{
+                width: 13px;
+                height: 13px;
+                border: 1px solid {self._get_color("input.border")};
+                background-color: {self._get_color("input.background")};
+                border-radius: 7px;
+            }}
+
+            QRadioButton::indicator:checked {{
+                background-color: {self._get_color("focusBorder")};
+                border-color: {self._get_color("focusBorder")};
+            }}
+
+            /* SpinBox */
+            QSpinBox {{
+                background-color: {self._get_color("input.background")};
+                color: {self._get_color("input.foreground")};
+                border: 1px solid {self._get_color("input.border")};
+                border-radius: 2px;
+                padding: 4px;
+                font-family: {font_family};
+                font-size: {font_size}px;
+            }}
+
+            QSpinBox:focus {{
+                border-color: {self._get_color("focusBorder")};
+            }}
+
+            /* Slider */
+            QSlider::groove:horizontal {{
+                background-color: {self._get_color("input.background")};
+                border: 1px solid {self._get_color("input.border")};
+                height: 4px;
+                border-radius: 2px;
+            }}
+
+            QSlider::handle:horizontal {{
+                background-color: {self._get_color("button.background")};
+                border: 1px solid {self._get_color("button.border")};
+                width: 14px;
+                height: 14px;
+                border-radius: 7px;
+                margin: -6px 0;
+            }}
+
+            QSlider::handle:horizontal:hover {{
+                background-color: {self._get_color("button.hoverBackground")};
+            }}
+
+            /* Tab widget */
+            QTabWidget::pane {{
+                background-color: {self._get_color("editor.background")};
+                border: 1px solid {self._get_color("panel.border")};
+                border-top: none;
+            }}
+
+            QTabWidget::tab-bar {{
+                alignment: left;
+            }}
+
+            QTabBar {{
+                background-color: {self._get_color("editor.background")};
+            }}
+
+            QTabBar::tab {{
+                background-color: {self._get_color("tab.inactiveBackground")};
+                color: {self._get_color("tab.inactiveForeground")};
+                padding: 8px 16px;
+                margin-right: 2px;
+                border: 1px solid {self._get_color("panel.border")};
+                border-bottom: none;
+                font-family: {font_family};
+                font-size: {font_size}px;
+            }}
+
+            QTabBar::tab:selected {{
+                background-color: {self._get_color("editor.background")};
+                color: {self._get_color("editor.foreground")};
+                border-bottom: 1px solid {self._get_color("editor.background")};
+            }}
+
+            QTabBar::tab:hover:!selected {{
+                background-color: {self._get_color("tab.hoverBackground")};
             }}
 
             /* Scroll bars */

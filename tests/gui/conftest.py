@@ -1,10 +1,9 @@
 """GUI test specific fixtures and configuration."""
 
-import pytest
 from unittest.mock import Mock, patch
-from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QTimer
-from PySide6.QtTest import QTest
+
+import pytest
+
 from ui.main_window import MainWindow
 
 
@@ -12,20 +11,20 @@ from ui.main_window import MainWindow
 def mock_icon_manager():
     """Mock icon manager for GUI tests to avoid resource loading issues."""
     from PySide6.QtGui import QIcon
-    
+
     with patch('ui.activity_bar.get_icon_manager') as mock_activity_bar, \
          patch('ui.main_window.get_icon_manager') as mock_main_window:
-        
+
         mock_manager = Mock()
         mock_manager.theme = "light"
         # Return a real QIcon object instead of Mock to avoid QAction constructor issues
         mock_manager.get_icon.return_value = QIcon()
         mock_manager.toggle_theme = Mock()
         mock_manager.detect_system_theme = Mock()
-        
+
         mock_activity_bar.return_value = mock_manager
         mock_main_window.return_value = mock_manager
-        
+
         yield mock_manager
 
 
@@ -36,10 +35,10 @@ def gui_main_window(qtbot, mock_icon_manager):
     qtbot.addWidget(window)
     window.show()
     qtbot.waitExposed(window)
-    
+
     # Ensure the window is fully rendered
     qtbot.wait(100)
-    
+
     return window
 
 
@@ -70,7 +69,7 @@ def gui_status_bar(gui_main_window):
 def wait_for_condition(qtbot, condition, timeout=5000, interval=100):
     """
     Helper function to wait for a condition with better error reporting.
-    
+
     Args:
         qtbot: pytest-qt bot
         condition: Callable that returns True when condition is met
@@ -82,14 +81,14 @@ def wait_for_condition(qtbot, condition, timeout=5000, interval=100):
             return condition()
         except Exception as e:
             pytest.fail(f"Condition check failed: {e}")
-    
+
     qtbot.waitUntil(check_condition, timeout=timeout)
 
 
 def simulate_key_sequence(qtbot, widget, key_sequence):
     """
     Simulate a keyboard shortcut sequence.
-    
+
     Args:
         qtbot: pytest-qt bot
         widget: Target widget
@@ -97,7 +96,7 @@ def simulate_key_sequence(qtbot, widget, key_sequence):
     """
     # Use the compatibility function for safe key sequence conversion
     from ui.qt_compat import safe_key_sequence_to_key
-    
+
     try:
         key, modifiers = safe_key_sequence_to_key(key_sequence)
         qtbot.keyClick(widget, key, modifiers)

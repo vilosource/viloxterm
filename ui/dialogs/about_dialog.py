@@ -5,18 +5,30 @@ About dialog for ViloxTerm.
 Displays application version, license, and system information.
 """
 
-from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QPixmap, QDesktopServices, QFont
-from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QTextEdit, QTabWidget, QWidget,
-    QGridLayout
-)
-from core.version import (
-    get_full_version_info, get_version_string,
-    APP_NAME, APP_DESCRIPTION, APP_COPYRIGHT, APP_URL, APP_LICENSE
-)
 import logging
+
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QDesktopServices, QFont
+from PySide6.QtWidgets import (
+    QDialog,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTabWidget,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+
+from core.version import (
+    APP_COPYRIGHT,
+    APP_DESCRIPTION,
+    APP_NAME,
+    APP_URL,
+    get_full_version_info,
+    get_version_string,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -83,8 +95,8 @@ class AboutDialog(QDialog):
         logo_label = QLabel()
         logo_label.setText("VT")  # Simple text logo for now
         logo_label.setAlignment(Qt.AlignCenter)
-        logo_label.setStyleSheet(f"""
-            QLabel {{
+        logo_label.setStyleSheet("""
+            QLabel {
                 background-color: #0e639c;
                 color: #ffffff;
                 font-size: 32px;
@@ -95,7 +107,7 @@ class AboutDialog(QDialog):
                 max-width: 80px;
                 min-height: 80px;
                 max-height: 80px;
-            }}
+            }
         """)
         layout.addWidget(logo_label)
 
@@ -419,15 +431,15 @@ SOFTWARE."""
                 }}
             """)
 
-            # Update app icon label if it exists
-            if hasattr(self, 'app_icon_label'):
-                self.app_icon_label.setStyleSheet(f"""
-                    QLabel {{
-                        background-color: {colors.get("button.background", "#0e639c")};
-                        color: {colors.get("button.foreground", "#ffffff")};
-                        font-size: 32px;
-                        font-weight: bold;
-                        border-radius: 8px;
-                        padding: 20px;
-                    }}
-                """)
+        # Update app icon label if it exists
+        if hasattr(self, 'app_icon_label'):
+            self.app_icon_label.setStyleSheet(f"""
+                QLabel {{
+                    background-color: {colors.get("button.background", "#0e639c")};
+                    color: {colors.get("button.foreground", "#ffffff")};
+                    font-size: 32px;
+                    font-weight: bold;
+                    border-radius: 8px;
+                    padding: 20px;
+                }}
+            """)

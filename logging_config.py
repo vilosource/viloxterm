@@ -10,11 +10,11 @@ Usage:
     setup_logging()
 """
 
+import logging.config
 import os
 import sys
-import logging.config
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Optional
 
 
 def get_log_level(production_mode: bool = False) -> str:
@@ -61,7 +61,7 @@ def get_log_file_path() -> Optional[Path]:
     return log_dir
 
 
-def get_logging_config(production_mode: bool = False) -> Dict[str, Any]:
+def get_logging_config(production_mode: bool = False) -> dict[str, Any]:
     """
     Generate logging configuration dictionary.
 
