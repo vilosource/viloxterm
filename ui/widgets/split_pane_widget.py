@@ -72,6 +72,9 @@ class PaneContent(QWidget):
             # Only create native window if absolutely necessary
             self.setAttribute(Qt.WA_NativeWindow, False)
 
+        # Start hidden to prevent flash during creation - will be shown when added to layout
+        self.hide()
+
         self.setup_ui()
 
     def setup_ui(self):

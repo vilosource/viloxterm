@@ -83,6 +83,8 @@ class WidgetPool:
         if not splitter:
             # Create new splitter with parent to prevent flash on Windows
             splitter = QSplitter(orientation, parent)
+            # Start hidden to prevent flash - will be shown when added to layout
+            splitter.hide()
             self._stats["creations"] += 1
             logger.debug(f"Creating new QSplitter (orientation={orientation})")
         else:
@@ -104,8 +106,8 @@ class WidgetPool:
             splitter.setAttribute(Qt.WA_DontCreateNativeAncestors, True)
             splitter.setAttribute(Qt.WA_OpaquePaintEvent, True)
 
-        # Make sure the splitter is visible (it was hidden when pooled)
-        splitter.show()
+        # Don't call show() here - let the widget become visible when added to parent
+        # Calling show() immediately can cause flashing on Windows
 
         # Track as in-use
         self._in_use.add(splitter)
@@ -217,7 +219,8 @@ class WidgetPool:
 
         # Reset common properties
         widget.setEnabled(True)
-        widget.show()  # Make sure widget is shown
+        # Don't call show() here - widgets will be shown when added to layouts
+        # Premature show() calls can cause flashing on Windows
         widget.setStyleSheet("")
 
     def _destroy_widget(self, widget: QWidget):
