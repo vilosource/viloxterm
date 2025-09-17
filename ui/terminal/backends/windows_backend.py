@@ -45,7 +45,14 @@ class WindowsTerminalBackend(TerminalBackend):
         try:
             # Prepare command
             if session.command.lower() in ["powershell", "powershell.exe"]:
+                # Use PowerShell with specific settings for better terminal compatibility
                 cmd = "powershell.exe"
+                # Add arguments for better terminal behavior
+                if not session.cmd_args:
+                    session.cmd_args = [
+                        "-NoLogo",  # Don't show PowerShell logo
+                        "-ExecutionPolicy", "Bypass"  # Allow scripts
+                    ]
             elif session.command.lower() in ["cmd", "cmd.exe"]:
                 cmd = "cmd.exe"
             else:
@@ -63,11 +70,24 @@ class WindowsTerminalBackend(TerminalBackend):
 
             logger.debug(f"Windows backend: Full command: {full_cmd}")
 
-            # Create PTY process
+            # Create PTY process with proper environment
+            env = os.environ.copy()
+
+            # Enable ANSI color support in Windows console
+            env['TERM'] = 'xterm-256color'
+
+            # For PowerShell, enable proper terminal behavior
+            if 'powershell' in cmd.lower():
+                # Disable progress bars that mess up terminal output
+                env['PSStyle.Progress.View'] = 'Minimal'
+                # Set output encoding to UTF-8
+                env['OutputEncoding'] = 'utf-8'
+
             proc = winpty.PtyProcess.spawn(
                 full_cmd,
                 cwd=session.cwd or os.getcwd(),
-                dimensions=(session.rows, session.cols)
+                dimensions=(session.rows, session.cols),
+                env=env
             )
 
             # Store process information
@@ -156,11 +176,12 @@ class WindowsTerminalBackend(TerminalBackend):
 
             if output:
                 session.last_activity = time.time()
-                # Windows uses \r\n, but xterm.js expects \n
-                converted = output.replace('\r\n', '\n')
-                logger.debug(f"Windows backend: Returning {len(converted)} bytes of output")
-                logger.debug(f"Windows backend: Output preview: {repr(converted[:100])}")
-                return converted
+                # Process Windows output for xterm.js
+                # Don't convert \r\n to \n - let xterm.js handle it naturally
+                # This preserves cursor positioning
+                logger.debug(f"Windows backend: Returning {len(output)} bytes of output")
+                logger.debug(f"Windows backend: Output preview: {repr(output[:100])}")
+                return output
             else:
                 # No data available
                 return None
@@ -182,14 +203,7 @@ class WindowsTerminalBackend(TerminalBackend):
             session.last_activity = time.time()
             logger.debug(f"Windows backend: Write successful to session {session.session_id}")
 
-            # Try to read any immediate response
-            try:
-                response = proc.read(256)
-                if response:
-                    logger.debug(f"Windows backend: Got immediate response after write: {repr(response[:100])}")
-            except:
-                pass
-
+            # Don't try to read response here - let the reader thread handle it
             return True
         except Exception as e:
             logger.error(f"Windows backend: Write error for session {session.session_id}: {e}", exc_info=True)
