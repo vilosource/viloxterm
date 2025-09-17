@@ -599,21 +599,29 @@ class Workspace(QWidget):
 
     def close_active_pane(self, show_message=True):
         """Close the active pane in the current tab."""
-        widget = self.get_current_split_widget()
-        if widget and widget.active_pane_id:
-            if widget.get_pane_count() > 1:
-                widget.close_pane(widget.active_pane_id)
-                return True
-            else:
-                # Only show message if requested (not during tests)
-                if show_message:
-                    QMessageBox.information(
-                        self,
-                        "Cannot Close Pane",
-                        "Cannot close the last remaining pane in a tab.",
-                    )
-                return False
-        return False
+        # Delegate to WorkspaceService for consistent code path
+        from services.service_locator import ServiceLocator
+        from services.workspace_service import WorkspaceService
+        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
+        if workspace_service:
+            return workspace_service.close_active_pane()
+        else:
+            # Fallback to direct method if service not available
+            widget = self.get_current_split_widget()
+            if widget and widget.active_pane_id:
+                if widget.get_pane_count() > 1:
+                    widget.close_pane(widget.active_pane_id)
+                    return True
+                else:
+                    # Only show message if requested (not during tests)
+                    if show_message:
+                        QMessageBox.information(
+                            self,
+                            "Cannot Close Pane",
+                            "Cannot close the last remaining pane in a tab.",
+                        )
+                    return False
+            return False
 
     def get_current_tab_info(self) -> Optional[dict]:
         """Get information about the current tab."""

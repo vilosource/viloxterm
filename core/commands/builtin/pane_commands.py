@@ -113,24 +113,12 @@ def close_pane_command(context: CommandContext) -> CommandResult:
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
 
-        # Get workspace
-        workspace = workspace_service.get_workspace()
-        if not workspace:
-            return CommandResult(success=False, error="No workspace available")
-
-        # Use the workspace's close method directly
-        if hasattr(workspace, "close_active_pane"):
-            # During tests, don't show message boxes
-            import os
-
-            show_message = os.environ.get("PYTEST_CURRENT_TEST") is None
-            result = workspace.close_active_pane(show_message=show_message)
-            if result:
-                return CommandResult(success=True, value={"action": "close_pane"})
-            else:
-                return CommandResult(success=False, error="Cannot close the last pane")
-
-        return CommandResult(success=False, error="Could not close pane")
+        # Use WorkspaceService for consistent code path
+        result = workspace_service.close_active_pane()
+        if result:
+            return CommandResult(success=True, value={"action": "close_pane"})
+        else:
+            return CommandResult(success=False, error="Cannot close the last pane")
 
     except Exception as e:
         logger.error(f"Error closing pane: {e}", exc_info=True)
