@@ -5,6 +5,7 @@ Windows terminal backend implementation using pywinpty.
 
 import logging
 import os
+import queue
 import signal
 import threading
 import time
@@ -37,6 +38,7 @@ class WindowsTerminalBackend(TerminalBackend):
         if not WINPTY_AVAILABLE:
             raise RuntimeError("pywinpty is required for Windows terminal support")
         self._read_threads = {}  # Store read threads for each session
+        self._output_queues = {}  # Store output queues for each session
 
     def start_process(self, session: TerminalSession) -> bool:
         """Start a terminal process using pywinpty."""
@@ -78,9 +80,20 @@ class WindowsTerminalBackend(TerminalBackend):
             )
             logger.debug(f"Windows backend: Process alive check: {proc.isalive()}")
 
-            # Don't read initial prompt here - let the read loop handle it
-            # Otherwise we'll lose the initial output
-            logger.debug("Windows backend: Process started successfully, initial output will be read by read loop")
+            # Create output queue for this session
+            output_queue = queue.Queue()
+            self._output_queues[session.session_id] = output_queue
+
+            # Start reader thread for this session
+            reader_thread = threading.Thread(
+                target=self._reader_thread,
+                args=(session.session_id, proc, output_queue),
+                daemon=True
+            )
+            reader_thread.start()
+            self._read_threads[session.session_id] = reader_thread
+
+            logger.debug("Windows backend: Started reader thread for non-blocking I/O")
 
             return True
 
@@ -88,11 +101,38 @@ class WindowsTerminalBackend(TerminalBackend):
             logger.error(f"Failed to start Windows terminal process: {e}", exc_info=True)
             return False
 
+    def _reader_thread(self, session_id: str, proc, output_queue: queue.Queue):
+        """Background thread to read from the PTY process."""
+        logger.debug(f"Windows backend: Reader thread started for session {session_id}")
+
+        while proc.isalive():
+            try:
+                # This will block until data is available
+                chunk = proc.read(1024)
+                if chunk:
+                    logger.debug(f"Windows backend: Reader thread got {len(chunk)} bytes")
+                    output_queue.put(chunk)
+                else:
+                    # Empty read might mean process is ending
+                    time.sleep(0.01)
+            except Exception as e:
+                if proc.isalive():
+                    logger.error(f"Windows backend: Reader thread error: {e}")
+                break
+
+        logger.debug(f"Windows backend: Reader thread ending for session {session_id}")
+
     def read_output(self, session: TerminalSession, max_bytes: int = 1024 * 20) -> Optional[str]:
         """Read output from the terminal process."""
         proc = session.platform_data.get("pty_process")
         if not proc:
             logger.debug(f"Windows backend: No process for session {session.session_id}")
+            return None
+
+        # Get the output queue for this session
+        output_queue = self._output_queues.get(session.session_id)
+        if not output_queue:
+            logger.debug(f"Windows backend: No output queue for session {session.session_id}")
             return None
 
         try:
@@ -102,54 +142,31 @@ class WindowsTerminalBackend(TerminalBackend):
                 session.active = False
                 return None
 
-            # For pywinpty, we need to handle reading differently
-            # The read() method in pywinpty can block, so we use a different approach
-            # We'll read in smaller chunks and use exception handling
+            # Collect all available output from the queue (non-blocking)
             output = ""
-            chunk_size = 1024  # Read in smaller chunks
-
-            # Try to read a chunk
-            # Note: This will return immediately if no data is available
-            chunk = proc.read(chunk_size)
-            if chunk:
-                output = chunk
-                session.last_activity = time.time()
-                logger.debug(f"Windows backend: Read {len(chunk)} bytes from session {session.session_id}")
-
-                # Try to read more if available (up to max_bytes)
+            try:
                 while len(output) < max_bytes:
-                    try:
-                        more_data = proc.read(min(chunk_size, max_bytes - len(output)))
-                        if not more_data:
-                            break
-                        output += more_data
-                        logger.debug(f"Windows backend: Read additional {len(more_data)} bytes")
-                    except:
-                        # No more data available
-                        break
+                    # Get data from queue with no wait
+                    chunk = output_queue.get_nowait()
+                    output += chunk
+                    logger.debug(f"Windows backend: Got {len(chunk)} bytes from queue")
+            except queue.Empty:
+                # No more data in queue
+                pass
 
+            if output:
+                session.last_activity = time.time()
                 # Windows uses \r\n, but xterm.js expects \n
                 converted = output.replace('\r\n', '\n')
                 logger.debug(f"Windows backend: Returning {len(converted)} bytes of output")
-                logger.debug(f"Windows backend: Output preview: {converted[:100]}")
+                logger.debug(f"Windows backend: Output preview: {repr(converted[:100])}")
                 return converted
             else:
                 # No data available
                 return None
 
-        except EOFError:
-            # Process ended
-            logger.debug(f"Windows backend: EOF for session {session.session_id}")
-            session.active = False
-            return None
-        except TimeoutError:
-            # No data available right now
-            return None
         except Exception as e:
-            # Log only if it's not a known "no data" situation
-            error_msg = str(e).lower()
-            if "timeout" not in error_msg and "would block" not in error_msg:
-                logger.error(f"Windows backend: Read error for session {session.session_id}: {e}", exc_info=True)
+            logger.error(f"Windows backend: Read error for session {session.session_id}: {e}", exc_info=True)
             return None
 
     def write_input(self, session: TerminalSession, data: str) -> bool:
@@ -230,9 +247,11 @@ class WindowsTerminalBackend(TerminalBackend):
         # Stop read thread if exists
         if session.session_id in self._read_threads:
             thread = self._read_threads.pop(session.session_id)
-            if thread.is_alive():
-                # Thread will stop when process dies
-                pass
+            # Thread will stop when process dies
+
+        # Clean up output queue
+        if session.session_id in self._output_queues:
+            self._output_queues.pop(session.session_id)
 
         # Terminate process
         proc = session.platform_data.get("pty_process")
@@ -250,10 +269,27 @@ class WindowsTerminalBackend(TerminalBackend):
         if not proc:
             return False
 
+        # Get the output queue for this session
+        output_queue = self._output_queues.get(session.session_id)
+        if not output_queue:
+            return False
+
         try:
-            # Windows doesn't have select() for PTY, so we check if process is alive
-            # and assume data might be available
-            return proc.isalive()
+            # Check if there's data in the queue or if process is alive
+            has_data = not output_queue.empty()
+            is_alive = proc.isalive()
+
+            # Return True if there's data to read or False if process is dead
+            if has_data:
+                logger.debug(f"Windows backend: Data available in queue for session {session.session_id}")
+                return True
+            elif is_alive:
+                # Process is alive but no data yet - wait a bit
+                time.sleep(timeout)
+                return False
+            else:
+                # Process is dead
+                return False
         except Exception:
             return False
 
