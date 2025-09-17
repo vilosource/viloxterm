@@ -49,11 +49,17 @@ class WindowsTerminalBackend(TerminalBackend):
             else:
                 cmd = session.command
 
+            logger.debug(f"Windows backend: Using shell command: {cmd}")
+            logger.debug(f"Windows backend: Working directory: {session.cwd or os.getcwd()}")
+            logger.debug(f"Windows backend: Initial dimensions: {session.rows}x{session.cols}")
+
             # Build full command with arguments
             if session.cmd_args:
                 full_cmd = f'"{cmd}" {" ".join(session.cmd_args)}'
             else:
                 full_cmd = cmd
+
+            logger.debug(f"Windows backend: Full command: {full_cmd}")
 
             # Create PTY process
             proc = winpty.PtyProcess.spawn(
@@ -70,21 +76,29 @@ class WindowsTerminalBackend(TerminalBackend):
             logger.info(
                 f"Started Windows terminal process for session {session.session_id}, PID: {proc.pid}"
             )
+            logger.debug(f"Windows backend: Process alive check: {proc.isalive()}")
+
+            # Don't read initial prompt here - let the read loop handle it
+            # Otherwise we'll lose the initial output
+            logger.debug("Windows backend: Process started successfully, initial output will be read by read loop")
+
             return True
 
         except Exception as e:
-            logger.error(f"Failed to start Windows terminal process: {e}")
+            logger.error(f"Failed to start Windows terminal process: {e}", exc_info=True)
             return False
 
     def read_output(self, session: TerminalSession, max_bytes: int = 1024 * 20) -> Optional[str]:
         """Read output from the terminal process."""
         proc = session.platform_data.get("pty_process")
         if not proc:
+            logger.debug(f"Windows backend: No process for session {session.session_id}")
             return None
 
         try:
             # Check if process is still alive
             if not proc.isalive():
+                logger.debug(f"Windows backend: Process dead for session {session.session_id}")
                 session.active = False
                 return None
 
@@ -100,6 +114,7 @@ class WindowsTerminalBackend(TerminalBackend):
             if chunk:
                 output = chunk
                 session.last_activity = time.time()
+                logger.debug(f"Windows backend: Read {len(chunk)} bytes from session {session.session_id}")
 
                 # Try to read more if available (up to max_bytes)
                 while len(output) < max_bytes:
@@ -108,18 +123,23 @@ class WindowsTerminalBackend(TerminalBackend):
                         if not more_data:
                             break
                         output += more_data
+                        logger.debug(f"Windows backend: Read additional {len(more_data)} bytes")
                     except:
                         # No more data available
                         break
 
                 # Windows uses \r\n, but xterm.js expects \n
-                return output.replace('\r\n', '\n')
-
-            return None
+                converted = output.replace('\r\n', '\n')
+                logger.debug(f"Windows backend: Returning {len(converted)} bytes of output")
+                logger.debug(f"Windows backend: Output preview: {converted[:100]}")
+                return converted
+            else:
+                # No data available
+                return None
 
         except EOFError:
             # Process ended
-            logger.debug(f"Process ended for session {session.session_id}")
+            logger.debug(f"Windows backend: EOF for session {session.session_id}")
             session.active = False
             return None
         except TimeoutError:
@@ -129,21 +149,33 @@ class WindowsTerminalBackend(TerminalBackend):
             # Log only if it's not a known "no data" situation
             error_msg = str(e).lower()
             if "timeout" not in error_msg and "would block" not in error_msg:
-                logger.error(f"Read error for session {session.session_id}: {e}")
+                logger.error(f"Windows backend: Read error for session {session.session_id}: {e}", exc_info=True)
             return None
 
     def write_input(self, session: TerminalSession, data: str) -> bool:
         """Write input to the terminal process."""
         proc = session.platform_data.get("pty_process")
         if not proc:
+            logger.debug(f"Windows backend: No process for write to session {session.session_id}")
             return False
 
         try:
+            logger.debug(f"Windows backend: Writing {len(data)} bytes to session {session.session_id}: {repr(data)}")
             proc.write(data)
             session.last_activity = time.time()
+            logger.debug(f"Windows backend: Write successful to session {session.session_id}")
+
+            # Try to read any immediate response
+            try:
+                response = proc.read(256)
+                if response:
+                    logger.debug(f"Windows backend: Got immediate response after write: {repr(response[:100])}")
+            except:
+                pass
+
             return True
         except Exception as e:
-            logger.error(f"Write error for session {session.session_id}: {e}")
+            logger.error(f"Windows backend: Write error for session {session.session_id}: {e}", exc_info=True)
             return False
 
     def resize(self, session: TerminalSession, rows: int, cols: int) -> bool:
