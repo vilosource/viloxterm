@@ -5,16 +5,24 @@ Adapted from viloxtermjs but enhanced for multi-session support.
 """
 
 import atexit
-import fcntl
 import logging
 import os
-import pty
-import select
 import shlex
 import signal
 import struct
-import termios
+import sys
 import threading
+
+# Platform-specific imports
+if sys.platform != 'win32':
+    import pty
+    import select
+    import termios
+else:
+    # Windows doesn't have these modules
+    pty = None
+    select = None
+    termios = None
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -171,7 +179,13 @@ class TerminalServerManager(QObject):
         if not session or session.child_pid:
             return
 
-        # Fork PTY
+        if sys.platform == 'win32':
+            # Windows doesn't support pty.fork()
+            # This would require using Windows-specific APIs like ConPTY
+            logger.error("Terminal sessions are not supported on Windows yet")
+            return
+
+        # Fork PTY (Unix/Linux/Mac only)
         child_pid, fd = pty.fork()
         if child_pid == 0:
             # Child process - execute shell
@@ -204,7 +218,12 @@ class TerminalServerManager(QObject):
                 break
 
             try:
-                # Use select to check if data is available
+                if sys.platform == 'win32':
+                    # Windows doesn't support select on file descriptors
+                    logger.warning("Terminal output reading not supported on Windows")
+                    break
+
+                # Use select to check if data is available (Unix/Linux/Mac)
                 timeout_sec = 0.01
                 data_ready, _, _ = select.select([session.fd], [], [], timeout_sec)
 
@@ -229,8 +248,16 @@ class TerminalServerManager(QObject):
 
     def _set_winsize(self, fd: int, rows: int, cols: int, xpix: int = 0, ypix: int = 0):
         """Set terminal window size."""
-        winsize = struct.pack("HHHH", rows, cols, xpix, ypix)
-        fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
+        if sys.platform != 'win32':
+            # Unix/Linux/Mac - use fcntl
+            import fcntl
+            winsize = struct.pack("HHHH", rows, cols, xpix, ypix)
+            fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
+        else:
+            # Windows - pty.fork() doesn't work on Windows anyway
+            # This is a placeholder - full Windows support would require
+            # using Windows-specific APIs like ConPTY
+            logger.warning("Terminal resize not fully supported on Windows")
 
     def create_session(
         self, command: str = "bash", cmd_args: str = "", cwd: Optional[str] = None
