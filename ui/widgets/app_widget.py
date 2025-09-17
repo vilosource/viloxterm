@@ -65,8 +65,6 @@ class AppWidget(QWidget):
         if sys.platform == "win32":
             self.setAttribute(Qt.WA_DontCreateNativeAncestors, True)
             self.setAttribute(Qt.WA_OpaquePaintEvent, True)
-            # Start hidden to prevent flash during initialization
-            self.hide()
         self._metadata = None  # Will be set by AppWidgetManager during creation
 
         # Lifecycle state management

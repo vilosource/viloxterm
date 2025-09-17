@@ -83,8 +83,6 @@ class WidgetPool:
         if not splitter:
             # Create new splitter with parent to prevent flash on Windows
             splitter = QSplitter(orientation, parent)
-            # Start hidden to prevent flash - will be shown when added to layout
-            splitter.hide()
             self._stats["creations"] += 1
             logger.debug(f"Creating new QSplitter (orientation={orientation})")
         else:
