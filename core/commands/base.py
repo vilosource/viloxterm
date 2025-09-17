@@ -221,6 +221,10 @@ class Command:
             logger.error(f"Error executing command {self.id}: {e}", exc_info=True)
             return CommandResult(success=False, error=str(e))
 
+    def __call__(self, context: CommandContext) -> CommandResult:
+        """Execute the command - makes Command objects callable."""
+        return self.execute(context)
+
     def can_execute(self, context: dict[str, Any]) -> bool:
         """
         Check if the command can execute in the given context.

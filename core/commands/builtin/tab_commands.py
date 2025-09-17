@@ -46,21 +46,11 @@ def duplicate_tab_command(context: CommandContext) -> CommandResult:
 
         # If no index provided, use current tab
         if tab_index is None:
-            tab_index = workspace.tab_widget.currentIndex()
+            tab_index = workspace_service.get_current_tab_index()
 
-        # Duplicate the tab
-        if hasattr(workspace, "duplicate_tab"):
-            workspace.duplicate_tab(tab_index)
-            return CommandResult(success=True, value={"duplicated_tab": tab_index})
-        else:
-            # Fallback: create a new tab with same name
-            if tab_index in workspace.tabs:
-                tab_data = workspace.tabs[tab_index]
-                new_name = f"{tab_data.name} (Copy)"
-                workspace.add_editor_tab(new_name)
-                return CommandResult(success=True, value={"new_tab_name": new_name})
-
-        return CommandResult(success=False, error="Could not duplicate tab")
+        # Duplicate the tab using WorkspaceService
+        new_index = workspace_service.duplicate_tab(tab_index)
+        return CommandResult(success=True, value={"duplicated_tab": tab_index, "new_index": new_index})
 
     except Exception as e:
         logger.error(f"Error duplicating tab: {e}", exc_info=True)
@@ -98,16 +88,13 @@ def close_tabs_to_right_command(context: CommandContext) -> CommandResult:
 
         # If no index provided, use current tab
         if tab_index is None:
-            tab_index = workspace.tab_widget.currentIndex()
+            tab_index = workspace_service.get_current_tab_index()
 
-        # Close tabs to the right
-        if hasattr(workspace, "close_tabs_to_right"):
-            workspace.close_tabs_to_right(tab_index)
-            return CommandResult(
-                success=True, value={"closed_from_index": tab_index + 1}
-            )
-
-        return CommandResult(success=False, error="Could not close tabs")
+        # Close tabs to the right using WorkspaceService
+        closed_count = workspace_service.close_tabs_to_right(tab_index)
+        return CommandResult(
+            success=True, value={"closed_from_index": tab_index + 1, "closed_count": closed_count}
+        )
 
     except Exception as e:
         logger.error(f"Error closing tabs to right: {e}", exc_info=True)
@@ -146,20 +133,21 @@ def rename_tab_command(context: CommandContext) -> CommandResult:
 
         # If no index provided, use current tab
         if tab_index is None:
-            tab_index = workspace.tab_widget.currentIndex()
+            tab_index = workspace_service.get_current_tab_index()
 
-        # If new name provided, rename directly
+        # If new name provided, rename directly using WorkspaceService
         if new_name:
-            workspace.tab_widget.setTabText(tab_index, new_name)
-            if tab_index in workspace.tabs:
-                workspace.tabs[tab_index].name = new_name
-            return CommandResult(
-                success=True, value={"tab_index": tab_index, "new_name": new_name}
-            )
+            success = workspace_service.rename_tab(tab_index, new_name)
+            if success:
+                return CommandResult(
+                    success=True, value={"tab_index": tab_index, "new_name": new_name}
+                )
+            else:
+                return CommandResult(success=False, error="Failed to rename tab")
 
         # Otherwise, start interactive rename
         if hasattr(workspace, "start_tab_rename"):
-            current_text = workspace.tab_widget.tabText(tab_index)
+            current_text = workspace.tab_widget.tabText(tab_index) if workspace else ""
             workspace.start_tab_rename(tab_index, current_text)
             return CommandResult(
                 success=True, value={"tab_index": tab_index, "mode": "interactive"}
@@ -203,14 +191,11 @@ def close_other_tabs_command(context: CommandContext) -> CommandResult:
 
         # If no index provided, use current tab
         if tab_index is None:
-            tab_index = workspace.tab_widget.currentIndex()
+            tab_index = workspace_service.get_current_tab_index()
 
-        # Close other tabs
-        if hasattr(workspace, "close_other_tabs"):
-            workspace.close_other_tabs(tab_index)
-            return CommandResult(success=True, value={"kept_tab": tab_index})
-
-        return CommandResult(success=False, error="Could not close other tabs")
+        # Close other tabs using WorkspaceService
+        closed_count = workspace_service.close_other_tabs(tab_index)
+        return CommandResult(success=True, value={"kept_tab": tab_index, "closed_count": closed_count})
 
     except Exception as e:
         logger.error(f"Error closing other tabs: {e}", exc_info=True)

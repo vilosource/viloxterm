@@ -108,9 +108,43 @@ def test_widget_lifecycle(qtbot):
     qtbot.waitUntil(lambda: not widget.has_resources)
 ```
 
+## ViloxTerm Architecture Context (Updated 2025)
+
+### Recent MVC Refactoring
+The project has undergone a major MVC architecture refactoring to eliminate direct UI access violations:
+
+**CRITICAL**: All commands now follow: **Command → WorkspaceService → Controller** pattern
+
+#### Key Changes Made:
+1. **WorkspaceService Enhanced** with methods: `duplicate_tab()`, `close_tabs_to_right()`, `close_other_tabs()`, `rename_tab()`, `get_current_widget()`, `get_current_split_widget()`
+2. **Command Files Refactored**: `tab_commands.py`, `terminal_commands.py`, `file_commands.py` now use services exclusively
+3. **workspace.py Delegation**: All methods now delegate to WorkspaceService with fallback patterns
+4. **UIService Integration**: Status messages now go through `ui_service.set_status_message()` instead of direct UI access
+
+#### Architecture Rules to Test:
+- ✅ **Commands MUST use services** - Never direct UI access
+- ✅ **Services delegate to controllers** - Workspace, UI, etc.
+- ✅ **Fallback patterns exist** - Service unavailable handling
+- ✅ **Proper error handling** - CommandResult with success/error states
+- ✅ **Service mocking** - Mock WorkspaceService, UIService, etc.
+
+#### Common Service Patterns in Tests:
+```python
+# New WorkspaceService methods to test:
+mock_workspace_service.duplicate_tab.return_value = 2
+mock_workspace_service.close_tabs_to_right.return_value = 3
+mock_workspace_service.close_other_tabs.return_value = 5
+mock_workspace_service.rename_tab.return_value = True
+mock_workspace_service.get_current_widget.return_value = mock_terminal
+mock_workspace_service.get_current_split_widget.return_value = mock_split
+
+# UIService status messages:
+mock_ui_service.set_status_message.assert_called_with("State saved", 2000)
+```
+
 ## ViloxTerm-Specific Patterns
 
-### Command Testing Template
+### Command Testing Template (Post-Refactoring)
 ```python
 def test_command_name_action_result(mock_context):
     """Test that command_name performs action and returns result."""
@@ -132,6 +166,65 @@ def test_command_name_action_result(mock_context):
     error_result = command_function(mock_context, param="value")
     assert error_result.success is False
     assert "Service unavailable" in error_result.error
+```
+
+### Refactored Command Test Examples
+```python
+# Tab Commands Testing
+def test_duplicate_tab_command_uses_workspace_service(mock_context):
+    """Test duplicate tab delegates to WorkspaceService."""
+    # ARRANGE
+    mock_workspace_service = Mock(spec=WorkspaceService)
+    mock_context.get_service.return_value = mock_workspace_service
+    mock_context.args = {"tab_index": 1}
+    mock_workspace_service.duplicate_tab.return_value = 2
+
+    # ACT
+    result = duplicate_tab_command(mock_context)
+
+    # ASSERT - Verify service delegation
+    assert result.success is True
+    assert result.value["new_index"] == 2
+    mock_workspace_service.duplicate_tab.assert_called_once_with(1)
+
+# Terminal Commands Testing
+def test_clear_terminal_uses_workspace_service(mock_context):
+    """Test clear terminal gets current widget through WorkspaceService."""
+    # ARRANGE
+    mock_workspace_service = Mock(spec=WorkspaceService)
+    mock_terminal = Mock()
+    mock_workspace_service.get_current_widget.return_value = mock_terminal
+    mock_context.get_service.return_value = mock_workspace_service
+
+    # ACT
+    result = clear_terminal_handler(mock_context)
+
+    # ASSERT - Verify proper delegation
+    assert result.success is True
+    mock_workspace_service.get_current_widget.assert_called_once()
+    mock_terminal.clear_terminal.assert_called_once()
+
+# File Commands Testing
+def test_save_state_uses_ui_service(mock_context):
+    """Test save state shows message through UIService."""
+    # ARRANGE
+    mock_state_service = Mock(spec=StateService)
+    mock_ui_service = Mock(spec=UIService)
+    def get_service(service_type):
+        if service_type == StateService:
+            return mock_state_service
+        elif service_type == UIService:
+            return mock_ui_service
+        return None
+    mock_context.get_service.side_effect = get_service
+
+    # ACT
+    result = save_state_command(mock_context)
+
+    # ASSERT - Verify UI service usage
+    assert result.success is True
+    mock_state_service.save_all_state.assert_called_once()
+    mock_ui_service.set_status_message.assert_called_once_with("State saved", 2000)
 ```
 
 ### Service Testing Template

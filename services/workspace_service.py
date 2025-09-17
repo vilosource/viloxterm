@@ -216,6 +216,153 @@ class WorkspaceService(Service):
 
         return success
 
+    def duplicate_tab(self, tab_index: int) -> int:
+        """Duplicate a tab at the specified index."""
+        self.validate_initialized()
+
+        if not self._workspace:
+            raise ValueError("Workspace not available")
+
+        # Delegate to workspace method (will be updated to use tab manager)
+        if hasattr(self._workspace, "duplicate_tab"):
+            new_index = self._workspace.duplicate_tab(tab_index)
+
+            # Notify observers
+            self.notify("tab_duplicated", {"original_index": tab_index, "new_index": new_index})
+
+            # Update context
+            from core.context.manager import context_manager
+            context_manager.set("workbench.tabs.count", self.get_tab_count())
+            context_manager.set("workbench.tabs.hasMultiple", self.get_tab_count() > 1)
+
+            return new_index
+        else:
+            # Fallback: create new editor tab with duplicate name
+            if tab_index < self._workspace.tab_widget.count():
+                original_name = self._workspace.tab_widget.tabText(tab_index)
+                new_name = f"{original_name} (Copy)"
+                return self.add_editor_tab(new_name)
+            else:
+                raise ValueError(f"Invalid tab index: {tab_index}")
+
+    def close_tabs_to_right(self, tab_index: int) -> int:
+        """Close all tabs to the right of the specified index."""
+        self.validate_initialized()
+
+        if not self._workspace:
+            raise ValueError("Workspace not available")
+
+        # Delegate to workspace method (will be updated to use tab manager)
+        if hasattr(self._workspace, "close_tabs_to_right"):
+            closed_count = self._workspace.close_tabs_to_right(tab_index)
+        else:
+            # Fallback implementation
+            total_tabs = self.get_tab_count()
+            closed_count = 0
+
+            # Close tabs from right to left to maintain indices
+            for i in range(total_tabs - 1, tab_index, -1):
+                if self.close_tab(i):
+                    closed_count += 1
+
+        # Notify observers
+        self.notify("tabs_closed_to_right", {"from_index": tab_index, "closed_count": closed_count})
+
+        # Update context
+        from core.context.manager import context_manager
+        context_manager.set("workbench.tabs.count", self.get_tab_count())
+        context_manager.set("workbench.tabs.hasMultiple", self.get_tab_count() > 1)
+
+        return closed_count
+
+    def close_other_tabs(self, keep_tab_index: int) -> int:
+        """Close all tabs except the one at the specified index."""
+        self.validate_initialized()
+
+        if not self._workspace:
+            raise ValueError("Workspace not available")
+
+        # Delegate to workspace method (will be updated to use tab manager)
+        if hasattr(self._workspace, "close_other_tabs"):
+            closed_count = self._workspace.close_other_tabs(keep_tab_index)
+        else:
+            # Fallback implementation
+            total_tabs = self.get_tab_count()
+            closed_count = 0
+
+            # Close tabs from right to left to maintain indices, skipping the one to keep
+            for i in range(total_tabs - 1, -1, -1):
+                if i != keep_tab_index:
+                    if self.close_tab(i):
+                        closed_count += 1
+
+        # Notify observers
+        self.notify("other_tabs_closed", {"kept_index": keep_tab_index, "closed_count": closed_count})
+
+        # Update context
+        from core.context.manager import context_manager
+        context_manager.set("workbench.tabs.count", self.get_tab_count())
+        context_manager.set("workbench.tabs.hasMultiple", self.get_tab_count() > 1)
+
+        return closed_count
+
+    def rename_tab(self, tab_index: int, new_name: str) -> bool:
+        """Rename a tab at the specified index."""
+        self.validate_initialized()
+
+        if not self._workspace:
+            return False
+
+        # Delegate to workspace method (will be updated to use tab manager)
+        if hasattr(self._workspace, "tab_widget"):
+            tab_widget = self._workspace.tab_widget
+            if 0 <= tab_index < tab_widget.count():
+                old_name = tab_widget.tabText(tab_index)
+                tab_widget.setTabText(tab_index, new_name)
+
+                # Update internal tab data if available
+                if hasattr(self._workspace, "tabs") and tab_index in self._workspace.tabs:
+                    self._workspace.tabs[tab_index].name = new_name
+
+                # Notify observers
+                self.notify("tab_renamed", {
+                    "index": tab_index,
+                    "old_name": old_name,
+                    "new_name": new_name
+                })
+
+                return True
+
+        return False
+
+    def get_current_widget(self):
+        """Get the current active widget in the workspace."""
+        self.validate_initialized()
+
+        if not self._workspace:
+            return None
+
+        # Delegate to workspace method
+        if hasattr(self._workspace, "get_current_widget"):
+            return self._workspace.get_current_widget()
+
+        return None
+
+    def get_current_split_widget(self):
+        """Get the current split widget in the workspace."""
+        self.validate_initialized()
+
+        if not self._workspace:
+            return None
+
+        # Get current tab's split widget
+        if hasattr(self._workspace, "tab_widget"):
+            tab_widget = self._workspace.tab_widget
+            current_tab = tab_widget.currentWidget()
+            return current_tab
+
+        return None
+
     # ============= Pane Operations (Delegated) =============
 
     def split_active_pane(self, orientation: Optional[str] = None) -> Optional[str]:

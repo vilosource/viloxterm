@@ -421,6 +421,14 @@ class Workspace(QWidget):
                 return self.tabs[index].split_widget
         return None
 
+    def get_current_widget(self):
+        """Get the current active widget in the active pane."""
+        split_widget = self.get_current_split_widget()
+        if split_widget and split_widget.active_pane_id:
+            # Get the widget from the active pane
+            return split_widget.get_pane_widget(split_widget.active_pane_id)
+        return None
+
     def on_tab_changed(self, index: int):
         """Handle tab change."""
         self.tab_changed.emit(index)
@@ -546,24 +554,58 @@ class Workspace(QWidget):
 
     def duplicate_tab(self, index: int):
         """Duplicate a tab."""
-        if index in self.tabs:
-            tab_data = self.tabs[index]
-            # Create new tab with same type
-            # TODO: Could also duplicate the split layout
-            self.add_editor_tab(f"{tab_data.name} (Copy)")
+        # Delegate to WorkspaceService for consistent code path
+        from services.service_locator import ServiceLocator
+        from services.workspace_service import WorkspaceService
+
+        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
+        if workspace_service:
+            return workspace_service.duplicate_tab(index)
+        else:
+            # Fallback to direct method if service not available
+            if index in self.tabs:
+                tab_data = self.tabs[index]
+                # Create new tab with same type
+                # TODO: Could also duplicate the split layout
+                return self.add_editor_tab(f"{tab_data.name} (Copy)")
+            return None
 
     def close_other_tabs(self, keep_index: int):
         """Close all tabs except the specified one."""
-        # Close from right to left to maintain indices
-        for i in range(self.tab_widget.count() - 1, -1, -1):
-            if i != keep_index:
-                self.close_tab(i)
+        # Delegate to WorkspaceService for consistent code path
+        from services.service_locator import ServiceLocator
+        from services.workspace_service import WorkspaceService
+
+        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
+        if workspace_service:
+            return workspace_service.close_other_tabs(keep_index)
+        else:
+            # Fallback to direct method if service not available
+            closed_count = 0
+            # Close from right to left to maintain indices
+            for i in range(self.tab_widget.count() - 1, -1, -1):
+                if i != keep_index:
+                    self.close_tab(i)
+                    closed_count += 1
+            return closed_count
 
     def close_tabs_to_right(self, index: int):
         """Close all tabs to the right of the specified index."""
-        # Close from right to left to maintain indices
-        for i in range(self.tab_widget.count() - 1, index, -1):
-            self.close_tab(i)
+        # Delegate to WorkspaceService for consistent code path
+        from services.service_locator import ServiceLocator
+        from services.workspace_service import WorkspaceService
+
+        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
+        if workspace_service:
+            return workspace_service.close_tabs_to_right(index)
+        else:
+            # Fallback to direct method if service not available
+            closed_count = 0
+            # Close from right to left to maintain indices
+            for i in range(self.tab_widget.count() - 1, index, -1):
+                self.close_tab(i)
+                closed_count += 1
+            return closed_count
 
     # Public API for compatibility with existing code
 

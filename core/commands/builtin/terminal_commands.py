@@ -18,71 +18,68 @@ logger = logging.getLogger(__name__)
 def clear_terminal_handler(context: CommandContext) -> CommandResult:
     """Clear the active terminal."""
     try:
-        main_window = ServiceLocator.get_service("main_window")
-        if not main_window:
-            return CommandResult(success=False, message="Main window not available")
+        # Get the active terminal widget using WorkspaceService
+        from services.workspace_service import WorkspaceService
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
 
-        # Get the active terminal widget
-        workspace = main_window.workspace
-        if workspace and hasattr(workspace, "get_current_widget"):
-            current_widget = workspace.get_current_widget()
+        current_widget = workspace_service.get_current_widget()
 
-            # Check if it's a terminal widget
-            if current_widget and hasattr(current_widget, "clear_terminal"):
-                current_widget.clear_terminal()
-                return CommandResult(success=True, message="Terminal cleared")
+        # Check if it's a terminal widget
+        if current_widget and hasattr(current_widget, "clear_terminal"):
+            current_widget.clear_terminal()
+            return CommandResult(success=True, value="Terminal cleared")
 
-        return CommandResult(success=False, message="No active terminal to clear")
+        return CommandResult(success=False, error="No active terminal to clear")
 
     except Exception as e:
         logger.error(f"Failed to clear terminal: {e}")
         return CommandResult(
-            success=False, message=f"Failed to clear terminal: {str(e)}"
+            success=False, error=f"Failed to clear terminal: {str(e)}"
         )
 
 
 def new_terminal_handler(context: CommandContext) -> CommandResult:
     """Create a new terminal tab."""
     try:
-        main_window = ServiceLocator.get_service("main_window")
-        if not main_window:
-            return CommandResult(success=False, message="Main window not available")
+        from services.workspace_service import WorkspaceService
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
 
-        # Use the existing new_terminal_tab method
-        if hasattr(main_window, "new_terminal_tab"):
-            main_window.new_terminal_tab()
-            return CommandResult(success=True, message="New terminal created")
-
-        return CommandResult(success=False, message="Terminal creation not available")
+        # Create new terminal tab using workspace service
+        index = workspace_service.add_terminal_tab()
+        return CommandResult(success=True, value={"message": "New terminal created", "index": index})
 
     except Exception as e:
         logger.error(f"Failed to create new terminal: {e}")
         return CommandResult(
-            success=False, message=f"Failed to create terminal: {str(e)}"
+            success=False, error=f"Failed to create terminal: {str(e)}"
         )
 
 
 def copy_terminal_handler(context: CommandContext) -> CommandResult:
     """Copy from terminal."""
     try:
-        main_window = ServiceLocator.get_service("main_window")
-        if not main_window:
-            return CommandResult(success=False, message="Main window not available")
+        # Get the active terminal widget using WorkspaceService
+        from services.workspace_service import WorkspaceService
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
 
-        workspace = main_window.workspace
-        if workspace and hasattr(workspace, "get_current_widget"):
-            current_widget = workspace.get_current_widget()
+        current_widget = workspace_service.get_current_widget()
 
-            # Check if it's a terminal widget and has copy method
-            if current_widget and hasattr(current_widget, "copy_selection"):
-                current_widget.copy_selection()
-                return CommandResult(success=True, message="Copied to clipboard")
+        # Check if it's a terminal widget and has copy method
+        if current_widget and hasattr(current_widget, "copy_selection"):
+            current_widget.copy_selection()
+            return CommandResult(success=True, value="Copied to clipboard")
 
-        return CommandResult(success=False, message="No active terminal to copy from")
+        return CommandResult(success=False, error="No active terminal to copy from")
 
     except Exception as e:
         logger.error(f"Failed to copy from terminal: {e}")
-        return CommandResult(success=False, message=f"Failed to copy: {str(e)}")
+        return CommandResult(success=False, error=f"Failed to copy: {str(e)}")
 
 
 def paste_terminal_handler(context: CommandContext) -> CommandResult:
@@ -90,77 +87,80 @@ def paste_terminal_handler(context: CommandContext) -> CommandResult:
     try:
         from PySide6.QtWidgets import QApplication
 
-        main_window = ServiceLocator.get_service("main_window")
-        if not main_window:
-            return CommandResult(success=False, message="Main window not available")
+        # Get the active terminal widget using WorkspaceService
+        from services.workspace_service import WorkspaceService
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
 
-        workspace = main_window.workspace
-        if workspace and hasattr(workspace, "get_current_widget"):
-            current_widget = workspace.get_current_widget()
+        current_widget = workspace_service.get_current_widget()
 
-            # Check if it's a terminal widget
-            if current_widget and hasattr(current_widget, "paste_to_terminal"):
-                clipboard = QApplication.clipboard()
-                text = clipboard.text()
-                if text:
-                    current_widget.paste_to_terminal(text)
-                    return CommandResult(success=True, message="Pasted to terminal")
-                else:
-                    return CommandResult(success=False, message="Clipboard is empty")
+        # Check if it's a terminal widget
+        if current_widget and hasattr(current_widget, "paste_to_terminal"):
+            clipboard = QApplication.clipboard()
+            text = clipboard.text()
+            if text:
+                current_widget.paste_to_terminal(text)
+                return CommandResult(success=True, value="Pasted to terminal")
+            else:
+                return CommandResult(success=False, error="Clipboard is empty")
 
-        return CommandResult(success=False, message="No active terminal to paste to")
+        return CommandResult(success=False, error="No active terminal to paste to")
 
     except Exception as e:
         logger.error(f"Failed to paste to terminal: {e}")
-        return CommandResult(success=False, message=f"Failed to paste: {str(e)}")
+        return CommandResult(success=False, error=f"Failed to paste: {str(e)}")
 
 
 def kill_terminal_handler(context: CommandContext) -> CommandResult:
     """Kill the current terminal."""
     try:
-        main_window = ServiceLocator.get_service("main_window")
-        if not main_window:
-            return CommandResult(success=False, message="Main window not available")
+        # Get the active terminal widget using WorkspaceService
+        from services.workspace_service import WorkspaceService
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
 
-        workspace = main_window.workspace
-        if workspace and hasattr(workspace, "close_current_tab"):
-            # Check if current tab is a terminal
-            current_widget = workspace.get_current_widget()
-            if current_widget and hasattr(current_widget, "close_terminal"):
-                workspace.close_current_tab()
-                return CommandResult(success=True, message="Terminal closed")
+        current_widget = workspace_service.get_current_widget()
 
-        return CommandResult(success=False, message="No active terminal to close")
+        # Check if current widget is a terminal
+        if current_widget and hasattr(current_widget, "close_terminal"):
+            # Close current tab using workspace service
+            success = workspace_service.close_tab()
+            if success:
+                return CommandResult(success=True, value="Terminal closed")
+
+        return CommandResult(success=False, error="No active terminal to close")
 
     except Exception as e:
         logger.error(f"Failed to kill terminal: {e}")
         return CommandResult(
-            success=False, message=f"Failed to kill terminal: {str(e)}"
+            success=False, error=f"Failed to kill terminal: {str(e)}"
         )
 
 
 def restart_terminal_handler(context: CommandContext) -> CommandResult:
     """Restart the current terminal."""
     try:
-        main_window = ServiceLocator.get_service("main_window")
-        if not main_window:
-            return CommandResult(success=False, message="Main window not available")
+        # Get the active terminal widget using WorkspaceService
+        from services.workspace_service import WorkspaceService
+        workspace_service = context.get_service(WorkspaceService)
+        if not workspace_service:
+            return CommandResult(success=False, error="WorkspaceService not available")
 
-        workspace = main_window.workspace
-        if workspace and hasattr(workspace, "get_current_widget"):
-            current_widget = workspace.get_current_widget()
+        current_widget = workspace_service.get_current_widget()
 
-            # Check if it's a terminal widget
-            if current_widget and hasattr(current_widget, "restart_terminal"):
-                current_widget.restart_terminal()
-                return CommandResult(success=True, message="Terminal restarted")
+        # Check if it's a terminal widget
+        if current_widget and hasattr(current_widget, "restart_terminal"):
+            current_widget.restart_terminal()
+            return CommandResult(success=True, value="Terminal restarted")
 
-        return CommandResult(success=False, message="No active terminal to restart")
+        return CommandResult(success=False, error="No active terminal to restart")
 
     except Exception as e:
         logger.error(f"Failed to restart terminal: {e}")
         return CommandResult(
-            success=False, message=f"Failed to restart terminal: {str(e)}"
+            success=False, error=f"Failed to restart terminal: {str(e)}"
         )
 
 

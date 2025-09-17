@@ -135,9 +135,11 @@ def save_state_command(context: CommandContext) -> CommandResult:
 
         state_service.save_all_state()
 
-        # Show status message
-        if context.main_window and hasattr(context.main_window, "status_bar"):
-            context.main_window.status_bar.set_message("State saved", 2000)
+        # Show status message using UIService
+        from services.ui_service import UIService
+        ui_service = context.get_service(UIService)
+        if ui_service:
+            ui_service.set_status_message("State saved", 2000)
 
         return CommandResult(success=True)
 
@@ -162,9 +164,11 @@ def restore_state_command(context: CommandContext) -> CommandResult:
         success = state_service.restore_all_state()
 
         if success:
-            # Show status message
-            if context.main_window and hasattr(context.main_window, "status_bar"):
-                context.main_window.status_bar.set_message("State restored", 2000)
+            # Show status message using UIService
+            from services.ui_service import UIService
+            ui_service = context.get_service(UIService)
+            if ui_service:
+                ui_service.set_status_message("State restored", 2000)
 
             return CommandResult(success=True)
         else:
@@ -194,17 +198,10 @@ def replace_with_terminal_command(context: CommandContext) -> CommandResult:
         pane = context.args.get("pane")
         pane_id = context.args.get("pane_id")
 
-        # Get workspace
-        workspace = workspace_service.get_workspace()
-        if not workspace:
-            return CommandResult(success=False, error="No workspace available")
-
-        # Get current tab's split widget
-        current_tab = workspace.tab_widget.currentWidget()
-        if not current_tab or not hasattr(current_tab, "model"):
+        # Get current split widget through WorkspaceService
+        split_widget = workspace_service.get_current_split_widget()
+        if not split_widget or not hasattr(split_widget, "model"):
             return CommandResult(success=False, error="No split widget available")
-
-        split_widget = current_tab
 
         # Try to get pane_id if not provided
         if not pane_id:
@@ -247,17 +244,10 @@ def replace_with_editor_command(context: CommandContext) -> CommandResult:
         pane = context.args.get("pane")
         pane_id = context.args.get("pane_id")
 
-        # Get workspace
-        workspace = workspace_service.get_workspace()
-        if not workspace:
-            return CommandResult(success=False, error="No workspace available")
-
-        # Get current tab's split widget
-        current_tab = workspace.tab_widget.currentWidget()
-        if not current_tab or not hasattr(current_tab, "model"):
+        # Get current split widget through WorkspaceService
+        split_widget = workspace_service.get_current_split_widget()
+        if not split_widget or not hasattr(split_widget, "model"):
             return CommandResult(success=False, error="No split widget available")
-
-        split_widget = current_tab
 
         # Try to get pane_id if not provided
         if not pane_id:
