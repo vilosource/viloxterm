@@ -444,6 +444,15 @@ class AppWidget(QWidget):
         self._has_focus = False
         logger.debug(f"Widget {self.widget_id} lost focus")
 
+    def on_reparented(self):
+        """
+        Called when the widget is reparented during split operations.
+
+        Override in subclasses to handle special cases like QWebEngineView
+        that may need content refresh after reparenting.
+        """
+        pass
+
     # Protected lifecycle methods
     def _set_state(self, new_state: WidgetState):
         """

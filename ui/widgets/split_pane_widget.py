@@ -119,6 +119,10 @@ class PaneContent(QWidget):
             # Ensure AppWidget is visible after being added to layout
             # This is especially important after refresh operations where widgets are reparented
             self.leaf_node.app_widget.show()
+
+            # Notify the AppWidget that it has been reparented (important for QWebEngineView)
+            self.leaf_node.app_widget.on_reparented()
+
             logger.debug(
                 f"Added AppWidget {self.leaf_node.app_widget.widget_id} to PaneContent and made visible"
             )
