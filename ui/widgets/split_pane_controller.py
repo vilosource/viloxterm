@@ -85,7 +85,12 @@ class SplitPaneController(QObject):
             return False
 
     def _handle_split_action(self, leaf_id: str, params: dict) -> bool:
-        """Handle split action."""
+        """Handle split action - maintains backward compatibility by returning bool."""
+        new_id = self._split_pane_internal(leaf_id, params)
+        return new_id is not None
+
+    def _split_pane_internal(self, leaf_id: str, params: dict) -> Optional[str]:
+        """Core split logic - single source of truth for all split operations."""
         orientation = params.get("orientation", "horizontal")
         target_id = params.get("leaf_id", leaf_id)
 
@@ -98,9 +103,8 @@ class SplitPaneController(QObject):
 
             # Set the new pane as active and prepare for focus
             self._prepare_new_pane_for_focus(new_id)
-            return True
 
-        return False
+        return new_id
 
     def _handle_close_action(self, leaf_id: str, params: dict) -> bool:
         """Handle close action."""
@@ -169,13 +173,8 @@ class SplitPaneController(QObject):
         Returns:
             ID of the new pane if successful, None otherwise
         """
-        new_id = self.model.split_pane(pane_id, "horizontal")
-        if new_id:
-            self.pane_added.emit(new_id)
-            self.layout_changed.emit()
-            self._prepare_new_pane_for_focus(new_id)
-
-        return new_id
+        # Delegate to core split logic for consistency and proper MVC pattern
+        return self._split_pane_internal(pane_id, {"orientation": "horizontal", "leaf_id": pane_id})
 
     def split_vertical(self, pane_id: str) -> Optional[str]:
         """
@@ -187,13 +186,8 @@ class SplitPaneController(QObject):
         Returns:
             ID of the new pane if successful, None otherwise
         """
-        new_id = self.model.split_pane(pane_id, "vertical")
-        if new_id:
-            self.pane_added.emit(new_id)
-            self.layout_changed.emit()
-            self._prepare_new_pane_for_focus(new_id)
-
-        return new_id
+        # Delegate to core split logic for consistency and proper MVC pattern
+        return self._split_pane_internal(pane_id, {"orientation": "vertical", "leaf_id": pane_id})
 
     def close_pane(self, pane_id: str) -> bool:
         """
