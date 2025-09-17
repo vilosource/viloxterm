@@ -34,6 +34,7 @@ class SplitPaneController(QObject):
     pane_removed = Signal(str)  # pane_id
     active_pane_changed = Signal(str)  # pane_id
     layout_changed = Signal()
+    pane_split = Signal(str, str)  # original_pane_id, new_pane_id
     widget_ready_for_focus = Signal(str)  # pane_id
 
     def __init__(self, model: SplitPaneModel, parent=None):
@@ -91,7 +92,9 @@ class SplitPaneController(QObject):
         new_id = self.model.split_pane(target_id, orientation)
         if new_id:
             self.pane_added.emit(new_id)
-            self.layout_changed.emit()
+            # Use specific split signal instead of generic layout_changed
+            # This allows for incremental updates instead of nuclear refresh
+            self.pane_split.emit(target_id, new_id)
 
             # Set the new pane as active and prepare for focus
             self._prepare_new_pane_for_focus(new_id)

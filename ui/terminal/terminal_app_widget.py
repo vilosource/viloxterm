@@ -353,18 +353,6 @@ class TerminalAppWidget(AppWidget):
             # Need to recreate from scratch
             super().retry_initialization()
 
-    def on_reparented(self):
-        """
-        Handle reparenting during split operations.
-
-        QWebEngineView can lose its content when reparented, so reload it.
-        """
-        logger.info(f"Terminal widget {self.widget_id} was reparented, reloading content")
-        if self.session_id and self.web_view:
-            # Use QTimer to reload after the reparenting is complete
-            from PySide6.QtCore import QTimer
-            QTimer.singleShot(100, self.reload)
-
     def on_session_ended(self, ended_session_id: str):
         """
         Handle terminal session ended signal from terminal server.

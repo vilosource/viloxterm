@@ -119,10 +119,6 @@ class PaneContent(QWidget):
             # Ensure AppWidget is visible after being added to layout
             # This is especially important after refresh operations where widgets are reparented
             self.leaf_node.app_widget.show()
-
-            # Notify the AppWidget that it has been reparented (important for QWebEngineView)
-            self.leaf_node.app_widget.on_reparented()
-
             logger.debug(
                 f"Added AppWidget {self.leaf_node.app_widget.widget_id} to PaneContent and made visible"
             )
@@ -363,6 +359,7 @@ class SplitPaneWidget(QWidget):
         self.controller.pane_removed.connect(self.pane_removed)
         self.controller.active_pane_changed.connect(self.active_pane_changed)
         self.controller.layout_changed.connect(lambda: self.refresh_view())
+        self.controller.pane_split.connect(self.incremental_update_for_split)
         self.controller.widget_ready_for_focus.connect(self._on_widget_ready_for_focus)
 
         # Set up terminal auto-close callback
