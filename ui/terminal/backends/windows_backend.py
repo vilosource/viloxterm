@@ -58,19 +58,15 @@ class WindowsTerminalBackend(TerminalBackend):
             else:
                 cmd = session.command
 
-            logger.debug(f"Windows backend: Using shell command: {cmd}")
-            logger.debug(f"Windows backend: Working directory: {session.cwd or os.getcwd()}")
-            logger.debug(f"Windows backend: Initial dimensions: {session.rows}x{session.cols}")
-
             # Build command as a list for pywinpty
             if session.cmd_args:
                 # Pass as list when there are arguments
                 spawn_cmd = [cmd] + session.cmd_args
-                logger.debug(f"Windows backend: Command list: {spawn_cmd}")
             else:
                 # Pass as simple string when no arguments
                 spawn_cmd = cmd
-                logger.debug(f"Windows backend: Command string: {spawn_cmd}")
+
+            logger.debug(f"Windows backend: Starting {spawn_cmd} in {session.cwd or os.getcwd()}")
 
             # Create PTY process with proper environment
             env = os.environ.copy()
@@ -100,7 +96,6 @@ class WindowsTerminalBackend(TerminalBackend):
             logger.info(
                 f"Started Windows terminal process for session {session.session_id}, PID: {proc.pid}"
             )
-            logger.debug(f"Windows backend: Process alive check: {proc.isalive()}")
 
             # Create output queue for this session
             output_queue = queue.Queue()
@@ -125,14 +120,11 @@ class WindowsTerminalBackend(TerminalBackend):
 
     def _reader_thread(self, session_id: str, proc, output_queue: queue.Queue):
         """Background thread to read from the PTY process."""
-        logger.debug(f"Windows backend: Reader thread started for session {session_id}")
-
         while proc.isalive():
             try:
                 # This will block until data is available
                 chunk = proc.read(1024)
                 if chunk:
-                    logger.debug(f"Windows backend: Reader thread got {len(chunk)} bytes")
                     output_queue.put(chunk)
                 else:
                     # Empty read might mean process is ending
@@ -141,8 +133,6 @@ class WindowsTerminalBackend(TerminalBackend):
                 if proc.isalive():
                     logger.error(f"Windows backend: Reader thread error: {e}")
                 break
-
-        logger.debug(f"Windows backend: Reader thread ending for session {session_id}")
 
     def read_output(self, session: TerminalSession, max_bytes: int = 1024 * 20) -> Optional[str]:
         """Read output from the terminal process."""
@@ -171,7 +161,6 @@ class WindowsTerminalBackend(TerminalBackend):
                     # Get data from queue with no wait
                     chunk = output_queue.get_nowait()
                     output += chunk
-                    logger.debug(f"Windows backend: Got {len(chunk)} bytes from queue")
             except queue.Empty:
                 # No more data in queue
                 pass
@@ -181,8 +170,6 @@ class WindowsTerminalBackend(TerminalBackend):
                 # Process Windows output for xterm.js
                 # Don't convert \r\n to \n - let xterm.js handle it naturally
                 # This preserves cursor positioning
-                logger.debug(f"Windows backend: Returning {len(output)} bytes of output")
-                logger.debug(f"Windows backend: Output preview: {repr(output[:100])}")
                 return output
             else:
                 # No data available
@@ -200,10 +187,8 @@ class WindowsTerminalBackend(TerminalBackend):
             return False
 
         try:
-            logger.debug(f"Windows backend: Writing {len(data)} bytes to session {session.session_id}: {repr(data)}")
             proc.write(data)
             session.last_activity = time.time()
-            logger.debug(f"Windows backend: Write successful to session {session.session_id}")
 
             # Don't try to read response here - let the reader thread handle it
             return True
@@ -297,7 +282,6 @@ class WindowsTerminalBackend(TerminalBackend):
 
             # Return True if there's data to read or False if process is dead
             if has_data:
-                logger.debug(f"Windows backend: Data available in queue for session {session.session_id}")
                 return True
             elif is_alive:
                 # Process is alive but no data yet - wait a bit

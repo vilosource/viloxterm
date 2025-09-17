@@ -174,8 +174,6 @@ class TerminalServerManager(QObject):
     def _read_and_forward_pty_output(self, session_id: str):
         """Read PTY output and forward to client."""
         session = self.sessions.get(session_id)
-        logger.debug(f"Starting read loop for session {session_id}")
-        loop_count = 0
 
         while self.running and session and session.active:
             if not self.backend:
@@ -183,23 +181,16 @@ class TerminalServerManager(QObject):
                 break
 
             try:
-                loop_count += 1
-                # Log every 100 loops to avoid spam
-                if loop_count % 100 == 0:
-                    logger.debug(f"Read loop iteration {loop_count} for session {session_id}")
-
                 # Use backend to poll and read output
                 if self.backend.poll_process(session, timeout=0.01):
                     output = self.backend.read_output(session)
                     if output:
-                        logger.debug(f"Forwarding {len(output)} bytes to client for session {session_id}")
                         self.socketio.emit(
                             "pty-output",
                             {"output": output, "session_id": session_id},
                             namespace="/terminal",
                             room=session_id,
                         )
-                        logger.debug(f"Output forwarded successfully for session {session_id}")
 
                 # Check if process is still alive
                 if not self.backend.is_process_alive(session):
@@ -216,8 +207,6 @@ class TerminalServerManager(QObject):
                 break
 
             self.socketio.sleep(0.01)
-
-        logger.debug(f"Read loop ended for session {session_id} after {loop_count} iterations")
 
     def _set_winsize(self, session: TerminalSession, rows: int, cols: int):
         """Set terminal window size using backend."""
