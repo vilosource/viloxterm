@@ -392,7 +392,10 @@ class ThemeEditorAppWidget(AppWidget):
                 if current_theme:
                     index = self._theme_combo.findData(current_theme.id)
                     if index >= 0:
+                        # Block signals to prevent triggering _on_theme_changed during initial load
+                        self._theme_combo.blockSignals(True)
                         self._theme_combo.setCurrentIndex(index)
+                        self._theme_combo.blockSignals(False)
                     self._load_theme(current_theme)
 
         except Exception as e:
@@ -470,8 +473,10 @@ class ThemeEditorAppWidget(AppWidget):
                 theme = result.value.get("theme")
                 if theme:
                     # Check if this is a different theme than currently loaded
+                    # Only mark as modified if we had a previous theme and it's different
                     theme_changed = (
-                        not self._current_theme or theme.id != self._current_theme.id
+                        self._current_theme is not None
+                        and theme.id != self._current_theme.id
                     )
 
                     # Load theme and mark as modified if it's a different theme
