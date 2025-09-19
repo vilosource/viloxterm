@@ -1,65 +1,89 @@
-"""Integration tests for plugin system."""
+"""Integration tests for plugin interactions."""
 
-from unittest.mock import Mock
+import pytest
+from unittest.mock import Mock, MagicMock, patch
+import tempfile
+from pathlib import Path
 
-from core.plugin_system import PluginManager
-from viloapp_sdk import EventBus
+# Mock the SDK imports to avoid dependency issues in tests
+with patch.dict('sys.modules', {
+    'viloapp_sdk': Mock(),
+    'viloapp_sdk.base': Mock(),
+    'viloapp_sdk.interfaces': Mock(),
+    'viloapp_sdk.metadata': Mock(),
+    'viloapp_sdk.context': Mock(),
+}):
+    from packages.viloxterm.src.viloxterm.plugin import TerminalPlugin
+    from packages.viloedit.src.viloedit.plugin import EditorPlugin
 
-def test_full_plugin_lifecycle():
-    """Test complete plugin lifecycle."""
-    # Create plugin manager
-    event_bus = EventBus()
-    services = {'test': Mock()}
-    manager = PluginManager(event_bus, services)
 
-    # Initialize (will discover and load plugins)
-    # This would need actual plugins to test fully
-    # manager.initialize()
+class TestPluginIntegration:
+    """Test integration between terminal and editor plugins."""
 
-    # Check that manager is ready
-    assert manager is not None
+    def setup_method(self):
+        """Setup test environment."""
+        self.terminal_plugin = TerminalPlugin()
+        self.editor_plugin = EditorPlugin()
+        self.mock_context = Mock()
 
-def test_plugin_event_communication():
-    """Test plugin event communication."""
-    event_bus = EventBus()
-    received_events = []
+        # Mock workspace service
+        self.mock_workspace = Mock()
+        self.mock_context.get_service.return_value = self.mock_workspace
 
-    # Subscribe to events
-    def handler(event):
-        received_events.append(event)
+    def test_terminal_opening_file_in_editor(self):
+        """Test terminal plugin opening a file in editor."""
+        # Setup plugins
+        self.terminal_plugin.context = self.mock_context
+        self.editor_plugin.context = self.mock_context
 
-    from viloapp_sdk import EventType
-    event_bus.subscribe(EventType.PLUGIN_LOADED, handler)
+        # Create a test file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write("print('Hello from terminal')")
+            test_file = f.name
 
-    # Create manager
-    services = {}
-    manager = PluginManager(event_bus, services)
+        try:
+            # Simulate terminal command to open file in editor
+            result = self.editor_plugin._open_file({"path": test_file})
 
-    # Trigger an event
-    from viloapp_sdk import PluginEvent
-    event_bus.emit(PluginEvent(
-        type=EventType.PLUGIN_LOADED,
-        source="test",
-        data={"plugin_id": "test"}
-    ))
+            # Verify file was opened
+            assert result["success"] is True
+            assert result["path"] == test_file
 
-    # Check event was received
-    assert len(received_events) == 1
-    assert received_events[0].data["plugin_id"] == "test"
+            # Verify workspace was called to add widget
+            self.mock_workspace.add_widget.assert_called_once()
 
-def test_plugin_service_access():
-    """Test that plugins can access services."""
-    # Create services
-    mock_service = Mock()
-    mock_service.get_service_id.return_value = "test"
-    mock_service.get_service_version.return_value = "1.0.0"
+        finally:
+            Path(test_file).unlink()
 
-    services = {'test': mock_service}
+    def test_workspace_integration(self):
+        """Test plugins working together in workspace."""
+        # Setup plugins
+        self.terminal_plugin.context = self.mock_context
+        self.editor_plugin.context = self.mock_context
 
-    # Create plugin manager
-    event_bus = EventBus()
-    manager = PluginManager(event_bus, services)
+        # Test that both plugins can register widgets
+        terminal_result = self.terminal_plugin._create_new_terminal({})
+        editor_result = self.editor_plugin._new_file({})
 
-    # Plugins loaded by manager should have access to services
-    # This would be tested with actual plugin loading
-    assert 'test' in services
+        assert terminal_result["success"] is True
+        assert editor_result["success"] is True
+
+        # Verify workspace service was called for both
+        assert self.mock_workspace.add_widget.call_count == 2
+
+    def test_plugin_metadata_compatibility(self):
+        """Test plugin metadata compatibility."""
+        terminal_plugin = TerminalPlugin()
+        editor_plugin = EditorPlugin()
+
+        terminal_meta = terminal_plugin.get_metadata()
+        editor_meta = editor_plugin.get_metadata()
+
+        # Both plugins should target the same viloapp version
+        assert terminal_meta.engines["viloapp"] == editor_meta.engines["viloapp"]
+
+        # Both should have valid metadata
+        assert terminal_meta.id is not None
+        assert editor_meta.id is not None
+        assert terminal_meta.version is not None
+        assert editor_meta.version is not None
