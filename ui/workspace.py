@@ -763,12 +763,16 @@ class Workspace(QWidget):
             icon_manager = get_icon_manager()
             is_dark = icon_manager.theme == "dark"
 
-            # Apply basic theme-aware styling for tab widget
-            # TODO: This should be replaced with proper theme provider command once available
-            if is_dark:
-                self.tab_widget.setStyleSheet(self._get_dark_tab_stylesheet())
+            # Apply theme-aware styling for tab widget using theme provider
+            result = execute_command("theme.getComponentStylesheet", component="tab_widget")
+            if result.success and result.value:
+                self.tab_widget.setStyleSheet(result.value)
             else:
-                self.tab_widget.setStyleSheet(self._get_light_tab_stylesheet())
+                # Fallback to basic theme-aware styling
+                if is_dark:
+                    self.tab_widget.setStyleSheet(self._get_dark_tab_stylesheet())
+                else:
+                    self.tab_widget.setStyleSheet(self._get_light_tab_stylesheet())
 
     def _get_dark_tab_stylesheet(self) -> str:
         """Get dark theme stylesheet for tab widget."""
@@ -782,6 +786,8 @@ class Workspace(QWidget):
                 color: #cccccc;
                 padding: 8px 12px;
                 margin-right: 2px;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                font-size: 14px;
             }
             QTabBar::tab:selected {
                 background-color: #1e1e1e;
@@ -804,6 +810,8 @@ class Workspace(QWidget):
                 color: #333333;
                 padding: 8px 12px;
                 margin-right: 2px;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                font-size: 14px;
             }
             QTabBar::tab:selected {
                 background-color: #ffffff;

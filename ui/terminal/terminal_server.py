@@ -6,10 +6,8 @@ Adapted from viloxtermjs but enhanced for multi-session support.
 
 import atexit
 import logging
-import os
 import shlex
 import signal
-import sys
 import threading
 import time
 import uuid
@@ -129,9 +127,8 @@ class TerminalServerManager(QObject):
                 session = self.sessions[session_id]
                 if self.backend and session:
                     if self.backend.write_input(session, data["input"]):
-                        logger.debug(
-                            f"Input to session {session_id}: {data['input'][:20]}..."
-                        )
+                        # Removed verbose input logging - was logging every character typed
+                        pass
 
         @self.socketio.on("resize", namespace="/terminal")
         def handle_resize(data):

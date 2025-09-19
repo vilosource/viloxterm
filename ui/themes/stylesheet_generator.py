@@ -245,6 +245,10 @@ class StylesheetGenerator:
 
     def _tab_widget_style(self) -> str:
         """Generate tab widget stylesheet."""
+        # Get font settings for tabs
+        font_family = self._get_font_family()
+        font_size = self._get_font_size("base")
+
         return f"""
             QTabWidget::pane {{
                 background-color: {self._get_color("editor.background")};
@@ -265,6 +269,8 @@ class StylesheetGenerator:
                 border-right: 1px solid {self._get_color("tab.border")};
                 min-width: 100px;
                 margin-top: 2px;
+                font-family: {font_family};
+                font-size: {font_size}px;
             }}
             QTabBar::tab:selected {{
                 background-color: {self._get_color("tab.activeBackground")};

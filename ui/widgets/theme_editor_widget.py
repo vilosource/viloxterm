@@ -638,6 +638,9 @@ class ThemeEditorAppWidget(AppWidget):
         self._modified = True
         self._update_button_states()
 
+        # Emit modified signal so parent widgets know about the change
+        self.theme_modified.emit(True)
+
         # Apply preview to the preview widget
         self._apply_preview()
 
@@ -648,6 +651,9 @@ class ThemeEditorAppWidget(AppWidget):
 
         self._modified = True
         self._update_button_states()
+
+        # Emit modified signal so parent widgets know about the change
+        self.theme_modified.emit(True)
 
         # Apply preview
         self._apply_preview()
