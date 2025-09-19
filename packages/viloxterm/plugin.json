@@ -1,0 +1,76 @@
+{
+  "id": "viloxterm",
+  "name": "ViloxTerm Terminal",
+  "version": "1.0.0",
+  "description": "Professional terminal emulator plugin for ViloxTerm",
+  "author": "ViloxTerm Team",
+  "license": "MIT",
+  "main": "src/viloxterm/plugin.py",
+  "entry_point": "viloxterm.plugin:TerminalPlugin",
+  "dependencies": {
+    "viloapp-sdk": ">=1.0.0"
+  },
+  "activation_events": [
+    "onCommand:terminal.new",
+    "onCommand:terminal.open",
+    "onView:terminal",
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "widgets": [
+      {
+        "id": "terminal",
+        "factory": "viloxterm.widget:TerminalWidgetFactory"
+      }
+    ],
+    "commands": [
+      {
+        "id": "terminal.new",
+        "title": "New Terminal",
+        "category": "Terminal"
+      },
+      {
+        "id": "terminal.clear",
+        "title": "Clear Terminal",
+        "category": "Terminal"
+      },
+      {
+        "id": "terminal.split",
+        "title": "Split Terminal",
+        "category": "Terminal"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "terminal.new",
+        "key": "ctrl+shift+`"
+      },
+      {
+        "command": "terminal.clear",
+        "key": "ctrl+k"
+      }
+    ],
+    "configuration": {
+      "terminal.shell.linux": {
+        "type": "string",
+        "default": "/bin/bash",
+        "description": "Shell to use on Linux"
+      },
+      "terminal.shell.windows": {
+        "type": "string",
+        "default": "powershell.exe",
+        "description": "Shell to use on Windows"
+      },
+      "terminal.font.size": {
+        "type": "number",
+        "default": 14,
+        "description": "Terminal font size"
+      },
+      "terminal.scrollback": {
+        "type": "number",
+        "default": 1000,
+        "description": "Number of scrollback lines"
+      }
+    }
+  }
+}

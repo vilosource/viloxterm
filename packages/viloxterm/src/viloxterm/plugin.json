@@ -1,0 +1,171 @@
+{
+  "id": "terminal",
+  "name": "ViloxTerm Terminal",
+  "version": "1.0.0",
+  "description": "Professional terminal emulator with full xterm compatibility",
+  "author": "ViloxTerm Team",
+  "license": "MIT",
+  "homepage": "https://github.com/viloxterm/viloxterm",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/viloxterm/viloxterm.git"
+  },
+  "engines": {
+    "viloapp": ">=2.0.0",
+    "viloapp-sdk": ">=1.0.0"
+  },
+  "categories": ["Terminal", "Development Tools"],
+  "keywords": ["terminal", "emulator", "xterm", "console", "shell"],
+  "icon": "terminal",
+  "main": "plugin.py",
+  "activationEvents": [
+    "onCommand:terminal.new",
+    "onCommand:terminal.open",
+    "onView:terminal",
+    "onStartup"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "id": "terminal.new",
+        "title": "New Terminal",
+        "category": "Terminal",
+        "icon": "terminal-plus"
+      },
+      {
+        "id": "terminal.clear",
+        "title": "Clear Terminal",
+        "category": "Terminal",
+        "icon": "terminal-clear"
+      },
+      {
+        "id": "terminal.close",
+        "title": "Close Terminal",
+        "category": "Terminal",
+        "icon": "terminal-x"
+      },
+      {
+        "id": "terminal.split",
+        "title": "Split Terminal",
+        "category": "Terminal",
+        "icon": "terminal-split"
+      },
+      {
+        "id": "terminal.focus",
+        "title": "Focus Terminal",
+        "category": "Terminal"
+      },
+      {
+        "id": "terminal.selectDefaultShell",
+        "title": "Select Default Shell",
+        "category": "Terminal"
+      }
+    ],
+    "configuration": {
+      "title": "Terminal",
+      "properties": {
+        "terminal.shell.linux": {
+          "type": "string",
+          "default": "/bin/bash",
+          "description": "Path to shell executable on Linux"
+        },
+        "terminal.shell.osx": {
+          "type": "string",
+          "default": "/bin/zsh",
+          "description": "Path to shell executable on macOS"
+        },
+        "terminal.shell.windows": {
+          "type": "string",
+          "default": "powershell.exe",
+          "description": "Path to shell executable on Windows"
+        },
+        "terminal.fontSize": {
+          "type": "number",
+          "default": 14,
+          "minimum": 8,
+          "maximum": 24,
+          "description": "Terminal font size"
+        },
+        "terminal.fontFamily": {
+          "type": "string",
+          "default": "monospace",
+          "description": "Terminal font family"
+        },
+        "terminal.cursorStyle": {
+          "type": "string",
+          "default": "block",
+          "enum": ["block", "underline", "bar"],
+          "description": "Terminal cursor style"
+        },
+        "terminal.cursorBlink": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable cursor blinking"
+        },
+        "terminal.scrollback": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 0,
+          "maximum": 10000,
+          "description": "Number of scrollback lines"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "terminal.new",
+        "key": "ctrl+shift+`",
+        "mac": "cmd+shift+`"
+      },
+      {
+        "command": "terminal.clear",
+        "key": "ctrl+shift+k",
+        "mac": "cmd+k",
+        "when": "terminalFocus"
+      },
+      {
+        "command": "terminal.close",
+        "key": "ctrl+shift+w",
+        "mac": "cmd+shift+w",
+        "when": "terminalFocus"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "terminal.new",
+          "when": "view == terminal",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "terminal.new"
+        },
+        {
+          "command": "terminal.clear",
+          "when": "terminalFocus"
+        },
+        {
+          "command": "terminal.selectDefaultShell"
+        }
+      ]
+    },
+    "views": {
+      "sidebar": [
+        {
+          "id": "terminal-sessions",
+          "name": "Terminal Sessions",
+          "icon": "terminal-outline",
+          "contextualTitle": "Terminal"
+        }
+      ]
+    },
+    "widgets": [
+      {
+        "id": "terminal",
+        "factory": "viloxterm.widget:TerminalWidgetFactory"
+      }
+    ]
+  }
+}

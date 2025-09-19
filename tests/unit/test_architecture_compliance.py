@@ -15,11 +15,10 @@ Key Principles Enforced:
 """
 
 import ast
-import inspect
 import re
 from pathlib import Path
-from typing import List, Dict, Set
-from unittest.mock import Mock, patch
+from typing import List, Dict
+from unittest.mock import Mock
 
 import pytest
 
@@ -27,7 +26,6 @@ from core.commands.base import CommandContext, CommandResult
 from services.workspace_service import WorkspaceService
 from services.ui_service import UIService
 from services.state_service import StateService
-from services.terminal_service import TerminalService
 
 
 class TestArchitectureCompliance:
@@ -660,7 +658,7 @@ class TestRegressionPrevention:
                 if re.search(pattern, content):
                     violations.append(f"{file_path}: {pattern}")
 
-        assert not violations, f"Regression detected - direct tab_widget access:\n" + "\n".join(violations)
+        assert not violations, "Regression detected - direct tab_widget access:\n" + "\n".join(violations)
 
     def test_no_main_window_status_bar_access(self):
         """Prevent regression: commands should not access main_window.status_bar directly."""
@@ -680,7 +678,7 @@ class TestRegressionPrevention:
                     if "main_window.status_bar.set_message" in line:
                         violations.append(f"{file_path}:{line_num} - {line.strip()}")
 
-        assert not violations, f"Regression detected - direct status bar access:\n" + "\n".join(violations)
+        assert not violations, "Regression detected - direct status bar access:\n" + "\n".join(violations)
 
     def test_commands_import_only_services(self):
         """Prevent regression: command files should only import services, not UI components."""
@@ -703,4 +701,4 @@ class TestRegressionPrevention:
                 if forbidden in content:
                     violations.append(f"{file_path}: {forbidden}")
 
-        assert not violations, f"Regression detected - forbidden UI imports:\n" + "\n".join(violations)
+        assert not violations, "Regression detected - forbidden UI imports:\n" + "\n".join(violations)

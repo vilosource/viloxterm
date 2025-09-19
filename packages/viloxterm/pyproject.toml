@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "viloxterm"
+version = "1.0.0"
+description = "Terminal Emulator Plugin for ViloxTerm"
+authors = [{name = "ViloxTerm Team", email = "team@viloxterm.org"}]
+readme = "README.md"
+license = {text = "MIT"}
+keywords = ["terminal", "emulator", "plugin", "viloxterm"]
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Terminals :: Terminal Emulators/X Terminals",
+]
+
+dependencies = [
+    "viloapp-sdk>=1.0.0",
+    "PySide6>=6.5.0",
+    "flask>=2.0.0",
+    "flask-socketio>=5.0.0",
+    "python-socketio>=5.0.0",
+    "psutil>=5.9.0",
+]
+
+[project.optional-dependencies]
+windows = [
+    "pywinpty>=2.0.0;platform_system=='Windows'",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-qt>=4.2.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+]
+
+[project.entry-points."viloapp.plugins"]
+terminal = "viloxterm.plugin:TerminalPlugin"
+
+[project.urls]
+Homepage = "https://github.com/viloxterm/viloxterm"
+Documentation = "https://viloxterm.readthedocs.io"
+Repository = "https://github.com/viloxterm/viloxterm"
+Issues = "https://github.com/viloxterm/viloxterm/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+viloxterm = [
+    "assets/**/*",
+    "static/**/*",
+]

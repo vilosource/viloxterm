@@ -10,7 +10,7 @@ and proper workspace service usage.
 from unittest.mock import Mock, patch
 import pytest
 
-from core.commands.base import CommandContext, CommandResult
+from core.commands.base import CommandContext
 from core.commands.builtin.terminal_commands import (
     clear_terminal_handler,
     copy_terminal_handler,

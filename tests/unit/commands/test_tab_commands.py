@@ -7,10 +7,10 @@ and follow the MVC architecture patterns. Focus is on service delegation
 rather than complex UI interactions.
 """
 
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 import pytest
 
-from core.commands.base import CommandContext, CommandResult
+from core.commands.base import CommandContext
 from core.commands.builtin.tab_commands import (
     duplicate_tab_command,
     close_tabs_to_right_command,

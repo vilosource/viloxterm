@@ -1,79 +1,43 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
-name = "viloxterm"
-version = "0.1.0"
-description = "A VSCode-style desktop application built with PySide6"
+name = "viloapp-workspace"
+version = "0.0.1"
+description = "ViloxTerm monorepo workspace"
 readme = "README.md"
-requires-python = ">=3.9"
-authors = [
-    {name = "ViloxTerm Team", email = "team@viloxterm.local"}
-]
-license = {text = "MIT"}
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-]
-dependencies = [
-    "PySide6>=6.7.0",
+requires-python = ">=3.8"
+
+[tool.hatch]
+# Workspace configuration
+[tool.hatch.build]
+packages = [
+    "packages/viloapp-sdk",
+    "packages/viloxterm",
+    "packages/viloedit",
+    "packages/viloapp"
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0.0",
-    "pytest-qt>=4.4.0",
-    "pytest-cov>=4.1.0",
-    "pytest-xvfb>=3.0.0",
-    "pyautogui>=0.9.54",
-    "black>=24.0.0",
-    "ruff>=0.3.0",
-    "mypy>=1.8.0",
-]
-docs = [
-    "sphinx>=7.0.0",
-    "sphinx-rtd-theme>=2.0.0",
-]
-
-[project.scripts]
-viloxterm = "main:main"
-
-[tool.black]
-line-length = 88
-target-version = ['py39', 'py310', 'py311', 'py312']
-include = '\.pyi?$'
+[tool.pytest]
+testpaths = ["packages/*/tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 
 [tool.ruff]
-line-length = 88
-target-version = "py39"
-select = ["E", "F", "W", "C90", "I", "N", "B", "UP"]
-ignore = ["E501"]  # Line too long - handled by black
+src = ["packages/*/src"]
+extend-include = ["packages/*/tests/*.py"]
+line-length = 100
+target-version = "py38"
 
 [tool.mypy]
-python_version = "3.9"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
-disallow_any_generics = false
-ignore_missing_imports = true
+packages = ["viloapp", "viloapp_sdk", "viloxterm", "viloedit"]
+namespace_packages = true
+explicit_package_bases = true
+python_version = "3.8"
 
-[tool.coverage.run]
-source = ["ui", "models"]
-omit = ["*/tests/*", "*/__init__.py"]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self.debug:",
-    "if __name__ == .__main__.:",
-    "raise AssertionError",
-    "raise NotImplementedError",
-]
+[tool.black]
+line-length = 100
+target-version = ['py38']
+include = 'packages/.*\.py$'

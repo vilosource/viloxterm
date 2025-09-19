@@ -10,7 +10,6 @@ import logging
 
 from core.commands.base import Command, CommandContext, CommandResult
 from core.commands.registry import command_registry
-from services.service_locator import ServiceLocator
 
 logger = logging.getLogger(__name__)
 

@@ -7,10 +7,10 @@ and follow the MVC architecture patterns. Focus is on service delegation
 and proper UI service usage for status messages.
 """
 
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock
 import pytest
 
-from core.commands.base import CommandContext, CommandResult
+from core.commands.base import CommandContext
 from core.commands.builtin.file_commands import (
     save_state_command,
     restore_state_command,

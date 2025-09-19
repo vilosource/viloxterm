@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "viloapp-sdk"
+version = "1.0.0"
+description = "ViloxTerm Plugin SDK - Build powerful plugins for ViloxTerm"
+authors = [{name = "ViloxTerm Team", email = "team@viloxterm.org"}]
+readme = "README.md"
+license = {text = "MIT"}
+keywords = ["plugin", "sdk", "terminal", "editor", "extensibility"]
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "PySide6>=6.5.0",
+    "typing-extensions>=4.0.0;python_version<'3.10'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-qt>=4.2.0",
+    "pytest-cov>=4.0",
+    "mypy>=1.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+]
+docs = [
+    "sphinx>=5.0",
+    "sphinx-autodoc-typehints>=1.0",
+    "sphinx-rtd-theme>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/viloxterm/viloapp"
+Documentation = "https://viloxterm.readthedocs.io"
+Repository = "https://github.com/viloxterm/viloapp"
+Issues = "https://github.com/viloxterm/viloapp/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+viloapp_sdk = ["py.typed"]
