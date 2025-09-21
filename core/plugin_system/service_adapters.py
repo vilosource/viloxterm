@@ -145,7 +145,7 @@ class WorkspaceServiceAdapter(IService):
             if hasattr(self.workspace_service, 'register_widget_factory'):
                 self.workspace_service.register_widget_factory(widget_id, factory)
             else:
-                print(f"WorkspaceService doesn't support widget factory registration")
+                print("WorkspaceService doesn't support widget factory registration")
         except Exception as e:
             print(f"Failed to register widget factory {widget_id}: {e}")
 
@@ -155,7 +155,7 @@ class WorkspaceServiceAdapter(IService):
             if hasattr(self.workspace_service, 'create_widget'):
                 return self.workspace_service.create_widget(widget_id, instance_id)
             else:
-                print(f"WorkspaceService doesn't support widget creation")
+                print("WorkspaceService doesn't support widget creation")
                 return None
         except Exception as e:
             print(f"Failed to create widget {widget_id}: {e}")

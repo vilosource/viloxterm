@@ -1,7 +1,7 @@
 """Tests for autocomplete functionality."""
 
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock
 
 try:
     from PySide6.QtWidgets import QApplication

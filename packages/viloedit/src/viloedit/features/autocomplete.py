@@ -1,18 +1,15 @@
 """Autocomplete functionality for the code editor."""
 
 import logging
-from typing import List, Dict, Any, Optional, Set, Callable
+from typing import List, Dict, Any, Set
 from abc import ABC, abstractmethod
 import re
-from collections import defaultdict
-import json
 
 from PySide6.QtWidgets import (
-    QWidget, QListWidget, QListWidgetItem, QCompleter,
-    QFrame, QVBoxLayout, QLabel, QApplication
+    QListWidget, QListWidgetItem, QFrame, QVBoxLayout
 )
-from PySide6.QtCore import Qt, Signal, QTimer, QStringListModel, QAbstractItemModel
-from PySide6.QtGui import QTextCursor, QKeySequence, QShortcut, QFont, QPalette
+from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtGui import QTextCursor, QKeySequence, QShortcut, QFont
 
 logger = logging.getLogger(__name__)
 

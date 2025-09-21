@@ -285,7 +285,7 @@ class PluginLoader:
                         return module
                     except ImportError as e:
                         logger.error(f"Failed to import {package_name}.plugin: {e}")
-                        logger.debug(f"Falling back to standalone module loading")
+                        logger.debug("Falling back to standalone module loading")
 
                 # Fallback: load as standalone module
                 module_name = f"plugin_{plugin_id}"

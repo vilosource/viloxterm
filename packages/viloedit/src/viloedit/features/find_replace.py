@@ -2,14 +2,14 @@
 
 import re
 import logging
-from typing import Optional, List, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any
 from enum import Enum
 
 from PySide6.QtWidgets import (
-    QWidget, QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
-    QCheckBox, QLabel, QFrame, QGridLayout, QComboBox, QTextEdit
+    QWidget, QDialog, QVBoxLayout, QHBoxLayout, QPushButton,
+    QCheckBox, QLabel, QComboBox, QTextEdit
 )
-from PySide6.QtCore import Qt, Signal, QTimer, QRegularExpression
+from PySide6.QtCore import Signal, QTimer, QRegularExpression
 from PySide6.QtGui import QTextCursor, QTextDocument, QKeySequence, QShortcut
 
 logger = logging.getLogger(__name__)
@@ -321,8 +321,7 @@ class FindReplace(QWidget):
 
         # This is a basic implementation
         # In a full implementation, you'd use QTextEdit.ExtraSelection
-        from PySide6.QtWidgets import QTextEdit
-        from PySide6.QtGui import QTextFormat, QColor
+        from PySide6.QtGui import QColor
 
         extra_selections = []
 

@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional, Set, Union
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
-from ..exceptions import PluginError
 
 
 @dataclass

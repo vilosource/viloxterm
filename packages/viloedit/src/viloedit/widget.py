@@ -4,7 +4,7 @@ import logging
 from typing import Optional, Dict, Any
 
 from PySide6.QtWidgets import QWidget
-from viloapp_sdk import IWidget, WidgetMetadata, WidgetPosition
+from viloapp_sdk import IWidget
 
 from .editor import CodeEditor
 

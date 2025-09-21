@@ -1,4 +1,4 @@
-.PHONY: help setup dev test test-sdk test-terminal test-editor test-app build format lint typecheck clean
+.PHONY: help setup dev test test-sdk test-terminal test-editor test-app build format lint typecheck clean install-dev run
 
 help:
 	@echo "ViloxTerm Monorepo Commands"
@@ -15,12 +15,14 @@ help:
 	@echo "  lint         - Lint code with ruff"
 	@echo "  typecheck    - Type check with mypy"
 	@echo "  clean        - Clean build artifacts"
+	@echo "  install-dev  - Install all packages in development mode"
+	@echo "  run          - Run the application (same as dev)"
 
 setup:
 	python scripts/dev-setup.py
 
 dev:
-	cd packages/viloapp && python -m viloapp.main --dev
+	python main.py --dev
 
 test:
 	pytest packages/*/tests -v
@@ -48,6 +50,16 @@ lint:
 
 typecheck:
 	mypy packages/*/src
+
+install-dev:
+	pip install -e packages/viloapp-sdk/
+	pip install -e packages/viloapp/
+	pip install -e packages/viloxterm/
+	pip install -e packages/viloedit/
+	pip install -e packages/viloapp-cli/
+
+run:
+	python main.py
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true

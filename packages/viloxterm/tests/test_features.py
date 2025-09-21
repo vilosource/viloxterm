@@ -1,7 +1,6 @@
 """Tests for terminal advanced features."""
 
-import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 import platform
 
 from viloxterm.features import (

@@ -3,14 +3,13 @@
 import json
 import tempfile
 from pathlib import Path
-import pytest
 
 from viloapp_sdk.utils.validators import (
     ManifestValidator, VersionCompatibilityChecker, DependencyValidator,
     PermissionValidator, ConfigurationSchemaValidator,
     validate_manifest, validate_version_compatibility, validate_dependencies,
     validate_permissions, validate_configuration_schema, validate_plugin_complete,
-    ValidationResult, ValidationError
+    ValidationResult
 )
 
 

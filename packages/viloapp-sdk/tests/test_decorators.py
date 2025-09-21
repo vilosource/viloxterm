@@ -1,7 +1,6 @@
 """Tests for plugin decorators."""
 
 import pytest
-from typing import Dict, Any
 from unittest.mock import Mock
 
 from viloapp_sdk.utils.decorators import (
@@ -9,8 +8,7 @@ from viloapp_sdk.utils.decorators import (
     ActivationEventType, ContributionPointType,
     get_plugin_metadata, get_command_metadata, get_widget_metadata,
     get_service_metadata, get_activation_events, get_contributions,
-    get_commands_from_class, create_manifest_from_decorators,
-    PluginMetadata, CommandMetadata, WidgetMetadata, ServiceMetadata
+    get_commands_from_class, create_manifest_from_decorators
 )
 from viloapp_sdk.interfaces import IPlugin
 from viloapp_sdk.widget import IWidget

@@ -1,19 +1,17 @@
 """Mock plugin host for testing plugins."""
 
-from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, TypeVar, Callable
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 import tempfile
 import shutil
 
 from ..context import IPluginContext, PluginContext
 from ..service import (
-    IService, ServiceProxy, ServiceNotAvailableError,
-    ICommandService, IConfigurationService, IWorkspaceService,
+    IService, ServiceProxy, ICommandService, IConfigurationService, IWorkspaceService,
     IThemeService, INotificationService
 )
-from ..events import EventBus, PluginEvent, EventType, EventPriority
+from ..events import EventBus, PluginEvent, EventType
 
 T = TypeVar('T', bound=IService)
 

@@ -1,9 +1,10 @@
 """Tests for CLI commands."""
 
-import pytest
-import tempfile
 import json
+import tempfile
 from pathlib import Path
+
+import pytest
 from click.testing import CliRunner
 
 from viloapp_cli.cli import cli

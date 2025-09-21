@@ -1,9 +1,7 @@
 """Tests for the new IWidget interface specification."""
 
 import pytest
-from abc import ABC
 from typing import Optional, Dict, Any
-from unittest.mock import Mock
 
 from PySide6.QtWidgets import QWidget, QLabel
 

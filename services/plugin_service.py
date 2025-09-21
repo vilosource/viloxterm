@@ -7,7 +7,7 @@ with the ServiceLocator.
 """
 
 import logging
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
 from services.base import Service
 

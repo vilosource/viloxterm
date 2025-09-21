@@ -1,7 +1,7 @@
 """Terminal settings management."""
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from dataclasses import dataclass, asdict
 
 logger = logging.getLogger(__name__)

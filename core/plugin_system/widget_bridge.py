@@ -2,8 +2,7 @@
 """Bridge between plugin widgets and core UI system."""
 
 import logging
-import uuid
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from PySide6.QtWidgets import QVBoxLayout
 

@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any
 
 import click
 
@@ -39,7 +39,7 @@ def list_installed_plugins(config: CLIConfig, verbose: bool, format: str) -> Non
         raise click.ClickException(f"Failed to list plugins: {e}")
 
 
-def _load_plugin_registry(registry_file: Path) -> Dict[str, Any]:
+def _load_plugin_registry(registry_file: Path) -> dict[str, Any]:
     """Load plugin registry from file.
 
     Args:
@@ -59,7 +59,7 @@ def _load_plugin_registry(registry_file: Path) -> Dict[str, Any]:
         return {}
 
 
-def _output_table(plugins: Dict[str, Any], verbose: bool) -> None:
+def _output_table(plugins: dict[str, Any], verbose: bool) -> None:
     """Output plugins in table format.
 
     Args:
@@ -125,7 +125,7 @@ def _output_table(plugins: Dict[str, Any], verbose: bool) -> None:
     click.echo(f"\nTotal: {len(plugins)} plugin(s)")
 
 
-def _output_json(plugins: Dict[str, Any], verbose: bool) -> None:
+def _output_json(plugins: dict[str, Any], verbose: bool) -> None:
     """Output plugins in JSON format.
 
     Args:

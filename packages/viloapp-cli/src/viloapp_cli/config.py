@@ -1,8 +1,7 @@
 """Configuration management for ViloxTerm Plugin CLI."""
 
-import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 
@@ -10,7 +9,7 @@ import yaml
 class CLIConfig:
     """Configuration manager for the CLI tool."""
 
-    def __init__(self, config_path: Optional[Path] = None) -> None:
+    def __init__(self, config_path: Path | None = None) -> None:
         """Initialize configuration.
 
         Args:
@@ -19,7 +18,7 @@ class CLIConfig:
         self.config_path = config_path or self._get_default_config_path()
         self.verbose = False
         self.debug = False
-        self._config: Dict[str, Any] = {}
+        self._config: dict[str, Any] = {}
         self._load_config()
 
     def _get_default_config_path(self) -> Path:
@@ -32,7 +31,7 @@ class CLIConfig:
         """Load configuration from file."""
         if self.config_path.exists():
             try:
-                with open(self.config_path, "r") as f:
+                with open(self.config_path) as f:
                     self._config = yaml.safe_load(f) or {}
             except Exception as e:
                 if self.debug:
@@ -52,7 +51,7 @@ class CLIConfig:
             if self.debug:
                 print(f"Warning: Could not save config file: {e}")
 
-    def _get_default_config(self) -> Dict[str, Any]:
+    def _get_default_config(self) -> dict[str, Any]:
         """Get default configuration values."""
         return {
             "plugins": {

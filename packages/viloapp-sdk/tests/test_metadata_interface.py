@@ -4,7 +4,7 @@ import pytest
 from typing import Dict, List
 
 from viloapp_sdk.interfaces import IMetadata
-from viloapp_sdk.plugin import PluginMetadata, PluginCapability
+from viloapp_sdk.plugin import PluginMetadata
 
 
 class TestIMetadataInterface:

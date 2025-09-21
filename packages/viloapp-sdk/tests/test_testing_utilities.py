@@ -1,8 +1,5 @@
 """Tests for SDK testing utilities."""
 
-import pytest
-import tempfile
-from pathlib import Path
 from unittest.mock import Mock
 
 from viloapp_sdk.testing.mock_host import (
@@ -12,9 +9,8 @@ from viloapp_sdk.testing.mock_host import (
 )
 from viloapp_sdk.testing.fixtures import *  # Import all fixtures
 from viloapp_sdk.context import IPluginContext
-from viloapp_sdk.service import ServiceProxy, IService
-from viloapp_sdk.events import EventBus, PluginEvent, EventType
-from viloapp_sdk.interfaces import IPlugin
+from viloapp_sdk.service import ServiceProxy
+from viloapp_sdk.events import EventBus, EventType
 
 
 class TestMockService:

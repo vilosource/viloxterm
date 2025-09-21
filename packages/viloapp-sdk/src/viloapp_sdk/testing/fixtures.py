@@ -4,18 +4,17 @@ import pytest
 import tempfile
 import shutil
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from unittest.mock import Mock
 
 from ..context import IPluginContext
-from ..service import IService, ServiceProxy
+from ..service import ServiceProxy
 from ..events import EventBus
 from ..plugin import PluginMetadata, PluginCapability
-from ..interfaces import IPlugin, IMetadata
+from ..interfaces import IPlugin
 from .mock_host import (
-    MockPluginHost, MockService, MockCommandService, MockConfigurationService,
-    MockWorkspaceService, MockThemeService, MockNotificationService,
-    create_mock_plugin_context, create_mock_service_proxy
+    MockPluginHost, MockCommandService, MockConfigurationService,
+    MockWorkspaceService, MockThemeService, MockNotificationService
 )
 
 # Core testing fixtures
@@ -287,7 +286,6 @@ def mock_widget():
             mock_widget.show()
             mock_widget.show.assert_called_once()
     """
-    from unittest.mock import Mock
     widget = Mock()
     widget.isVisible.return_value = True
     widget.size.return_value = (800, 600)

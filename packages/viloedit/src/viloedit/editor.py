@@ -4,7 +4,7 @@ import logging
 from typing import Optional, Dict, Any
 from pathlib import Path
 
-from PySide6.QtWidgets import QPlainTextEdit, QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QPlainTextEdit, QWidget
 from PySide6.QtCore import Signal, Qt, QRect, QSize
 from PySide6.QtGui import QTextOption, QPainter, QColor, QTextFormat, QFont, QKeySequence, QShortcut
 

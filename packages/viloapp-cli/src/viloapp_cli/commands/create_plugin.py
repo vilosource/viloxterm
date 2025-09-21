@@ -1,12 +1,10 @@
 """Create plugin command implementation."""
 
-import json
-import shutil
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 import click
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment
 
 from ..config import CLIConfig
 
@@ -117,7 +115,7 @@ def _generate_plugin_files(
         _generate_file(plugin_dir / "tests" / "test_commands.py", templates["test_commands.py"], context)
 
 
-def _generate_file(file_path: Path, template_content: str, context: Dict[str, Any]) -> None:
+def _generate_file(file_path: Path, template_content: str, context: dict[str, Any]) -> None:
     """Generate a file from template content.
 
     Args:
@@ -145,7 +143,7 @@ def _to_class_name(name: str) -> str:
     return "".join(word.capitalize() for word in name.replace("-", "_").split("_"))
 
 
-def _get_embedded_templates() -> Dict[str, str]:
+def _get_embedded_templates() -> dict[str, str]:
     """Get embedded template content.
 
     Returns:
@@ -229,7 +227,7 @@ where = ["src"]
     },
     "dependencies": {},
     "permissions": [
-        "ui.read"
+        "viloapp.ui.read"
     ]
 }
 ''',

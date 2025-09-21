@@ -11,7 +11,6 @@ from viloapp_sdk import (
 
 from .widget import EditorWidgetFactory
 from .editor import CodeEditor
-from .syntax import SyntaxHighlighter
 from .commands import register_editor_commands
 
 logger = logging.getLogger(__name__)

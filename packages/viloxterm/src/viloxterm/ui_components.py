@@ -2,12 +2,11 @@
 
 from typing import Optional
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QToolBar,
-    QComboBox, QLineEdit, QPushButton,
-    QMenu, QLabel, QTabWidget
+    QWidget, QVBoxLayout, QToolBar,
+    QComboBox, QLineEdit, QTabWidget
 )
-from PySide6.QtCore import Signal, Qt
-from PySide6.QtGui import QIcon, QKeySequence, QAction
+from PySide6.QtCore import Signal
+from PySide6.QtGui import QKeySequence, QAction
 
 from .features import TerminalProfileManager
 

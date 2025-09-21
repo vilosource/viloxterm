@@ -2,25 +2,16 @@
 
 import unittest
 import sys
-from pathlib import Path
-from typing import Dict, Any, Optional, Type, Callable
-from unittest.mock import Mock, MagicMock
+from typing import Dict, Any, Optional, Type
+from unittest.mock import Mock
 
-from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtTest import QTest
 
 from ..interfaces import IPlugin
 from ..widget import IWidget
 from ..service import IService
-from ..context import PluginContext
 from .mock_host import MockPluginHost
-from .fixtures import (
-    mock_plugin_context,
-    mock_services,
-    mock_event_bus,
-    temp_plugin_dir,
-)
 
 
 class PluginTestCase(unittest.TestCase):
@@ -443,7 +434,7 @@ def create_test_plugin_manifest(plugin_id: str, **overrides) -> Dict[str, Any]:
             "services": []
         },
         "dependencies": {},
-        "permissions": ["ui.read"]
+        "permissions": ["viloapp.ui.read"]
     }
 
     manifest.update(overrides)

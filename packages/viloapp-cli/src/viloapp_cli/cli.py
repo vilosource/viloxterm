@@ -2,19 +2,13 @@
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 from click import Context
 
 from . import __version__
+from .commands import create_plugin, dev, install, list_plugins, package, test
 from .config import CLIConfig
-from .commands import create_plugin
-from .commands import dev
-from .commands import test
-from .commands import package
-from .commands import install
-from .commands import list_plugins
 
 
 @click.group()
@@ -27,7 +21,7 @@ from .commands import list_plugins
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
 @click.option("--debug", is_flag=True, help="Enable debug output")
 @click.pass_context
-def cli(ctx: Context, config: Optional[Path], verbose: bool, debug: bool) -> None:
+def cli(ctx: Context, config: Path | None, verbose: bool, debug: bool) -> None:
     """ViloxTerm Plugin Development CLI Tool.
 
     A comprehensive tool for creating, developing, testing, and managing
@@ -100,7 +94,7 @@ def test_cmd(ctx: Context, plugin: Path, coverage: bool, verbose: bool) -> None:
 )
 @click.option("--format", type=click.Choice(["zip", "tar.gz"]), default="zip")
 @click.pass_context
-def package(ctx: Context, plugin: Path, output: Optional[Path], format: str) -> None:
+def package(ctx: Context, plugin: Path, output: Path | None, format: str) -> None:
     """Package a plugin for distribution."""
     config = ctx.obj["config"]
     package.package_plugin(config, plugin, output, format)

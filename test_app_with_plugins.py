@@ -3,7 +3,6 @@
 
 import sys
 import logging
-from pathlib import Path
 
 # Setup logging
 logging.basicConfig(

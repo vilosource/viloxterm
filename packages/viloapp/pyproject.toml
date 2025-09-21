@@ -1,0 +1,196 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "viloapp"
+version = "0.1.0"
+description = "ViloxTerm - VSCode-style desktop GUI application"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+    {name = "ViloxTerm Team", email = "team@viloapp.com"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Desktop Environment",
+]
+keywords = ["gui", "desktop", "vscode", "pyside6", "qt"]
+
+dependencies = [
+    # Core GUI Framework
+    "PySide6>=6.7.0",
+
+    # Terminal Dependencies
+    "flask>=2.0.0",
+    "flask-socketio>=5.0.0",
+    "python-socketio>=5.0.0",
+    "python-engineio>=4.0.0",
+    "simple-websocket>=1.0.0",
+
+    # Cross-platform Support
+    "portalocker>=2.8.0",
+    "pywinpty>=2.0.0 ; sys_platform == 'win32'",
+
+    # Plugin SDK
+    "viloapp-sdk>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=8.0.0",
+    "pytest-qt>=4.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-xvfb>=3.0.0 ; sys_platform == 'linux'",
+    "pyautogui>=0.9.54",
+
+    # Development Tools
+    "black>=24.0.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
+
+    # Documentation
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=2.0.0",
+]
+
+styling = [
+    "qt-vscode-style>=0.1.0",
+]
+
+advanced = [
+    "qt-advanced-docking-system>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/viloapp/viloapp"
+Documentation = "https://viloapp.readthedocs.io"
+Repository = "https://github.com/viloapp/viloapp.git"
+Issues = "https://github.com/viloapp/viloapp/issues"
+
+[project.scripts]
+viloapp = "viloapp.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/viloapp"]
+
+[tool.hatch.version]
+path = "src/viloapp/__init__.py"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--tb=short",
+    "--strict-markers",
+    "--disable-warnings",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "gui: GUI tests requiring display",
+    "slow: Slow running tests",
+    "signals: Tests involving Qt signals",
+]
+
+[tool.coverage.run]
+source = ["src/viloapp"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/test_*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.ruff]
+src = ["src"]
+line-length = 100
+target-version = "py38"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "N",  # pep8-naming
+    "UP", # pyupgrade
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["F401", "F811"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[tool.black]
+line-length = 100
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''

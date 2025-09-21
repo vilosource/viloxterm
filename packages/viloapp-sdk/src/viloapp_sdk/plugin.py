@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
 from enum import Enum
 
-from .interfaces import IPlugin, IMetadata
+from .interfaces import IMetadata
 
 class PluginCapability(Enum):
     """Plugin capabilities that can be declared."""

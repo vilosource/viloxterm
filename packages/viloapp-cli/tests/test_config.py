@@ -1,9 +1,9 @@
 """Tests for CLI configuration."""
 
-import pytest
 import tempfile
-import yaml
 from pathlib import Path
+
+import yaml
 
 from viloapp_cli.config import CLIConfig
 

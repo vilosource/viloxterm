@@ -3,7 +3,6 @@
 import logging
 from typing import Dict, Any
 
-from PySide6.QtCore import QRegularExpression
 from PySide6.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QFont
 
 try:

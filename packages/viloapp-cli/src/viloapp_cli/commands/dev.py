@@ -4,7 +4,6 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Set
 
 import click
 from watchdog.events import FileSystemEventHandler

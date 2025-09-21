@@ -1,12 +1,9 @@
 """Package command implementation."""
 
 import json
-import shutil
-import tempfile
-import zipfile
 import tarfile
+import zipfile
 from pathlib import Path
-from typing import Optional, List
 
 import click
 
@@ -14,7 +11,7 @@ from ..config import CLIConfig
 
 
 def package_plugin(
-    config: CLIConfig, plugin_path: Path, output: Optional[Path], format: str
+    config: CLIConfig, plugin_path: Path, output: Path | None, format: str
 ) -> None:
     """Package a plugin for distribution.
 
@@ -88,7 +85,7 @@ def _validate_and_get_manifest(plugin_path: Path) -> dict:
     return manifest
 
 
-def _get_files_to_package(plugin_path: Path, config: CLIConfig) -> List[Path]:
+def _get_files_to_package(plugin_path: Path, config: CLIConfig) -> list[Path]:
     """Get list of files to include in package.
 
     Args:

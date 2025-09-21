@@ -6,12 +6,11 @@ from typing import Optional, Dict, Any
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Signal
-from viloapp_sdk import IWidget, WidgetMetadata, WidgetPosition
+from viloapp_sdk import IWidget
 
 from .server import terminal_server
 from .ui_components import TerminalToolBar
 from .features import TerminalSearch
-from .settings import TerminalSettingsManager
 
 logger = logging.getLogger(__name__)
 

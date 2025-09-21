@@ -4,7 +4,6 @@ This module provides examples showing how to use the testing utilities
 to write comprehensive tests for your plugins.
 """
 
-import pytest
 from viloapp_sdk import IPlugin, PluginMetadata, PluginCapability
 from viloapp_sdk.context import IPluginContext
 from viloapp_sdk.events import EventType, PluginEvent

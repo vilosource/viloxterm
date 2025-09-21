@@ -1,7 +1,6 @@
 """Tests for code editor widget."""
 
 import pytest
-from unittest.mock import Mock, patch
 from pathlib import Path
 import tempfile
 

@@ -1,14 +1,13 @@
 """Multi-cursor functionality for the code editor."""
 
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Optional
 from dataclasses import dataclass
 
 from PySide6.QtWidgets import QTextEdit
 from PySide6.QtCore import Qt, Signal, QObject
 from PySide6.QtGui import (
-    QTextCursor, QKeySequence, QShortcut, QTextFormat, QColor,
-    QTextCharFormat, QPainter, QFont
+    QTextCursor, QKeySequence, QShortcut, QTextFormat, QColor
 )
 
 logger = logging.getLogger(__name__)
