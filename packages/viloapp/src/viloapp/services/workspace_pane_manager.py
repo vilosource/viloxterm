@@ -9,6 +9,14 @@ pane-based operations in the workspace.
 import logging
 from typing import Any, Optional
 
+from viloapp.core.events.event_bus import event_bus
+from viloapp.core.events.events import EventTypes
+from viloapp.core.events.requests import (
+    request_pane_close,
+    request_pane_numbers_state,
+    request_pane_numbers_toggle,
+    request_pane_split,
+)
 from viloapp.core.settings.app_defaults import (
     get_default_split_direction,
 )
@@ -68,11 +76,8 @@ class WorkspacePaneManager:
 
             # Create split request
             from viloapp.models.operations import SplitPaneRequest
-            request = SplitPaneRequest(
-                pane_id=active_pane.id,
-                orientation=orientation,
-                ratio=0.5
-            )
+
+            request = SplitPaneRequest(pane_id=active_pane.id, orientation=orientation, ratio=0.5)
 
             # Perform split via model
             result = self._model.split_pane(request)
@@ -94,20 +99,23 @@ class WorkspacePaneManager:
                 logger.warning("No active pane to split")
                 return None
 
-            # Perform the split with default ratio
-            # Note: Current split methods don't support ratio parameter yet
-            # This will need to be added to SplitPaneWidget
-            if orientation == "horizontal":
-                new_id = widget.split_horizontal(widget.active_pane_id)
-            elif orientation == "vertical":
-                new_id = widget.split_vertical(widget.active_pane_id)
-            else:
-                logger.error(f"Invalid split orientation: {orientation}")
-                return None
+            # Perform the split via event system to avoid circular dependency
+            new_id = request_pane_split(widget.active_pane_id, orientation)
 
             if new_id:
                 self._pane_counter += 1
-                logger.info(f"Split pane {orientation}ly via workspace, created pane {new_id}")
+                logger.info(f"Split pane {orientation}ly via event system, created pane {new_id}")
+                # Publish event for any other listeners
+                event_bus.publish(
+                    EventTypes.PANE_SPLIT,
+                    {
+                        "pane_id": widget.active_pane_id,
+                        "new_pane_id": new_id,
+                        "orientation": orientation,
+                    },
+                )
+            else:
+                logger.error(f"Failed to split pane {orientation}ly via event system")
 
             return new_id
         else:
@@ -152,11 +160,17 @@ class WorkspacePaneManager:
 
             pane_id = widget.active_pane_id
 
-            # Close the pane
-            widget.close_pane(pane_id)
+            # Close the pane via event system to avoid circular dependency
+            success = request_pane_close(pane_id)
 
-            logger.info(f"Closed pane {pane_id} via workspace")
-            return True
+            if success:
+                logger.info(f"Closed pane {pane_id} via event system")
+                # Publish event for any other listeners
+                event_bus.publish(EventTypes.PANE_CLOSED, {"pane_id": pane_id})
+            else:
+                logger.error(f"Failed to close pane {pane_id} via event system")
+
+            return success
         else:
             return False
 
@@ -184,13 +198,15 @@ class WorkspacePaneManager:
             logger.info("Cannot close the last pane in tab")
             return False
 
-        # Close the specific pane
-        result = widget.close_pane(pane_id)
+        # Close the specific pane via event system to avoid circular dependency
+        result = request_pane_close(pane_id)
 
         if result:
-            logger.info(f"Closed pane {pane_id}")
+            logger.info(f"Closed pane {pane_id} via event system")
+            # Publish event for any other listeners
+            event_bus.publish(EventTypes.PANE_CLOSED, {"pane_id": pane_id})
         else:
-            logger.warning(f"Failed to close pane {pane_id}")
+            logger.warning(f"Failed to close pane {pane_id} via event system")
 
         return result
 
@@ -232,10 +248,12 @@ class WorkspacePaneManager:
             logger.warning("Cannot toggle pane numbers: no current split widget")
             return False
 
-        # Toggle the numbers
-        visible = widget.toggle_pane_numbers()
+        # Toggle the numbers via event system to avoid circular dependency
+        visible = request_pane_numbers_toggle()
 
-        logger.info(f"Pane numbers {'shown' if visible else 'hidden'}")
+        logger.info(f"Pane numbers {'shown' if visible else 'hidden'} via event system")
+        # Publish event for any other listeners
+        event_bus.publish(EventTypes.PANE_NUMBERS_TOGGLE, {"visible": visible})
         return visible
 
     def show_pane_numbers(self) -> bool:
@@ -252,10 +270,16 @@ class WorkspacePaneManager:
         if not widget:
             return False
 
-        # Show the numbers if not already visible
-        if hasattr(widget, "model") and not widget.model.show_pane_numbers:
-            widget.toggle_pane_numbers()
-            logger.info("Pane numbers shown")
+        # Show the numbers if not already visible via event system
+        current_state = request_pane_numbers_state()
+        if current_state is False:  # Only toggle if currently hidden
+            visible = request_pane_numbers_toggle()
+            if visible:
+                logger.info("Pane numbers shown via event system")
+                event_bus.publish(EventTypes.PANE_NUMBERS_SHOW, {"visible": True})
+                return True
+        elif current_state is True:
+            # Already visible
             return True
 
         return False
@@ -274,10 +298,16 @@ class WorkspacePaneManager:
         if not widget:
             return False
 
-        # Hide the numbers if currently visible
-        if hasattr(widget, "model") and widget.model.show_pane_numbers:
-            widget.toggle_pane_numbers()
-            logger.info("Pane numbers hidden")
+        # Hide the numbers if currently visible via event system
+        current_state = request_pane_numbers_state()
+        if current_state is True:  # Only toggle if currently visible
+            visible = request_pane_numbers_toggle()
+            if not visible:
+                logger.info("Pane numbers hidden via event system")
+                event_bus.publish(EventTypes.PANE_NUMBERS_HIDE, {"visible": False})
+                return True
+        elif current_state is False:
+            # Already hidden
             return True
 
         return False

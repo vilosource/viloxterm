@@ -12,6 +12,8 @@ from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMenu, QTabWidget, QVBoxLayout, QWidget
 
 from viloapp.core.commands.executor import execute_command
+from viloapp.core.events.event_bus import event_bus
+from viloapp.core.events.requests import UIRequest, UIResponse
 from viloapp.ui.factories import WidgetFactory
 from viloapp.ui.widgets.rename_editor import RenameEditor
 from viloapp.ui.widgets.split_pane_widget import SplitPaneWidget
@@ -48,6 +50,7 @@ class Workspace(QWidget):
         self.setup_ui()
         self.create_default_tab()
         self._setup_theme_observer()
+        self._setup_event_handlers()
         self._setup_workspace_observer()
 
     def setup_ui(self):
@@ -113,6 +116,12 @@ class Workspace(QWidget):
             # Subscribe to service events using Qt signal
             workspace_service.service_event.connect(self._on_workspace_event)
             logger.info("Workspace UI subscribed to WorkspaceService events")
+
+    def _setup_event_handlers(self):
+        """Set up event bus handlers for breaking circular dependencies."""
+        # Subscribe to UI requests that services need to send
+        event_bus.subscribe("ui.request", self._handle_ui_request)
+        logger.info("Workspace UI subscribed to event bus for request/response pattern")
 
     def _on_theme_changed(self, data):
         """Handle theme change notifications."""
@@ -182,6 +191,84 @@ class Workspace(QWidget):
         logger.info(f"UI reacting to pane focused: {data}")
         # The actual UI update logic would go here
         pass
+
+    def _handle_ui_request(self, request: UIRequest):
+        """Handle UI requests from services to break circular dependencies."""
+        response = UIResponse(request_id=request.request_id, success=False)
+
+        try:
+            if request.request_type == "pane.close":
+                pane_id = request.data.get("pane_id")
+                if pane_id:
+                    success = self._handle_pane_close_request(pane_id)
+                    response.success = success
+                    response.data = {"pane_id": pane_id}
+                else:
+                    response.error = "No pane_id provided"
+
+            elif request.request_type == "pane.numbers.toggle":
+                visible = self._handle_pane_numbers_toggle_request()
+                response.success = True
+                response.data = {"visible": visible}
+
+            elif request.request_type == "pane.numbers.state":
+                visible = self._handle_pane_numbers_state_request()
+                response.success = True
+                response.data = {"visible": visible}
+
+            elif request.request_type == "pane.split":
+                pane_id = request.data.get("pane_id")
+                orientation = request.data.get("orientation")
+                if pane_id and orientation:
+                    new_pane_id = self._handle_pane_split_request(pane_id, orientation)
+                    if new_pane_id:
+                        response.success = True
+                        response.data = {"new_pane_id": new_pane_id}
+                    else:
+                        response.error = "Failed to split pane"
+                else:
+                    response.error = "Missing pane_id or orientation"
+
+            else:
+                response.error = f"Unknown request type: {request.request_type}"
+
+        except Exception as e:
+            response.error = str(e)
+            logger.error(f"Error handling UI request {request.request_type}: {e}")
+
+        # Send response back through event bus
+        event_bus.publish("ui.response", response)
+
+    def _handle_pane_close_request(self, pane_id: str) -> bool:
+        """Handle request to close a pane."""
+        widget = self.get_current_split_widget()
+        if widget:
+            return widget.close_pane(pane_id)
+        return False
+
+    def _handle_pane_numbers_toggle_request(self) -> bool:
+        """Handle request to toggle pane numbers."""
+        widget = self.get_current_split_widget()
+        if widget:
+            return widget.toggle_pane_numbers()
+        return False
+
+    def _handle_pane_numbers_state_request(self) -> Optional[bool]:
+        """Handle request to get pane numbers state."""
+        widget = self.get_current_split_widget()
+        if widget and hasattr(widget, "model"):
+            return getattr(widget.model, "show_pane_numbers", None)
+        return None
+
+    def _handle_pane_split_request(self, pane_id: str, orientation: str) -> Optional[str]:
+        """Handle request to split a pane."""
+        widget = self.get_current_split_widget()
+        if widget:
+            if orientation == "horizontal":
+                return widget.split_horizontal(pane_id)
+            elif orientation == "vertical":
+                return widget.split_vertical(pane_id)
+        return None
 
     def _get_close_button_style(self):
         """Get the style for close buttons based on current theme."""
@@ -269,8 +356,7 @@ class Workspace(QWidget):
     def add_editor_tab(self, name: str = "Editor") -> int:
         """Add a new editor tab with split pane widget."""
         split_widget = WidgetFactory.create_split_pane_widget(
-            initial_type=WidgetType.TEXT_EDITOR,
-            parent=self
+            initial_type=WidgetType.TEXT_EDITOR, parent=self
         )
 
         # Connect split widget signals
@@ -301,8 +387,7 @@ class Workspace(QWidget):
     def add_terminal_tab(self, name: str = "Terminal") -> int:
         """Add a new terminal tab."""
         split_widget = WidgetFactory.create_split_pane_widget(
-            initial_type=WidgetType.TERMINAL,
-            parent=self
+            initial_type=WidgetType.TERMINAL, parent=self
         )
 
         # Connect signals
@@ -343,8 +428,7 @@ class Workspace(QWidget):
     def add_output_tab(self, name: str = "Output") -> int:
         """Add a new output tab."""
         split_widget = WidgetFactory.create_split_pane_widget(
-            initial_type=WidgetType.OUTPUT,
-            parent=self
+            initial_type=WidgetType.OUTPUT, parent=self
         )
 
         # Connect signals
@@ -390,7 +474,7 @@ class Workspace(QWidget):
             split_widget = WidgetFactory.create_split_pane_widget(
                 initial_type=widget_type,
                 initial_widget_id=widget_id,  # Pass the widget_id
-                parent=self
+                parent=self,
             )
 
             # Connect signals
@@ -434,6 +518,7 @@ class Workspace(QWidget):
             # UI only handles display of errors returned from business logic
             if show_message and result.error:
                 from viloapp.ui.qt_compat import QMessageBox
+
                 QMessageBox.information(self, "Cannot Close Tab", result.error)
             return
 
@@ -721,6 +806,7 @@ class Workspace(QWidget):
             # UI only handles display of errors returned from business logic
             if show_message and result.error:
                 from viloapp.ui.qt_compat import QMessageBox
+
                 QMessageBox.information(self, "Cannot Close Pane", result.error)
             return False
 

@@ -13,7 +13,7 @@ This document tracks the real-time progress of fixing architectural violations i
 | 3. Command Layer | ✅ COMPLETE | 2025-09-21 | 2025-09-21 | ✅ 4/4 | None |
 | 4. UI Cleanup | ✅ COMPLETE | 2025-09-21 | 2025-09-21 | ✅ 4/4 | None |
 | 5. MVC Fix | ✅ COMPLETE | 2025-09-21 | 2025-09-21 | ✅ 5/5 | None |
-| 6. Circular Deps | NOT STARTED | - | - | ⬜ 0/5 | None |
+| 6. Circular Deps | ✅ COMPLETE | 2025-09-21 | 2025-09-21 | ✅ 5/5 | None |
 | 7. Testing | NOT STARTED | - | - | ⬜ 0/5 | None |
 
 ## Violation Fixes Tracker
@@ -27,12 +27,12 @@ This document tracks the real-time progress of fixing architectural violations i
 - ✅ `theme_commands.py:342` - split_widget.model.change_pane_type() - FIXED use service interface
 - ✅ `pane_commands.py:247` - split_widget.model.change_pane_type() - FIXED use service interface
 
-### Circular Dependencies (0/3 Fixed)
-- ⬜ UI → Service → UI (split_horizontal)
-- ⬜ UI → Service → UI (split_vertical)
-- ⬜ UI → Service → UI (close_pane)
+### Circular Dependencies (3/3 Fixed)
+- ✅ UI → Service → UI (split_horizontal) - FIXED via event bus pattern
+- ✅ UI → Service → UI (split_vertical) - FIXED via event bus pattern
+- ✅ UI → Service → UI (close_pane) - FIXED via event bus pattern
 
-### Service Layer Violations (17/23 Fixed)
+### Service Layer Violations (23/23 Fixed)
 - ✅ `workspace_service.py:182` - Direct QTabWidget access - FIXED via model interface
 - ✅ `workspace_service.py:186` - Direct QTabWidget access - FIXED via model interface
 - ✅ `workspace_service.py:232` - Calling UI method - FIXED via model interface
@@ -52,10 +52,12 @@ This document tracks the real-time progress of fixing architectural violations i
 - ✅ `workspace_tab_manager.py:246` - Direct QTabWidget access - FIXED via model interface
 - ✅ `workspace_pane_manager.py:59` - Calling UI method - FIXED via model interface
 - ✅ `workspace_pane_manager.py:92` - Calling UI method - FIXED via model interface
-- ⬜ `workspace_pane_manager.py:124` - Calling UI method
-- ⬜ `workspace_pane_manager.py:157` - Calling UI method
-- ⬜ `workspace_pane_manager.py:203` - Accessing widget.model
-- ⬜ `workspace_pane_manager.py:254` - Accessing widget.model
+- ✅ `workspace_pane_manager.py:159` - Calling UI method - FIXED via event bus pattern
+- ✅ `workspace_pane_manager.py:197` - Calling UI method - FIXED via event bus pattern
+- ✅ `workspace_pane_manager.py:101` - Calling UI method (split) - FIXED via event bus pattern
+- ✅ `workspace_pane_manager.py:247` - Calling UI method (toggle) - FIXED via event bus pattern
+- ✅ `workspace_pane_manager.py:265` - Accessing widget.model - FIXED via event bus pattern
+- ✅ `workspace_pane_manager.py:293` - Accessing widget.model - FIXED via event bus pattern
 
 ### Business Logic in UI (2/12+ Fixed)
 - ✅ `workspace.py:354-360` - Tab close validation - FIXED via command pattern
@@ -275,7 +277,23 @@ After completing work:
 - ✅ Ready for Phase 6 circular dependency elimination
 
 ### Phase 6 Notes
--
+- ✅ Successfully eliminated ALL 3 critical circular dependencies in ViloxTerm architecture
+- ✅ Created comprehensive Event Bus system for breaking circular dependencies between services and UI
+- ✅ Implemented request/response pattern allowing services to request UI actions without direct calls
+- ✅ Fixed workspace_pane_manager.py Service→UI calls: close_pane(), split_horizontal(), split_vertical(), toggle_pane_numbers()
+- ✅ Fixed workspace_pane_manager.py widget.model direct access violations for pane number state
+- ✅ Added EventBus singleton with publish/subscribe pattern for one-way communication
+- ✅ Created UIRequest/UIResponse classes for async service-to-UI communication
+- ✅ Updated workspace.py UI layer to handle all pane-related requests (close, split, toggle numbers, state)
+- ✅ Established proper architectural flow: UI → Command → Service → Model → Event → UI (one-way)
+- ✅ All 23/23 Service Layer violations now fixed (6 additional violations fixed in Phase 6)
+- ✅ All 3/3 Circular Dependencies eliminated via event bus pattern
+- ✅ All 5/5 Phase 6 success criteria verified and met
+- ✅ Services no longer call UI methods directly - only through event bus requests
+- ✅ UI components properly handle requests and send responses asynchronously
+- ✅ Clean separation maintained: Services publish events, UI subscribes and reacts
+- ✅ Zero critical circular dependencies remaining in architecture
+- ✅ Ready for Phase 7 comprehensive testing and validation
 
 ### Phase 7 Notes
 -
