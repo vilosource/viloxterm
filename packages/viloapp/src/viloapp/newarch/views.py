@@ -6,14 +6,12 @@ They observe model changes and re-render as needed.
 NO business logic, NO state storage, just presentation.
 """
 
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Optional
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
-    QMenu,
     QPushButton,
     QSplitter,
     QTabWidget,
@@ -205,7 +203,7 @@ class PaneView(QWidget):
         context = CommandContext(model=self.model)
         self.command_registry.execute("pane.close", context, pane_id=self.pane.id)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event):  # noqa: N802
         """Handle mouse click for focus."""
         if event.button() == Qt.LeftButton:
             context = CommandContext(model=self.model)
@@ -253,7 +251,9 @@ class TreeView(QWidget):
         elif node.is_split() and node.first and node.second:
             # Render split as QSplitter
             splitter = QSplitter(
-                Qt.Horizontal if node.orientation and str(node.orientation).endswith("horizontal") else Qt.Vertical
+                Qt.Horizontal
+                if node.orientation and str(node.orientation).endswith("horizontal")
+                else Qt.Vertical
             )
 
             # Recursively render children
@@ -490,7 +490,7 @@ def create_test_app():
 
     # Create some test data
     tab1 = model.create_tab("Editor", WidgetType.EDITOR)
-    tab2 = model.create_tab("Terminal", WidgetType.TERMINAL)
+    model.create_tab("Terminal", WidgetType.TERMINAL)
 
     # Switch to first tab and split some panes
     model.set_active_tab(tab1)

@@ -6,7 +6,6 @@ This script tests all commands to ensure they work correctly
 with the model through the pure command interface.
 """
 
-
 from commands import (
     ChangeWidgetTypeCommand,
     ClosePaneCommand,

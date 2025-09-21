@@ -8,11 +8,10 @@ and respond to model changes without storing any state.
 
 import sys
 
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication
-
 from commands import CommandContext, CommandRegistry
 from model import WidgetType, WorkspaceModel
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QApplication
 from views import WorkspaceView
 
 
@@ -96,7 +95,9 @@ def validate_views():
     initial_tab_count = view.tab_widget.count()
 
     # Create another tab
-    result = registry.execute("tab.create", context, name="Terminal", widget_type=WidgetType.TERMINAL)
+    result = registry.execute(
+        "tab.create", context, name="Terminal", widget_type=WidgetType.TERMINAL
+    )
     assert result.success
     print_success("Created terminal tab")
 
@@ -178,7 +179,7 @@ def validate_views():
 
     # Create multiple tabs with different layouts
     for i in range(3):
-        tab_id = model3.create_tab(f"Tab {i+1}")
+        tab_id = model3.create_tab(f"Tab {i + 1}")
         model3.set_active_tab(tab_id)
 
         # Create different split patterns
