@@ -326,3 +326,7 @@ class AppWidgetManager:
     def __repr__(self) -> str:
         """String representation."""
         return f"AppWidgetManager({len(self._widgets)} widgets registered)"
+
+
+# Create and export singleton instance
+app_widget_manager = AppWidgetManager.get_instance()

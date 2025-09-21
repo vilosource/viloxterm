@@ -24,76 +24,57 @@ from viloapp.models.workspace_model import Pane, PaneNode, Tab, WidgetType, Work
 
 
 class WidgetFactory:
-    """Factory for creating actual widget instances."""
+    """Factory for creating actual widget instances through the plugin system."""
 
     @staticmethod
     def create(widget_type: WidgetType, pane_id: str) -> QWidget:
         """
-        Create a widget instance based on type.
+        Create a widget instance based on type using the plugin system.
 
-        This now creates real widgets instead of placeholders.
+        This properly uses AppWidgetManager to create widgets through plugins.
         """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
         try:
-            # Import real widget implementations
-            if widget_type == WidgetType.TERMINAL:
-                # Use the real terminal widget
-                from viloapp.ui.terminal.terminal_app_widget import TerminalAppWidget
+            # Get the AppWidgetManager instance
+            from viloapp.core.app_widget_manager import app_widget_manager
 
-                widget = TerminalAppWidget()
-                widget.setObjectName(f"terminal_{pane_id[:8]}")
-                return widget
+            # Create widget through the plugin system
+            widget = app_widget_manager.create_widget_by_type(widget_type, pane_id)
 
-            elif widget_type == WidgetType.EDITOR:
-                # Use the real editor widget
-                from viloapp.ui.widgets.editor_app_widget import EditorAppWidget
-
-                widget = EditorAppWidget()
-                widget.setObjectName(f"editor_{pane_id[:8]}")
-                return widget
-
-            elif widget_type == WidgetType.OUTPUT:
-                # For now, output can be a read-only text widget
-                from PySide6.QtWidgets import QTextEdit
-
-                widget = QTextEdit()
-                widget.setReadOnly(True)
-                widget.setObjectName(f"output_{pane_id[:8]}")
-                widget.setPlainText("Output panel\n")
-                widget.setStyleSheet(
-                    """
-                    QTextEdit {
-                        background-color: #1e1e1e;
-                        color: #cccccc;
-                        font-family: 'Consolas', 'Monaco', monospace;
-                        font-size: 12px;
-                        border: none;
-                    }
-                    """
+            if widget:
+                logger.debug(
+                    f"Created widget {widget_type.value} with id {pane_id} via plugin system"
                 )
                 return widget
-
             else:
-                # Fallback to a simple widget
-                widget = QWidget()
-                layout = QVBoxLayout(widget)
-                label = QLabel(f"Widget: {widget_type.value}")
-                label.setAlignment(Qt.AlignCenter)
-                layout.addWidget(label)
-                return widget
+                logger.warning(f"AppWidgetManager could not create widget for type {widget_type}")
 
         except ImportError as e:
-            # If real widgets aren't available, create a placeholder
-            import logging
+            logger.error(f"Could not import AppWidgetManager: {e}")
+        except Exception as e:
+            logger.error(f"Error creating widget through plugin system: {e}")
 
-            logger = logging.getLogger(__name__)
-            logger.warning(f"Could not import real widget for {widget_type}: {e}")
-
-            widget = QWidget()
-            layout = QVBoxLayout(widget)
-            label = QLabel(f"{widget_type.value.upper()} - Loading...")
-            label.setAlignment(Qt.AlignCenter)
-            layout.addWidget(label)
-            return widget
+        # Fallback to a placeholder widget if plugin system fails
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        label = QLabel(f"{widget_type.value.upper()}\n(Plugin not available)")
+        label.setAlignment(Qt.AlignCenter)
+        label.setStyleSheet(
+            """
+            QLabel {
+                background-color: #2d2d30;
+                color: #cccccc;
+                padding: 20px;
+                border: 1px dashed #555;
+            }
+            """
+        )
+        layout.addWidget(label)
+        widget.setObjectName(f"placeholder_{pane_id[:8]}")
+        return widget
 
 
 class PaneView(QWidget):
