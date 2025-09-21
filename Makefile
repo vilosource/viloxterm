@@ -62,8 +62,29 @@ run:
 	python main.py
 
 clean:
+	@echo "Cleaning build artifacts..."
+	# Clean Python cache and build artifacts
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	find . -type f -name "*.pyo" -delete 2>/dev/null || true
+	find . -type f -name ".coverage" -delete 2>/dev/null || true
+
+	# Clean package build directories
 	find . -type d -name "build" -path "*/packages/*" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "dist" -path "*/packages/*" -exec rm -rf {} + 2>/dev/null || true
-	rm -rf .pytest_cache .coverage htmlcov
+
+	# Clean root level build artifacts
+	rm -rf .coverage htmlcov
+	rm -rf ViloxTerm.dist
+	rm -rf squashfs-root
+	rm -rf docker-build-output
+	rm -f ViloxTerm*.AppImage
+	rm -f *.log
+	rm -f *.txt
+	rm -f pysidedeploy.spec
+
+	@echo "✓ Clean complete"

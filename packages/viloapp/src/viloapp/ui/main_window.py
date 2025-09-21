@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
 
     def initialize_services(self):
         """Initialize and register all services."""
-        from services import initialize_services
+        from viloapp.services import initialize_services
 
         # Initialize services with application components
         self.service_locator = initialize_services(
@@ -112,12 +112,8 @@ class MainWindow(QMainWindow):
 
         # Connect keyboard service signals
         self.keyboard_service.shortcut_triggered.connect(self._on_shortcut_triggered)
-        self.keyboard_service.chord_sequence_started.connect(
-            self._on_chord_sequence_started
-        )
-        self.keyboard_service.chord_sequence_cancelled.connect(
-            self._on_chord_sequence_cancelled
-        )
+        self.keyboard_service.chord_sequence_started.connect(self._on_chord_sequence_started)
+        self.keyboard_service.chord_sequence_cancelled.connect(self._on_chord_sequence_cancelled)
 
         # Add context providers
         self.keyboard_service.add_context_provider(self._get_ui_context)
@@ -165,9 +161,7 @@ class MainWindow(QMainWindow):
 
         logger = logging.getLogger(__name__)
         logger.info("Keyboard service initialized successfully")
-        logger.info(
-            f"Registered {commands_with_shortcuts} command shortcuts with keyboard service"
-        )
+        logger.info(f"Registered {commands_with_shortcuts} command shortcuts with keyboard service")
 
     def initialize_command_palette(self):
         """Initialize the command palette controller."""
@@ -176,9 +170,7 @@ class MainWindow(QMainWindow):
         from viloapp.ui.command_palette import CommandPaletteController
 
         # Create command palette controller
-        self.command_palette_controller = CommandPaletteController(
-            parent=self, main_window=self
-        )
+        self.command_palette_controller = CommandPaletteController(parent=self, main_window=self)
 
         # Connect palette signals to context updates
         self.command_palette_controller.palette_shown.connect(
@@ -268,9 +260,7 @@ class MainWindow(QMainWindow):
         return CommandContext(
             main_window=self,
             workspace=self.workspace,
-            active_widget=(
-                self.workspace.get_current_split_widget() if self.workspace else None
-            ),
+            active_widget=(self.workspace.get_current_split_widget() if self.workspace else None),
         )
 
     def execute_command(self, command_id: str, **kwargs):
@@ -346,7 +336,7 @@ class MainWindow(QMainWindow):
             if "RenderWidgetHostViewQtDelegateWidget" not in child.__class__.__name__:
                 self._install_filters_recursively(child)
 
-    def eventFilter(self, obj, event) -> bool:
+    def eventFilter(self, obj, event) -> bool:  # noqa: N802
         """
         Filter events to intercept shortcuts.
         This ensures shortcuts work even when other widgets have focus.
@@ -365,9 +355,7 @@ class MainWindow(QMainWindow):
             logger.debug(f"eventFilter received KeyPress from {obj.__class__.__name__}")
 
             # Let keyboard service handle the event first
-            if hasattr(
-                self, "keyboard_service"
-            ) and self.keyboard_service.handle_key_event(event):
+            if hasattr(self, "keyboard_service") and self.keyboard_service.handle_key_event(event):
                 # Event was handled by keyboard service - stop propagation
                 logger.debug("Event handled by keyboard service via eventFilter")
                 return True
@@ -375,7 +363,7 @@ class MainWindow(QMainWindow):
         # Let the event continue to the target widget
         return False
 
-    def keyPressEvent(self, event: QKeyEvent) -> None:
+    def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802
         """Handle key press events for keyboard shortcuts."""
         import logging
 
@@ -385,9 +373,7 @@ class MainWindow(QMainWindow):
         )
 
         # Let keyboard service handle the event first
-        if hasattr(self, "keyboard_service") and self.keyboard_service.handle_key_event(
-            event
-        ):
+        if hasattr(self, "keyboard_service") and self.keyboard_service.handle_key_event(event):
             # Event was handled by keyboard service
             logger.debug("Event handled by keyboard service")
             return
@@ -524,7 +510,7 @@ class MainWindow(QMainWindow):
         """Reset application to default state - delegate to action manager."""
         return self.action_manager.reset_app_state()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event):  # noqa: N802
         """Handle close event - delegate to state manager."""
         self.state_manager.close_event_handler(event)
 
