@@ -1,19 +1,39 @@
 """
-Stub for widget_state.
+Widget state management for lifecycle and state tracking.
 
-Temporary stub while transitioning to new architecture.
+This module provides the WidgetState enum and related functionality
+for managing widget lifecycle states.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from enum import Enum
+from typing import Any, Dict, Optional, Set
+
+
+class WidgetState(Enum):
+    """
+    Widget lifecycle states.
+
+    These states represent the lifecycle of a widget from creation
+    to destruction.
+    """
+
+    CREATED = "created"  # Widget instance created but not initialized
+    INITIALIZING = "initializing"  # Widget is being initialized
+    READY = "ready"  # Widget is ready for use
+    SUSPENDED = "suspended"  # Widget is temporarily suspended
+    ERROR = "error"  # Widget is in error state
+    DESTROYING = "destroying"  # Widget is being destroyed
+    DESTROYED = "destroyed"  # Widget has been destroyed
 
 
 @dataclass
-class WidgetState:
-    """Stub for widget state."""
+class WidgetStateData:
+    """Container for widget state data (separate from lifecycle state)."""
 
     widget_id: str
     widget_type: str
+    state: WidgetState = WidgetState.CREATED
     state_data: Dict[str, Any] = None
 
     def __post_init__(self):
@@ -38,22 +58,22 @@ class WidgetState:
 
 
 class WidgetStateManager:
-    """Stub for widget state manager."""
+    """Manager for widget states."""
 
     def __init__(self):
         self.states = {}
 
-    def get_state(self, widget_id: str) -> Optional[WidgetState]:
+    def get_state(self, widget_id: str) -> Optional[WidgetStateData]:
         """Get state for a widget."""
         return self.states.get(widget_id)
 
-    def set_state(self, widget_id: str, state: WidgetState):
+    def set_state(self, widget_id: str, state: WidgetStateData):
         """Set state for a widget."""
         self.states[widget_id] = state
 
-    def create_state(self, widget_id: str, widget_type: str) -> WidgetState:
+    def create_state(self, widget_id: str, widget_type: str) -> WidgetStateData:
         """Create a new state for a widget."""
-        state = WidgetState(widget_id, widget_type)
+        state = WidgetStateData(widget_id, widget_type)
         self.states[widget_id] = state
         return state
 
@@ -68,11 +88,28 @@ class WidgetStateManager:
 
 
 class WidgetStateValidator:
-    """Stub for widget state validator."""
+    """Validator for widget state transitions."""
+
+    # Define valid state transitions
+    VALID_TRANSITIONS: Dict[WidgetState, Set[WidgetState]] = {
+        WidgetState.CREATED: {WidgetState.INITIALIZING, WidgetState.DESTROYING},
+        WidgetState.INITIALIZING: {WidgetState.READY, WidgetState.ERROR, WidgetState.DESTROYING},
+        WidgetState.READY: {WidgetState.SUSPENDED, WidgetState.ERROR, WidgetState.DESTROYING},
+        WidgetState.SUSPENDED: {WidgetState.READY, WidgetState.ERROR, WidgetState.DESTROYING},
+        WidgetState.ERROR: {WidgetState.INITIALIZING, WidgetState.DESTROYING},
+        WidgetState.DESTROYING: {WidgetState.DESTROYED},
+        WidgetState.DESTROYED: set(),  # Terminal state
+    }
+
+    @classmethod
+    def is_valid_transition(cls, from_state: WidgetState, to_state: WidgetState) -> bool:
+        """Check if a state transition is valid."""
+        valid_states = cls.VALID_TRANSITIONS.get(from_state, set())
+        return to_state in valid_states
 
     @staticmethod
-    def validate(state: WidgetState) -> bool:
-        """Validate a widget state."""
+    def validate(state: WidgetStateData) -> bool:
+        """Validate a widget state data object."""
         return state is not None and state.widget_id and state.widget_type
 
     @staticmethod
