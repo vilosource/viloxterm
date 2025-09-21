@@ -1,5 +1,5 @@
 {
-  "id": "viloxterm",
+  "id": "terminal",
   "name": "ViloxTerm Terminal",
   "version": "1.0.0",
   "description": "Professional terminal emulator plugin for ViloxTerm",
@@ -7,9 +7,36 @@
   "license": "MIT",
   "main": "src/viloxterm/plugin.py",
   "entry_point": "viloxterm.plugin:TerminalPlugin",
-  "dependencies": {
-    "viloapp-sdk": ">=1.0.0"
-  },
+  "dependencies": [
+    "viloapp-sdk>=1.0.0"
+  ],
+  "permissions": [
+    {
+      "category": "system",
+      "scope": "execute",
+      "resource": "shell_commands"
+    },
+    {
+      "category": "filesystem",
+      "scope": "read",
+      "resource": "/home/*"
+    },
+    {
+      "category": "filesystem",
+      "scope": "write",
+      "resource": "/home/*"
+    },
+    {
+      "category": "ui",
+      "scope": "read",
+      "resource": "*"
+    },
+    {
+      "category": "ui",
+      "scope": "write",
+      "resource": "*"
+    }
+  ],
   "activation_events": [
     "onCommand:terminal.new",
     "onCommand:terminal.open",

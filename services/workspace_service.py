@@ -41,6 +41,9 @@ class WorkspaceService(Service):
         self._tab_manager = WorkspaceTabManager(workspace, self._widget_registry)
         self._pane_manager = WorkspacePaneManager(workspace)
 
+        # Initialize widget factories for plugins
+        self._widget_factories = {}
+
     def get_workspace(self):
         """Get the workspace instance."""
         return self._workspace
@@ -67,6 +70,7 @@ class WorkspaceService(Service):
         """Cleanup service resources."""
         self._workspace = None
         self._widget_registry.clear()
+        self._widget_factories.clear()
         super().cleanup()
 
     # ============= Widget Registry Operations (Delegated) =============
@@ -560,6 +564,28 @@ class WorkspaceService(Service):
         """Navigate to the previous pane in the current tab."""
         self.validate_initialized()
         return self._pane_manager.navigate_to_previous_pane()
+
+    # ============= Plugin Widget Factory Methods =============
+
+    def register_widget_factory(self, widget_id: str, factory: Any) -> None:
+        """Register a widget factory (for plugins)."""
+        self._widget_factories[widget_id] = factory
+        logger.info(f"Registered widget factory: {widget_id}")
+
+    def create_widget(self, widget_id: str, instance_id: str) -> Optional[Any]:
+        """Create a widget using registered factory."""
+        if widget_id in self._widget_factories:
+            factory = self._widget_factories[widget_id]
+            # Handle both IWidget and direct factory functions
+            if hasattr(factory, 'create_instance'):
+                return factory.create_instance(instance_id)
+            elif callable(factory):
+                return factory(instance_id)
+        return None
+
+    def get_widget_factories(self) -> dict[str, Any]:
+        """Get all registered widget factories."""
+        return self._widget_factories.copy()
 
     # ============= Utility Methods =============
 

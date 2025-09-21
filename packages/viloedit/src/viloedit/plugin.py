@@ -193,8 +193,10 @@ class EditorPlugin(IPlugin):
 
     def _new_file(self, args: Dict[str, Any]) -> Any:
         """Create a new file."""
-        # Create editor widget
-        editor = self.widget_factory.create_widget()
+        # Create editor widget with unique instance ID
+        import uuid
+        instance_id = f"editor_{uuid.uuid4().hex[:8]}"
+        editor = self.widget_factory.create_instance(instance_id)
 
         # Add to workspace
         workspace_service = self.context.get_service("workspace")
@@ -215,8 +217,10 @@ class EditorPlugin(IPlugin):
             )
 
         if file_path:
-            # Create editor widget
-            editor = self.widget_factory.create_widget()
+            # Create editor widget with unique instance ID
+            import uuid
+            instance_id = f"editor_{uuid.uuid4().hex[:8]}"
+            editor = self.widget_factory.create_instance(instance_id)
             editor.load_file(file_path)
 
             # Track open editor

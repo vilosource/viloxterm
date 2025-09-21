@@ -69,6 +69,76 @@ except ImportError as e:
 # Legacy registration removed - no longer needed
 
 
+def initialize_plugins(window):
+    """Initialize plugin system after main window is ready."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        service_locator = window.service_locator
+        from services.plugin_service import PluginService
+        plugin_service = service_locator.get(PluginService)
+
+        if not plugin_service:
+            logger.error("PluginService not found")
+            return
+
+        plugin_manager = plugin_service.get_plugin_manager()
+        if not plugin_manager:
+            logger.error("PluginManager not found")
+            return
+
+        # Create widget bridge
+        from core.plugin_system.widget_bridge import PluginWidgetBridge
+        from services.workspace_service import WorkspaceService
+
+        workspace_service = service_locator.get(WorkspaceService)
+        if workspace_service:
+            widget_bridge = PluginWidgetBridge(workspace_service)
+            plugin_service._widget_bridge = widget_bridge
+
+            # Get all discovered plugins from registry
+            registry = plugin_manager.registry
+            all_plugins = {}
+            for plugin_info in registry.get_all_plugins():
+                all_plugins[plugin_info.metadata.id] = plugin_info
+
+            logger.info(f"Found {len(all_plugins)} plugins to process")
+
+            # Load and activate each plugin
+            for plugin_id, plugin_info in all_plugins.items():
+                logger.info(f"Processing plugin: {plugin_id}")
+
+                # Skip built-in plugins (they're handled differently)
+                if plugin_id in ['core-commands', 'core-themes']:
+                    logger.info(f"Skipping built-in plugin: {plugin_id}")
+                    continue
+
+                # Load the plugin
+                if plugin_manager.load_plugin(plugin_id):
+                    logger.info(f"Loaded plugin: {plugin_id}")
+
+                    # Activate the plugin
+                    if plugin_manager.activate_plugin(plugin_id):
+                        logger.info(f"Activated plugin: {plugin_id}")
+
+                        # Get the plugin instance
+                        plugin = plugin_manager.get_plugin(plugin_id)
+                        if plugin:
+                            # Register widget factory if available
+                            if hasattr(plugin, 'widget_factory'):
+                                widget_bridge.register_plugin_widget(plugin.widget_factory)
+                                logger.info(f"Registered widget factory for: {plugin_id}")
+                    else:
+                        logger.error(f"Failed to activate plugin: {plugin_id}")
+                else:
+                    logger.error(f"Failed to load plugin: {plugin_id}")
+
+            logger.info("Plugin system initialization complete")
+    except Exception as e:
+        logger.error(f"Failed to initialize plugins: {e}", exc_info=True)
+
+
 def main():
     """Initialize and run the application."""
     # Parse command line args (app_config already imported at top)
@@ -136,6 +206,9 @@ def main():
         window = MainWindow()
 
     window.show()
+
+    # Initialize plugin system after window is ready
+    initialize_plugins(window)
 
     # Run application
     sys.exit(app.exec())

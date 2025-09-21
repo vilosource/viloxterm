@@ -1,0 +1,135 @@
+{
+  "id": "editor",
+  "name": "ViloEdit Code Editor",
+  "version": "1.0.0",
+  "description": "Professional code editor plugin with syntax highlighting",
+  "author": "ViloxTerm Team",
+  "license": "MIT",
+  "main": "src/viloedit/plugin.py",
+  "entry_point": "viloedit.plugin:EditorPlugin",
+  "dependencies": [
+    "viloapp-sdk>=1.0.0"
+  ],
+  "permissions": [
+    {
+      "category": "filesystem",
+      "scope": "read",
+      "resource": "/home/*"
+    },
+    {
+      "category": "filesystem",
+      "scope": "write",
+      "resource": "/home/*"
+    },
+    {
+      "category": "ui",
+      "scope": "read",
+      "resource": "*"
+    },
+    {
+      "category": "ui",
+      "scope": "write",
+      "resource": "*"
+    }
+  ],
+  "activation_events": [
+    "onCommand:editor.new",
+    "onCommand:editor.open",
+    "onLanguage:python",
+    "onLanguage:javascript",
+    "workspaceContains:**/*.py"
+  ],
+  "contributes": {
+    "widgets": [
+      {
+        "id": "editor",
+        "factory": "viloedit.widget:EditorWidgetFactory"
+      }
+    ],
+    "commands": [
+      {
+        "id": "editor.new",
+        "title": "New File",
+        "category": "Editor"
+      },
+      {
+        "id": "editor.open",
+        "title": "Open File",
+        "category": "Editor"
+      },
+      {
+        "id": "editor.save",
+        "title": "Save File",
+        "category": "Editor"
+      },
+      {
+        "id": "editor.saveAs",
+        "title": "Save As...",
+        "category": "Editor"
+      },
+      {
+        "id": "editor.close",
+        "title": "Close Editor",
+        "category": "Editor"
+      }
+    ],
+    "languages": [
+      {
+        "id": "python",
+        "extensions": [".py", ".pyw"],
+        "aliases": ["Python", "py"]
+      },
+      {
+        "id": "javascript",
+        "extensions": [".js", ".jsx"],
+        "aliases": ["JavaScript", "js"]
+      },
+      {
+        "id": "json",
+        "extensions": [".json"],
+        "aliases": ["JSON"]
+      },
+      {
+        "id": "markdown",
+        "extensions": [".md", ".markdown"],
+        "aliases": ["Markdown", "md"]
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "editor.save",
+        "key": "ctrl+s"
+      },
+      {
+        "command": "editor.open",
+        "key": "ctrl+o"
+      },
+      {
+        "command": "editor.new",
+        "key": "ctrl+n"
+      }
+    ],
+    "configuration": {
+      "editor.font.size": {
+        "type": "number",
+        "default": 12,
+        "description": "Editor font size"
+      },
+      "editor.font.family": {
+        "type": "string",
+        "default": "monospace",
+        "description": "Editor font family"
+      },
+      "editor.line.numbers": {
+        "type": "boolean",
+        "default": true,
+        "description": "Show line numbers"
+      },
+      "editor.highlight.current.line": {
+        "type": "boolean",
+        "default": true,
+        "description": "Highlight current line"
+      }
+    }
+  }
+}

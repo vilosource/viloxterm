@@ -31,7 +31,7 @@ class TerminalPlugin(IPlugin):
     def get_metadata(self) -> PluginMetadata:
         """Get plugin metadata."""
         return PluginMetadata(
-            id="terminal",
+            id="viloxterm",
             name="ViloxTerm Terminal",
             version="1.0.0",
             description="Professional terminal emulator with full xterm compatibility",
@@ -283,7 +283,7 @@ class TerminalPlugin(IPlugin):
         workspace_service = self.context.get_service("workspace")
         if workspace_service:
             # Create terminal widget
-            widget = self.widget_factory.create_widget()
+            widget = self.widget_factory.create_instance(f"terminal_{id(self)}")
 
             # Add to workspace
             workspace_service.add_widget(widget, "terminal", "main")
@@ -357,7 +357,7 @@ class TerminalPlugin(IPlugin):
             session_id = self.session_manager.create_session(profile)
 
             # Create terminal widget
-            widget = self.widget_factory.create_widget()
+            widget = self.widget_factory.create_instance(f"terminal_{id(self)}")
             widget.session_id = session_id
 
             # Apply settings

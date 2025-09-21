@@ -169,7 +169,37 @@ class SplitPaneModel:
             except Exception as e:
                 logger.error(f"Factory failed for {widget_type}: {e}")
 
-        # Final fallback to built-in types
+        # Try plugin widget factories
+        try:
+            from services.service_locator import ServiceLocator
+            from services.workspace_service import WorkspaceService
+
+            service_locator = ServiceLocator.get_instance()
+            workspace_service = service_locator.get(WorkspaceService)
+
+            if workspace_service:
+                # Map widget types to plugin widget IDs
+                plugin_widget_id = None
+                if widget_type == WidgetType.TERMINAL:
+                    plugin_widget_id = "terminal"
+                elif widget_type == WidgetType.TEXT_EDITOR:
+                    plugin_widget_id = "editor"
+
+                if plugin_widget_id:
+                    plugin_widget = workspace_service.create_widget(plugin_widget_id, widget_id)
+                    if plugin_widget:
+                        logger.info(f"Created plugin widget: {plugin_widget_id} -> {widget_id}")
+                        # Special handling for terminal signals
+                        if widget_type == WidgetType.TERMINAL and hasattr(plugin_widget, "pane_close_requested"):
+                            plugin_widget.pane_close_requested.connect(
+                                lambda: self.on_terminal_close_requested(widget_id)
+                            )
+                        return plugin_widget
+
+        except Exception as e:
+            logger.debug(f"Plugin widget creation failed: {e}")
+
+        # Final fallback to built-in types (temporary)
         if widget_type == WidgetType.TERMINAL:
             terminal_widget = TerminalAppWidget(widget_id)
             terminal_widget.pane_close_requested.connect(

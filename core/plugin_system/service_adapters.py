@@ -21,12 +21,39 @@ class CommandServiceAdapter(IService):
         return result.value if result.success else None
 
     def register_command(self, command_id: str, handler: callable) -> None:
-        # This would need implementation in command registry
-        pass
+        """Register a command with the command registry."""
+        from core.commands.registry import command_registry
+        from core.commands.base import Command, CommandContext, CommandResult
+
+        # Create wrapper that converts plugin handler to command handler
+        def command_wrapper(context: CommandContext) -> CommandResult:
+            try:
+                # Convert CommandContext to plugin args
+                plugin_args = {
+                    'workspace': context.workspace,
+                    'active_widget': context.active_widget,
+                    **context.args
+                }
+                result = handler(plugin_args)
+                return CommandResult(success=True, value=result)
+            except Exception as e:
+                return CommandResult(success=False, error=str(e))
+
+        # Create Command instance
+        command = Command(
+            id=command_id,
+            title=command_id.replace('.', ' ').title(),
+            category="Plugin",
+            handler=command_wrapper
+        )
+
+        # Register with command registry
+        command_registry.register(command)
 
     def unregister_command(self, command_id: str) -> None:
-        # This would need implementation in command registry
-        pass
+        """Unregister a command from the command registry."""
+        from core.commands.registry import command_registry
+        command_registry.unregister(command_id)
 
 class ConfigurationServiceAdapter(IService):
     """Adapter for configuration service."""
@@ -47,8 +74,15 @@ class ConfigurationServiceAdapter(IService):
         self.settings_service.set(key, value)
 
     def on_change(self, key: str, callback: callable) -> None:
-        # This would need signal connection
-        pass
+        """Subscribe to configuration changes."""
+        if hasattr(self.settings_service, 'setting_changed'):
+            # Connect to settings service signal
+            self.settings_service.setting_changed.connect(
+                lambda k, v: callback(v) if k == key else None
+            )
+        else:
+            # Settings service doesn't support change notifications
+            pass
 
 class WorkspaceServiceAdapter(IService):
     """Adapter for workspace service."""
@@ -63,16 +97,69 @@ class WorkspaceServiceAdapter(IService):
         return "1.0.0"
 
     def open_file(self, path: str) -> None:
-        # Implementation would open file in editor
-        pass
+        """Open file in editor."""
+        try:
+            # Use workspace service to open file
+            if hasattr(self.workspace_service, 'open_file'):
+                self.workspace_service.open_file(path)
+            else:
+                # Fallback: create new editor tab with file
+                from ui.widgets.widget_registry import WidgetType
+                widget_id = f"editor_{path.split('/')[-1]}"
+                if hasattr(self.workspace_service, 'add_tab'):
+                    self.workspace_service.add_tab(widget_id, WidgetType.TEXT_EDITOR, title=path.split('/')[-1])
+        except Exception as e:
+            print(f"Failed to open file {path}: {e}")
 
     def get_active_editor(self) -> Optional[Any]:
-        # Return active editor widget
-        return None
+        """Return active editor widget."""
+        try:
+            if hasattr(self.workspace_service, 'get_active_widget'):
+                widget = self.workspace_service.get_active_widget()
+                if widget and hasattr(widget, 'widget_type'):
+                    from ui.widgets.widget_registry import WidgetType
+                    if widget.widget_type == WidgetType.TEXT_EDITOR:
+                        return widget
+            return None
+        except Exception as e:
+            print(f"Failed to get active editor: {e}")
+            return None
 
     def create_pane(self, widget: Any, position: str) -> None:
-        # Create new pane with widget
-        pass
+        """Create new pane with widget."""
+        try:
+            if hasattr(self.workspace_service, 'workspace'):
+                workspace = self.workspace_service.workspace
+                # Implementation depends on workspace structure
+                if hasattr(workspace, 'split_pane'):
+                    workspace.split_pane(widget, position)
+                elif hasattr(self.workspace_service, 'split_current_pane'):
+                    # Alternative method
+                    self.workspace_service.split_current_pane(position)
+        except Exception as e:
+            print(f"Failed to create pane: {e}")
+
+    def register_widget_factory(self, widget_id: str, factory: Any) -> None:
+        """Register a widget factory (for plugins)."""
+        try:
+            if hasattr(self.workspace_service, 'register_widget_factory'):
+                self.workspace_service.register_widget_factory(widget_id, factory)
+            else:
+                print(f"WorkspaceService doesn't support widget factory registration")
+        except Exception as e:
+            print(f"Failed to register widget factory {widget_id}: {e}")
+
+    def create_widget(self, widget_id: str, instance_id: str) -> Optional[Any]:
+        """Create a widget using registered factory."""
+        try:
+            if hasattr(self.workspace_service, 'create_widget'):
+                return self.workspace_service.create_widget(widget_id, instance_id)
+            else:
+                print(f"WorkspaceService doesn't support widget creation")
+                return None
+        except Exception as e:
+            print(f"Failed to create widget {widget_id}: {e}")
+            return None
 
 class ThemeServiceAdapter(IService):
     """Adapter for theme service."""

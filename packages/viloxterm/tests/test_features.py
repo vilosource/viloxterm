@@ -238,13 +238,11 @@ class TestTerminalSettingsManager:
 
     def test_get_setting(self):
         """Test getting individual setting."""
-        # Mock config service to return None for all gets
-        self.mock_config.get.return_value = None
-
+        # Test getting existing setting
         value = self.manager.get_setting("font_size")
-        assert value == 14  # default value
+        assert value == 14  # default value from TerminalSettings
 
-        # Test with default
+        # Test with default for nonexistent setting
         value = self.manager.get_setting("nonexistent", "default")
         assert value == "default"
 

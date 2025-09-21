@@ -1,7 +1,7 @@
 """Tests for editor plugin."""
 
 import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, patch
 from pathlib import Path
 
 from viloedit.plugin import EditorPlugin
@@ -47,9 +47,13 @@ class TestEditorPlugin:
         assert self.mock_context.get_service.called
         assert self.plugin.context == self.mock_context
 
-    def test_new_file_command(self):
+    @patch('viloedit.widget.CodeEditor')
+    def test_new_file_command(self, mock_editor_class):
         """Test new file command."""
         # Setup mocks
+        mock_editor = Mock()
+        mock_editor_class.return_value = mock_editor
+
         workspace_service = Mock()
         self.mock_context.get_service.return_value = workspace_service
         self.plugin.context = self.mock_context
@@ -61,8 +65,13 @@ class TestEditorPlugin:
         assert result["success"] is True
         workspace_service.add_widget.assert_called_once()
 
-    def test_open_file_command(self):
+    @patch('viloedit.widget.CodeEditor')
+    def test_open_file_command(self, mock_editor_class):
         """Test open file command."""
+        # Setup mocks
+        mock_editor = Mock()
+        mock_editor_class.return_value = mock_editor
+
         # Create a test file
         test_file = Path("test_file.py")
         test_file.write_text("print('hello world')")
@@ -80,6 +89,7 @@ class TestEditorPlugin:
             assert result["success"] is True
             assert result["path"] == str(test_file)
             workspace_service.add_widget.assert_called_once()
+            mock_editor.load_file.assert_called_once_with(str(test_file))
 
         finally:
             if test_file.exists():

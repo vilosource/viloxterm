@@ -121,7 +121,10 @@ def initialize_services(
 
     # Register plugin manager
     if plugin_manager:
-        locator.register('plugin_manager', plugin_manager)
+        from services.plugin_service import PluginService
+        plugin_service = PluginService()
+        plugin_service.set_plugin_manager(plugin_manager)
+        locator.register(PluginService, plugin_service)
 
     # Create theme provider after theme service is registered
     from ui.themes.theme_provider import ThemeProvider

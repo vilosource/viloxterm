@@ -30,6 +30,12 @@ class PluginDiscovery:
         # Discover from entry points
         plugins.extend(self.discover_entry_points())
 
+        # Discover from local packages directory (development)
+        packages_dir = self._get_packages_dir()
+        if packages_dir.exists():
+            logger.debug(f"Discovering plugins from packages directory: {packages_dir}")
+            plugins.extend(self.discover_from_directory(packages_dir))
+
         # Discover from plugin directories
         plugins.extend(self.discover_from_directory(self._get_user_plugin_dir()))
         plugins.extend(self.discover_from_directory(self._get_system_plugin_dir()))
@@ -266,6 +272,30 @@ class PluginDiscovery:
             pass
 
         return Path("entry_points") / entry_point.name
+
+    def _get_packages_dir(self) -> Path:
+        """Get local packages directory for development."""
+        # Get the project root (where main.py is)
+        from pathlib import Path
+        import os
+
+        # Try to find packages directory relative to current file
+        current_file = Path(__file__)
+        project_root = current_file.parent.parent.parent  # core/plugin_system/.. -> project root
+        packages_dir = project_root / "packages"
+
+        if packages_dir.exists():
+            return packages_dir
+
+        # Fallback: check if VILOAPP_ROOT env var is set
+        if "VILOAPP_ROOT" in os.environ:
+            root = Path(os.environ["VILOAPP_ROOT"])
+            packages_dir = root / "packages"
+            if packages_dir.exists():
+                return packages_dir
+
+        # Return non-existent path (will be skipped)
+        return Path("packages")
 
     def _get_user_plugin_dir(self) -> Path:
         """Get user plugin directory."""

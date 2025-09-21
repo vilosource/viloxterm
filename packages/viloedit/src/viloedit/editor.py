@@ -6,7 +6,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QPlainTextEdit, QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Signal, Qt, QRect, QSize
-from PySide6.QtGui import QTextOption, QPainter, QColor, QTextFormat, QFont
+from PySide6.QtGui import QTextOption, QPainter, QColor, QTextFormat, QFont, QKeySequence, QShortcut
 
 try:
     from pygments import highlight
@@ -41,6 +41,8 @@ class CodeEditor(QPlainTextEdit):
     file_saved = Signal(str)  # file_path
     modified_changed = Signal(bool)  # is_modified
     cursor_position_changed = Signal(int, int)  # line, column
+    find_requested = Signal()  # find dialog requested
+    replace_requested = Signal()  # replace dialog requested
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -48,8 +50,10 @@ class CodeEditor(QPlainTextEdit):
         self.file_path: Optional[Path] = None
         self.lexer = None
         self.line_number_area = LineNumberArea(self)
+        self.find_replace_widget = None
 
         self.setup_editor()
+        self.setup_shortcuts()
         self.update_line_number_area_width(0)
 
         # Connect signals
@@ -84,6 +88,17 @@ class CodeEditor(QPlainTextEdit):
 
         # Initial highlight
         self.highlight_current_line()
+
+    def setup_shortcuts(self):
+        """Setup keyboard shortcuts."""
+        # Find and replace shortcuts
+        find_shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
+        find_shortcut.activated.connect(self.show_find_dialog)
+
+        replace_shortcut = QShortcut(QKeySequence("Ctrl+H"), self)
+        replace_shortcut.activated.connect(self.show_replace_dialog)
+
+        # Find next/previous shortcuts (F3/Shift+F3) will be handled by the find widget
 
     def line_number_area_width(self):
         """Calculate line number area width."""
@@ -235,3 +250,26 @@ class CodeEditor(QPlainTextEdit):
 
         # Update line number area
         self.line_number_area.update()
+
+    def show_find_dialog(self):
+        """Show find dialog."""
+        self.find_requested.emit()
+
+    def show_replace_dialog(self):
+        """Show find/replace dialog."""
+        self.replace_requested.emit()
+
+    def get_find_replace_widget(self):
+        """Get or create the find/replace widget."""
+        if self.find_replace_widget is None:
+            # Import here to avoid circular imports
+            from .features.find_replace import FindReplace
+            self.find_replace_widget = FindReplace(self.parent())
+            self.find_replace_widget.set_editor(self)
+        return self.find_replace_widget
+
+    def set_find_replace_widget(self, widget):
+        """Set an external find/replace widget."""
+        self.find_replace_widget = widget
+        if widget:
+            widget.set_editor(self)

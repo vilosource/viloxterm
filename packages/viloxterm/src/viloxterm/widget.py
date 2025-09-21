@@ -129,29 +129,110 @@ class TerminalWidget(QWidget):
 class TerminalWidgetFactory(IWidget):
     """Factory for creating terminal widgets."""
 
-    def get_metadata(self) -> WidgetMetadata:
-        return WidgetMetadata(
-            id="terminal",
-            title="Terminal",
-            position=WidgetPosition.MAIN,
-            icon="terminal",
-            closable=True,
-            singleton=False
-        )
+    def __init__(self):
+        self._instances = {}  # Track widget instances
 
-    def create_widget(self, parent: Optional[QWidget] = None) -> QWidget:
-        """Create a new terminal widget."""
-        widget = TerminalWidget(parent)
+    def get_widget_id(self) -> str:
+        """Get unique widget identifier."""
+        return "terminal"
+
+    def get_title(self) -> str:
+        """Get widget display title."""
+        return "Terminal"
+
+    def get_icon(self) -> Optional[str]:
+        """Get widget icon identifier."""
+        return "terminal"
+
+    def create_instance(self, instance_id: str) -> QWidget:
+        """Create widget instance with unique ID."""
+        widget = TerminalWidget()
         widget.start_terminal()
+        self._instances[instance_id] = widget
+
+        # Connect to session ended signal to clean up
+        widget.session_ended.connect(lambda session_id: self._on_session_ended(instance_id))
+
         return widget
+
+    def destroy_instance(self, instance_id: str) -> None:
+        """Destroy widget instance and clean up resources."""
+        if instance_id in self._instances:
+            widget = self._instances[instance_id]
+            widget.stop_terminal()  # Clean shutdown of terminal
+            widget.deleteLater()
+            del self._instances[instance_id]
+
+    def handle_command(self, command: str, args: Dict[str, Any]) -> Any:
+        """Handle widget-specific commands."""
+        if command == "create_terminal":
+            # Create new terminal with specific parameters
+            cwd = args.get("cwd")
+            cmd = args.get("command")
+            instance_id = args.get("instance_id", "default")
+
+            widget = TerminalWidget()
+            widget.start_terminal(command=cmd, cwd=cwd)
+            self._instances[instance_id] = widget
+            return widget
+
+        elif command == "send_text":
+            # Send text to specific terminal instance
+            instance_id = args.get("instance_id")
+            text = args.get("text", "")
+
+            if instance_id in self._instances:
+                widget = self._instances[instance_id]
+                widget.send_text(text)
+                return True
+            return False
+
+        elif command == "clear_terminal":
+            # Clear specific terminal instance
+            instance_id = args.get("instance_id")
+
+            if instance_id in self._instances:
+                widget = self._instances[instance_id]
+                widget.clear_terminal()
+                return True
+            return False
+
+        elif command == "focus_terminal":
+            # Focus specific terminal instance
+            instance_id = args.get("instance_id")
+
+            if instance_id in self._instances:
+                widget = self._instances[instance_id]
+                widget.focus_terminal()
+                return True
+            return False
+
+        elif command == "get_sessions":
+            # Get list of active sessions
+            return {
+                instance_id: {
+                    "session_id": widget.session_id,
+                    "active": widget.session_id is not None
+                }
+                for instance_id, widget in self._instances.items()
+            }
+
+        return None
 
     def get_state(self) -> Dict[str, Any]:
         """Get widget state for persistence."""
         return {
-            "session_count": len(terminal_server.sessions)
+            "session_count": len(terminal_server.sessions),
+            "instance_count": len(self._instances)
         }
 
     def restore_state(self, state: Dict[str, Any]) -> None:
         """Restore widget state."""
-        # Terminal sessions are not restored
+        # Terminal sessions are not restored by design
+        # They should be recreated fresh on startup
+        pass
+
+    def _on_session_ended(self, instance_id: str) -> None:
+        """Handle session ended for cleanup."""
+        # This could trigger cleanup or recreation logic
         pass

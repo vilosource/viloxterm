@@ -25,10 +25,10 @@ def test_terminal_widget_creation(qapp):
 def test_terminal_widget_factory():
     """Test terminal widget factory."""
     factory = TerminalWidgetFactory()
-    metadata = factory.get_metadata()
 
-    assert metadata.id == "terminal"
-    assert metadata.title == "Terminal"
+    assert factory.get_widget_id() == "terminal"
+    assert factory.get_title() == "Terminal"
+    assert factory.get_icon() == "terminal"
 
 
 @patch('viloxterm.widget.terminal_server')

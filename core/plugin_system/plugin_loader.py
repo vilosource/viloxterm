@@ -109,6 +109,25 @@ class PluginLoader:
             # Activate plugin
             plugin_info.instance.activate(context)
 
+            # Register plugin widgets if it has any
+            if hasattr(plugin_info.instance, 'get_widgets'):
+                try:
+                    from services.service_locator import ServiceLocator
+                    from services.plugin_service import PluginService
+
+                    service_locator = ServiceLocator.get_instance()
+                    plugin_service = service_locator.get(PluginService)
+
+                    if plugin_service:
+                        for widget in plugin_info.instance.get_widgets():
+                            plugin_service.register_widget(widget)
+                            logger.info(f"Registered widget from plugin {plugin_id}: {widget.get_widget_id()}")
+                    else:
+                        logger.warning(f"PluginService not available for widget registration from {plugin_id}")
+
+                except Exception as e:
+                    logger.error(f"Failed to register widgets from plugin {plugin_id}: {e}")
+
             # Update state
             self.registry.update_state(plugin_id, LifecycleState.ACTIVATED)
 
@@ -249,21 +268,24 @@ class PluginLoader:
                 # Use the actual package name from the plugin directory
                 # For viloxterm package: viloxterm.plugin
                 # For viloedit package: viloedit.plugin
-                package_src = plugin_path / "src"
-                if package_src.exists():
+                package_src = plugin_path.parent  # This should be the src directory
+                if package_src.exists() and package_src.name == "src":
                     # Add src directory to path if not already there
                     if str(package_src) not in sys.path:
                         sys.path.insert(0, str(package_src))
 
                     # Import the actual package module
                     try:
-                        # Get package name from directory
-                        package_name = plugin_id.replace('-', '_')
+                        # Get package name from the actual directory name (not plugin_id)
+                        package_name = plugin_path.name
+                        logger.debug(f"Attempting to import {package_name}.plugin from path {package_src}")
                         module = importlib.import_module(f"{package_name}.plugin")
                         self.loaded_modules[plugin_id] = f"{package_name}.plugin"
+                        logger.info(f"Successfully imported {package_name}.plugin")
                         return module
                     except ImportError as e:
                         logger.error(f"Failed to import {package_name}.plugin: {e}")
+                        logger.debug(f"Falling back to standalone module loading")
 
                 # Fallback: load as standalone module
                 module_name = f"plugin_{plugin_id}"
