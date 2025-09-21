@@ -1,0 +1,1 @@
+"""Architecture tests to enforce design principles."""
