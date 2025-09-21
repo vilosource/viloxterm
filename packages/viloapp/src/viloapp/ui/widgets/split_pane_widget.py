@@ -322,28 +322,41 @@ class SplitPaneWidget(QWidget):
 
     def __init__(
         self,
+        model: SplitPaneModel = None,
+        controller: 'SplitPaneController' = None,
         initial_widget_type: WidgetType = WidgetType.TEXT_EDITOR,
         initial_widget_id: Optional[str] = None,
         parent=None,
     ):
         """
-        Initialize the split pane widget.
+        Initialize the split pane widget with dependency injection.
 
         Args:
-            initial_widget_type: Type of widget for initial pane
-            initial_widget_id: Optional ID for the initial widget (for singleton tracking)
+            model: Injected model for MVC pattern (optional for backward compatibility)
+            controller: Injected controller for MVC pattern (optional for backward compatibility)
+            initial_widget_type: Type of widget for initial pane (legacy parameter)
+            initial_widget_id: Optional ID for the initial widget (for singleton tracking, legacy parameter)
             parent: Parent widget
         """
         super().__init__(parent)
 
-        # Create the model - it owns all AppWidgets
-        self.model = SplitPaneModel(initial_widget_type, initial_widget_id)
+        # Dependency injection with backward compatibility fallback
+        if model is not None:
+            self.model = model
+        else:
+            # Legacy fallback - create model internally
+            self.model = SplitPaneModel(initial_widget_type, initial_widget_id)
 
         # Initialize helper components
         self.theme_manager = get_theme_manager()
         self.drag_handler = get_drag_handler()
         self.view_helpers = get_view_helpers()
-        self.controller = SplitPaneController(self.model, self)
+
+        if controller is not None:
+            self.controller = controller
+        else:
+            # Legacy fallback - create controller internally
+            self.controller = SplitPaneController(self.model, self)
 
         # Connect controller signals to our signals
         self.controller.pane_added.connect(self.pane_added)
@@ -449,6 +462,17 @@ class SplitPaneWidget(QWidget):
             params: Action parameters
         """
         self.controller.handle_widget_action(leaf_id, action, params)
+
+    def _on_model_changed(self):
+        """
+        Observer method for model changes.
+
+        This method is called whenever the model emits a change signal,
+        ensuring the view stays in sync with the model state without
+        directly manipulating the model.
+        """
+        # React to model changes by updating the view
+        self.refresh_view()
 
     def refresh_view(self):
         """

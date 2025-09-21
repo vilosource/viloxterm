@@ -7,7 +7,7 @@ go through commands, enforcing the Command Pattern and maintaining single respon
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from viloapp.core.commands.base import CommandResult
 from viloapp.core.commands.executor import execute_command

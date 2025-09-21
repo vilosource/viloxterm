@@ -324,7 +324,7 @@ class TestServiceProxyPermissions:
         # This test will need to be implemented after ServiceProxy is updated
         # For now, we'll create a mock scenario
 
-        manager = PermissionManager()
+        PermissionManager()
         services = {}
 
         # Create proxy with permission checking (to be implemented)

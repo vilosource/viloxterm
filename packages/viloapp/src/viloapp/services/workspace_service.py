@@ -12,9 +12,6 @@ from typing import Any, Optional
 from viloapp.core.settings.app_defaults import get_default_split_direction
 from viloapp.interfaces.model_interfaces import IWorkspaceModel
 from viloapp.models import (
-    ClosePaneRequest,
-    OperationResult,
-    PaneFocusRequest,
     SplitPaneRequest,
     WidgetStateUpdateRequest,
     WidgetType,
@@ -49,8 +46,8 @@ class WorkspaceService(Service):
 
         # Initialize specialized managers (legacy support)
         self._widget_registry = WorkspaceWidgetRegistry()
-        self._tab_manager = WorkspaceTabManager(workspace, self._widget_registry) if workspace else None
-        self._pane_manager = WorkspacePaneManager(workspace) if workspace else None
+        self._tab_manager = WorkspaceTabManager(workspace, self._widget_registry, model) if workspace else None
+        self._pane_manager = WorkspacePaneManager(workspace, model) if workspace else None
 
         # Initialize widget factories for plugins
         self._widget_factories = {}
@@ -73,8 +70,10 @@ class WorkspaceService(Service):
         # Update all managers with new workspace
         if self._tab_manager:
             self._tab_manager.set_workspace(workspace)
+            self._tab_manager.set_model(self._model)
         if self._pane_manager:
             self._pane_manager.set_workspace(workspace)
+            self._pane_manager.set_model(self._model)
 
     def initialize(self, context: dict[str, Any]) -> None:
         """Initialize the service with application context."""

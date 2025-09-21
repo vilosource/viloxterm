@@ -20,16 +20,18 @@ class WorkspaceTabManager:
     state management.
     """
 
-    def __init__(self, workspace=None, widget_registry=None):
+    def __init__(self, workspace=None, widget_registry=None, model=None):
         """
         Initialize the tab manager.
 
         Args:
-            workspace: The workspace instance
+            workspace: The workspace instance (legacy)
             widget_registry: The widget registry instance
+            model: The workspace model interface (preferred)
         """
         self._workspace = workspace
         self._widget_registry = widget_registry
+        self._model = model
         self._tab_counter = 0
 
     def set_workspace(self, workspace):
@@ -39,6 +41,10 @@ class WorkspaceTabManager:
     def set_widget_registry(self, widget_registry):
         """Set the widget registry instance."""
         self._widget_registry = widget_registry
+
+    def set_model(self, model):
+        """Set the workspace model interface."""
+        self._model = model
 
     def add_editor_tab(self, name: Optional[str] = None) -> int:
         """
@@ -51,21 +57,30 @@ class WorkspaceTabManager:
             Index of the created tab
 
         Raises:
-            RuntimeError: If workspace is not available
+            RuntimeError: If neither model nor workspace is available
         """
-        if not self._workspace:
-            raise RuntimeError("Workspace not available")
-
         # Auto-generate name if not provided
         if not name:
             self._tab_counter += 1
             name = f"Editor {self._tab_counter}"
 
-        # Add the tab
-        index = self._workspace.add_editor_tab(name)
-
-        logger.info(f"Added editor tab '{name}' at index {index}")
-        return index
+        # Prefer model interface over direct UI access
+        if self._model:
+            result = self._model.add_tab(name, "editor")
+            if result.success and result.data:
+                index = result.data.get("index", -1)
+                logger.info(f"Added editor tab '{name}' at index {index} via model")
+                return index
+            else:
+                logger.error(f"Failed to add editor tab via model: {result.error}")
+                raise RuntimeError(f"Failed to add editor tab: {result.error}")
+        elif self._workspace:
+            # Fallback to direct UI access (legacy)
+            index = self._workspace.add_editor_tab(name)
+            logger.info(f"Added editor tab '{name}' at index {index} via workspace")
+            return index
+        else:
+            raise RuntimeError("Neither model nor workspace is available")
 
     def add_terminal_tab(self, name: Optional[str] = None) -> int:
         """
@@ -78,21 +93,30 @@ class WorkspaceTabManager:
             Index of the created tab
 
         Raises:
-            RuntimeError: If workspace is not available
+            RuntimeError: If neither model nor workspace is available
         """
-        if not self._workspace:
-            raise RuntimeError("Workspace not available")
-
         # Auto-generate name if not provided
         if not name:
             self._tab_counter += 1
             name = f"Terminal {self._tab_counter}"
 
-        # Add the tab
-        index = self._workspace.add_terminal_tab(name)
-
-        logger.info(f"Added terminal tab '{name}' at index {index}")
-        return index
+        # Prefer model interface over direct UI access
+        if self._model:
+            result = self._model.add_tab(name, "terminal")
+            if result.success and result.data:
+                index = result.data.get("index", -1)
+                logger.info(f"Added terminal tab '{name}' at index {index} via model")
+                return index
+            else:
+                logger.error(f"Failed to add terminal tab via model: {result.error}")
+                raise RuntimeError(f"Failed to add terminal tab: {result.error}")
+        elif self._workspace:
+            # Fallback to direct UI access (legacy)
+            index = self._workspace.add_terminal_tab(name)
+            logger.info(f"Added terminal tab '{name}' at index {index} via workspace")
+            return index
+        else:
+            raise RuntimeError("Neither model nor workspace is available")
 
     def add_app_widget(self, widget_type, widget_id: str, name: Optional[str] = None) -> bool:
         """
@@ -136,40 +160,80 @@ class WorkspaceTabManager:
         Returns:
             True if tab was closed
         """
-        if not self._workspace:
+        # Prefer model interface over direct UI access
+        if self._model:
+            state = self._model.get_state()
+
+            # Get current index from model if not provided
+            if index is None:
+                index = state.active_tab_index
+
+            if index < 0 or index >= len(state.tabs):
+                return False
+
+            # Get tab info before closing
+            tab_name = state.tabs[index].name
+
+            # Clean up widget registry if available
+            if self._widget_registry:
+                # Find and remove any widgets at this tab index, update others
+                widgets_to_remove = []
+                for widget_id, tab_idx in self._widget_registry.get_all_widgets().items():
+                    if tab_idx == index:
+                        widgets_to_remove.append(widget_id)
+
+                # Remove widgets that were in the closed tab and update indices
+                for widget_id in widgets_to_remove:
+                    self._widget_registry.unregister_widget(widget_id)
+                    logger.debug(f"Removed widget {widget_id} from registry (tab closed)")
+
+                # Update registry for remaining tabs
+                self._widget_registry.update_registry_after_tab_close(index)
+
+            # Close the tab via model
+            result = self._model.close_tab(index)
+            if result.success:
+                logger.info(f"Closed tab '{tab_name}' at index {index} via model")
+                return True
+            else:
+                logger.error(f"Failed to close tab via model: {result.error}")
+                return False
+
+        elif self._workspace:
+            # Fallback to direct UI access (legacy)
+            # Get current index if not provided
+            if index is None:
+                index = self._workspace.tab_widget.currentIndex()
+
+            if index < 0:
+                return False
+
+            # Get tab name before closing
+            tab_name = self._workspace.tab_widget.tabText(index) if self._workspace.tab_widget else None
+
+            # Clean up widget registry if available
+            if self._widget_registry:
+                # Find and remove any widgets at this tab index, update others
+                widgets_to_remove = []
+                for widget_id, tab_idx in self._widget_registry.get_all_widgets().items():
+                    if tab_idx == index:
+                        widgets_to_remove.append(widget_id)
+
+                # Remove widgets that were in the closed tab and update indices
+                for widget_id in widgets_to_remove:
+                    self._widget_registry.unregister_widget(widget_id)
+                    logger.debug(f"Removed widget {widget_id} from registry (tab closed)")
+
+                # Update registry for remaining tabs
+                self._widget_registry.update_registry_after_tab_close(index)
+
+            # Close the tab
+            self._workspace.close_tab(index)
+
+            logger.info(f"Closed tab '{tab_name}' at index {index} via workspace")
+            return True
+        else:
             return False
-
-        # Get current index if not provided
-        if index is None:
-            index = self._workspace.tab_widget.currentIndex()
-
-        if index < 0:
-            return False
-
-        # Get tab name before closing
-        tab_name = self._workspace.tab_widget.tabText(index) if self._workspace.tab_widget else None
-
-        # Clean up widget registry if available
-        if self._widget_registry:
-            # Find and remove any widgets at this tab index, update others
-            widgets_to_remove = []
-            for widget_id, tab_idx in self._widget_registry.get_all_widgets().items():
-                if tab_idx == index:
-                    widgets_to_remove.append(widget_id)
-
-            # Remove widgets that were in the closed tab and update indices
-            for widget_id in widgets_to_remove:
-                self._widget_registry.unregister_widget(widget_id)
-                logger.debug(f"Removed widget {widget_id} from registry (tab closed)")
-
-            # Update registry for remaining tabs
-            self._widget_registry.update_registry_after_tab_close(index)
-
-        # Close the tab
-        self._workspace.close_tab(index)
-
-        logger.info(f"Closed tab '{tab_name}' at index {index}")
-        return True
 
     def get_current_tab_index(self) -> int:
         """
@@ -178,9 +242,14 @@ class WorkspaceTabManager:
         Returns:
             Current tab index, or -1 if no tabs
         """
-        if not self._workspace:
+        # Prefer model interface over direct UI access
+        if self._model:
+            state = self._model.get_state()
+            return state.active_tab_index if state.tabs else -1
+        elif self._workspace:
+            return self._workspace.tab_widget.currentIndex()
+        else:
             return -1
-        return self._workspace.tab_widget.currentIndex()
 
     def get_tab_count(self) -> int:
         """
@@ -189,9 +258,14 @@ class WorkspaceTabManager:
         Returns:
             Number of tabs
         """
-        if not self._workspace:
+        # Prefer model interface over direct UI access
+        if self._model:
+            state = self._model.get_state()
+            return len(state.tabs)
+        elif self._workspace:
+            return self._workspace.tab_widget.count()
+        else:
             return 0
-        return self._workspace.tab_widget.count()
 
     def switch_to_tab(self, index: int) -> bool:
         """
@@ -203,14 +277,17 @@ class WorkspaceTabManager:
         Returns:
             True if switched successfully
         """
-        if not self._workspace:
+        # Prefer model interface over direct UI access
+        if self._model:
+            result = self._model.set_active_tab(index)
+            return result.success
+        elif self._workspace:
+            if 0 <= index < self._workspace.tab_widget.count():
+                self._workspace.tab_widget.setCurrentIndex(index)
+                return True
             return False
-
-        if 0 <= index < self._workspace.tab_widget.count():
-            self._workspace.tab_widget.setCurrentIndex(index)
-            return True
-
-        return False
+        else:
+            return False
 
     def focus_widget(self, widget_id: str) -> bool:
         """

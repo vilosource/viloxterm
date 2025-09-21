@@ -6,14 +6,15 @@ These tests ensure that commands only call service methods and never bypass
 the service layer to call UI components directly.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from viloapp.core.commands.base import CommandContext, CommandResult
 from viloapp.core.commands.builtin.pane_commands import (
+    close_pane_command,
     split_pane_horizontal_command,
     split_pane_vertical_command,
-    close_pane_command,
 )
 from viloapp.services.workspace_service import WorkspaceService
 
@@ -138,7 +139,7 @@ class TestViolationDetection:
         violations = []
 
         # Check pane_commands.py for direct workspace calls
-        with open('/home/kuja/GitHub/viloapp/packages/viloapp/src/viloapp/core/commands/builtin/pane_commands.py', 'r') as f:
+        with open('/home/kuja/GitHub/viloapp/packages/viloapp/src/viloapp/core/commands/builtin/pane_commands.py') as f:
             content = f.read()
 
             # These are the violations that need fixing:
@@ -153,4 +154,4 @@ class TestViolationDetection:
 
         # Document violations for tracking
         if violations:
-            pytest.fail(f"Command Pattern violations detected:\n" + "\n".join(violations))
+            pytest.fail("Command Pattern violations detected:\n" + "\n".join(violations))

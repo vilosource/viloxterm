@@ -13,7 +13,7 @@ def test_event_bus_subscribe_emit():
         received_events.append(event)
 
     # Subscribe to event
-    subscription = bus.subscribe(EventType.PLUGIN_LOADED, handler)
+    bus.subscribe(EventType.PLUGIN_LOADED, handler)
 
     # Emit event
     event = PluginEvent(
@@ -50,7 +50,7 @@ def test_event_filtering():
 
     # Only matching event should be received
     assert len(received_events) == 1
-    assert received_events[0].data["important"] == True
+    assert received_events[0].data["important"]
 
 
 def test_event_priority():

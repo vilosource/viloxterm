@@ -115,9 +115,9 @@ class TestTerminalSessionManager:
     def test_list_sessions(self):
         """Test listing sessions."""
         # Create multiple sessions
-        session1 = self.manager.create_session(name="Session 1")
+        self.manager.create_session(name="Session 1")
         self.mock_server.create_session.return_value = "session_456"
-        session2 = self.manager.create_session(name="Session 2")
+        self.manager.create_session(name="Session 2")
 
         # List sessions
         sessions = self.manager.list_sessions()

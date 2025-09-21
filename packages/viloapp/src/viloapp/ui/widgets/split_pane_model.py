@@ -11,6 +11,8 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Callable, Optional, Union
 
+from PySide6.QtCore import QObject, Signal
+
 from viloapp.ui.terminal.terminal_app_widget import TerminalAppWidget
 from viloapp.ui.widgets.app_widget import AppWidget
 from viloapp.ui.widgets.editor_app_widget import EditorAppWidget
@@ -60,7 +62,7 @@ class SplitNode:
     parent: Optional["SplitNode"] = None
 
 
-class SplitPaneModel:
+class SplitPaneModel(QObject):
     """
     Model managing the split pane tree structure and AppWidgets.
 
@@ -72,10 +74,18 @@ class SplitPaneModel:
     All operations go through this model.
     """
 
+    # Signals for observer pattern
+    model_changed = Signal()
+    pane_added = Signal(str)  # pane_id
+    pane_removed = Signal(str)  # pane_id
+    active_pane_changed = Signal(str)  # pane_id
+    pane_split = Signal(str, str)  # original_pane_id, new_pane_id
+
     def __init__(
         self,
         initial_widget_type: WidgetType = WidgetType.PLACEHOLDER,
         initial_widget_id: Optional[str] = None,
+        parent=None,
     ):
         """
         Initialize with a single root leaf containing an AppWidget.
@@ -83,7 +93,10 @@ class SplitPaneModel:
         Args:
             initial_widget_type: Type of widget for initial pane
             initial_widget_id: Optional ID for the initial widget (for singleton tracking)
+            parent: Parent QObject for Qt object hierarchy
         """
+        super().__init__(parent)
+
         # Use provided ID or generate a new one
         widget_id = initial_widget_id or str(uuid.uuid4())[:8]
 
@@ -355,6 +368,11 @@ class SplitPaneModel:
         # Update pane indices after structural change
         self.update_pane_indices()
 
+        # Emit signals for observer pattern
+        self.pane_added.emit(new_leaf.id)
+        self.pane_split.emit(pane_id, new_leaf.id)
+        self.model_changed.emit()
+
         logger.info(f"Split complete: created new pane {new_leaf.id}")
         return new_leaf.id
 
@@ -422,6 +440,12 @@ class SplitPaneModel:
         # Update pane indices after structural change
         self.update_pane_indices()
 
+        # Emit signals for observer pattern
+        self.pane_removed.emit(pane_id)
+        if self.active_pane_id and self.active_pane_id != pane_id:
+            self.active_pane_changed.emit(self.active_pane_id)
+        self.model_changed.emit()
+
         logger.info(f"Pane {pane_id} closed successfully")
         return True
 
@@ -436,8 +460,14 @@ class SplitPaneModel:
             True if successful, False if pane not found
         """
         if pane_id in self.leaves:
+            old_active = self.active_pane_id
             self.active_pane_id = pane_id
             logger.debug(f"Active pane set to {pane_id}")
+
+            # Emit signal only if pane actually changed
+            if old_active != pane_id:
+                self.active_pane_changed.emit(pane_id)
+
             return True
         return False
 

@@ -190,7 +190,6 @@ def restore_state_command(context: CommandContext) -> CommandResult:
 def replace_with_terminal_command(context: CommandContext) -> CommandResult:
     """Replace current pane with terminal."""
     try:
-        from viloapp.ui.widgets.widget_registry import WidgetType
 
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
@@ -233,7 +232,6 @@ def replace_with_terminal_command(context: CommandContext) -> CommandResult:
 def replace_with_editor_command(context: CommandContext) -> CommandResult:
     """Replace current pane with text editor."""
     try:
-        from viloapp.ui.widgets.widget_registry import WidgetType
 
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:

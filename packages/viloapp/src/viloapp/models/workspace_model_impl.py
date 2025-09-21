@@ -385,7 +385,7 @@ class WorkspaceModelImpl(IWorkspaceModel):
 
             # Update pane tree to reflect split
             # For now, use a simple structure - can be enhanced later
-            split_config = SplitConfiguration(
+            SplitConfiguration(
                 orientation=request.orientation,
                 ratio=request.ratio,
                 left_pane_id=request.pane_id,
@@ -450,7 +450,7 @@ class WorkspaceModelImpl(IWorkspaceModel):
 
         try:
             # Remove pane
-            pane = active_tab.panes.pop(request.pane_id)
+            active_tab.panes.pop(request.pane_id)
 
             # Update active pane if necessary
             if active_tab.active_pane_id == request.pane_id:

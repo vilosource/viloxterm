@@ -9,9 +9,10 @@ from typing import Optional
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QMenu, QMessageBox, QTabWidget, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QMenu, QTabWidget, QVBoxLayout, QWidget
 
 from viloapp.core.commands.executor import execute_command
+from viloapp.ui.factories import WidgetFactory
 from viloapp.ui.widgets.rename_editor import RenameEditor
 from viloapp.ui.widgets.split_pane_widget import SplitPaneWidget
 from viloapp.ui.widgets.widget_registry import WidgetType
@@ -47,6 +48,7 @@ class Workspace(QWidget):
         self.setup_ui()
         self.create_default_tab()
         self._setup_theme_observer()
+        self._setup_workspace_observer()
 
     def setup_ui(self):
         """Initialize the workspace UI."""
@@ -98,9 +100,88 @@ class Workspace(QWidget):
         # The apply_theme() method will be called when needed
         pass
 
+    def _setup_workspace_observer(self):
+        """Set up observer for workspace service events."""
+        from viloapp.services.service_locator import ServiceLocator
+        from viloapp.services.workspace_service import WorkspaceService
+
+        # Get workspace service and subscribe to its events
+        service_locator = ServiceLocator.get_instance()
+        workspace_service = service_locator.get(WorkspaceService)
+
+        if workspace_service:
+            # Subscribe to service events using Qt signal
+            workspace_service.service_event.connect(self._on_workspace_event)
+            logger.info("Workspace UI subscribed to WorkspaceService events")
+
     def _on_theme_changed(self, data):
         """Handle theme change notifications."""
         self.update_close_button_styles()
+
+    def _on_workspace_event(self, event):
+        """Handle workspace service events - make UI reactive to model changes."""
+        try:
+            if event.name == "tab_added":
+                self._react_to_tab_added(event.data)
+            elif event.name == "tab_closed":
+                self._react_to_tab_closed(event.data)
+            elif event.name == "tab_switched":
+                self._react_to_tab_switched(event.data)
+            elif event.name == "tab_renamed":
+                self._react_to_tab_renamed(event.data)
+            elif event.name == "pane_split":
+                self._react_to_pane_split(event.data)
+            elif event.name == "pane_closed":
+                self._react_to_pane_closed(event.data)
+            elif event.name == "pane_focused":
+                self._react_to_pane_focused(event.data)
+            # Add more event handlers as needed
+        except Exception as e:
+            logger.error(f"Error handling workspace event {event.name}: {e}")
+
+    def _react_to_tab_added(self, data):
+        """React to tab being added via model."""
+        # UI should reflect the model change
+        # This would typically refresh the tab display
+        logger.info(f"UI reacting to tab added: {data}")
+        # The actual UI update logic would go here
+        pass
+
+    def _react_to_tab_closed(self, data):
+        """React to tab being closed via model."""
+        logger.info(f"UI reacting to tab closed: {data}")
+        # The actual UI update logic would go here
+        pass
+
+    def _react_to_tab_switched(self, data):
+        """React to tab being switched via model."""
+        logger.info(f"UI reacting to tab switched: {data}")
+        # The actual UI update logic would go here
+        pass
+
+    def _react_to_tab_renamed(self, data):
+        """React to tab being renamed via model."""
+        logger.info(f"UI reacting to tab renamed: {data}")
+        # The actual UI update logic would go here
+        pass
+
+    def _react_to_pane_split(self, data):
+        """React to pane being split via model."""
+        logger.info(f"UI reacting to pane split: {data}")
+        # The actual UI update logic would go here
+        pass
+
+    def _react_to_pane_closed(self, data):
+        """React to pane being closed via model."""
+        logger.info(f"UI reacting to pane closed: {data}")
+        # The actual UI update logic would go here
+        pass
+
+    def _react_to_pane_focused(self, data):
+        """React to pane being focused via model."""
+        logger.info(f"UI reacting to pane focused: {data}")
+        # The actual UI update logic would go here
+        pass
 
     def _get_close_button_style(self):
         """Get the style for close buttons based on current theme."""
@@ -187,7 +268,10 @@ class Workspace(QWidget):
 
     def add_editor_tab(self, name: str = "Editor") -> int:
         """Add a new editor tab with split pane widget."""
-        split_widget = SplitPaneWidget(initial_widget_type=WidgetType.TEXT_EDITOR)
+        split_widget = WidgetFactory.create_split_pane_widget(
+            initial_type=WidgetType.TEXT_EDITOR,
+            parent=self
+        )
 
         # Connect split widget signals
         split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(name, pane_id))
@@ -216,7 +300,10 @@ class Workspace(QWidget):
 
     def add_terminal_tab(self, name: str = "Terminal") -> int:
         """Add a new terminal tab."""
-        split_widget = SplitPaneWidget(initial_widget_type=WidgetType.TERMINAL)
+        split_widget = WidgetFactory.create_split_pane_widget(
+            initial_type=WidgetType.TERMINAL,
+            parent=self
+        )
 
         # Connect signals
         split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(name, pane_id))
@@ -255,7 +342,10 @@ class Workspace(QWidget):
 
     def add_output_tab(self, name: str = "Output") -> int:
         """Add a new output tab."""
-        split_widget = SplitPaneWidget(initial_widget_type=WidgetType.OUTPUT)
+        split_widget = WidgetFactory.create_split_pane_widget(
+            initial_type=WidgetType.OUTPUT,
+            parent=self
+        )
 
         # Connect signals
         split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(name, pane_id))
@@ -297,9 +387,10 @@ class Workspace(QWidget):
                 name = f"{widget_type.value.title()} Widget"
 
             # Create SplitPaneWidget with the specified widget type AND widget_id
-            split_widget = SplitPaneWidget(
-                initial_widget_type=widget_type,
+            split_widget = WidgetFactory.create_split_pane_widget(
+                initial_type=widget_type,
                 initial_widget_id=widget_id,  # Pass the widget_id
+                parent=self
             )
 
             # Connect signals
@@ -333,16 +424,20 @@ class Workspace(QWidget):
             return -1  # Return -1 on failure
 
     def close_tab(self, index: int, show_message=True):
-        """Close a tab."""
-        # Don't close the last tab
-        if self.tab_widget.count() <= 1:
-            if show_message:
-                QMessageBox.information(
-                    self, "Cannot Close Tab", "Cannot close the last remaining tab."
-                )
+        """Close a tab using command pattern."""
+        from viloapp.core.commands.executor import execute_command
+
+        # Use command pattern for proper business logic validation
+        result = execute_command("file.closeTab", index=index)
+
+        if not result.success:
+            # UI only handles display of errors returned from business logic
+            if show_message and result.error:
+                from viloapp.ui.qt_compat import QMessageBox
+                QMessageBox.information(self, "Cannot Close Tab", result.error)
             return
 
-        # Get tab data
+        # Get tab data for cleanup - business logic already validated above
         if index in self.tabs:
             tab_data = self.tabs[index]
 
@@ -616,31 +711,20 @@ class Workspace(QWidget):
                 widget.split_vertical(widget.active_pane_id)
 
     def close_active_pane(self, show_message=True):
-        """Close the active pane in the current tab."""
-        # Delegate to WorkspaceService for consistent code path
-        from viloapp.services.service_locator import ServiceLocator
-        from viloapp.services.workspace_service import WorkspaceService
+        """Close the active pane using command pattern."""
+        from viloapp.core.commands.executor import execute_command
 
-        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
-        if workspace_service:
-            return workspace_service.close_active_pane()
-        else:
-            # Fallback to direct method if service not available
-            widget = self.get_current_split_widget()
-            if widget and widget.active_pane_id:
-                if widget.get_pane_count() > 1:
-                    widget.close_pane(widget.active_pane_id)
-                    return True
-                else:
-                    # Only show message if requested (not during tests)
-                    if show_message:
-                        QMessageBox.information(
-                            self,
-                            "Cannot Close Pane",
-                            "Cannot close the last remaining pane in a tab.",
-                        )
-                    return False
+        # Use command pattern for proper business logic validation
+        result = execute_command("workbench.action.closeActivePane")
+
+        if not result.success:
+            # UI only handles display of errors returned from business logic
+            if show_message and result.error:
+                from viloapp.ui.qt_compat import QMessageBox
+                QMessageBox.information(self, "Cannot Close Pane", result.error)
             return False
+
+        return True
 
     def get_current_tab_info(self) -> Optional[dict]:
         """Get information about the current tab."""

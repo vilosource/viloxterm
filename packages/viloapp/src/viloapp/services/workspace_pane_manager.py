@@ -24,19 +24,25 @@ class WorkspacePaneManager:
     state management.
     """
 
-    def __init__(self, workspace=None):
+    def __init__(self, workspace=None, model=None):
         """
         Initialize the pane manager.
 
         Args:
-            workspace: The workspace instance
+            workspace: The workspace instance (legacy)
+            model: The workspace model interface (preferred)
         """
         self._workspace = workspace
+        self._model = model
         self._pane_counter = 0
 
     def set_workspace(self, workspace):
         """Set the workspace instance."""
         self._workspace = workspace
+
+    def set_model(self, model):
+        """Set the workspace model interface."""
+        self._model = model
 
     def split_active_pane(self, orientation: Optional[str] = None) -> Optional[str]:
         """
@@ -48,35 +54,64 @@ class WorkspacePaneManager:
         Returns:
             ID of the new pane, or None if split failed
         """
-        if not self._workspace:
-            return None
-
         # Use default orientation if not specified
         if orientation is None:
             orientation = get_default_split_direction()
 
-        # Get current split widget
-        widget = self._workspace.get_current_split_widget()
-        if not widget or not widget.active_pane_id:
-            logger.warning("No active pane to split")
-            return None
+        # Prefer model interface over direct UI access
+        if self._model:
+            # Get the active pane from model
+            active_pane = self._model.get_active_pane()
+            if not active_pane:
+                logger.warning("No active pane to split")
+                return None
 
-        # Perform the split with default ratio
-        # Note: Current split methods don't support ratio parameter yet
-        # This will need to be added to SplitPaneWidget
-        if orientation == "horizontal":
-            new_id = widget.split_horizontal(widget.active_pane_id)
-        elif orientation == "vertical":
-            new_id = widget.split_vertical(widget.active_pane_id)
+            # Create split request
+            from viloapp.models.operations import SplitPaneRequest
+            request = SplitPaneRequest(
+                pane_id=active_pane.id,
+                orientation=orientation,
+                ratio=0.5
+            )
+
+            # Perform split via model
+            result = self._model.split_pane(request)
+            if result.success and result.data:
+                new_pane_id = result.data.get("new_pane_id")
+                if new_pane_id:
+                    self._pane_counter += 1
+                    logger.info(f"Split pane {orientation}ly via model, created pane {new_pane_id}")
+                    return new_pane_id
+            else:
+                logger.error(f"Failed to split pane via model: {result.error}")
+                return None
+
+        elif self._workspace:
+            # Fallback to direct UI access (legacy)
+            # Get current split widget
+            widget = self._workspace.get_current_split_widget()
+            if not widget or not widget.active_pane_id:
+                logger.warning("No active pane to split")
+                return None
+
+            # Perform the split with default ratio
+            # Note: Current split methods don't support ratio parameter yet
+            # This will need to be added to SplitPaneWidget
+            if orientation == "horizontal":
+                new_id = widget.split_horizontal(widget.active_pane_id)
+            elif orientation == "vertical":
+                new_id = widget.split_vertical(widget.active_pane_id)
+            else:
+                logger.error(f"Invalid split orientation: {orientation}")
+                return None
+
+            if new_id:
+                self._pane_counter += 1
+                logger.info(f"Split pane {orientation}ly via workspace, created pane {new_id}")
+
+            return new_id
         else:
-            logger.error(f"Invalid split orientation: {orientation}")
             return None
-
-        if new_id:
-            self._pane_counter += 1
-            logger.info(f"Split pane {orientation}ly, created pane {new_id}")
-
-        return new_id
 
     def close_active_pane(self) -> bool:
         """
@@ -85,27 +120,45 @@ class WorkspacePaneManager:
         Returns:
             True if pane was closed
         """
-        if not self._workspace:
+        # Prefer model interface over direct UI access
+        if self._model:
+            # Get the active pane from model
+            active_pane = self._model.get_active_pane()
+            if not active_pane:
+                logger.warning("No active pane to close")
+                return False
+
+            # Try to close via model
+            result = self._model.close_pane(active_pane.id)
+            if result.success:
+                logger.info(f"Closed pane {active_pane.id} via model")
+                return True
+            else:
+                logger.error(f"Failed to close pane via model: {result.error}")
+                return False
+
+        elif self._workspace:
+            # Fallback to direct UI access (legacy)
+            # Get current split widget
+            widget = self._workspace.get_current_split_widget()
+            if not widget or not widget.active_pane_id:
+                logger.warning("No active pane to close")
+                return False
+
+            # Can't close if it's the only pane
+            if widget.get_pane_count() <= 1:
+                logger.info("Cannot close the last pane")
+                return False
+
+            pane_id = widget.active_pane_id
+
+            # Close the pane
+            widget.close_pane(pane_id)
+
+            logger.info(f"Closed pane {pane_id} via workspace")
+            return True
+        else:
             return False
-
-        # Get current split widget
-        widget = self._workspace.get_current_split_widget()
-        if not widget or not widget.active_pane_id:
-            logger.warning("No active pane to close")
-            return False
-
-        # Can't close if it's the only pane
-        if widget.get_pane_count() <= 1:
-            logger.info("Cannot close the last pane")
-            return False
-
-        pane_id = widget.active_pane_id
-
-        # Close the pane
-        widget.close_pane(pane_id)
-
-        logger.info(f"Closed pane {pane_id}")
-        return True
 
     def close_pane(self, pane_id: str) -> bool:
         """

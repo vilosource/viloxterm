@@ -6,8 +6,9 @@ These tests verify that the Command Router correctly routes operations
 through the command system and enforces the Command Pattern.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from viloapp.core.commands.base import CommandResult
 from viloapp.core.commands.router import CommandRouter
@@ -141,13 +142,13 @@ class TestCommandRouter:
     def test_convenience_functions(self, mock_execute):
         """Test convenience functions work correctly."""
         from viloapp.core.commands.router import (
+            close_current_tab,
+            close_pane,
+            duplicate_current_tab,
+            new_editor_tab,
+            new_terminal_tab,
             split_horizontal,
             split_vertical,
-            close_pane,
-            new_terminal_tab,
-            new_editor_tab,
-            close_current_tab,
-            duplicate_current_tab
         )
 
         # Configure mock

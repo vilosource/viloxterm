@@ -164,7 +164,7 @@ def test_plugin_with_custom_service(mock_plugin_host):
     custom_service = CustomService()
     mock_plugin_host.add_service(custom_service)
 
-    plugin = ExamplePlugin()
+    ExamplePlugin()
     context = mock_plugin_host.create_context()
 
     # Test plugin can access custom service

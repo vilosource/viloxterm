@@ -37,21 +37,27 @@ class SplitPaneController(QObject):
     pane_split = Signal(str, str)  # original_pane_id, new_pane_id
     widget_ready_for_focus = Signal(str)  # pane_id
 
-    def __init__(self, model: SplitPaneModel, parent=None):
+    def __init__(self, model: SplitPaneModel, view=None, parent=None):
         """
         Initialize the controller.
 
         Args:
             model: The split pane model to control
+            view: Optional view reference for MVC pattern
             parent: Parent QObject
         """
         super().__init__(parent)
         self.model = model
+        self.view = view
         self._focus_callbacks: dict[str, Callable] = {}
         self._terminal_close_callback: Optional[Callable] = None
 
         # Set up terminal close callback
         self.model.set_terminal_close_callback(self._handle_terminal_close)
+
+    def set_view(self, view):
+        """Set the view reference for MVC pattern."""
+        self.view = view
 
     def handle_widget_action(self, leaf_id: str, action: str, params: dict) -> bool:
         """

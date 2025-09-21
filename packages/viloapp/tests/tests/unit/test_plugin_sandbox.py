@@ -111,7 +111,7 @@ def test_plugin_sandbox_restart_limit():
     # Simulate multiple crashes
     exception = Exception("Plugin crashed")
 
-    for i in range(3):
+    for _i in range(3):
         sandbox.handle_plugin_crash(exception)
 
     # Should only restart up to the limit

@@ -233,7 +233,7 @@ class PluginRegistry:
                 return False
 
             with open(path) as f:
-                state_data = json.load(f)
+                json.load(f)
 
             # Note: This only loads metadata, not actual plugin instances
             # Actual loading happens through PluginLoader

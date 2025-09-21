@@ -118,7 +118,7 @@ class TestPluginIntegration:
             assert isinstance(state, dict)
 
             # Test command handling returns something
-            result = factory.handle_command("unknown_command", {})
+            factory.handle_command("unknown_command", {})
             # Should not raise exception
 
     def test_backward_compatibility_with_real_plugins(self):

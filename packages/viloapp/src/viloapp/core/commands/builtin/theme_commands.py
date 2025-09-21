@@ -293,7 +293,6 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
     """Replace current pane with theme editor."""
     try:
         from viloapp.services.workspace_service import WorkspaceService
-        from viloapp.ui.widgets.widget_registry import WidgetType
 
         # Get the pane and pane_id from context
         pane = context.args.get("pane")
@@ -314,7 +313,6 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
         if not current_tab or not hasattr(current_tab, "model"):
             return CommandResult(success=False, error="No split widget available")
 
-        split_widget = current_tab
 
         # Try to get pane_id if not provided
         if not pane_id:

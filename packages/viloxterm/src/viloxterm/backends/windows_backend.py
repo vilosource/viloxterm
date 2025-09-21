@@ -252,7 +252,7 @@ class WindowsTerminalBackend(TerminalBackend):
         """Clean up resources for a terminal session."""
         # Stop read thread if exists
         if session.session_id in self._read_threads:
-            thread = self._read_threads.pop(session.session_id)
+            self._read_threads.pop(session.session_id)
             # Thread will stop when process dies
 
         # Clean up output queue
