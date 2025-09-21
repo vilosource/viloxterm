@@ -169,9 +169,7 @@ class SettingsAppWidget(AppWidget):
             ],
             start=1,
         ):
-            placeholder = self._create_loading_placeholder(
-                f"Loading {name} settings..."
-            )
+            placeholder = self._create_loading_placeholder(f"Loading {name} settings...")
             self._tabs.addTab(placeholder, name)
             self._tab_creators[idx] = creator
             self._tab_placeholders[idx] = placeholder
@@ -305,9 +303,7 @@ class SettingsAppWidget(AppWidget):
         tab_widget_layout = QHBoxLayout()
         tab_widget_layout.addWidget(QLabel("Default new tab:"))
         self._default_tab_combo = QComboBox()
-        self._default_tab_combo.addItems(
-            ["Terminal", "Editor", "Theme Editor", "Explorer"]
-        )
+        self._default_tab_combo.addItems(["Terminal", "Editor", "Theme Editor", "Explorer"])
         self._default_tab_combo.setItemData(0, "terminal")
         self._default_tab_combo.setItemData(1, "editor")
         self._default_tab_combo.setItemData(2, "theme_editor")
@@ -328,9 +324,7 @@ class SettingsAppWidget(AppWidget):
         self._tab_naming_input = QLineEdit()
         self._tab_naming_input.setPlaceholderText("{type} {index}")
         self._tab_naming_input.textChanged.connect(
-            lambda text: self._on_setting_changed(
-                "workspace.tab_auto_naming_pattern", text
-            )
+            lambda text: self._on_setting_changed("workspace.tab_auto_naming_pattern", text)
         )
         naming_layout.addWidget(self._tab_naming_input)
         workspace_layout.addLayout(naming_layout)
@@ -356,9 +350,7 @@ class SettingsAppWidget(AppWidget):
         self._create_default_radio = QRadioButton("Create default tab")
         self._create_default_radio.toggled.connect(
             lambda checked: (
-                self._on_setting_changed(
-                    "workspace.close_last_tab_behavior", "create_default"
-                )
+                self._on_setting_changed("workspace.close_last_tab_behavior", "create_default")
                 if checked
                 else None
             )
@@ -366,9 +358,7 @@ class SettingsAppWidget(AppWidget):
         self._close_window_radio = QRadioButton("Close window")
         self._close_window_radio.toggled.connect(
             lambda checked: (
-                self._on_setting_changed(
-                    "workspace.close_last_tab_behavior", "close_window"
-                )
+                self._on_setting_changed("workspace.close_last_tab_behavior", "close_window")
                 if checked
                 else None
             )
@@ -376,9 +366,7 @@ class SettingsAppWidget(AppWidget):
         self._do_nothing_radio = QRadioButton("Do nothing")
         self._do_nothing_radio.toggled.connect(
             lambda checked: (
-                self._on_setting_changed(
-                    "workspace.close_last_tab_behavior", "do_nothing"
-                )
+                self._on_setting_changed("workspace.close_last_tab_behavior", "do_nothing")
                 if checked
                 else None
             )
@@ -451,9 +439,7 @@ class SettingsAppWidget(AppWidget):
         # Focus new pane
         self._focus_new_pane_check = QCheckBox("Focus new pane after split")
         self._focus_new_pane_check.stateChanged.connect(
-            lambda state: self._on_setting_changed(
-                "pane.focus_new_on_split", state == Qt.Checked
-            )
+            lambda state: self._on_setting_changed("pane.focus_new_on_split", state == Qt.Checked)
         )
         pane_layout.addWidget(self._focus_new_pane_check)
 
@@ -496,9 +482,7 @@ class SettingsAppWidget(AppWidget):
 
         # Create Theme Editor without its own Apply/Save/Reset buttons
         # We'll use the main settings dialog buttons instead
-        self._theme_editor = ThemeEditorAppWidget(
-            parent=self, show_bottom_buttons=False
-        )
+        self._theme_editor = ThemeEditorAppWidget(parent=self, show_bottom_buttons=False)
 
         # Connect theme modified signal to update our buttons
         self._theme_editor.theme_modified.connect(self._on_theme_modified)
@@ -510,9 +494,7 @@ class SettingsAppWidget(AppWidget):
     def _create_keyboard_tab(self) -> QWidget:
         """Create the keyboard settings tab."""
         # For now, embed the existing Keyboard Shortcuts widget
-        return ShortcutConfigAppWidget(
-            widget_id=f"{self.widget_id}_shortcuts", parent=self
-        )
+        return ShortcutConfigAppWidget(widget_id=f"{self.widget_id}_shortcuts", parent=self)
 
     def _create_terminal_tab(self) -> QWidget:
         """Create the terminal settings tab."""
@@ -580,17 +562,13 @@ class SettingsAppWidget(AppWidget):
 
         self._confirm_exit_check = QCheckBox("Confirm before exiting application")
         self._confirm_exit_check.stateChanged.connect(
-            lambda state: self._on_setting_changed(
-                "ux.confirm_app_exit", state == Qt.Checked
-            )
+            lambda state: self._on_setting_changed("ux.confirm_app_exit", state == Qt.Checked)
         )
         confirm_layout.addWidget(self._confirm_exit_check)
 
         self._confirm_reload_check = QCheckBox("Confirm before reloading window")
         self._confirm_reload_check.stateChanged.connect(
-            lambda state: self._on_setting_changed(
-                "ux.confirm_reload_window", state == Qt.Checked
-            )
+            lambda state: self._on_setting_changed("ux.confirm_reload_window", state == Qt.Checked)
         )
         confirm_layout.addWidget(self._confirm_reload_check)
 
@@ -659,9 +637,7 @@ class SettingsAppWidget(AppWidget):
         # Only load settings for tabs that have been created
         # General tab (always created)
         if hasattr(self, "_default_tab_combo"):
-            widget_type = get_app_default(
-                "workspace.default_new_tab_widget", "terminal"
-            )
+            widget_type = get_app_default("workspace.default_new_tab_widget", "terminal")
             index = self._default_tab_combo.findData(widget_type)
             if index >= 0:
                 self._default_tab_combo.setCurrentIndex(index)
@@ -675,9 +651,7 @@ class SettingsAppWidget(AppWidget):
             self._max_tabs_spin.setValue(get_app_default("workspace.max_tabs", 20))
 
         if hasattr(self, "_create_default_radio"):
-            close_behavior = get_app_default(
-                "workspace.close_last_tab_behavior", "create_default"
-            )
+            close_behavior = get_app_default("workspace.close_last_tab_behavior", "create_default")
             if close_behavior == "create_default":
                 self._create_default_radio.setChecked(True)
             elif close_behavior == "close_window":
@@ -704,9 +678,7 @@ class SettingsAppWidget(AppWidget):
             self._split_ratio_label.setText(f"{split_ratio}%")
 
         if hasattr(self, "_focus_new_pane_check"):
-            self._focus_new_pane_check.setChecked(
-                get_app_default("pane.focus_new_on_split", True)
-            )
+            self._focus_new_pane_check.setChecked(get_app_default("pane.focus_new_on_split", True))
 
         # Terminal settings - only load if terminal tab has been created
         if hasattr(self, "_shell_combo"):
@@ -723,13 +695,9 @@ class SettingsAppWidget(AppWidget):
 
         # Advanced settings - only load if advanced tab has been created
         if hasattr(self, "_confirm_exit_check"):
-            self._confirm_exit_check.setChecked(
-                get_app_default("ux.confirm_app_exit", True)
-            )
+            self._confirm_exit_check.setChecked(get_app_default("ux.confirm_app_exit", True))
         if hasattr(self, "_confirm_reload_check"):
-            self._confirm_reload_check.setChecked(
-                get_app_default("ux.confirm_reload_window", True)
-            )
+            self._confirm_reload_check.setChecked(get_app_default("ux.confirm_reload_window", True))
 
         # Clear modified settings after loading
         self._modified_settings.clear()
@@ -794,11 +762,7 @@ class SettingsAppWidget(AppWidget):
             current_tab = self._tabs.currentIndex()
 
             # If on Appearance tab and theme editor exists, reset theme
-            if (
-                current_tab == 1
-                and hasattr(self, "_theme_editor")
-                and self._theme_editor
-            ):
+            if current_tab == 1 and hasattr(self, "_theme_editor") and self._theme_editor:
                 self._theme_editor.reset_changes()
             else:
                 # Reset regular settings
@@ -829,9 +793,7 @@ class SettingsAppWidget(AppWidget):
                 settings = self._defaults_manager.export_settings()
                 with open(file_path, "w") as f:
                     json.dump(settings, f, indent=2)
-                QMessageBox.information(
-                    self, "Success", "Settings exported successfully!"
-                )
+                QMessageBox.information(self, "Success", "Settings exported successfully!")
             except Exception as e:
                 logger.error(f"Failed to export settings: {e}")
                 QMessageBox.critical(self, "Error", f"Failed to export settings: {e}")

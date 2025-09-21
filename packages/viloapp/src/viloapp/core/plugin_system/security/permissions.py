@@ -1,13 +1,14 @@
 """Permission system for plugin security."""
 
+import fnmatch
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Set, Any, Optional
-import fnmatch
+from typing import Any, Dict, List, Optional, Set
 
 
 class PermissionCategory(Enum):
     """Categories of permissions a plugin can request."""
+
     FILESYSTEM = "filesystem"
     NETWORK = "network"
     SYSTEM = "system"
@@ -16,6 +17,7 @@ class PermissionCategory(Enum):
 
 class PermissionScope(Enum):
     """Scope of permissions within a category."""
+
     READ = "read"
     WRITE = "write"
     EXECUTE = "execute"
@@ -24,6 +26,7 @@ class PermissionScope(Enum):
 @dataclass(frozen=True)
 class Permission:
     """Represents a specific permission for a plugin."""
+
     category: PermissionCategory
     scope: PermissionScope
     resource: str
@@ -37,9 +40,9 @@ class Permission:
         if not isinstance(other, Permission):
             return False
         return (
-            self.category == other.category and
-            self.scope == other.scope and
-            self.resource == other.resource
+            self.category == other.category
+            and self.scope == other.scope
+            and self.resource == other.resource
         )
 
     def __hash__(self) -> int:
@@ -88,7 +91,7 @@ class PermissionManager:
             ],
             "command": [
                 Permission(PermissionCategory.UI, PermissionScope.EXECUTE, "commands"),
-            ]
+            ],
         }
 
     def set_plugin_permissions(self, plugin_id: str, permissions: List[Permission]) -> None:
@@ -117,11 +120,7 @@ class PermissionManager:
         return permission in plugin_permissions
 
     def can_access(
-        self,
-        plugin_id: str,
-        category: PermissionCategory,
-        scope: PermissionScope,
-        resource: str
+        self, plugin_id: str, category: PermissionCategory, scope: PermissionScope, resource: str
     ) -> bool:
         """
         Check if a plugin can access a specific resource.
@@ -138,9 +137,11 @@ class PermissionManager:
         plugin_permissions = self._plugin_permissions.get(plugin_id, set())
 
         for permission in plugin_permissions:
-            if (permission.category == category and
-                permission.scope == scope and
-                permission.matches_resource(resource)):
+            if (
+                permission.category == category
+                and permission.scope == scope
+                and permission.matches_resource(resource)
+            ):
                 return True
 
         return False
@@ -204,7 +205,7 @@ class PermissionManager:
                 {
                     "category": perm.category.value,
                     "scope": perm.scope.value,
-                    "resource": perm.resource
+                    "resource": perm.resource,
                 }
                 for perm in permissions
             ]
@@ -230,10 +231,7 @@ class PermissionManager:
             self._plugin_permissions[plugin_id] = set(permissions)
 
     def request_permission(
-        self,
-        plugin_id: str,
-        permission: Permission,
-        reason: Optional[str] = None
+        self, plugin_id: str, permission: Permission, reason: Optional[str] = None
     ) -> bool:
         """
         Request a permission for a plugin.
@@ -306,7 +304,7 @@ class PermissionManager:
             "plugin_id": plugin_id,
             "total_permissions": len(permissions),
             "by_category": {},
-            "risky_permissions": []
+            "risky_permissions": [],
         }
 
         # Group by category
@@ -315,10 +313,9 @@ class PermissionManager:
             if category not in summary["by_category"]:
                 summary["by_category"][category] = []
 
-            summary["by_category"][category].append({
-                "scope": perm.scope.value,
-                "resource": perm.resource
-            })
+            summary["by_category"][category].append(
+                {"scope": perm.scope.value, "resource": perm.resource}
+            )
 
             # Flag risky permissions
             if perm.scope == PermissionScope.EXECUTE or perm.resource == "*":

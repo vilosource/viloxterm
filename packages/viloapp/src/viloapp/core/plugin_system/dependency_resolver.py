@@ -1,16 +1,17 @@
 """Plugin dependency resolution."""
 
 import logging
-from typing import Dict, List, Set, Tuple, Optional
-from dataclasses import dataclass
 import re
-
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class Dependency:
     """Represents a plugin dependency."""
+
     plugin_id: str
     version_spec: str
     optional: bool = False
@@ -55,8 +56,8 @@ class Dependency:
     def _compare_versions(self, v1: str, v2: str) -> int:
         """Compare two version strings."""
         # Simple version comparison
-        parts1 = [int(x) for x in v1.split('.')]
-        parts2 = [int(x) for x in v2.split('.')]
+        parts1 = [int(x) for x in v1.split(".")]
+        parts2 = [int(x) for x in v2.split(".")]
 
         # Pad with zeros if needed
         max_len = max(len(parts1), len(parts2))
@@ -70,6 +71,7 @@ class Dependency:
                 return 1
         return 0
 
+
 class DependencyResolver:
     """Resolves plugin dependencies and determines load order."""
 
@@ -77,8 +79,7 @@ class DependencyResolver:
         self.registry = registry
 
     def resolve_dependencies(
-        self,
-        plugin_ids: Optional[List[str]] = None
+        self, plugin_ids: Optional[List[str]] = None
     ) -> Tuple[List[str], Dict[str, List[str]]]:
         """
         Resolve dependencies and determine load order.
@@ -146,7 +147,7 @@ class DependencyResolver:
     def _parse_dependency(self, dep_str: str) -> Optional[Dependency]:
         """Parse dependency string."""
         # Format: "plugin-id@version" or "plugin-id@>=version"
-        match = re.match(r'^([a-zA-Z0-9\-]+)(?:@(.+))?$', dep_str)
+        match = re.match(r"^([a-zA-Z0-9\-]+)(?:@(.+))?$", dep_str)
         if not match:
             return None
 
@@ -158,11 +159,7 @@ class DependencyResolver:
         if optional:
             dep_str = dep_str[:-1]
 
-        return Dependency(
-            plugin_id=plugin_id,
-            version_spec=version_spec,
-            optional=optional
-        )
+        return Dependency(plugin_id=plugin_id, version_spec=version_spec, optional=optional)
 
     def _has_cycle(self, graph: Dict[str, Set[str]]) -> bool:
         """Check if dependency graph has cycles."""
@@ -193,7 +190,7 @@ class DependencyResolver:
     def _topological_sort(self, graph: Dict[str, Set[str]]) -> List[str]:
         """Perform topological sort on dependency graph."""
         # Calculate in-degrees
-        in_degree = {node: 0 for node in graph}
+        in_degree = dict.fromkeys(graph, 0)
         for node in graph:
             for neighbor in graph[node]:
                 if neighbor in in_degree:

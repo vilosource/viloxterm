@@ -6,17 +6,21 @@ from typing import Optional, Dict, Any, Tuple, List
 from enum import Enum
 from PySide6.QtWidgets import QWidget
 
+
 class WidgetPosition(Enum):
     """Available widget positions."""
+
     MAIN = "main"  # Main workspace area
     SIDEBAR = "sidebar"  # Left sidebar
     PANEL = "panel"  # Bottom panel
     AUXILIARY = "auxiliary"  # Right sidebar
     FLOATING = "floating"  # Floating window
 
+
 @dataclass
 class WidgetMetadata:
     """Widget metadata."""
+
     id: str
     title: str
     position: WidgetPosition = WidgetPosition.MAIN
@@ -27,6 +31,7 @@ class WidgetMetadata:
     default_size: Optional[Tuple[int, int]] = None
     min_size: Optional[Tuple[int, int]] = None
     max_size: Optional[Tuple[int, int]] = None
+
 
 class IWidget(ABC):
     """Interface for plugin-provided widgets."""
@@ -172,7 +177,7 @@ class LegacyWidgetAdapter(IWidget):
     and create_widget() to work with the new interface.
     """
 
-    def __init__(self, legacy_widget: 'IWidget'):
+    def __init__(self, legacy_widget: "IWidget"):
         """
         Initialize adapter with legacy widget implementation.
 
@@ -184,30 +189,34 @@ class LegacyWidgetAdapter(IWidget):
 
     def get_widget_id(self) -> str:
         """Get widget ID from legacy metadata."""
-        if hasattr(self.legacy_widget, 'get_metadata'):
+        if hasattr(self.legacy_widget, "get_metadata"):
             metadata = self.legacy_widget.get_metadata()
             return metadata.id
         # Fallback to class name if no metadata
-        return self.legacy_widget.__class__.__name__.lower().replace('widget', '').replace('factory', '')
+        return (
+            self.legacy_widget.__class__.__name__.lower()
+            .replace("widget", "")
+            .replace("factory", "")
+        )
 
     def get_title(self) -> str:
         """Get widget title from legacy metadata."""
-        if hasattr(self.legacy_widget, 'get_metadata'):
+        if hasattr(self.legacy_widget, "get_metadata"):
             metadata = self.legacy_widget.get_metadata()
             return metadata.title
         # Fallback to class name
-        return self.legacy_widget.__class__.__name__.replace('Widget', '').replace('Factory', '')
+        return self.legacy_widget.__class__.__name__.replace("Widget", "").replace("Factory", "")
 
     def get_icon(self) -> Optional[str]:
         """Get widget icon from legacy metadata."""
-        if hasattr(self.legacy_widget, 'get_metadata'):
+        if hasattr(self.legacy_widget, "get_metadata"):
             metadata = self.legacy_widget.get_metadata()
             return metadata.icon
         return None
 
     def create_instance(self, instance_id: str) -> QWidget:
         """Create instance using legacy create_widget method."""
-        if hasattr(self.legacy_widget, 'create_widget'):
+        if hasattr(self.legacy_widget, "create_widget"):
             widget = self.legacy_widget.create_widget()
             self._instances[instance_id] = widget
             return widget
@@ -219,7 +228,7 @@ class LegacyWidgetAdapter(IWidget):
         if instance_id in self._instances:
             widget = self._instances[instance_id]
             # Call close method if available
-            if hasattr(widget, 'close'):
+            if hasattr(widget, "close"):
                 widget.close()
             widget.deleteLater()
             del self._instances[instance_id]
@@ -231,11 +240,11 @@ class LegacyWidgetAdapter(IWidget):
 
     def get_state(self) -> Dict[str, Any]:
         """Delegate to legacy widget's get_state method."""
-        if hasattr(self.legacy_widget, 'get_state'):
+        if hasattr(self.legacy_widget, "get_state"):
             return self.legacy_widget.get_state()
         return {}
 
     def restore_state(self, state: Dict[str, Any]) -> None:
         """Delegate to legacy widget's restore_state method."""
-        if hasattr(self.legacy_widget, 'restore_state'):
+        if hasattr(self.legacy_widget, "restore_state"):
             self.legacy_widget.restore_state(state)

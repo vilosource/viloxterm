@@ -115,16 +115,12 @@ class TestFramelessWindow:
 
         # Double click to maximize
         title_pos = window.custom_title_bar.title_label.rect().center()
-        QTest.mouseDClick(
-            window.custom_title_bar.title_label, Qt.LeftButton, pos=title_pos
-        )
+        QTest.mouseDClick(window.custom_title_bar.title_label, Qt.LeftButton, pos=title_pos)
         qtbot.wait(100)
         assert window.isMaximized()
 
         # Double click to restore
-        QTest.mouseDClick(
-            window.custom_title_bar.title_label, Qt.LeftButton, pos=title_pos
-        )
+        QTest.mouseDClick(window.custom_title_bar.title_label, Qt.LeftButton, pos=title_pos)
         qtbot.wait(100)
         assert not window.isMaximized()
 
@@ -156,9 +152,7 @@ class TestFramelessWindow:
 
         # Mock startSystemResize
         mock_start_resize = MagicMock()
-        monkeypatch.setattr(
-            window.windowHandle(), "startSystemResize", mock_start_resize
-        )
+        monkeypatch.setattr(window.windowHandle(), "startSystemResize", mock_start_resize)
 
         # Test positions for each edge
         test_cases = [
@@ -215,9 +209,7 @@ class TestFramelessWindow:
 
         for pos, _expected_cursor in cursor_tests:
             # Simulate mouse move
-            event = QMouseEvent(
-                QEvent.MouseMove, pos, Qt.NoButton, Qt.NoButton, Qt.NoModifier
-            )
+            event = QMouseEvent(QEvent.MouseMove, pos, Qt.NoButton, Qt.NoButton, Qt.NoModifier)
             window.mouseMoveEvent(event)
 
             # Note: Can't directly test cursor shape due to Qt limitations

@@ -10,9 +10,7 @@ import click
 from ..config import CLIConfig
 
 
-def package_plugin(
-    config: CLIConfig, plugin_path: Path, output: Path | None, format: str
-) -> None:
+def package_plugin(config: CLIConfig, plugin_path: Path, output: Path | None, format: str) -> None:
     """Package a plugin for distribution.
 
     Args:
@@ -95,14 +93,27 @@ def _get_files_to_package(plugin_path: Path, config: CLIConfig) -> list[Path]:
     Returns:
         List of file paths to package
     """
-    include_patterns = config.get("packaging.include_patterns", [
-        "*.py", "*.json", "*.yaml", "*.yml", "*.md", "*.txt", "*.toml"
-    ])
-    exclude_patterns = config.get("packaging.exclude_patterns", [
-        "__pycache__", "*.pyc", ".git", ".pytest_cache", "htmlcov",
-        ".coverage", ".mypy_cache", ".ruff_cache", "*.egg-info",
-        "build", "dist", ".viloapp_dev.py"
-    ])
+    include_patterns = config.get(
+        "packaging.include_patterns",
+        ["*.py", "*.json", "*.yaml", "*.yml", "*.md", "*.txt", "*.toml"],
+    )
+    exclude_patterns = config.get(
+        "packaging.exclude_patterns",
+        [
+            "__pycache__",
+            "*.pyc",
+            ".git",
+            ".pytest_cache",
+            "htmlcov",
+            ".coverage",
+            ".mypy_cache",
+            ".ruff_cache",
+            "*.egg-info",
+            "build",
+            "dist",
+            ".viloapp_dev.py",
+        ],
+    )
 
     files_to_package = []
 
@@ -144,10 +155,8 @@ def _matches_pattern(path: Path, pattern: str) -> bool:
         True if path matches pattern
     """
     import fnmatch
-    return any(
-        fnmatch.fnmatch(str(part), pattern)
-        for part in [path] + list(path.parents)
-    )
+
+    return any(fnmatch.fnmatch(str(part), pattern) for part in [path] + list(path.parents))
 
 
 def _create_zip_package(plugin_path: Path, output: Path, config: CLIConfig) -> None:
@@ -160,7 +169,7 @@ def _create_zip_package(plugin_path: Path, output: Path, config: CLIConfig) -> N
     """
     files_to_package = _get_files_to_package(plugin_path, config)
 
-    with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as zf:
         for file_path in files_to_package:
             arc_name = file_path.relative_to(plugin_path)
             zf.write(file_path, arc_name)
@@ -179,7 +188,7 @@ def _create_tar_package(plugin_path: Path, output: Path, config: CLIConfig) -> N
     """
     files_to_package = _get_files_to_package(plugin_path, config)
 
-    with tarfile.open(output, 'w:gz') as tf:
+    with tarfile.open(output, "w:gz") as tf:
         for file_path in files_to_package:
             arc_name = file_path.relative_to(plugin_path)
             tf.add(file_path, arc_name)
@@ -197,7 +206,7 @@ def _format_size(size_bytes: int) -> str:
     Returns:
         Formatted size string
     """
-    for unit in ['B', 'KB', 'MB', 'GB']:
+    for unit in ["B", "KB", "MB", "GB"]:
         if size_bytes < 1024.0:
             return f"{size_bytes:.1f} {unit}"
         size_bytes /= 1024.0

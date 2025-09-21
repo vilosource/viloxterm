@@ -8,14 +8,15 @@ and proper UI service usage for status messages.
 """
 
 from unittest.mock import Mock
+
 import pytest
 
 from viloapp.core.commands.base import CommandContext
 from viloapp.core.commands.builtin.file_commands import (
-    save_state_command,
-    restore_state_command,
-    replace_with_terminal_command,
     replace_with_editor_command,
+    replace_with_terminal_command,
+    restore_state_command,
+    save_state_command,
 )
 from viloapp.services.state_service import StateService
 from viloapp.services.ui_service import UIService
@@ -48,6 +49,7 @@ class TestSaveStateCommand:
 
     def test_save_state_uses_services(self, mock_context, mock_state_service, mock_ui_service):
         """Test that save_state_command uses StateService.save_all_state() and UIService.set_status_message()."""
+
         # ARRANGE - Setup service delegation
         def get_service_side_effect(service_type):
             if service_type == StateService:
@@ -82,6 +84,7 @@ class TestSaveStateCommand:
 
     def test_save_state_works_without_ui_service(self, mock_context, mock_state_service):
         """Test save_state_command works even when UIService unavailable."""
+
         # ARRANGE - StateService available but no UIService
         def get_service_side_effect(service_type):
             if service_type == StateService:
@@ -101,6 +104,7 @@ class TestSaveStateCommand:
 
     def test_save_state_handles_exception(self, mock_context, mock_state_service):
         """Test save_state_command handles exceptions from StateService."""
+
         # ARRANGE - StateService throws exception
         def get_service_side_effect(service_type):
             if service_type == StateService:
@@ -144,6 +148,7 @@ class TestRestoreStateCommand:
 
     def test_restore_state_uses_services(self, mock_context, mock_state_service, mock_ui_service):
         """Test that restore_state_command uses StateService.restore_all_state() and UIService.set_status_message()."""
+
         # ARRANGE - Setup service delegation
         def get_service_side_effect(service_type):
             if service_type == StateService:
@@ -164,8 +169,11 @@ class TestRestoreStateCommand:
         mock_state_service.restore_all_state.assert_called_once()
         mock_ui_service.set_status_message.assert_called_once_with("State restored", 2000)
 
-    def test_restore_state_handles_no_saved_state(self, mock_context, mock_state_service, mock_ui_service):
+    def test_restore_state_handles_no_saved_state(
+        self, mock_context, mock_state_service, mock_ui_service
+    ):
         """Test restore_state_command handles when no saved state found."""
+
         # ARRANGE - StateService returns False (no saved state)
         def get_service_side_effect(service_type):
             if service_type == StateService:
@@ -198,6 +206,7 @@ class TestRestoreStateCommand:
 
     def test_restore_state_works_without_ui_service(self, mock_context, mock_state_service):
         """Test restore_state_command works even when UIService unavailable."""
+
         # ARRANGE - StateService available but no UIService
         def get_service_side_effect(service_type):
             if service_type == StateService:
@@ -217,6 +226,7 @@ class TestRestoreStateCommand:
 
     def test_restore_state_handles_exception(self, mock_context, mock_state_service):
         """Test restore_state_command handles exceptions from StateService."""
+
         # ARRANGE - StateService throws exception
         def get_service_side_effect(service_type):
             if service_type == StateService:
@@ -259,7 +269,9 @@ class TestReplaceWithTerminalCommand:
         split_widget.refresh_view = Mock()
         return split_widget
 
-    def test_replace_with_terminal_uses_workspace_service(self, mock_context, mock_workspace_service, mock_split_widget):
+    def test_replace_with_terminal_uses_workspace_service(
+        self, mock_context, mock_workspace_service, mock_split_widget
+    ):
         """Test that replace_with_terminal_command uses workspace_service.get_current_split_widget()."""
         # ARRANGE - Setup service delegation
         mock_context.get_service.return_value = mock_workspace_service
@@ -288,7 +300,9 @@ class TestReplaceWithTerminalCommand:
         assert result.success is False
         assert "WorkspaceService not available" in result.error
 
-    def test_replace_with_terminal_handles_no_split_widget(self, mock_context, mock_workspace_service):
+    def test_replace_with_terminal_handles_no_split_widget(
+        self, mock_context, mock_workspace_service
+    ):
         """Test replace_with_terminal_command when no split widget available."""
         # ARRANGE - No split widget
         mock_context.get_service.return_value = mock_workspace_service
@@ -301,7 +315,9 @@ class TestReplaceWithTerminalCommand:
         assert result.success is False
         assert "No split widget available" in result.error
 
-    def test_replace_with_terminal_handles_split_widget_no_model(self, mock_context, mock_workspace_service):
+    def test_replace_with_terminal_handles_split_widget_no_model(
+        self, mock_context, mock_workspace_service
+    ):
         """Test replace_with_terminal_command when split widget has no model."""
         # ARRANGE - Split widget without model
         mock_split_widget = Mock()
@@ -316,7 +332,9 @@ class TestReplaceWithTerminalCommand:
         assert result.success is False
         assert "No split widget available" in result.error
 
-    def test_replace_with_terminal_extracts_pane_id_from_pane(self, mock_context, mock_workspace_service, mock_split_widget):
+    def test_replace_with_terminal_extracts_pane_id_from_pane(
+        self, mock_context, mock_workspace_service, mock_split_widget
+    ):
         """Test replace_with_terminal_command extracts pane_id from pane object."""
         # ARRANGE - Setup pane object with leaf_node.id
         mock_pane = Mock()
@@ -334,7 +352,9 @@ class TestReplaceWithTerminalCommand:
         assert result.success is True
         mock_split_widget.model.change_pane_type.assert_called_once()
 
-    def test_replace_with_terminal_handles_no_pane_id(self, mock_context, mock_workspace_service, mock_split_widget):
+    def test_replace_with_terminal_handles_no_pane_id(
+        self, mock_context, mock_workspace_service, mock_split_widget
+    ):
         """Test replace_with_terminal_command when no pane_id can be determined."""
         # ARRANGE - No pane_id or pane in args
         mock_context.get_service.return_value = mock_workspace_service
@@ -348,7 +368,9 @@ class TestReplaceWithTerminalCommand:
         assert result.success is False
         assert "Could not identify pane for replacement" in result.error
 
-    def test_replace_with_terminal_handles_change_pane_type_failure(self, mock_context, mock_workspace_service, mock_split_widget):
+    def test_replace_with_terminal_handles_change_pane_type_failure(
+        self, mock_context, mock_workspace_service, mock_split_widget
+    ):
         """Test replace_with_terminal_command when change_pane_type fails."""
         # ARRANGE - change_pane_type returns False
         mock_context.get_service.return_value = mock_workspace_service
@@ -402,7 +424,9 @@ class TestReplaceWithEditorCommand:
         split_widget.refresh_view = Mock()
         return split_widget
 
-    def test_replace_with_editor_uses_workspace_service(self, mock_context, mock_workspace_service, mock_split_widget):
+    def test_replace_with_editor_uses_workspace_service(
+        self, mock_context, mock_workspace_service, mock_split_widget
+    ):
         """Test that replace_with_editor_command uses workspace_service.get_current_split_widget()."""
         # ARRANGE - Setup service delegation
         mock_context.get_service.return_value = mock_workspace_service
@@ -431,7 +455,9 @@ class TestReplaceWithEditorCommand:
         assert result.success is False
         assert "WorkspaceService not available" in result.error
 
-    def test_replace_with_editor_handles_no_split_widget(self, mock_context, mock_workspace_service):
+    def test_replace_with_editor_handles_no_split_widget(
+        self, mock_context, mock_workspace_service
+    ):
         """Test replace_with_editor_command when no split widget available."""
         # ARRANGE - No split widget
         mock_context.get_service.return_value = mock_workspace_service
@@ -444,7 +470,9 @@ class TestReplaceWithEditorCommand:
         assert result.success is False
         assert "No split widget available" in result.error
 
-    def test_replace_with_editor_extracts_pane_id_from_pane(self, mock_context, mock_workspace_service, mock_split_widget):
+    def test_replace_with_editor_extracts_pane_id_from_pane(
+        self, mock_context, mock_workspace_service, mock_split_widget
+    ):
         """Test replace_with_editor_command extracts pane_id from pane object."""
         # ARRANGE - Setup pane object with leaf_node.id
         mock_pane = Mock()
@@ -462,7 +490,9 @@ class TestReplaceWithEditorCommand:
         assert result.success is True
         mock_split_widget.model.change_pane_type.assert_called_once()
 
-    def test_replace_with_editor_handles_no_pane_id(self, mock_context, mock_workspace_service, mock_split_widget):
+    def test_replace_with_editor_handles_no_pane_id(
+        self, mock_context, mock_workspace_service, mock_split_widget
+    ):
         """Test replace_with_editor_command when no pane_id can be determined."""
         # ARRANGE - No pane_id or pane in args
         mock_context.get_service.return_value = mock_workspace_service
@@ -476,7 +506,9 @@ class TestReplaceWithEditorCommand:
         assert result.success is False
         assert "Could not identify pane for replacement" in result.error
 
-    def test_replace_with_editor_handles_change_pane_type_failure(self, mock_context, mock_workspace_service, mock_split_widget):
+    def test_replace_with_editor_handles_change_pane_type_failure(
+        self, mock_context, mock_workspace_service, mock_split_widget
+    ):
         """Test replace_with_editor_command when change_pane_type fails."""
         # ARRANGE - change_pane_type returns False
         mock_context.get_service.return_value = mock_workspace_service
@@ -577,8 +609,8 @@ class TestFileCommandsMVCCompliance:
             result = command_func(mock_context)
 
             # Verify proper CommandResult structure
-            assert hasattr(result, 'success')
-            assert hasattr(result, 'error')
+            assert hasattr(result, "success")
+            assert hasattr(result, "error")
             assert isinstance(result.success, bool)
             assert result.success is False  # All should fail without service
             assert isinstance(result.error, str)
@@ -677,7 +709,7 @@ class TestFileCommandsEdgeCases:
             "string_pane_id",
             123,  # Integer pane_id
             None,  # None pane_id (should fail)
-            "",   # Empty string pane_id
+            "",  # Empty string pane_id
         ]
 
         for pane_id in test_cases:

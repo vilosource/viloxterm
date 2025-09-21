@@ -198,6 +198,4 @@ class TestActivityBarMenu:
                 activity_bar.on_menu_clicked()
 
                 # Verify warning was logged
-                mock_logger.warning.assert_called_once_with(
-                    "Could not access main window menu bar"
-                )
+                mock_logger.warning.assert_called_once_with("Could not access main window menu bar")

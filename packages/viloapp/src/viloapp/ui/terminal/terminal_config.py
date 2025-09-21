@@ -135,9 +135,7 @@ class TerminalConfig:
         """Get the default shell for the current platform."""
         if platform.system() == "Windows":
             # Try PowerShell first, fall back to cmd
-            if os.path.exists(
-                "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
-            ):
+            if os.path.exists("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"):
                 return "powershell.exe"
             return "cmd.exe"
         else:
@@ -205,9 +203,7 @@ class TerminalConfig:
         settings.endGroup()
 
     @classmethod
-    def load_from_settings(
-        cls, settings: QSettings, prefix: str = "terminal"
-    ) -> "TerminalConfig":
+    def load_from_settings(cls, settings: QSettings, prefix: str = "terminal") -> "TerminalConfig":
         """Load configuration from QSettings."""
         config = cls()
 
@@ -216,27 +212,21 @@ class TerminalConfig:
         # Shell settings
         config.shell = settings.value("shell", config.shell)
         config.shell_args = settings.value("shell_args", config.shell_args)
-        config.custom_shell_path = settings.value(
-            "custom_shell_path", config.custom_shell_path
-        )
+        config.custom_shell_path = settings.value("custom_shell_path", config.custom_shell_path)
 
         # Appearance
         config.font_family = settings.value("font_family", config.font_family)
         config.font_size = int(settings.value("font_size", config.font_size))
         config.line_height = float(settings.value("line_height", config.line_height))
         config.cursor_style = settings.value("cursor_style", config.cursor_style)
-        config.cursor_blink = settings.value(
-            "cursor_blink", config.cursor_blink, type=bool
-        )
+        config.cursor_blink = settings.value("cursor_blink", config.cursor_blink, type=bool)
         config.scrollback = int(settings.value("scrollback", config.scrollback))
 
         # Theme
         config.theme = settings.value("theme", config.theme)
 
         # Behavior
-        config.copy_on_select = settings.value(
-            "copy_on_select", config.copy_on_select, type=bool
-        )
+        config.copy_on_select = settings.value("copy_on_select", config.copy_on_select, type=bool)
         config.right_click_paste = settings.value(
             "right_click_paste", config.right_click_paste, type=bool
         )
@@ -244,9 +234,7 @@ class TerminalConfig:
             "confirm_on_exit", config.confirm_on_exit, type=bool
         )
         config.bell_style = settings.value("bell_style", config.bell_style)
-        config.max_terminals = int(
-            settings.value("max_terminals", config.max_terminals)
-        )
+        config.max_terminals = int(settings.value("max_terminals", config.max_terminals))
 
         # Window
         config.default_cols = int(settings.value("default_cols", config.default_cols))

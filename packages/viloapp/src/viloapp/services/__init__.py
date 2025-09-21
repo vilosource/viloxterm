@@ -40,8 +40,9 @@ def initialize_plugin_system(services):
         PluginManager instance or None if initialization fails
     """
     try:
-        from viloapp.core.plugin_system import PluginManager
         from viloapp_sdk import EventBus
+
+        from viloapp.core.plugin_system import PluginManager
 
         # Create event bus
         event_bus = EventBus()
@@ -50,13 +51,14 @@ def initialize_plugin_system(services):
         plugin_manager = PluginManager(event_bus, services)
 
         # Add plugin manager and event bus to services
-        services['plugin_manager'] = plugin_manager
-        services['event_bus'] = event_bus
+        services["plugin_manager"] = plugin_manager
+        services["event_bus"] = event_bus
 
         # Initialize plugin system
         plugin_manager.initialize()
 
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info("Plugin system initialized successfully")
 
@@ -64,14 +66,13 @@ def initialize_plugin_system(services):
 
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Failed to initialize plugin system: {e}", exc_info=True)
         return None
 
 
-def initialize_services(
-    main_window=None, workspace=None, sidebar=None, activity_bar=None
-):
+def initialize_services(main_window=None, workspace=None, sidebar=None, activity_bar=None):
     """
     Initialize all services with application context.
 
@@ -100,15 +101,17 @@ def initialize_services(
     editor_service = EditorService()
 
     # Initialize plugin system
-    plugin_manager = initialize_plugin_system({
-        'state_service': state_service,
-        'theme_service': theme_service,
-        'settings_service': settings_service,
-        'workspace_service': workspace_service,
-        'ui_service': ui_service,
-        'terminal_service': terminal_service,
-        'editor_service': editor_service
-    })
+    plugin_manager = initialize_plugin_system(
+        {
+            "state_service": state_service,
+            "theme_service": theme_service,
+            "settings_service": settings_service,
+            "workspace_service": workspace_service,
+            "ui_service": ui_service,
+            "terminal_service": terminal_service,
+            "editor_service": editor_service,
+        }
+    )
 
     # Register in dependency order
     locator.register(StateService, state_service)
@@ -122,6 +125,7 @@ def initialize_services(
     # Register plugin manager
     if plugin_manager:
         from viloapp.services.plugin_service import PluginService
+
         plugin_service = PluginService()
         plugin_service.set_plugin_manager(plugin_manager)
         locator.register(PluginService, plugin_service)

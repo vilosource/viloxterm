@@ -4,8 +4,9 @@
 import ast
 import glob
 import os
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 class TestArchitectureBoundaries:
@@ -16,11 +17,7 @@ class TestArchitectureBoundaries:
         base_path = Path(__file__).parent.parent.parent
 
         # Core files that should not import plugins
-        core_patterns = [
-            'ui/**/*.py',
-            'services/**/*.py',
-            'core/**/*.py'
-        ]
+        core_patterns = ["ui/**/*.py", "services/**/*.py", "core/**/*.py"]
 
         violations = []
 
@@ -28,7 +25,7 @@ class TestArchitectureBoundaries:
             files = glob.glob(str(base_path / pattern), recursive=True)
             for file_path in files:
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
                         tree = ast.parse(content)
 
@@ -43,13 +40,13 @@ class TestArchitectureBoundaries:
                                     names = []
 
                             for name in names:
-                                if (name and (
-                                    name.startswith('packages.') or
-                                    name.startswith('viloxterm') or
-                                    name.startswith('viloedit') or
-                                    name == 'viloxterm' or
-                                    name == 'viloedit'
-                                )):
+                                if name and (
+                                    name.startswith("packages.")
+                                    or name.startswith("viloxterm")
+                                    or name.startswith("viloedit")
+                                    or name == "viloxterm"
+                                    or name == "viloedit"
+                                ):
                                     rel_path = os.path.relpath(file_path, base_path)
                                     violations.append(f"{rel_path}: imports '{name}'")
 
@@ -65,9 +62,7 @@ class TestArchitectureBoundaries:
         base_path = Path(__file__).parent.parent.parent
 
         # Plugin files
-        plugin_patterns = [
-            'packages/*/src/**/*.py'
-        ]
+        plugin_patterns = ["packages/*/src/**/*.py"]
 
         violations = []
 
@@ -75,25 +70,28 @@ class TestArchitectureBoundaries:
             files = glob.glob(str(base_path / pattern), recursive=True)
             for file_path in files:
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
 
                     # Check for forbidden imports
                     forbidden_imports = [
-                        'from viloapp.ui.',
-                        'from viloapp.services.',
-                        'import viloapp.ui.',
-                        'import viloapp.services.'
+                        "from viloapp.ui.",
+                        "from viloapp.services.",
+                        "import viloapp.ui.",
+                        "import viloapp.services.",
                     ]
 
                     # Allow core.plugin_system imports in plugins
-                    lines = content.split('\n')
+                    lines = content.split("\n")
                     for i, line in enumerate(lines, 1):
                         line = line.strip()
                         for forbidden in forbidden_imports:
-                            if forbidden in line and not line.startswith('#'):
+                            if forbidden in line and not line.startswith("#"):
                                 # Check if it's an allowed core.plugin_system import
-                                if 'from viloapp.core.plugin_system' not in line and 'import viloapp.core.plugin_system' not in line:
+                                if (
+                                    "from viloapp.core.plugin_system" not in line
+                                    and "import viloapp.core.plugin_system" not in line
+                                ):
                                     rel_path = os.path.relpath(file_path, base_path)
                                     violations.append(f"{rel_path}:{i}: {line}")
 
@@ -109,10 +107,7 @@ class TestArchitectureBoundaries:
         base_path = Path(__file__).parent.parent.parent
 
         # Check for direct service imports where ServiceLocator should be used
-        patterns = [
-            'ui/**/*.py',
-            'core/commands/**/*.py'
-        ]
+        patterns = ["ui/**/*.py", "core/commands/**/*.py"]
 
         violations = []
 
@@ -120,32 +115,37 @@ class TestArchitectureBoundaries:
             files = glob.glob(str(base_path / pattern), recursive=True)
             for file_path in files:
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
 
                     # Look for direct service instantiation in non-service files
-                    if '/services/' not in file_path and 'service_locator.py' not in file_path:
+                    if "/services/" not in file_path and "service_locator.py" not in file_path:
                         suspicious_patterns = [
-                            'WorkspaceService()',
-                            'ThemeService()',
-                            'UIService()',
-                            'TerminalService()',
-                            'EditorService()'
+                            "WorkspaceService()",
+                            "ThemeService()",
+                            "UIService()",
+                            "TerminalService()",
+                            "EditorService()",
                         ]
 
-                        lines = content.split('\n')
+                        lines = content.split("\n")
                         for i, line in enumerate(lines, 1):
                             for pattern in suspicious_patterns:
-                                if pattern in line and not line.strip().startswith('#'):
+                                if pattern in line and not line.strip().startswith("#"):
                                     rel_path = os.path.relpath(file_path, base_path)
-                                    violations.append(f"{rel_path}:{i}: Direct service instantiation: {line.strip()}")
+                                    violations.append(
+                                        f"{rel_path}:{i}: Direct service instantiation: {line.strip()}"
+                                    )
 
                 except Exception:
                     continue
 
         # This is more of a warning than a strict violation
         if violations:
-            print("Warning - Direct service instantiation found (consider using ServiceLocator):\n" + "\n".join(violations))
+            print(
+                "Warning - Direct service instantiation found (consider using ServiceLocator):\n"
+                + "\n".join(violations)
+            )
 
     def test_plugin_system_isolation(self):
         """Test that plugin system is properly isolated."""
@@ -153,28 +153,35 @@ class TestArchitectureBoundaries:
 
         # Plugin system should only be imported by specific files
         allowed_plugin_system_importers = [
-            'services/__init__.py',
-            'main.py',
-            'tests/',
-            'core/plugin_system/',
-            'ui/widgets/split_pane_model.py'  # This is allowed due to our factory pattern
+            "services/__init__.py",
+            "main.py",
+            "tests/",
+            "core/plugin_system/",
+            "ui/widgets/split_pane_model.py",  # This is allowed due to our factory pattern
         ]
 
         violations = []
 
-        files = glob.glob(str(base_path / '**/*.py'), recursive=True)
+        files = glob.glob(str(base_path / "**/*.py"), recursive=True)
         for file_path in files:
             rel_path = os.path.relpath(file_path, base_path)
 
             # Skip allowed files and test files
-            if any(allowed in rel_path for allowed in allowed_plugin_system_importers) or rel_path.startswith('test') or '/test' in rel_path:
+            if (
+                any(allowed in rel_path for allowed in allowed_plugin_system_importers)
+                or rel_path.startswith("test")
+                or "/test" in rel_path
+            ):
                 continue
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
 
-                if 'from viloapp.core.plugin_system' in content or 'import viloapp.core.plugin_system' in content:
+                if (
+                    "from viloapp.core.plugin_system" in content
+                    or "import viloapp.core.plugin_system" in content
+                ):
                     violations.append(f"{rel_path}: imports plugin system")
 
             except Exception:
@@ -188,38 +195,40 @@ class TestArchitectureBoundaries:
         base_path = Path(__file__).parent.parent.parent
 
         # UI files should use execute_command, not direct service calls
-        ui_files = glob.glob(str(base_path / 'ui/**/*.py'), recursive=True)
+        ui_files = glob.glob(str(base_path / "ui/**/*.py"), recursive=True)
 
         violations = []
 
         for file_path in ui_files:
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
 
                 # Look for direct service method calls that should go through commands
-                lines = content.split('\n')
+                lines = content.split("\n")
                 for i, line in enumerate(lines, 1):
                     line = line.strip()
 
                     # Skip comments and imports
-                    if line.startswith('#') or line.startswith('import') or line.startswith('from'):
+                    if line.startswith("#") or line.startswith("import") or line.startswith("from"):
                         continue
 
                     # Look for direct service calls (this is a simplified check)
                     suspicious_patterns = [
-                        '.add_tab(',
-                        '.close_tab(',
-                        '.split_pane(',
-                        '.set_theme('
+                        ".add_tab(",
+                        ".close_tab(",
+                        ".split_pane(",
+                        ".set_theme(",
                     ]
 
                     for pattern in suspicious_patterns:
-                        if pattern in line and 'execute_command' not in line:
+                        if pattern in line and "execute_command" not in line:
                             rel_path = os.path.relpath(file_path, base_path)
                             # Only report if this looks like a direct service call
-                            if 'service' in line.lower():
-                                violations.append(f"{rel_path}:{i}: Possible command pattern bypass: {line}")
+                            if "service" in line.lower():
+                                violations.append(
+                                    f"{rel_path}:{i}: Possible command pattern bypass: {line}"
+                                )
 
             except Exception:
                 continue
@@ -229,5 +238,5 @@ class TestArchitectureBoundaries:
             print("Info - Possible command pattern bypasses found:\n" + "\n".join(violations))
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

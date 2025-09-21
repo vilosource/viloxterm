@@ -26,7 +26,7 @@ class ExamplePlugin(IPlugin):
             version="1.0.0",
             description="An example plugin for testing",
             author="ViloxTerm Team",
-            capabilities=[PluginCapability.COMMANDS, PluginCapability.WIDGETS]
+            capabilities=[PluginCapability.COMMANDS, PluginCapability.WIDGETS],
         )
 
     def activate(self, context: IPluginContext) -> None:
@@ -94,9 +94,7 @@ def test_plugin_with_fixtures(mock_plugin_host, mock_services):
     plugin = ExamplePlugin()
 
     # Create context with specific configuration
-    context = mock_plugin_host.create_context(
-        configuration={"debug": True, "log_level": "INFO"}
-    )
+    context = mock_plugin_host.create_context(configuration={"debug": True, "log_level": "INFO"})
 
     # Test activation
     plugin.activate(context)
@@ -301,6 +299,7 @@ if __name__ == "__main__":
     try:
         from PySide6.QtWidgets import QApplication
         import sys
+
         app = QApplication.instance()
         if app is None:
             app = QApplication(sys.argv)

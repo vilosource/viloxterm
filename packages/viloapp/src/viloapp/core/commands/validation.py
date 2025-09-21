@@ -144,9 +144,7 @@ class OneOfValidator(Validator):
 
     def validate(self, value: Any, parameter_name: str = None) -> bool:
         if value not in self.allowed_values:
-            allowed_str = ", ".join(
-                repr(v) for v in sorted(self.allowed_values, key=str)
-            )
+            allowed_str = ", ".join(repr(v) for v in sorted(self.allowed_values, key=str))
             self._raise_error(
                 f"Value {value!r} not in allowed values: {allowed_str}",
                 parameter_name,
@@ -174,9 +172,7 @@ class StringValidator(Validator):
 
     def validate(self, value: Any, parameter_name: str = None) -> bool:
         if not isinstance(value, str):
-            self._raise_error(
-                f"Expected string, got {type(value).__name__}", parameter_name, value
-            )
+            self._raise_error(f"Expected string, got {type(value).__name__}", parameter_name, value)
 
         if self.non_empty and not value.strip():
             self._raise_error("String cannot be empty", parameter_name, value)
@@ -196,9 +192,7 @@ class StringValidator(Validator):
             )
 
         if self.pattern and not self.pattern.match(value):
-            self._raise_error(
-                "String does not match required pattern", parameter_name, value
-            )
+            self._raise_error("String does not match required pattern", parameter_name, value)
 
         return True
 
@@ -246,9 +240,7 @@ class ListValidator(Validator):
                     self.element_validator.validate(element, f"{parameter_name}[{i}]")
                 except ValidationError as e:
                     # Re-raise with context
-                    raise ValidationError(
-                        f"Element {i}: {e.message}", parameter_name, value
-                    )
+                    raise ValidationError(f"Element {i}: {e.message}", parameter_name, value)
 
         return True
 
@@ -339,9 +331,7 @@ def Type(expected_type: Type) -> TypeValidator:
     return TypeValidator(expected_type)
 
 
-def Custom(
-    validator_func: Callable[[Any], bool], error_message: str
-) -> CustomValidator:
+def Custom(validator_func: Callable[[Any], bool], error_message: str) -> CustomValidator:
     """Create a custom validator."""
     return CustomValidator(validator_func, error_message)
 

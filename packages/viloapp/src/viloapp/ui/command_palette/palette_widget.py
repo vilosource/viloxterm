@@ -417,9 +417,7 @@ class CommandPaletteWidget(QDialog):
 
         return super().eventFilter(obj, event)
 
-    def show_palette(
-        self, commands: list[Command], recent_commands: list[Command] = None
-    ):
+    def show_palette(self, commands: list[Command], recent_commands: list[Command] = None):
         """
         Show the command palette with the given commands.
 
@@ -486,9 +484,7 @@ class CommandPaletteWidget(QDialog):
             if hasattr(self, "recent_commands") and self.recent_commands:
                 # Combine recent and all commands, removing duplicates
                 recent_ids = {cmd.id for cmd in self.recent_commands}
-                other_commands = [
-                    cmd for cmd in self.all_commands if cmd.id not in recent_ids
-                ]
+                other_commands = [cmd for cmd in self.all_commands if cmd.id not in recent_ids]
                 filtered_commands = self.recent_commands + other_commands
             else:
                 filtered_commands = self.all_commands
@@ -501,9 +497,7 @@ class CommandPaletteWidget(QDialog):
             search_results = command_registry.search_commands(query, use_fuzzy=True)
 
             # Filter to only commands that were in our original list
-            filtered_commands = [
-                cmd for cmd in search_results if cmd.id in all_command_ids
-            ]
+            filtered_commands = [cmd for cmd in search_results if cmd.id in all_command_ids]
 
         self.update_command_list(filtered_commands)
 

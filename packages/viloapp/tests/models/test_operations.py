@@ -1,14 +1,15 @@
 """Tests for operation DTO classes."""
 
 import pytest
+
 from viloapp.models.operations import (
-    SplitPaneRequest,
     ClosePaneRequest,
-    TabOperationRequest,
     PaneFocusRequest,
-    WidgetStateUpdateRequest,
+    SplitPaneRequest,
     SplitPaneResponse,
+    TabOperationRequest,
     TabOperationResponse,
+    WidgetStateUpdateRequest,
 )
 from viloapp.models.workspace_models import WidgetType
 
@@ -22,7 +23,7 @@ class TestSplitPaneRequest:
             pane_id="pane_1",
             orientation="horizontal",
             ratio=0.7,
-            new_widget_type=WidgetType.TERMINAL
+            new_widget_type=WidgetType.TERMINAL,
         )
 
         assert request.pane_id == "pane_1"
@@ -32,10 +33,7 @@ class TestSplitPaneRequest:
 
     def test_split_pane_request_defaults(self):
         """Test SplitPaneRequest with default values."""
-        request = SplitPaneRequest(
-            pane_id="pane_2",
-            orientation="vertical"
-        )
+        request = SplitPaneRequest(pane_id="pane_2", orientation="vertical")
 
         assert request.ratio == 0.5  # Default
         assert request.new_widget_type == WidgetType.EMPTY  # Default
@@ -85,9 +83,7 @@ class TestTabOperationRequest:
     def test_add_tab_request(self):
         """Test creation of add tab request."""
         request = TabOperationRequest(
-            operation="add",
-            tab_name="New Tab",
-            widget_type=WidgetType.EDITOR
+            operation="add", tab_name="New Tab", widget_type=WidgetType.EDITOR
         )
 
         assert request.operation == "add"
@@ -96,21 +92,14 @@ class TestTabOperationRequest:
 
     def test_close_tab_request(self):
         """Test creation of close tab request."""
-        request = TabOperationRequest(
-            operation="close",
-            tab_index=2
-        )
+        request = TabOperationRequest(operation="close", tab_index=2)
 
         assert request.operation == "close"
         assert request.tab_index == 2
 
     def test_rename_tab_request(self):
         """Test creation of rename tab request."""
-        request = TabOperationRequest(
-            operation="rename",
-            tab_index=1,
-            tab_name="Renamed Tab"
-        )
+        request = TabOperationRequest(operation="rename", tab_index=1, tab_name="Renamed Tab")
 
         assert request.operation == "rename"
         assert request.tab_index == 1
@@ -118,10 +107,7 @@ class TestTabOperationRequest:
 
     def test_duplicate_tab_request(self):
         """Test creation of duplicate tab request."""
-        request = TabOperationRequest(
-            operation="duplicate",
-            tab_index=0
-        )
+        request = TabOperationRequest(operation="duplicate", tab_index=0)
 
         assert request.operation == "duplicate"
         assert request.tab_index == 0
@@ -167,10 +153,7 @@ class TestPaneFocusRequest:
 
     def test_pane_focus_request_creation(self):
         """Test creation of PaneFocusRequest."""
-        request = PaneFocusRequest(
-            pane_id="pane_1",
-            tab_index=2
-        )
+        request = PaneFocusRequest(pane_id="pane_1", tab_index=2)
 
         assert request.pane_id == "pane_1"
         assert request.tab_index == 2
@@ -189,9 +172,7 @@ class TestWidgetStateUpdateRequest:
         """Test creation of WidgetStateUpdateRequest."""
         state_updates = {"theme": "dark", "font_size": 12}
         request = WidgetStateUpdateRequest(
-            pane_id="pane_1",
-            state_updates=state_updates,
-            merge=False
+            pane_id="pane_1", state_updates=state_updates, merge=False
         )
 
         assert request.pane_id == "pane_1"
@@ -201,10 +182,7 @@ class TestWidgetStateUpdateRequest:
     def test_widget_state_update_defaults(self):
         """Test WidgetStateUpdateRequest with default values."""
         state_updates = {"setting": "value"}
-        request = WidgetStateUpdateRequest(
-            pane_id="pane_2",
-            state_updates=state_updates
-        )
+        request = WidgetStateUpdateRequest(pane_id="pane_2", state_updates=state_updates)
 
         assert request.merge is True  # Default
 
@@ -221,9 +199,7 @@ class TestSplitPaneResponse:
         """Test creation of SplitPaneResponse."""
         split_config = {"orientation": "horizontal", "ratio": 0.6}
         response = SplitPaneResponse(
-            original_pane_id="pane_1",
-            new_pane_id="pane_2",
-            split_config=split_config
+            original_pane_id="pane_1", new_pane_id="pane_2", split_config=split_config
         )
 
         assert response.original_pane_id == "pane_1"
@@ -237,11 +213,7 @@ class TestTabOperationResponse:
     def test_tab_operation_response_creation(self):
         """Test creation of TabOperationResponse."""
         operation_data = {"previous_name": "Old Tab"}
-        response = TabOperationResponse(
-            tab_id="tab_1",
-            tab_index=2,
-            operation_data=operation_data
-        )
+        response = TabOperationResponse(tab_id="tab_1", tab_index=2, operation_data=operation_data)
 
         assert response.tab_id == "tab_1"
         assert response.tab_index == 2
@@ -249,9 +221,6 @@ class TestTabOperationResponse:
 
     def test_tab_operation_response_defaults(self):
         """Test TabOperationResponse with default values."""
-        response = TabOperationResponse(
-            tab_id="tab_2",
-            tab_index=0
-        )
+        response = TabOperationResponse(tab_id="tab_2", tab_index=0)
 
         assert response.operation_data is None  # Default

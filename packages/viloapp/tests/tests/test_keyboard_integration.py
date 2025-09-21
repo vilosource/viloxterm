@@ -58,9 +58,7 @@ class TestKeyboardCommandIntegration:
         assert cmd.shortcut == "ctrl+shift+t"
 
         # Verify shortcut was automatically registered
-        shortcuts = self.keyboard_service.get_shortcuts_for_command(
-            "test.auto_shortcut"
-        )
+        shortcuts = self.keyboard_service.get_shortcuts_for_command("test.auto_shortcut")
         assert len(shortcuts) == 1
         assert str(shortcuts[0].sequence) == "ctrl+shift+t"
         assert shortcuts[0].command_id == "test.auto_shortcut"
@@ -102,9 +100,7 @@ class TestKeyboardCommandIntegration:
             command_registry._pending_shortcuts = []
 
         # Verify shortcut was registered
-        shortcuts = self.keyboard_service.get_shortcuts_for_command(
-            "test.pending_shortcut"
-        )
+        shortcuts = self.keyboard_service.get_shortcuts_for_command("test.pending_shortcut")
         assert len(shortcuts) == 1
         assert str(shortcuts[0].sequence) == "ctrl+alt+p"
 
@@ -144,18 +140,14 @@ class TestKeyboardCommandIntegration:
 
         # All shortcuts should be registered
         for i in range(1, 4):
-            shortcuts = self.keyboard_service.get_shortcuts_for_command(
-                f"test.multi{i}"
-            )
+            shortcuts = self.keyboard_service.get_shortcuts_for_command(f"test.multi{i}")
             assert len(shortcuts) == 1
             assert str(shortcuts[0].sequence) == f"ctrl+{i}"
 
     def test_shortcut_conflict_handling(self):
         """Test handling of shortcut conflicts between commands."""
 
-        @command(
-            id="test.conflict1", title="Conflict 1", category="Test", shortcut="ctrl+x"
-        )
+        @command(id="test.conflict1", title="Conflict 1", category="Test", shortcut="ctrl+x")
         def conflict1_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=True)
 

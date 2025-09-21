@@ -130,9 +130,7 @@ class SettingsService(Service):
                     return False
 
             # Special validation for keyboard shortcuts
-            if category == "keyboard_shortcuts" and not validate_keyboard_shortcut(
-                value
-            ):
+            if category == "keyboard_shortcuts" and not validate_keyboard_shortcut(value):
                 logger.warning(f"Invalid keyboard shortcut: {value}")
                 return False
 
@@ -170,9 +168,7 @@ class SettingsService(Service):
         """
         return self._settings.get(category, {}).copy()
 
-    def set_category(
-        self, category: str, settings: dict[str, Any], validate: bool = True
-    ) -> bool:
+    def set_category(self, category: str, settings: dict[str, Any], validate: bool = True) -> bool:
         """
         Set all settings for a category.
 
@@ -187,9 +183,7 @@ class SettingsService(Service):
         try:
             # Validate if requested
             if validate:
-                is_valid, errors = self._schema_validator.validate_category(
-                    category, settings
-                )
+                is_valid, errors = self._schema_validator.validate_category(category, settings)
                 if not is_valid:
                     logger.warning(f"Invalid settings for {category}: {errors}")
                     return False
@@ -350,9 +344,7 @@ class SettingsService(Service):
 
     # ============= Change Listeners =============
 
-    def add_change_listener(
-        self, category: str, key: str, callback: Callable[[Any], None]
-    ) -> None:
+    def add_change_listener(self, category: str, key: str, callback: Callable[[Any], None]) -> None:
         """
         Add a listener for setting changes.
 
@@ -442,9 +434,7 @@ class SettingsService(Service):
                 # Reset specific categories
                 for category in categories:
                     if category in DEFAULT_SETTINGS:
-                        self._settings[category] = copy.deepcopy(
-                            DEFAULT_SETTINGS[category]
-                        )
+                        self._settings[category] = copy.deepcopy(DEFAULT_SETTINGS[category])
                         self.category_changed.emit(category, self._settings[category])
             else:
                 # Reset all settings
@@ -488,9 +478,7 @@ class SettingsService(Service):
 
             # Load each category
             for category in DEFAULT_SETTINGS.keys():
-                saved_settings = self._state_service.get_preference(
-                    f"settings.{category}"
-                )
+                saved_settings = self._state_service.get_preference(f"settings.{category}")
 
                 if saved_settings:
                     # Validate loaded settings

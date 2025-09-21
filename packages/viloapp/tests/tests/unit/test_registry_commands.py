@@ -26,9 +26,7 @@ class TestRegistryCommands:
         # Mock the new service methods
         self.mock_workspace_service.register_widget = MagicMock(return_value=True)
         self.mock_workspace_service.unregister_widget = MagicMock(return_value=True)
-        self.mock_workspace_service.update_registry_after_tab_close = MagicMock(
-            return_value=2
-        )
+        self.mock_workspace_service.update_registry_after_tab_close = MagicMock(return_value=2)
         self.mock_workspace_service.get_widget_tab_index = MagicMock(return_value=3)
         self.mock_workspace_service.is_widget_registered = MagicMock(return_value=True)
 
@@ -123,9 +121,7 @@ class TestRegistryCommands:
         assert result.value["updated_count"] == 1
 
         # Verify service method was called with None for widget_id
-        self.mock_workspace_service.update_registry_after_tab_close.assert_called_once_with(
-            1, None
-        )
+        self.mock_workspace_service.update_registry_after_tab_close.assert_called_once_with(1, None)
 
     def test_get_widget_tab_index(self):
         """Test getting tab index for a registered widget."""
@@ -190,9 +186,7 @@ class TestRegistryCommands:
     def test_exception_handling(self):
         """Test exception handling in commands."""
         # Make service method raise an exception
-        self.mock_workspace_service.register_widget.side_effect = Exception(
-            "Test error"
-        )
+        self.mock_workspace_service.register_widget.side_effect = Exception("Test error")
 
         self.mock_context.args = {"widget_id": "test", "tab_index": 0}
 

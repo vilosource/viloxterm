@@ -179,9 +179,7 @@ class TestSplitPaneWidgetLifecycle:
 
         # Perform multiple splits
         for widget in [sync_widget1, async_widget1, sync_widget2, async_widget2]:
-            with patch.object(
-                model, "split_pane", side_effect=create_mock_split(widget)
-            ):
+            with patch.object(model, "split_pane", side_effect=create_mock_split(widget)):
                 # Start async widgets
                 if isinstance(widget, MockAsyncWidget):
                     widget.start_initialization()

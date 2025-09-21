@@ -88,9 +88,7 @@ class TestWorkspaceMouseGUI(WorkspaceGUITestBase, MouseGUITestBase):
                     if tab_bar:
                         # Click on tab
                         tab_rect = tab_bar.tabRect(i)
-                        qtbot.mouseClick(
-                            tab_bar, Qt.MouseButton.LeftButton, pos=tab_rect.center()
-                        )
+                        qtbot.mouseClick(tab_bar, Qt.MouseButton.LeftButton, pos=tab_rect.center())
                         qtbot.wait(50)
 
                         # Verify tab changed
@@ -152,9 +150,7 @@ class TestWorkspaceKeyboardGUI(WorkspaceGUITestBase, KeyboardGUITestBase):
             qtbot.wait(50)
 
             # Try Ctrl+Tab for tab switching (if supported)
-            qtbot.keyClick(
-                tab_widget, Qt.Key.Key_Tab, Qt.KeyboardModifier.ControlModifier
-            )
+            qtbot.keyClick(tab_widget, Qt.Key.Key_Tab, Qt.KeyboardModifier.ControlModifier)
             qtbot.wait(100)
 
             # Basic test - tab widget should remain functional
@@ -189,9 +185,7 @@ class TestWorkspaceIntegrationGUI(WorkspaceGUITestBase):
         main_splitter = gui_main_window.main_splitter
 
         # Workspace should be in the main splitter
-        splitter_widgets = [
-            main_splitter.widget(i) for i in range(main_splitter.count())
-        ]
+        splitter_widgets = [main_splitter.widget(i) for i in range(main_splitter.count())]
         assert workspace in splitter_widgets
 
         # Workspace should be visible and functional
@@ -321,9 +315,7 @@ class TestWorkspaceAccessibilityGUI(WorkspaceGUITestBase):
         for i in range(tab_widget.count()):
             tab_text = tab_widget.tabText(i)
             # Tab should have some identifying text or be able to get one
-            assert isinstance(
-                tab_text, str
-            )  # May be empty string, but should be string
+            assert isinstance(tab_text, str)  # May be empty string, but should be string
 
     def test_workspace_focus_indication(self, gui_workspace, qtbot):
         """Test workspace provides clear focus indication."""
@@ -431,9 +423,7 @@ class TestWorkspaceSignalGUI(WorkspaceGUITestBase):
         # Verify signal argument
         if tab_changed_spy:
             signal_args = tab_changed_spy[0]
-            assert signal_args == (
-                0,
-            ), f"Expected tab index 0 in signal, got {signal_args}"
+            assert signal_args == (0,), f"Expected tab index 0 in signal, got {signal_args}"
 
     def test_workspace_tab_close_signal_in_gui(self, gui_workspace, qtbot):
         """Test tab_removed signal behavior when closing tabs via GUI."""
@@ -459,9 +449,7 @@ class TestWorkspaceSignalGUI(WorkspaceGUITestBase):
             tab_name,
         ), f"Expected tab name '{tab_name}' in signal, got {signal_args}"
 
-    def test_workspace_pane_changed_signal_propagation_in_gui(
-        self, gui_workspace, qtbot
-    ):
+    def test_workspace_pane_changed_signal_propagation_in_gui(self, gui_workspace, qtbot):
         """Test active_pane_changed signal propagation in GUI environment."""
         # Get current tab's split widget
         current_split = gui_workspace.get_current_split_widget()
@@ -488,9 +476,7 @@ class TestWorkspaceSignalGUI(WorkspaceGUITestBase):
             len(pane_changed_spy) >= 1
         ), "active_pane_changed signal should propagate from split widget"
 
-    def test_workspace_signal_consistency_during_rapid_operations(
-        self, gui_workspace, qtbot
-    ):
+    def test_workspace_signal_consistency_during_rapid_operations(self, gui_workspace, qtbot):
         """Test signal consistency during rapid GUI operations."""
         # Set up multiple signal spies
         tab_added_spy = qtbot.spy(gui_workspace.tab_added)
@@ -504,9 +490,7 @@ class TestWorkspaceSignalGUI(WorkspaceGUITestBase):
         qtbot.wait(100)  # Final wait for all signals
 
         # Verify signal counts
-        assert (
-            len(tab_added_spy) == 3
-        ), f"Expected 3 tab_added signals, got {len(tab_added_spy)}"
+        assert len(tab_added_spy) == 3, f"Expected 3 tab_added signals, got {len(tab_added_spy)}"
         assert (
             len(tab_changed_spy) >= 3
         ), f"Expected at least 3 tab_changed signals, got {len(tab_changed_spy)}"

@@ -66,9 +66,7 @@ class PluginReloadHandler(FileSystemEventHandler):
         return file_path.suffix in watch_extensions
 
 
-def run_dev_mode(
-    config: CLIConfig, plugin_path: Path, port: int, reload: bool
-) -> None:
+def run_dev_mode(config: CLIConfig, plugin_path: Path, port: int, reload: bool) -> None:
     """Run plugin in development mode.
 
     Args:
@@ -255,5 +253,5 @@ if __name__ == "__main__":
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         universal_newlines=True,
-        bufsize=1
+        bufsize=1,
     )

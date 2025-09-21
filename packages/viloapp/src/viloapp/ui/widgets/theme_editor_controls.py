@@ -187,9 +187,7 @@ class ThemeControlsWidget(QWidget):
         family_layout.addWidget(QLabel("Font Family:"))
         self._font_family_combo = QFontComboBox()
         self._font_family_combo.setCurrentFont("Fira Code")
-        self._font_family_combo.currentFontChanged.connect(
-            self._on_typography_field_changed
-        )
+        self._font_family_combo.currentFontChanged.connect(self._on_typography_field_changed)
         family_layout.addWidget(self._font_family_combo, 1)
         font_layout.addLayout(family_layout)
 
@@ -311,9 +309,7 @@ class ThemeControlsWidget(QWidget):
 
         for prop_key, field in self._color_fields.items():
             # Check if key or label contains search text
-            visible = (
-                search_text in prop_key.lower() or search_text in field._label.lower()
-            )
+            visible = search_text in prop_key.lower() or search_text in field._label.lower()
             field.setVisible(visible)
 
         # Hide empty category boxes

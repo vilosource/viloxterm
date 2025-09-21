@@ -355,27 +355,19 @@ class TestWorkspace:
         qtbot.addWidget(workspace)
 
         # Verify all documented signals exist
-        assert hasattr(
-            workspace, "tab_changed"
-        ), "Workspace must have tab_changed signal"
+        assert hasattr(workspace, "tab_changed"), "Workspace must have tab_changed signal"
         assert hasattr(workspace, "tab_added"), "Workspace must have tab_added signal"
-        assert hasattr(
-            workspace, "tab_removed"
-        ), "Workspace must have tab_removed signal"
+        assert hasattr(workspace, "tab_removed"), "Workspace must have tab_removed signal"
         assert hasattr(
             workspace, "active_pane_changed"
         ), "Workspace must have active_pane_changed signal"
-        assert hasattr(
-            workspace, "layout_changed"
-        ), "Workspace must have layout_changed signal"
+        assert hasattr(workspace, "layout_changed"), "Workspace must have layout_changed signal"
 
         # Verify signals are actually Signal class attributes
         assert hasattr(
             type(workspace), "tab_changed"
         ), "tab_changed must be a Signal class attribute"
-        assert hasattr(
-            type(workspace), "tab_added"
-        ), "tab_added must be a Signal class attribute"
+        assert hasattr(type(workspace), "tab_added"), "tab_added must be a Signal class attribute"
         assert hasattr(
             type(workspace), "tab_removed"
         ), "tab_removed must be a Signal class attribute"
@@ -397,8 +389,7 @@ class TestWorkspace:
 
         # Verify signal was emitted with correct tab name
         assert blocker.args == ["Test Editor"], (
-            f"Expected tab_added signal with args ['Test Editor'], "
-            f"but got {blocker.args}"
+            f"Expected tab_added signal with args ['Test Editor'], " f"but got {blocker.args}"
         )
 
     def test_tab_added_signal_emission_terminal(self, qtbot):
@@ -412,8 +403,7 @@ class TestWorkspace:
 
         # Verify signal was emitted with correct tab name
         assert blocker.args == ["Test Terminal"], (
-            f"Expected tab_added signal with args ['Test Terminal'], "
-            f"but got {blocker.args}"
+            f"Expected tab_added signal with args ['Test Terminal'], " f"but got {blocker.args}"
         )
 
     def test_tab_removed_signal_emission(self, qtbot):
@@ -431,8 +421,7 @@ class TestWorkspace:
 
         # Verify signal was emitted with correct tab name
         assert blocker.args == [tab_name], (
-            f"Expected tab_removed signal with args ['{tab_name}'], "
-            f"but got {blocker.args}"
+            f"Expected tab_removed signal with args ['{tab_name}'], " f"but got {blocker.args}"
         )
 
     def test_tab_changed_signal_emission(self, qtbot):
@@ -517,9 +506,7 @@ class TestWorkspace:
         qtbot.wait(100)  # Allow signals to be processed
 
         # Verify multiple tab_added signals were emitted
-        assert (
-            len(tab_added_spy) == 3
-        ), f"Expected 3 tab_added signals, got {len(tab_added_spy)}"
+        assert len(tab_added_spy) == 3, f"Expected 3 tab_added signals, got {len(tab_added_spy)}"
 
         # Verify tab names in signal emissions
         emitted_names = [call[0] for call in tab_added_spy]

@@ -8,14 +8,15 @@ and proper workspace service usage.
 """
 
 from unittest.mock import Mock, patch
+
 import pytest
 
 from viloapp.core.commands.base import CommandContext
 from viloapp.core.commands.builtin.terminal_commands import (
     clear_terminal_handler,
     copy_terminal_handler,
-    paste_terminal_handler,
     kill_terminal_handler,
+    paste_terminal_handler,
     restart_terminal_handler,
 )
 from viloapp.services.workspace_service import WorkspaceService
@@ -188,8 +189,10 @@ class TestPasteTerminalHandler:
         service = Mock(spec=WorkspaceService)
         return service
 
-    @patch('PySide6.QtWidgets.QApplication.clipboard')
-    def test_paste_terminal_uses_workspace_service(self, mock_clipboard, mock_context, mock_workspace_service):
+    @patch("PySide6.QtWidgets.QApplication.clipboard")
+    def test_paste_terminal_uses_workspace_service(
+        self, mock_clipboard, mock_context, mock_workspace_service
+    ):
         """Test that paste_terminal_handler uses workspace_service.get_current_widget()."""
         # ARRANGE - Setup mocks
         mock_terminal_widget = Mock()
@@ -211,8 +214,10 @@ class TestPasteTerminalHandler:
         mock_workspace_service.get_current_widget.assert_called_once()
         mock_terminal_widget.paste_to_terminal.assert_called_once_with("test clipboard text")
 
-    @patch('PySide6.QtWidgets.QApplication.clipboard')
-    def test_paste_terminal_handles_empty_clipboard(self, mock_clipboard, mock_context, mock_workspace_service):
+    @patch("PySide6.QtWidgets.QApplication.clipboard")
+    def test_paste_terminal_handles_empty_clipboard(
+        self, mock_clipboard, mock_context, mock_workspace_service
+    ):
         """Test paste_terminal_handler when clipboard is empty."""
         # ARRANGE - Empty clipboard
         mock_terminal_widget = Mock()
@@ -382,7 +387,9 @@ class TestRestartTerminalHandler:
         assert result.success is False
         assert "WorkspaceService not available" in result.error
 
-    def test_restart_terminal_handles_no_terminal_widget(self, mock_context, mock_workspace_service):
+    def test_restart_terminal_handles_no_terminal_widget(
+        self, mock_context, mock_workspace_service
+    ):
         """Test restart_terminal_handler when no terminal widget available."""
         # ARRANGE - No terminal widget
         mock_context.get_service.return_value = mock_workspace_service
@@ -395,7 +402,9 @@ class TestRestartTerminalHandler:
         assert result.success is False
         assert "No active terminal to restart" in result.error
 
-    def test_restart_terminal_handles_non_terminal_widget(self, mock_context, mock_workspace_service):
+    def test_restart_terminal_handles_non_terminal_widget(
+        self, mock_context, mock_workspace_service
+    ):
         """Test restart_terminal_handler when current widget is not a terminal."""
         # ARRANGE - Current widget doesn't have restart_terminal method
         mock_non_terminal_widget = Mock(spec=[])  # No restart_terminal method
@@ -464,8 +473,8 @@ class TestTerminalCommandsMVCCompliance:
             result = command_func(mock_context)
 
             # Verify proper CommandResult structure
-            assert hasattr(result, 'success')
-            assert hasattr(result, 'error')
+            assert hasattr(result, "success")
+            assert hasattr(result, "error")
             assert isinstance(result.success, bool)
             assert result.success is False  # All should fail without service
             assert isinstance(result.error, str)
@@ -519,7 +528,7 @@ class TestTerminalCommandsEdgeCases:
             assert result.success is False
             assert expected_error in result.error
 
-    @patch('PySide6.QtWidgets.QApplication.clipboard')
+    @patch("PySide6.QtWidgets.QApplication.clipboard")
     def test_paste_terminal_handles_clipboard_exception(self, mock_clipboard):
         """Test paste_terminal_handler handles clipboard access exceptions."""
         # ARRANGE - Clipboard throws exception

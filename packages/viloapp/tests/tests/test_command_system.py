@@ -7,7 +7,6 @@ registration, execution, context evaluation, and undo/redo.
 """
 
 import pytest
-
 from core import (
     Command,
     CommandContext,
@@ -36,9 +35,7 @@ class TestCommandBasics:
         def handler(context: CommandContext) -> CommandResult:
             return CommandResult(success=True, value="test")
 
-        cmd = Command(
-            id="test.command", title="Test Command", category="Test", handler=handler
-        )
+        cmd = Command(id="test.command", title="Test Command", category="Test", handler=handler)
 
         assert cmd.id == "test.command"
         assert cmd.title == "Test Command"
@@ -90,9 +87,7 @@ class TestCommandBasics:
     def test_command_search(self):
         """Test searching for commands."""
 
-        @command(
-            id="file.new", title="New File", category="File", keywords=["create", "add"]
-        )
+        @command(id="file.new", title="New File", category="File", keywords=["create", "add"])
         def new_file(context):
             return CommandResult(success=True)
 

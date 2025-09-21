@@ -179,7 +179,14 @@ class UnixTerminalBackend(TerminalBackend):
     def supports_feature(self, feature: str) -> bool:
         """Check if this backend supports a specific feature."""
         unix_features = {
-            "resize", "colors", "unicode", "input", "output",
-            "signals", "job_control", "pty", "termios"
+            "resize",
+            "colors",
+            "unicode",
+            "input",
+            "output",
+            "signals",
+            "job_control",
+            "pty",
+            "termios",
         }
         return feature in unix_features

@@ -1,14 +1,15 @@
 """Tests for workspace model classes."""
 
 import pytest
+
+from viloapp.models.base import OperationResult
 from viloapp.models.workspace_models import (
-    WidgetType,
     PaneState,
     SplitConfiguration,
     TabState,
+    WidgetType,
     WorkspaceState,
 )
-from viloapp.models.base import OperationResult
 
 
 class TestWidgetType:
@@ -37,10 +38,7 @@ class TestPaneState:
         """Test creation of PaneState."""
         state = {"content": "Hello World"}
         pane = PaneState(
-            id="pane_1",
-            widget_type=WidgetType.EDITOR,
-            widget_state=state,
-            is_active=True
+            id="pane_1", widget_type=WidgetType.EDITOR, widget_state=state, is_active=True
         )
 
         assert pane.id == "pane_1"
@@ -51,10 +49,7 @@ class TestPaneState:
     def test_pane_state_with_empty_state(self):
         """Test PaneState with empty widget state."""
         pane = PaneState(
-            id="pane_2",
-            widget_type=WidgetType.TERMINAL,
-            widget_state={},
-            is_active=False
+            id="pane_2", widget_type=WidgetType.TERMINAL, widget_state={}, is_active=False
         )
 
         assert pane.widget_state == {}
@@ -63,10 +58,7 @@ class TestPaneState:
     def test_pane_state_post_init_none_state(self):
         """Test that None widget_state is converted to empty dict."""
         pane = PaneState(
-            id="pane_3",
-            widget_type=WidgetType.EMPTY,
-            widget_state=None,
-            is_active=False
+            id="pane_3", widget_type=WidgetType.EMPTY, widget_state=None, is_active=False
         )
 
         assert pane.widget_state == {}
@@ -81,7 +73,7 @@ class TestSplitConfiguration:
             orientation="horizontal",
             ratio=0.6,
             left_pane_id="left_pane",
-            right_pane_id="right_pane"
+            right_pane_id="right_pane",
         )
 
         assert config.orientation == "horizontal"
@@ -126,17 +118,11 @@ class TestTabState:
 
     def test_tab_state_creation(self):
         """Test creation of TabState."""
-        panes = {
-            "pane_1": PaneState("pane_1", WidgetType.EDITOR, {}, True)
-        }
+        panes = {"pane_1": PaneState("pane_1", WidgetType.EDITOR, {}, True)}
         pane_tree = {"root": "pane_1"}
 
         tab = TabState(
-            id="tab_1",
-            name="Main Tab",
-            pane_tree=pane_tree,
-            active_pane_id="pane_1",
-            panes=panes
+            id="tab_1", name="Main Tab", pane_tree=pane_tree, active_pane_id="pane_1", panes=panes
         )
 
         assert tab.id == "tab_1"
@@ -147,23 +133,14 @@ class TestTabState:
 
     def test_tab_state_with_defaults(self):
         """Test TabState with default values."""
-        tab = TabState(
-            id="tab_2",
-            name="Empty Tab",
-            pane_tree={},
-            active_pane_id="none"
-        )
+        tab = TabState(id="tab_2", name="Empty Tab", pane_tree={}, active_pane_id="none")
 
         assert tab.panes == {}  # Default factory
 
     def test_tab_state_post_init_none_values(self):
         """Test that None values are handled in post_init."""
         tab = TabState(
-            id="tab_3",
-            name="Test Tab",
-            pane_tree=None,
-            active_pane_id="pane_1",
-            panes=None
+            id="tab_3", name="Test Tab", pane_tree=None, active_pane_id="pane_1", panes=None
         )
 
         assert tab.pane_tree == {}
@@ -178,10 +155,7 @@ class TestWorkspaceState:
         tab1 = TabState("tab_1", "Tab 1", {}, "pane_1")
         tab2 = TabState("tab_2", "Tab 2", {}, "pane_2")
 
-        workspace = WorkspaceState(
-            tabs=[tab1, tab2],
-            active_tab_index=1
-        )
+        workspace = WorkspaceState(tabs=[tab1, tab2], active_tab_index=1)
 
         assert len(workspace.tabs) == 2
         assert workspace.active_tab_index == 1

@@ -82,9 +82,7 @@ class CommandRegistry:
 
             # Warn about conflicts
             if len(self._shortcuts[shortcut]) > 1:
-                logger.warning(
-                    f"Shortcut conflict for {shortcut}: {self._shortcuts[shortcut]}"
-                )
+                logger.warning(f"Shortcut conflict for {shortcut}: {self._shortcuts[shortcut]}")
 
         # Index by keywords
         self._index_keywords(command)
@@ -204,9 +202,7 @@ class CommandRegistry:
         """
         shortcut = self._normalize_shortcut(shortcut)
         command_ids = self._shortcuts.get(shortcut, [])
-        return [
-            self._commands[cmd_id] for cmd_id in command_ids if cmd_id in self._commands
-        ]
+        return [self._commands[cmd_id] for cmd_id in command_ids if cmd_id in self._commands]
 
     def search_commands(self, query: str, use_fuzzy: bool = True) -> list[Command]:
         """

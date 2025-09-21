@@ -1,13 +1,14 @@
 """Plugin-related commands."""
 
-from viloapp.core.commands.decorators import command
 from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.decorators import command
+
 
 @command(
     id="plugins.list",
     title="List Installed Plugins",
     category="Plugins",
-    description="Show all installed plugins and their status"
+    description="Show all installed plugins and their status",
 )
 def list_plugins_command(context: CommandContext) -> CommandResult:
     """List all plugins."""
@@ -18,11 +19,12 @@ def list_plugins_command(context: CommandContext) -> CommandResult:
     plugins = plugin_manager.list_plugins()
     return CommandResult(success=True, value=plugins)
 
+
 @command(
     id="plugins.enable",
     title="Enable Plugin",
     category="Plugins",
-    description="Enable a disabled plugin"
+    description="Enable a disabled plugin",
 )
 def enable_plugin_command(context: CommandContext, plugin_id: str) -> CommandResult:
     """Enable a plugin."""
@@ -35,11 +37,12 @@ def enable_plugin_command(context: CommandContext, plugin_id: str) -> CommandRes
     else:
         return CommandResult(success=False, error=f"Failed to enable plugin {plugin_id}")
 
+
 @command(
     id="plugins.disable",
     title="Disable Plugin",
     category="Plugins",
-    description="Disable an enabled plugin"
+    description="Disable an enabled plugin",
 )
 def disable_plugin_command(context: CommandContext, plugin_id: str) -> CommandResult:
     """Disable a plugin."""
@@ -52,11 +55,9 @@ def disable_plugin_command(context: CommandContext, plugin_id: str) -> CommandRe
     else:
         return CommandResult(success=False, error=f"Failed to disable plugin {plugin_id}")
 
+
 @command(
-    id="plugins.reload",
-    title="Reload Plugin",
-    category="Plugins",
-    description="Reload a plugin"
+    id="plugins.reload", title="Reload Plugin", category="Plugins", description="Reload a plugin"
 )
 def reload_plugin_command(context: CommandContext, plugin_id: str) -> CommandResult:
     """Reload a plugin."""
@@ -69,11 +70,12 @@ def reload_plugin_command(context: CommandContext, plugin_id: str) -> CommandRes
     else:
         return CommandResult(success=False, error=f"Failed to reload plugin {plugin_id}")
 
+
 @command(
     id="plugins.info",
     title="Plugin Information",
     category="Plugins",
-    description="Show detailed information about a plugin"
+    description="Show detailed information about a plugin",
 )
 def plugin_info_command(context: CommandContext, plugin_id: str) -> CommandResult:
     """Get plugin information."""
@@ -87,11 +89,12 @@ def plugin_info_command(context: CommandContext, plugin_id: str) -> CommandResul
     else:
         return CommandResult(success=False, error=f"Plugin {plugin_id} not found")
 
+
 @command(
     id="plugins.discover",
     title="Discover Plugins",
     category="Plugins",
-    description="Discover new plugins"
+    description="Discover new plugins",
 )
 def discover_plugins_command(context: CommandContext) -> CommandResult:
     """Discover new plugins."""
@@ -101,6 +104,5 @@ def discover_plugins_command(context: CommandContext) -> CommandResult:
 
     plugin_ids = plugin_manager.discover_plugins()
     return CommandResult(
-        success=True,
-        value=f"Discovered {len(plugin_ids)} plugins: {', '.join(plugin_ids)}"
+        success=True, value=f"Discovered {len(plugin_ids)} plugins: {', '.join(plugin_ids)}"
     )

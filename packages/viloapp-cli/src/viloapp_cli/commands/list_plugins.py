@@ -76,22 +76,22 @@ def _output_table(plugins: dict[str, Any], verbose: bool) -> None:
             click.echo(f"   Version: {plugin_data.get('version', 'Unknown')}")
             click.echo(f"   Path: {plugin_data.get('path', 'Unknown')}")
 
-            manifest = plugin_data.get('manifest', {})
-            if 'description' in manifest:
+            manifest = plugin_data.get("manifest", {})
+            if "description" in manifest:
                 click.echo(f"   Description: {manifest['description']}")
 
-            if 'author' in manifest:
-                author = manifest['author']
+            if "author" in manifest:
+                author = manifest["author"]
                 if isinstance(author, dict):
-                    author_str = author.get('name', 'Unknown')
-                    if 'email' in author:
+                    author_str = author.get("name", "Unknown")
+                    if "email" in author:
                         author_str += f" <{author['email']}>"
                 else:
                     author_str = str(author)
                 click.echo(f"   Author: {author_str}")
 
             # Show contributions
-            contributes = manifest.get('contributes', {})
+            contributes = manifest.get("contributes", {})
             if contributes:
                 click.echo("   Contributes:")
                 for contrib_type, items in contributes.items():
@@ -99,7 +99,7 @@ def _output_table(plugins: dict[str, Any], verbose: bool) -> None:
                         click.echo(f"     {contrib_type.title()}: {len(items)} item(s)")
 
             # Check if path exists
-            plugin_path = Path(plugin_data.get('path', ''))
+            plugin_path = Path(plugin_data.get("path", ""))
             if not plugin_path.exists():
                 click.echo("   ⚠️  Plugin path does not exist!")
 
@@ -111,8 +111,8 @@ def _output_table(plugins: dict[str, Any], verbose: bool) -> None:
         click.echo("-" * 80)
 
         for plugin_id, plugin_data in plugins.items():
-            name = plugin_data.get('name', 'Unknown')
-            version = plugin_data.get('version', 'Unknown')
+            name = plugin_data.get("name", "Unknown")
+            version = plugin_data.get("version", "Unknown")
 
             # Truncate long names
             if len(name) > 24:
@@ -134,10 +134,7 @@ def _output_json(plugins: dict[str, Any], verbose: bool) -> None:
     """
     if verbose:
         # Full plugin data
-        output = {
-            "plugins": plugins,
-            "total": len(plugins)
-        }
+        output = {"plugins": plugins, "total": len(plugins)}
     else:
         # Simplified data
         simplified = {}
@@ -145,12 +142,9 @@ def _output_json(plugins: dict[str, Any], verbose: bool) -> None:
             simplified[plugin_id] = {
                 "name": plugin_data.get("name", "Unknown"),
                 "version": plugin_data.get("version", "Unknown"),
-                "path": plugin_data.get("path", "Unknown")
+                "path": plugin_data.get("path", "Unknown"),
             }
 
-        output = {
-            "plugins": simplified,
-            "total": len(plugins)
-        }
+        output = {"plugins": simplified, "total": len(plugins)}
 
     click.echo(json.dumps(output, indent=2))

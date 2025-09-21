@@ -85,9 +85,7 @@ def new_tab_command(context: CommandContext) -> CommandResult:
                 # Get the index of the newly added tab
                 index = workspace_service.get_tab_count() - 1
             else:
-                return CommandResult(
-                    success=False, error=f"Failed to create {widget_type} tab"
-                )
+                return CommandResult(success=False, error=f"Failed to create {widget_type} tab")
         else:
             # Unknown widget type, fall back to terminal
             logger.warning(f"Unknown widget type '{widget_type}', using terminal")
@@ -360,9 +358,7 @@ def focus_previous_pane_command(context: CommandContext) -> CommandResult:
         if success:
             return CommandResult(success=True)
         else:
-            return CommandResult(
-                success=False, error="Failed to navigate to previous pane"
-            )
+            return CommandResult(success=False, error="Failed to navigate to previous pane")
 
     except Exception as e:
         logger.error(f"Failed to focus previous pane: {e}")

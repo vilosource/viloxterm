@@ -96,11 +96,7 @@ def test_commands_have_decorators():
                     if not has_decorator:
                         violations.append(
                             {
-                                "file": str(
-                                    file_path.relative_to(
-                                        file_path.parent.parent.parent
-                                    )
-                                ),
+                                "file": str(file_path.relative_to(file_path.parent.parent.parent)),
                                 "line": line_num,
                                 "function": func_name,
                                 "content": stripped,
@@ -113,15 +109,11 @@ def test_commands_have_decorators():
     if violations:
         error_msg = "Functions ending with '_command' missing @command decorator:\n"
         for violation in violations:
-            error_msg += (
-                f"  {violation['file']}:{violation['line']} - {violation['function']}\n"
-            )
+            error_msg += f"  {violation['file']}:{violation['line']} - {violation['function']}\n"
 
         error_msg += "\nAll command functions must use @command decorator:\n"
         error_msg += "  @command(id='workbench.action.example', title='Example')\n"
-        error_msg += (
-            "  def example_command(context: CommandContext) -> CommandResult:\n"
-        )
+        error_msg += "  def example_command(context: CommandContext) -> CommandResult:\n"
 
         pytest.fail(error_msg)
 
@@ -175,11 +167,7 @@ def test_commands_return_command_result():
                     if not has_proper_return:
                         violations.append(
                             {
-                                "file": str(
-                                    file_path.relative_to(
-                                        file_path.parent.parent.parent
-                                    )
-                                ),
+                                "file": str(file_path.relative_to(file_path.parent.parent.parent)),
                                 "line": node.lineno,
                                 "function": node.name,
                             }
@@ -191,9 +179,7 @@ def test_commands_return_command_result():
     if violations:
         error_msg = "Command functions not returning CommandResult:\n"
         for violation in violations:
-            error_msg += (
-                f"  {violation['file']}:{violation['line']} - {violation['function']}\n"
-            )
+            error_msg += f"  {violation['file']}:{violation['line']} - {violation['function']}\n"
 
         error_msg += "\nCommand functions must return CommandResult:\n"
         error_msg += "  def my_command(context: CommandContext) -> CommandResult:\n"
@@ -231,10 +217,7 @@ def test_ui_uses_execute_command():
                     continue
 
                 # Look for direct command function calls
-                if (
-                    re.search(r"\w+_command\s*\(", line)
-                    and "execute_command" not in line
-                ):
+                if re.search(r"\w+_command\s*\(", line) and "execute_command" not in line:
                     # Skip function definitions and imports
                     if not (
                         stripped.startswith("def ")
@@ -245,11 +228,7 @@ def test_ui_uses_execute_command():
 
                         violations.append(
                             {
-                                "file": str(
-                                    file_path.relative_to(
-                                        file_path.parent.parent.parent
-                                    )
-                                ),
+                                "file": str(file_path.relative_to(file_path.parent.parent.parent)),
                                 "line": line_num,
                                 "content": stripped,
                             }
@@ -259,13 +238,9 @@ def test_ui_uses_execute_command():
             continue
 
     if violations:
-        error_msg = (
-            "UI components calling commands directly (should use execute_command):\n"
-        )
+        error_msg = "UI components calling commands directly (should use execute_command):\n"
         for violation in violations[:5]:  # Limit to first 5
-            error_msg += (
-                f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
-            )
+            error_msg += f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
 
         if len(violations) > 5:
             error_msg += f"  ... and {len(violations) - 5} more\n"
@@ -305,9 +280,7 @@ def test_command_ids_are_namespaced():
 
                     violations.append(
                         {
-                            "file": str(
-                                file_path.relative_to(file_path.parent.parent.parent)
-                            ),
+                            "file": str(file_path.relative_to(file_path.parent.parent.parent)),
                             "line": line_num,
                             "command_id": command_id,
                         }
@@ -355,9 +328,7 @@ def test_command_context_usage():
                             violations.append(
                                 {
                                     "file": str(
-                                        file_path.relative_to(
-                                            file_path.parent.parent.parent
-                                        )
+                                        file_path.relative_to(file_path.parent.parent.parent)
                                     ),
                                     "line": line_num,
                                     "function": func_name,
@@ -368,9 +339,7 @@ def test_command_context_usage():
                             violations.append(
                                 {
                                     "file": str(
-                                        file_path.relative_to(
-                                            file_path.parent.parent.parent
-                                        )
+                                        file_path.relative_to(file_path.parent.parent.parent)
                                     ),
                                     "line": line_num,
                                     "function": func_name,

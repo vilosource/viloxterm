@@ -39,6 +39,7 @@ class TerminalBackendFactory:
             logger.info("Creating Windows terminal backend")
             try:
                 from .windows_backend import WindowsTerminalBackend
+
                 TerminalBackendFactory._backend_instance = WindowsTerminalBackend()
             except ImportError as e:
                 logger.error(f"Failed to import Windows backend: {e}")
@@ -50,6 +51,7 @@ class TerminalBackendFactory:
             # Unix-like systems (Linux, macOS, BSD, etc.)
             logger.info(f"Creating Unix terminal backend for platform: {sys.platform}")
             from .unix_backend import UnixTerminalBackend
+
             TerminalBackendFactory._backend_instance = UnixTerminalBackend()
 
         logger.info(
@@ -88,6 +90,7 @@ class TerminalBackendFactory:
         if sys.platform == "win32":
             try:
                 import winpty
+
                 return True
             except ImportError:
                 return False
@@ -108,7 +111,7 @@ class TerminalBackendFactory:
             "supported": TerminalBackendFactory.is_platform_supported(),
             "backend_type": None,
             "features": [],
-            "requirements": []
+            "requirements": [],
         }
 
         if sys.platform == "win32":
@@ -116,6 +119,7 @@ class TerminalBackendFactory:
             info["features"] = ["conpty", "powershell", "cmd", "resize", "colors"]
             try:
                 import winpty
+
                 info["requirements"].append(f"pywinpty {winpty.__version__}")
             except ImportError:
                 info["requirements"].append("pywinpty (not installed)")

@@ -5,14 +5,15 @@ architectural principle of separation of concerns.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from .base import OperationResult
 
 
 class WidgetType(Enum):
     """Types of widgets that can be hosted in panes."""
+
     TERMINAL = "terminal"
     EDITOR = "editor"
     BROWSER = "browser"
@@ -27,6 +28,7 @@ class PaneState:
     A pane is a container that holds a widget. It has an ID, a widget type,
     and maintains the widget's state as serializable data.
     """
+
     id: str
     widget_type: WidgetType
     widget_state: Dict[str, Any]
@@ -41,6 +43,7 @@ class PaneState:
 @dataclass
 class SplitConfiguration:
     """Configuration for a split layout."""
+
     orientation: str  # "horizontal" or "vertical"
     ratio: float = 0.5
     left_pane_id: Optional[str] = None
@@ -61,6 +64,7 @@ class TabState:
     A tab contains a pane tree structure and tracks which pane is currently active.
     The pane_tree represents the hierarchical split layout as serializable data.
     """
+
     id: str
     name: str
     pane_tree: Dict[str, Any]  # Serialized tree structure
@@ -82,6 +86,7 @@ class WorkspaceState:
     This is the root state object that contains all tabs and tracks
     which tab is currently active.
     """
+
     tabs: List[TabState] = field(default_factory=list)
     active_tab_index: int = 0
 

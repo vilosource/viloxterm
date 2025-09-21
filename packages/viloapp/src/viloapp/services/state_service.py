@@ -44,12 +44,8 @@ class StateService(Service):
         self._workspace = context.get("workspace")
 
         # Load autosave preferences
-        self._autosave_enabled = self._settings.value(
-            "autosave_enabled", True, type=bool
-        )
-        self._autosave_interval = self._settings.value(
-            "autosave_interval", 60000, type=int
-        )
+        self._autosave_enabled = self._settings.value("autosave_enabled", True, type=bool)
+        self._autosave_interval = self._settings.value("autosave_interval", 60000, type=int)
 
         logger.info(f"StateService initialized (autosave: {self._autosave_enabled})")
 
@@ -78,15 +74,11 @@ class StateService(Service):
 
             # Save splitter sizes
             if hasattr(self._main_window, "main_splitter"):
-                self._settings.setValue(
-                    "splitter_sizes", self._main_window.main_splitter.sizes()
-                )
+                self._settings.setValue("splitter_sizes", self._main_window.main_splitter.sizes())
 
             # Save maximized/fullscreen state
             self._settings.setValue("window_maximized", self._main_window.isMaximized())
-            self._settings.setValue(
-                "window_fullscreen", self._main_window.isFullScreen()
-            )
+            self._settings.setValue("window_fullscreen", self._main_window.isFullScreen())
 
             self._settings.sync()
 
@@ -260,9 +252,7 @@ class StateService(Service):
         try:
             session = {
                 "window_state": self._get_window_state_dict(),
-                "workspace_state": (
-                    self._workspace.get_state() if self._workspace else {}
-                ),
+                "workspace_state": (self._workspace.get_state() if self._workspace else {}),
                 "ui_state": self._get_ui_state(),
                 "timestamp": self._get_timestamp(),
             }

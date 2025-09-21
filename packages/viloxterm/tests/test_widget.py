@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QApplication
 
 from viloxterm.widget import TerminalWidget, TerminalWidgetFactory
 
+
 # Ensure QApplication exists for widget tests
 @pytest.fixture(scope="module")
 def qapp():
@@ -31,7 +32,7 @@ def test_terminal_widget_factory():
     assert factory.get_icon() == "terminal"
 
 
-@patch('viloxterm.widget.terminal_server')
+@patch("viloxterm.widget.terminal_server")
 def test_start_terminal(mock_server, qapp):
     """Test starting a terminal session."""
     widget = TerminalWidget()
@@ -45,7 +46,7 @@ def test_start_terminal(mock_server, qapp):
     assert widget.session_id == "test-session-id"
 
 
-@patch('viloxterm.widget.terminal_server')
+@patch("viloxterm.widget.terminal_server")
 def test_stop_terminal(mock_server, qapp):
     """Test stopping a terminal session."""
     widget = TerminalWidget()

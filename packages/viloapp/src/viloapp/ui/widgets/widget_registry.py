@@ -203,9 +203,7 @@ class WidgetConfig:
     stylesheet: str = ""  # Custom stylesheet for this widget type
 
     # State serialization
-    serializer: Optional[Callable[[QWidget], dict[str, Any]]] = (
-        None  # Custom state serializer
-    )
+    serializer: Optional[Callable[[QWidget], dict[str, Any]]] = None  # Custom state serializer
     deserializer: Optional[Callable[[QWidget, dict[str, Any]], None]] = (
         None  # Custom state deserializer
     )
@@ -316,9 +314,7 @@ class WidgetRegistry:
         """Register a new widget type or override existing."""
         self.configs[widget_type] = config
 
-    def register_factory(
-        self, widget_type: WidgetType, factory: Callable[[str], QWidget]
-    ):
+    def register_factory(self, widget_type: WidgetType, factory: Callable[[str], QWidget]):
         """Register a custom factory function for a widget type.
 
         .. deprecated:: 1.0
@@ -389,9 +385,7 @@ class WidgetRegistry:
             return config.header_compact, config.header_auto_hide
         return False, False
 
-    def serialize_widget_state(
-        self, widget: QWidget, widget_type: WidgetType
-    ) -> dict[str, Any]:
+    def serialize_widget_state(self, widget: QWidget, widget_type: WidgetType) -> dict[str, Any]:
         """Serialize widget state using the appropriate serializer."""
         config = self.get_config(widget_type)
         if config and config.serializer:

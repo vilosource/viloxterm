@@ -9,6 +9,7 @@ from ..exceptions import PluginError
 
 class ActivationEventType(Enum):
     """Plugin activation event types."""
+
     ON_STARTUP = "onStartup"
     ON_COMMAND = "onCommand"
     ON_FILE_SYSTEM = "onFileSystem"
@@ -23,6 +24,7 @@ class ActivationEventType(Enum):
 
 class ContributionPointType(Enum):
     """Plugin contribution point types."""
+
     COMMANDS = "commands"
     MENUS = "menus"
     KEYBINDINGS = "keybindings"
@@ -43,6 +45,7 @@ class ContributionPointType(Enum):
 @dataclass
 class PluginMetadata:
     """Plugin metadata collected from decorators."""
+
     plugin_id: Optional[str] = None
     name: Optional[str] = None
     version: Optional[str] = None
@@ -64,6 +67,7 @@ class PluginMetadata:
 @dataclass
 class CommandMetadata:
     """Command metadata collected from decorators."""
+
     command_id: str
     title: str
     category: Optional[str] = None
@@ -78,6 +82,7 @@ class CommandMetadata:
 @dataclass
 class WidgetMetadata:
     """Widget metadata collected from decorators."""
+
     widget_id: str
     title: str
     icon: Optional[str] = None
@@ -92,6 +97,7 @@ class WidgetMetadata:
 @dataclass
 class ServiceMetadata:
     """Service metadata collected from decorators."""
+
     service_id: str
     name: str
     description: Optional[str] = None
@@ -104,14 +110,15 @@ class ServiceMetadata:
 @dataclass
 class ContributionMetadata:
     """Contribution metadata collected from decorators."""
+
     contribution_point: str
     contribution_type: ContributionPointType
     configuration: Dict[str, Any] = field(default_factory=dict)
     target_class: Optional[Type] = None
 
 
-F = TypeVar('F', bound=Callable[..., Any])
-T = TypeVar('T', bound=Type)
+F = TypeVar("F", bound=Callable[..., Any])
+T = TypeVar("T", bound=Type)
 
 
 def plugin(
@@ -129,7 +136,7 @@ def plugin(
     preview: bool = False,
     extensionPack: Optional[List[str]] = None,
     extensionDependencies: Optional[List[str]] = None,
-    main: Optional[str] = None
+    main: Optional[str] = None,
 ) -> Callable[[T], T]:
     """
     Class decorator for plugin registration.
@@ -167,6 +174,7 @@ def plugin(
         class MyPlugin(IPlugin):
             pass
     """
+
     def decorator(cls: T) -> T:
         # Validate required parameters
         if not name:
@@ -179,12 +187,12 @@ def plugin(
             # Convert class name to plugin ID format
             class_name = cls.__name__
             # Remove 'Plugin' suffix if present
-            if class_name.endswith('Plugin'):
+            if class_name.endswith("Plugin"):
                 class_name = class_name[:-6]
             final_plugin_id = class_name.lower()
 
         # Validate plugin_id format
-        if not final_plugin_id.replace('-', '').replace('.', '').isalnum():
+        if not final_plugin_id.replace("-", "").replace(".", "").isalnum():
             raise PluginError(f"Invalid plugin ID format: {final_plugin_id}")
 
         # Normalize author to dict format
@@ -210,7 +218,7 @@ def plugin(
             galleryBanner=galleryBanner,
             preview=preview,
             extensionPack=extensionPack or [],
-            extensionDependencies=extensionDependencies or []
+            extensionDependencies=extensionDependencies or [],
         )
 
         # Attach metadata to class
@@ -229,7 +237,7 @@ def command(
     icon: Optional[str] = None,
     enablement: Optional[str] = None,
     shortcut: Optional[str] = None,
-    when: Optional[str] = None
+    when: Optional[str] = None,
 ) -> Callable[[F], F]:
     """
     Method decorator for command registration.
@@ -259,12 +267,13 @@ def command(
             # Command implementation
             pass
     """
+
     def decorator(func: F) -> F:
         # Validate command_id
         if not command_id:
             raise PluginError("Command ID is required")
 
-        if not command_id.replace('.', '').replace('-', '').replace('_', '').isalnum():
+        if not command_id.replace(".", "").replace("-", "").replace("_", "").isalnum():
             raise PluginError(f"Invalid command ID format: {command_id}")
 
         # Create metadata
@@ -277,17 +286,17 @@ def command(
             enablement=enablement,
             handler=func,
             shortcut=shortcut,
-            when=when
+            when=when,
         )
 
         # Attach metadata to function
         func.__command_metadata__ = metadata
 
         # Get or create command registry on class
-        if hasattr(func, '__self__'):
+        if hasattr(func, "__self__"):
             # Method is bound, attach to instance
             instance = func.__self__
-            if not hasattr(instance, '__commands__'):
+            if not hasattr(instance, "__commands__"):
                 instance.__commands__ = {}
             instance.__commands__[command_id] = metadata
         else:
@@ -307,7 +316,7 @@ def widget(
     group: Optional[str] = None,
     position: str = "main",
     closable: bool = True,
-    singleton: bool = False
+    singleton: bool = False,
 ) -> Callable[[T], T]:
     """
     Class decorator for widget registration.
@@ -336,6 +345,7 @@ def widget(
         class TerminalWidget(IWidget):
             pass
     """
+
     def decorator(cls: T) -> T:
         # Validate required parameters
         if not widget_id:
@@ -347,7 +357,9 @@ def widget(
         # Validate position
         valid_positions = ["main", "sidebar", "panel", "auxiliary", "floating"]
         if position not in valid_positions:
-            raise PluginError(f"Invalid widget position: {position}. Must be one of {valid_positions}")
+            raise PluginError(
+                f"Invalid widget position: {position}. Must be one of {valid_positions}"
+            )
 
         # Create metadata
         metadata = WidgetMetadata(
@@ -359,7 +371,7 @@ def widget(
             position=position,
             closable=closable,
             singleton=singleton,
-            factory_class=cls
+            factory_class=cls,
         )
 
         # Attach metadata to class
@@ -377,7 +389,7 @@ def service(
     version: str = "1.0.0",
     interface_type: Optional[Type] = None,
     singleton: bool = True,
-    lazy: bool = False
+    lazy: bool = False,
 ) -> Callable[[T], T]:
     """
     Class decorator for service registration.
@@ -404,6 +416,7 @@ def service(
         class MyService(IService):
             pass
     """
+
     def decorator(cls: T) -> T:
         # Validate required parameters
         if not service_id:
@@ -420,7 +433,7 @@ def service(
             version=version,
             interface_type=interface_type,
             singleton=singleton,
-            lazy=lazy
+            lazy=lazy,
         )
 
         # Attach metadata to class
@@ -432,8 +445,7 @@ def service(
 
 
 def activation_event(
-    event_type: Union[ActivationEventType, str],
-    parameter: Optional[str] = None
+    event_type: Union[ActivationEventType, str], parameter: Optional[str] = None
 ) -> Callable[[T], T]:
     """
     Class decorator for activation event registration.
@@ -451,6 +463,7 @@ def activation_event(
         class MyPlugin(IPlugin):
             pass
     """
+
     def decorator(cls: T) -> T:
         # Convert enum to string if needed
         if isinstance(event_type, ActivationEventType):
@@ -463,7 +476,7 @@ def activation_event(
             event_str = f"{event_str}:{parameter}"
 
         # Get or create activation events list
-        if not hasattr(cls, '__activation_events__'):
+        if not hasattr(cls, "__activation_events__"):
             cls.__activation_events__ = []
 
         # Add event if not already present
@@ -476,8 +489,7 @@ def activation_event(
 
 
 def contribution(
-    contribution_point: Union[ContributionPointType, str],
-    **config: Any
+    contribution_point: Union[ContributionPointType, str], **config: Any
 ) -> Callable[[T], T]:
     """
     Class decorator for contribution point registration.
@@ -502,6 +514,7 @@ def contribution(
         class MyPlugin(IPlugin):
             pass
     """
+
     def decorator(cls: T) -> T:
         # Convert enum to string if needed
         if isinstance(contribution_point, ContributionPointType):
@@ -523,11 +536,11 @@ def contribution(
             contribution_point=point_str,
             contribution_type=point_type,
             configuration=config,
-            target_class=cls
+            target_class=cls,
         )
 
         # Get or create contributions list
-        if not hasattr(cls, '__contributions__'):
+        if not hasattr(cls, "__contributions__"):
             cls.__contributions__ = []
 
         cls.__contributions__.append(metadata)
@@ -539,34 +552,35 @@ def contribution(
 
 # Utility functions for metadata extraction
 
+
 def get_plugin_metadata(cls: Type) -> Optional[PluginMetadata]:
     """Get plugin metadata from a class."""
-    return getattr(cls, '__plugin_metadata__', None)
+    return getattr(cls, "__plugin_metadata__", None)
 
 
 def get_command_metadata(func: Callable) -> Optional[CommandMetadata]:
     """Get command metadata from a function."""
-    return getattr(func, '__command_metadata__', None)
+    return getattr(func, "__command_metadata__", None)
 
 
 def get_widget_metadata(cls: Type) -> Optional[WidgetMetadata]:
     """Get widget metadata from a class."""
-    return getattr(cls, '__widget_metadata__', None)
+    return getattr(cls, "__widget_metadata__", None)
 
 
 def get_service_metadata(cls: Type) -> Optional[ServiceMetadata]:
     """Get service metadata from a class."""
-    return getattr(cls, '__service_metadata__', None)
+    return getattr(cls, "__service_metadata__", None)
 
 
 def get_activation_events(cls: Type) -> List[str]:
     """Get activation events from a class."""
-    return getattr(cls, '__activation_events__', [])
+    return getattr(cls, "__activation_events__", [])
 
 
 def get_contributions(cls: Type) -> List[ContributionMetadata]:
     """Get contributions from a class."""
-    return getattr(cls, '__contributions__', [])
+    return getattr(cls, "__contributions__", [])
 
 
 def get_commands_from_class(cls: Type) -> Dict[str, CommandMetadata]:
@@ -582,7 +596,7 @@ def get_commands_from_class(cls: Type) -> Dict[str, CommandMetadata]:
                 commands[metadata.command_id] = metadata
 
     # Check class-level commands registry
-    if hasattr(cls, '__commands__'):
+    if hasattr(cls, "__commands__"):
         commands.update(cls.__commands__)
 
     return commands
@@ -603,18 +617,20 @@ def create_manifest_from_decorators(plugin_class: Type) -> Dict[str, Any]:
     # Get plugin metadata
     plugin_metadata = get_plugin_metadata(plugin_class)
     if plugin_metadata:
-        manifest.update({
-            "name": plugin_metadata.plugin_id,
-            "displayName": plugin_metadata.name,
-            "version": plugin_metadata.version,
-            "description": plugin_metadata.description,
-            "author": plugin_metadata.author,
-            "license": plugin_metadata.license,
-            "keywords": plugin_metadata.keywords,
-            "engines": plugin_metadata.engines,
-            "categories": plugin_metadata.categories,
-            "main": plugin_metadata.main,
-        })
+        manifest.update(
+            {
+                "name": plugin_metadata.plugin_id,
+                "displayName": plugin_metadata.name,
+                "version": plugin_metadata.version,
+                "description": plugin_metadata.description,
+                "author": plugin_metadata.author,
+                "license": plugin_metadata.license,
+                "keywords": plugin_metadata.keywords,
+                "engines": plugin_metadata.engines,
+                "categories": plugin_metadata.categories,
+                "main": plugin_metadata.main,
+            }
+        )
 
         if plugin_metadata.icon:
             manifest["icon"] = plugin_metadata.icon

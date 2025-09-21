@@ -8,12 +8,12 @@ and improves performance.
 """
 
 import logging
+import sys
 from collections import defaultdict
 from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QSplitter, QWidget
-import sys
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,9 @@ class WidgetPool:
 
         logger.info(f"WidgetPool initialized with max_pool_size={max_pool_size}")
 
-    def acquire_splitter(self, orientation: Qt.Orientation, parent: Optional[QWidget] = None) -> QSplitter:
+    def acquire_splitter(
+        self, orientation: Qt.Orientation, parent: Optional[QWidget] = None
+    ) -> QSplitter:
         """
         Acquire a QSplitter from the pool or create a new one.
 
@@ -158,9 +160,7 @@ class WidgetPool:
             True if widget was pooled, False if destroyed
         """
         if widget not in self._in_use:
-            logger.warning(
-                f"Attempting to release widget not tracked as in-use: {widget}"
-            )
+            logger.warning(f"Attempting to release widget not tracked as in-use: {widget}")
             return False
 
         self._stats["releases"] += 1
@@ -183,9 +183,7 @@ class WidgetPool:
         widget.setParent(None)  # Remove from parent
 
         pool.append(widget)
-        logger.debug(
-            f"Released {widget_type.__name__} to pool (pool size: {len(pool)})"
-        )
+        logger.debug(f"Released {widget_type.__name__} to pool (pool size: {len(pool)})")
 
         return True
 

@@ -6,6 +6,7 @@ from viloapp_sdk.service import ServiceProxy
 from viloapp_sdk.events import EventBus
 from pathlib import Path
 
+
 class TestPlugin(IPlugin):
     """Test plugin implementation."""
 
@@ -20,7 +21,7 @@ class TestPlugin(IPlugin):
             version="1.0.0",
             description="A test plugin",
             author="Test Author",
-            capabilities=[PluginCapability.WIDGETS]
+            capabilities=[PluginCapability.WIDGETS],
         )
 
     def activate(self, context):
@@ -29,6 +30,7 @@ class TestPlugin(IPlugin):
 
     def deactivate(self):
         self.deactivated = True
+
 
 def test_plugin_metadata():
     """Test plugin metadata."""
@@ -41,6 +43,7 @@ def test_plugin_metadata():
     assert metadata.description == "A test plugin"
     assert metadata.author == "Test Author"
     assert PluginCapability.WIDGETS in metadata.capabilities
+
 
 def test_plugin_lifecycle():
     """Test plugin lifecycle."""
@@ -56,7 +59,7 @@ def test_plugin_lifecycle():
         data_path=Path("/tmp/test-plugin-data"),
         service_proxy=ServiceProxy({}),
         event_bus=EventBus(),
-        configuration={}
+        configuration={},
     )
 
     # Activate plugin
@@ -68,6 +71,7 @@ def test_plugin_lifecycle():
     plugin.deactivate()
     assert plugin.deactivated
 
+
 def test_metadata_validation():
     """Test metadata validation."""
     # Valid metadata
@@ -76,7 +80,7 @@ def test_metadata_validation():
         name="Valid Plugin",
         version="1.0.0",
         description="A valid plugin",
-        author="Author"
+        author="Author",
     )
 
     errors = metadata.validate()
@@ -88,7 +92,7 @@ def test_metadata_validation():
         name="Invalid Plugin",
         version="1.0.0",
         description="An invalid plugin",
-        author="Author"
+        author="Author",
     )
 
     errors = metadata.validate()
@@ -101,7 +105,7 @@ def test_metadata_validation():
         name="Invalid Plugin",
         version="1.0.0",
         description="An invalid plugin",
-        author="Author"
+        author="Author",
     )
 
     errors = metadata.validate()

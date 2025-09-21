@@ -54,16 +54,14 @@ class TerminalWidget(QWidget):
             # Get default shell if not specified
             if not command:
                 import platform
+
                 if platform.system() == "Windows":
                     command = "powershell.exe"
                 else:
                     command = "/bin/bash"
 
             # Create terminal session
-            self.session_id = terminal_server.create_session(
-                command=command,
-                cwd=cwd
-            )
+            self.session_id = terminal_server.create_session(command=command, cwd=cwd)
 
             # Get terminal URL
             url = terminal_server.get_terminal_url(self.session_id)
@@ -211,7 +209,7 @@ class TerminalWidgetFactory(IWidget):
             return {
                 instance_id: {
                     "session_id": widget.session_id,
-                    "active": widget.session_id is not None
+                    "active": widget.session_id is not None,
                 }
                 for instance_id, widget in self._instances.items()
             }
@@ -222,7 +220,7 @@ class TerminalWidgetFactory(IWidget):
         """Get widget state for persistence."""
         return {
             "session_count": len(terminal_server.sessions),
-            "instance_count": len(self._instances)
+            "instance_count": len(self._instances),
         }
 
     def restore_state(self, state: Dict[str, Any]) -> None:

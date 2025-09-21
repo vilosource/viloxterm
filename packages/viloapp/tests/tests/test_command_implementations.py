@@ -172,9 +172,7 @@ class TestTabCommands:
         new_name = "Renamed Tab"
 
         # Execute rename command with new name
-        result = execute_command(
-            "workbench.action.renameTab", tab_index=0, new_name=new_name
-        )
+        result = execute_command("workbench.action.renameTab", tab_index=0, new_name=new_name)
         assert result.success, f"Command failed: {result.error}"
 
         # Verify tab was renamed
@@ -470,9 +468,7 @@ class TestCommandPerformance:
         assert not result.success or result.value is None
 
         # Test with wrong argument types
-        result = execute_command(
-            "workbench.action.duplicateTab", tab_index="not_a_number"
-        )
+        result = execute_command("workbench.action.duplicateTab", tab_index="not_a_number")
         # Should handle gracefully
         assert isinstance(result, CommandResult)
 

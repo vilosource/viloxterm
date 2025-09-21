@@ -317,9 +317,7 @@ class TestMockAppWidgetLifecycle:
         qtbot.addWidget(widget)
 
         # Configure custom retry strategy
-        widget.configure_retry_strategy(
-            max_retries=5, base_delay=500, backoff_factor=2.0
-        )
+        widget.configure_retry_strategy(max_retries=5, base_delay=500, backoff_factor=2.0)
 
         assert widget._max_retries == 5
         assert widget._retry_base_delay == 500

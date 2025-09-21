@@ -320,10 +320,7 @@ class TestSettingsIntegration:
             ]:
                 settings = config.create_settings(*domain)
                 # After reset, the test key should not exist
-                assert (
-                    settings.value("test_key") is None
-                    or settings.value("test_key") == ""
-                )
+                assert settings.value("test_key") is None or settings.value("test_key") == ""
 
         finally:
             if test_dir.exists():

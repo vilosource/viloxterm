@@ -246,9 +246,7 @@ class TransitionManager:
         # Begin transition
         if not self.begin_transition():
             # If transition fails, just run operation
-            logger.warning(
-                "Transition failed to start, running operation without overlay"
-            )
+            logger.warning("Transition failed to start, running operation without overlay")
             return operation()
 
         try:

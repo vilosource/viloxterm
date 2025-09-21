@@ -4,10 +4,7 @@ import logging
 from typing import Optional, Dict, Any
 from pathlib import Path
 
-from viloapp_sdk import (
-    IPlugin, PluginMetadata, PluginCapability,
-    IPluginContext, EventType
-)
+from viloapp_sdk import IPlugin, PluginMetadata, PluginCapability, IPluginContext, EventType
 
 from .widget import EditorWidgetFactory
 from .editor import CodeEditor
@@ -44,80 +41,38 @@ class EditorPlugin(IPlugin):
                 "onCommand:editor.new",
                 "onLanguage:python",
                 "onLanguage:javascript",
-                "workspaceContains:**/*.py"
+                "workspaceContains:**/*.py",
             ],
-            capabilities=[PluginCapability.WIDGETS, PluginCapability.COMMANDS, PluginCapability.LANGUAGES],
+            capabilities=[
+                PluginCapability.WIDGETS,
+                PluginCapability.COMMANDS,
+                PluginCapability.LANGUAGES,
+            ],
             contributes={
-                "widgets": [
-                    {
-                        "id": "editor",
-                        "factory": "viloedit.widget:EditorWidgetFactory"
-                    }
-                ],
+                "widgets": [{"id": "editor", "factory": "viloedit.widget:EditorWidgetFactory"}],
                 "commands": [
-                    {
-                        "id": "editor.open",
-                        "title": "Open File",
-                        "category": "Editor"
-                    },
-                    {
-                        "id": "editor.save",
-                        "title": "Save File",
-                        "category": "Editor"
-                    },
-                    {
-                        "id": "editor.saveAs",
-                        "title": "Save As...",
-                        "category": "Editor"
-                    },
-                    {
-                        "id": "editor.close",
-                        "title": "Close Editor",
-                        "category": "Editor"
-                    },
-                    {
-                        "id": "editor.new",
-                        "title": "New File",
-                        "category": "Editor"
-                    }
+                    {"id": "editor.open", "title": "Open File", "category": "Editor"},
+                    {"id": "editor.save", "title": "Save File", "category": "Editor"},
+                    {"id": "editor.saveAs", "title": "Save As...", "category": "Editor"},
+                    {"id": "editor.close", "title": "Close Editor", "category": "Editor"},
+                    {"id": "editor.new", "title": "New File", "category": "Editor"},
                 ],
                 "languages": [
-                    {
-                        "id": "python",
-                        "extensions": [".py", ".pyw"],
-                        "aliases": ["Python", "py"]
-                    },
+                    {"id": "python", "extensions": [".py", ".pyw"], "aliases": ["Python", "py"]},
                     {
                         "id": "javascript",
                         "extensions": [".js", ".jsx"],
-                        "aliases": ["JavaScript", "js"]
+                        "aliases": ["JavaScript", "js"],
                     },
-                    {
-                        "id": "json",
-                        "extensions": [".json"],
-                        "aliases": ["JSON"]
-                    },
-                    {
-                        "id": "markdown",
-                        "extensions": [".md", ".markdown"],
-                        "aliases": ["Markdown"]
-                    }
+                    {"id": "json", "extensions": [".json"], "aliases": ["JSON"]},
+                    {"id": "markdown", "extensions": [".md", ".markdown"], "aliases": ["Markdown"]},
                 ],
                 "keybindings": [
-                    {
-                        "command": "editor.save",
-                        "key": "ctrl+s"
-                    },
-                    {
-                        "command": "editor.open",
-                        "key": "ctrl+o"
-                    },
-                    {
-                        "command": "editor.new",
-                        "key": "ctrl+n"
-                    }
-                ]
-            }
+                    {"command": "editor.save", "key": "ctrl+s"},
+                    {"command": "editor.open", "key": "ctrl+o"},
+                    {"command": "editor.new", "key": "ctrl+n"},
+                ],
+            },
         )
 
     def activate(self, context: IPluginContext) -> None:
@@ -187,13 +142,14 @@ class EditorPlugin(IPlugin):
         """Handle theme change."""
         # Update syntax highlighting colors
         for editor in self.open_editors.values():
-            if hasattr(editor, 'update_theme'):
+            if hasattr(editor, "update_theme"):
                 editor.update_theme(event.data)
 
     def _new_file(self, args: Dict[str, Any]) -> Any:
         """Create a new file."""
         # Create editor widget with unique instance ID
         import uuid
+
         instance_id = f"editor_{uuid.uuid4().hex[:8]}"
         editor = self.widget_factory.create_instance(instance_id)
 
@@ -207,17 +163,17 @@ class EditorPlugin(IPlugin):
 
     def _open_file(self, args: Dict[str, Any]) -> Any:
         """Open a file in the editor."""
-        file_path = args.get('path')
+        file_path = args.get("path")
         if not file_path:
             # Show file dialog
             from PySide6.QtWidgets import QFileDialog
-            file_path, _ = QFileDialog.getOpenFileName(
-                None, "Open File", "", "All Files (*.*)"
-            )
+
+            file_path, _ = QFileDialog.getOpenFileName(None, "Open File", "", "All Files (*.*)")
 
         if file_path:
             # Create editor widget with unique instance ID
             import uuid
+
             instance_id = f"editor_{uuid.uuid4().hex[:8]}"
             editor = self.widget_factory.create_instance(instance_id)
             editor.load_file(file_path)
@@ -272,10 +228,12 @@ class EditorPlugin(IPlugin):
                 if editor.document().isModified():
                     # Ask to save
                     from PySide6.QtWidgets import QMessageBox
+
                     reply = QMessageBox.question(
-                        None, "Save Changes",
+                        None,
+                        "Save Changes",
                         "Do you want to save changes before closing?",
-                        QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
+                        QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
                     )
 
                     if reply == QMessageBox.Save:

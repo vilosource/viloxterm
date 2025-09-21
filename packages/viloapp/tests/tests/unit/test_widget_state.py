@@ -38,30 +38,20 @@ class TestWidgetStateValidator:
         assert WidgetStateValidator.is_valid_transition(
             WidgetState.CREATED, WidgetState.INITIALIZING
         )
-        assert WidgetStateValidator.is_valid_transition(
-            WidgetState.CREATED, WidgetState.DESTROYING
-        )
+        assert WidgetStateValidator.is_valid_transition(WidgetState.CREATED, WidgetState.DESTROYING)
 
     def test_invalid_transitions_from_created(self):
         """Test invalid transitions from CREATED state."""
-        assert not WidgetStateValidator.is_valid_transition(
-            WidgetState.CREATED, WidgetState.READY
-        )
+        assert not WidgetStateValidator.is_valid_transition(WidgetState.CREATED, WidgetState.READY)
         assert not WidgetStateValidator.is_valid_transition(
             WidgetState.CREATED, WidgetState.SUSPENDED
         )
-        assert not WidgetStateValidator.is_valid_transition(
-            WidgetState.CREATED, WidgetState.ERROR
-        )
+        assert not WidgetStateValidator.is_valid_transition(WidgetState.CREATED, WidgetState.ERROR)
 
     def test_valid_transitions_from_initializing(self):
         """Test valid transitions from INITIALIZING state."""
-        assert WidgetStateValidator.is_valid_transition(
-            WidgetState.INITIALIZING, WidgetState.READY
-        )
-        assert WidgetStateValidator.is_valid_transition(
-            WidgetState.INITIALIZING, WidgetState.ERROR
-        )
+        assert WidgetStateValidator.is_valid_transition(WidgetState.INITIALIZING, WidgetState.READY)
+        assert WidgetStateValidator.is_valid_transition(WidgetState.INITIALIZING, WidgetState.ERROR)
         assert WidgetStateValidator.is_valid_transition(
             WidgetState.INITIALIZING, WidgetState.DESTROYING
         )
@@ -77,30 +67,20 @@ class TestWidgetStateValidator:
 
     def test_valid_transitions_from_ready(self):
         """Test valid transitions from READY state."""
-        assert WidgetStateValidator.is_valid_transition(
-            WidgetState.READY, WidgetState.SUSPENDED
-        )
-        assert WidgetStateValidator.is_valid_transition(
-            WidgetState.READY, WidgetState.ERROR
-        )
-        assert WidgetStateValidator.is_valid_transition(
-            WidgetState.READY, WidgetState.DESTROYING
-        )
+        assert WidgetStateValidator.is_valid_transition(WidgetState.READY, WidgetState.SUSPENDED)
+        assert WidgetStateValidator.is_valid_transition(WidgetState.READY, WidgetState.ERROR)
+        assert WidgetStateValidator.is_valid_transition(WidgetState.READY, WidgetState.DESTROYING)
 
     def test_invalid_transitions_from_ready(self):
         """Test invalid transitions from READY state."""
-        assert not WidgetStateValidator.is_valid_transition(
-            WidgetState.READY, WidgetState.CREATED
-        )
+        assert not WidgetStateValidator.is_valid_transition(WidgetState.READY, WidgetState.CREATED)
         assert not WidgetStateValidator.is_valid_transition(
             WidgetState.READY, WidgetState.INITIALIZING
         )
 
     def test_valid_transitions_from_suspended(self):
         """Test valid transitions from SUSPENDED state."""
-        assert WidgetStateValidator.is_valid_transition(
-            WidgetState.SUSPENDED, WidgetState.READY
-        )
+        assert WidgetStateValidator.is_valid_transition(WidgetState.SUSPENDED, WidgetState.READY)
         assert WidgetStateValidator.is_valid_transition(
             WidgetState.SUSPENDED, WidgetState.DESTROYING
         )
@@ -119,21 +99,13 @@ class TestWidgetStateValidator:
 
     def test_valid_transitions_from_error(self):
         """Test valid transitions from ERROR state."""
-        assert WidgetStateValidator.is_valid_transition(
-            WidgetState.ERROR, WidgetState.INITIALIZING
-        )
-        assert WidgetStateValidator.is_valid_transition(
-            WidgetState.ERROR, WidgetState.DESTROYING
-        )
+        assert WidgetStateValidator.is_valid_transition(WidgetState.ERROR, WidgetState.INITIALIZING)
+        assert WidgetStateValidator.is_valid_transition(WidgetState.ERROR, WidgetState.DESTROYING)
 
     def test_invalid_transitions_from_error(self):
         """Test invalid transitions from ERROR state."""
-        assert not WidgetStateValidator.is_valid_transition(
-            WidgetState.ERROR, WidgetState.CREATED
-        )
-        assert not WidgetStateValidator.is_valid_transition(
-            WidgetState.ERROR, WidgetState.READY
-        )
+        assert not WidgetStateValidator.is_valid_transition(WidgetState.ERROR, WidgetState.CREATED)
+        assert not WidgetStateValidator.is_valid_transition(WidgetState.ERROR, WidgetState.READY)
         assert not WidgetStateValidator.is_valid_transition(
             WidgetState.ERROR, WidgetState.SUSPENDED
         )
@@ -160,9 +132,7 @@ class TestWidgetStateValidator:
         """Test that DESTROYED is a terminal state with no valid transitions."""
         for state in WidgetState:
             if state != WidgetState.DESTROYED:
-                assert not WidgetStateValidator.is_valid_transition(
-                    WidgetState.DESTROYED, state
-                )
+                assert not WidgetStateValidator.is_valid_transition(WidgetState.DESTROYED, state)
 
     def test_self_transitions_invalid(self):
         """Test that self-transitions are not allowed."""

@@ -23,9 +23,7 @@ logger = logging.getLogger(__name__)
     description="Change the application color theme",
     shortcut="ctrl+k ctrl+t",
 )
-def select_theme_command(
-    context: CommandContext, theme_id: str = None
-) -> CommandResult:
+def select_theme_command(context: CommandContext, theme_id: str = None) -> CommandResult:
     """
     Select and apply a theme.
 
@@ -48,9 +46,7 @@ def select_theme_command(
                 logger.info(f"Applied theme: {theme_id}")
                 return CommandResult(success=True, value={"theme_id": theme_id})
             else:
-                return CommandResult(
-                    success=False, error=f"Failed to apply theme: {theme_id}"
-                )
+                return CommandResult(success=False, error=f"Failed to apply theme: {theme_id}")
         else:
             # Cycle through available themes (for now)
             themes = theme_service.get_available_themes()
@@ -58,9 +54,7 @@ def select_theme_command(
                 return CommandResult(success=False, error="No themes available")
 
             current_id = theme_service.get_current_theme_id()
-            current_index = next(
-                (i for i, t in enumerate(themes) if t.id == current_id), 0
-            )
+            current_index = next((i for i, t in enumerate(themes) if t.id == current_id), 0)
             next_index = (current_index + 1) % len(themes)
             next_theme = themes[next_index]
 
@@ -69,16 +63,12 @@ def select_theme_command(
                 # Show status message
                 ui_service = context.get_service(UIService)
                 if ui_service:
-                    ui_service.set_status_message(
-                        f"Theme changed to: {next_theme.name}", 2000
-                    )
+                    ui_service.set_status_message(f"Theme changed to: {next_theme.name}", 2000)
 
                 logger.info(f"Cycled to theme: {next_theme.id}")
                 return CommandResult(success=True, value={"theme_id": next_theme.id})
             else:
-                return CommandResult(
-                    success=False, error=f"Failed to apply theme: {next_theme.id}"
-                )
+                return CommandResult(success=False, error=f"Failed to apply theme: {next_theme.id}")
 
     except Exception as e:
         logger.error(f"Failed to select theme: {e}")
@@ -169,9 +159,7 @@ def create_custom_theme_command(context: CommandContext) -> CommandResult:
             # Show status message
             ui_service = context.get_service(UIService)
             if ui_service:
-                ui_service.set_status_message(
-                    f"Created custom theme: {custom_theme.name}", 3000
-                )
+                ui_service.set_status_message(f"Created custom theme: {custom_theme.name}", 3000)
 
             logger.info(f"Created custom theme: {custom_theme.id}")
             return CommandResult(success=True, value={"theme_id": custom_theme.id})
@@ -233,9 +221,7 @@ def export_theme_command(context: CommandContext) -> CommandResult:
     category="Preferences",
     description="Import a theme from a file",
 )
-def import_theme_command(
-    context: CommandContext, file_path: str = None
-) -> CommandResult:
+def import_theme_command(context: CommandContext, file_path: str = None) -> CommandResult:
     """
     Import a theme from a file.
 
@@ -269,9 +255,7 @@ def import_theme_command(
             # Show status message
             ui_service = context.get_service(UIService)
             if ui_service:
-                ui_service.set_status_message(
-                    f"Imported and applied theme: {theme_id}", 3000
-                )
+                ui_service.set_status_message(f"Imported and applied theme: {theme_id}", 3000)
 
             logger.info(f"Imported theme: {theme_id}")
             return CommandResult(success=True, value={"theme_id": theme_id})
@@ -338,16 +322,13 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
                 pane_id = pane.leaf_node.id
 
         if pane_id:
-            # Change the pane type directly to SETTINGS (theme editor is registered as SETTINGS type)
-            success = split_widget.model.change_pane_type(pane_id, WidgetType.SETTINGS)
+            # Change the pane type through service
+            success = workspace_service.change_pane_widget_type(pane_id, "settings")
             if success:
-                split_widget.refresh_view()
                 logger.info(f"Replaced pane {pane_id} with theme editor")
                 return CommandResult(success=True)
 
-        return CommandResult(
-            success=False, error="Could not identify pane for replacement"
-        )
+        return CommandResult(success=False, error="Could not identify pane for replacement")
 
     except Exception as e:
         logger.error(f"Failed to replace pane with theme editor: {e}")
@@ -397,9 +378,7 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
                 success=True, value={"widget_id": widget_id, "action": "created_new"}
             )
         else:
-            return CommandResult(
-                success=False, error="Failed to add theme editor to workspace"
-            )
+            return CommandResult(success=False, error="Failed to add theme editor to workspace")
 
     except Exception as e:
         logger.error(f"Failed to open theme editor: {e}")

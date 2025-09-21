@@ -210,9 +210,7 @@ class KeymapManager:
         for shortcut_id in shortcuts_to_remove:
             self._registry.unregister(shortcut_id)
 
-        logger.debug(
-            f"Cleared {len(shortcuts_to_remove)} shortcuts from keymap '{keymap_id}'"
-        )
+        logger.debug(f"Cleared {len(shortcuts_to_remove)} shortcuts from keymap '{keymap_id}'")
 
     def export_keymap(self, keymap_id: str) -> Optional[dict[str, Any]]:
         """

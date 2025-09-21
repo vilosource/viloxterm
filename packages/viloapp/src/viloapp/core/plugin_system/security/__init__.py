@@ -1,7 +1,7 @@
 """Security framework for plugin system."""
 
-from .permissions import Permission, PermissionManager, PermissionScope, PermissionCategory
-from .resources import ResourceMonitor, ResourceLimiter, ResourceType, ResourceViolation
+from .permissions import Permission, PermissionCategory, PermissionManager, PermissionScope
+from .resources import ResourceLimiter, ResourceMonitor, ResourceType, ResourceViolation
 from .sandbox import PluginSandbox, RestartPolicy
 
 __all__ = [

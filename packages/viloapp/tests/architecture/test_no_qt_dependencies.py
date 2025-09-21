@@ -2,8 +2,9 @@
 
 import ast
 import os
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 def get_python_files(directory):
@@ -15,7 +16,7 @@ def get_python_files(directory):
 def extract_imports(file_path):
     """Extract all imports from a Python file."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         tree = ast.parse(content)
@@ -37,11 +38,11 @@ def extract_imports(file_path):
 def is_qt_import(import_name):
     """Check if an import is Qt-related."""
     qt_patterns = [
-        'PySide6',
-        'PyQt5',
-        'PyQt6',
-        'qtpy',
-        'Qt',
+        "PySide6",
+        "PyQt5",
+        "PyQt6",
+        "qtpy",
+        "Qt",
     ]
 
     for pattern in qt_patterns:
@@ -93,10 +94,10 @@ class TestNoQtDependencies:
         try:
             from viloapp.models import (
                 OperationResult,
-                WorkspaceState,
                 PaneState,
-                TabState,
                 SplitPaneRequest,
+                TabState,
+                WorkspaceState,
             )
 
             # Try to create instances to ensure no hidden Qt dependencies
@@ -107,7 +108,7 @@ class TestNoQtDependencies:
             assert workspace is not None
 
         except ImportError as e:
-            if any(qt_lib in str(e) for qt_lib in ['PySide6', 'PyQt5', 'PyQt6']):
+            if any(qt_lib in str(e) for qt_lib in ["PySide6", "PyQt5", "PyQt6"]):
                 pytest.fail(f"Models import failed due to Qt dependency: {e}")
             else:
                 # Re-raise if it's a different import error
@@ -117,10 +118,10 @@ class TestNoQtDependencies:
         """Test that interfaces can be imported without Qt being available."""
         try:
             from viloapp.interfaces import (
-                IWorkspaceModel,
-                ITabModel,
-                IPaneModel,
                 IModelObserver,
+                IPaneModel,
+                ITabModel,
+                IWorkspaceModel,
             )
 
             # Ensure interfaces are properly defined
@@ -130,7 +131,7 @@ class TestNoQtDependencies:
             assert IModelObserver is not None
 
         except ImportError as e:
-            if any(qt_lib in str(e) for qt_lib in ['PySide6', 'PyQt5', 'PyQt6']):
+            if any(qt_lib in str(e) for qt_lib in ["PySide6", "PyQt5", "PyQt6"]):
                 pytest.fail(f"Interfaces import failed due to Qt dependency: {e}")
             else:
                 # Re-raise if it's a different import error
@@ -145,22 +146,22 @@ class TestNoQtDependencies:
             pytest.skip(f"Models directory not found: {package_root}")
 
         qt_widget_terms = [
-            'QWidget',
-            'QMainWindow',
-            'QTabWidget',
-            'QSplitter',
-            'QVBoxLayout',
-            'QHBoxLayout',
-            'QPushButton',
-            'QLabel',
-            'QTextEdit',
-            'QLineEdit',
+            "QWidget",
+            "QMainWindow",
+            "QTabWidget",
+            "QSplitter",
+            "QVBoxLayout",
+            "QHBoxLayout",
+            "QPushButton",
+            "QLabel",
+            "QTextEdit",
+            "QLineEdit",
         ]
 
         python_files = get_python_files(package_root)
 
         for file_path in python_files:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             for term in qt_widget_terms:
@@ -175,19 +176,21 @@ class TestNoQtDependencies:
             pytest.skip(f"Models directory not found: {package_root}")
 
         qt_signal_terms = [
-            'Signal(',
-            'Slot(',
-            'pyqtSignal',
-            'emit(',
-            'connect(',
-            'disconnect(',
+            "Signal(",
+            "Slot(",
+            "pyqtSignal",
+            "emit(",
+            "connect(",
+            "disconnect(",
         ]
 
         python_files = get_python_files(package_root)
 
         for file_path in python_files:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             for term in qt_signal_terms:
-                assert term not in content, f"Found Qt signal/slot reference '{term}' in {file_path}"
+                assert (
+                    term not in content
+                ), f"Found Qt signal/slot reference '{term}' in {file_path}"

@@ -8,12 +8,18 @@ import shutil
 
 from ..context import IPluginContext, PluginContext
 from ..service import (
-    IService, ServiceProxy, ICommandService, IConfigurationService, IWorkspaceService,
-    IThemeService, INotificationService
+    IService,
+    ServiceProxy,
+    ICommandService,
+    IConfigurationService,
+    IWorkspaceService,
+    IThemeService,
+    INotificationService,
 )
 from ..events import EventBus, PluginEvent, EventType
 
-T = TypeVar('T', bound=IService)
+T = TypeVar("T", bound=IService)
+
 
 class MockService(IService):
     """Base mock service implementation."""
@@ -28,6 +34,7 @@ class MockService(IService):
 
     def get_service_version(self) -> str:
         return self._version
+
 
 class MockCommandService(MockService, ICommandService):
     """Mock implementation of command service."""
@@ -52,6 +59,7 @@ class MockCommandService(MockService, ICommandService):
         if command_id in self._commands:
             del self._commands[command_id]
         self.mock.unregister_command(command_id)
+
 
 class MockConfigurationService(MockService, IConfigurationService):
     """Mock implementation of configuration service."""
@@ -88,6 +96,7 @@ class MockConfigurationService(MockService, IConfigurationService):
         self._listeners[key].append(callback)
         self.mock.on_change(key, callback)
 
+
 class MockWorkspaceService(MockService, IWorkspaceService):
     """Mock implementation of workspace service."""
 
@@ -111,6 +120,7 @@ class MockWorkspaceService(MockService, IWorkspaceService):
         """Create a new pane with a widget."""
         self.mock.create_pane(widget, position)
 
+
 class MockThemeService(MockService, IThemeService):
     """Mock implementation of theme service."""
 
@@ -118,11 +128,7 @@ class MockThemeService(MockService, IThemeService):
         super().__init__("theme", "1.0.0")
         self._theme = {
             "name": "test-theme",
-            "colors": {
-                "background": "#ffffff",
-                "foreground": "#000000",
-                "primary": "#007acc"
-            }
+            "colors": {"background": "#ffffff", "foreground": "#000000", "primary": "#007acc"},
         }
         self._listeners: List[Callable] = []
 
@@ -151,6 +157,7 @@ class MockThemeService(MockService, IThemeService):
             except Exception:
                 pass
 
+
 class MockNotificationService(MockService, INotificationService):
     """Mock implementation of notification service."""
 
@@ -176,6 +183,7 @@ class MockNotificationService(MockService, INotificationService):
         self.notifications.append(notification)
         self.mock.error(message, title)
 
+
 class MockPluginHost:
     """Mock plugin host for testing plugins in isolation."""
 
@@ -196,13 +204,15 @@ class MockPluginHost:
         self.theme_service = MockThemeService()
         self.notification_service = MockNotificationService()
 
-        self._services.update({
-            "command": self.command_service,
-            "configuration": self.configuration_service,
-            "workspace": self.workspace_service,
-            "theme": self.theme_service,
-            "notification": self.notification_service,
-        })
+        self._services.update(
+            {
+                "command": self.command_service,
+                "configuration": self.configuration_service,
+                "workspace": self.workspace_service,
+                "theme": self.theme_service,
+                "notification": self.notification_service,
+            }
+        )
 
     def add_service(self, service: IService) -> None:
         """Add a custom service."""
@@ -224,10 +234,12 @@ class MockPluginHost:
                 return service
         return None
 
-    def create_context(self,
-                      plugin_path: Optional[Path] = None,
-                      data_path: Optional[Path] = None,
-                      configuration: Optional[Dict[str, Any]] = None) -> IPluginContext:
+    def create_context(
+        self,
+        plugin_path: Optional[Path] = None,
+        data_path: Optional[Path] = None,
+        configuration: Optional[Dict[str, Any]] = None,
+    ) -> IPluginContext:
         """Create a plugin context for testing."""
         if plugin_path is None:
             plugin_path = self.get_temp_dir() / "plugin"
@@ -248,7 +260,7 @@ class MockPluginHost:
             data_path=data_path,
             service_proxy=service_proxy,
             event_bus=self._event_bus,
-            configuration=configuration
+            configuration=configuration,
         )
 
     def get_temp_dir(self) -> Path:
@@ -265,26 +277,23 @@ class MockPluginHost:
 
     def emit_event(self, event_type: EventType, data: Optional[Dict[str, Any]] = None) -> None:
         """Emit an event for testing."""
-        event = PluginEvent(
-            type=event_type,
-            source="test-host",
-            data=data or {}
-        )
+        event = PluginEvent(type=event_type, source="test-host", data=data or {})
         self._event_bus.emit(event)
 
     def get_event_bus(self) -> EventBus:
         """Get the event bus."""
         return self._event_bus
 
-    def assert_event_emitted(self, event_type: EventType,
-                           source: Optional[str] = None,
-                           timeout: float = 1.0) -> bool:
+    def assert_event_emitted(
+        self, event_type: EventType, source: Optional[str] = None, timeout: float = 1.0
+    ) -> bool:
         """Assert that an event was emitted."""
         events = self._event_bus.get_history(event_type=event_type, source=source)
         return len(events) > 0
 
-    def get_last_event(self, event_type: EventType,
-                      source: Optional[str] = None) -> Optional[PluginEvent]:
+    def get_last_event(
+        self, event_type: EventType, source: Optional[str] = None
+    ) -> Optional[PluginEvent]:
         """Get the last event of a specific type."""
         events = self._event_bus.get_history(event_type=event_type, source=source, limit=1)
         return events[0] if events else None
@@ -292,7 +301,7 @@ class MockPluginHost:
     def reset_mocks(self) -> None:
         """Reset all mock call histories."""
         for service in self._services.values():
-            if hasattr(service, 'mock'):
+            if hasattr(service, "mock"):
                 service.mock.reset_mock()
 
     def __enter__(self):
@@ -303,11 +312,15 @@ class MockPluginHost:
         """Context manager exit - cleanup resources."""
         self.cleanup()
 
+
 # Helper functions for common test scenarios
 
-def create_mock_plugin_context(plugin_id: str = "test-plugin",
-                              services: Optional[Dict[str, IService]] = None,
-                              configuration: Optional[Dict[str, Any]] = None) -> IPluginContext:
+
+def create_mock_plugin_context(
+    plugin_id: str = "test-plugin",
+    services: Optional[Dict[str, IService]] = None,
+    configuration: Optional[Dict[str, Any]] = None,
+) -> IPluginContext:
     """Create a mock plugin context with minimal setup."""
     host = MockPluginHost(plugin_id)
 
@@ -316,6 +329,7 @@ def create_mock_plugin_context(plugin_id: str = "test-plugin",
             host.add_service(service)
 
     return host.create_context(configuration=configuration)
+
 
 def create_mock_service_proxy(services: Optional[Dict[str, IService]] = None) -> ServiceProxy:
     """Create a mock service proxy with specified services."""

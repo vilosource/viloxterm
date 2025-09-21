@@ -19,6 +19,7 @@ def clear_terminal_handler(context: CommandContext) -> CommandResult:
     try:
         # Get the active terminal widget using WorkspaceService
         from viloapp.services.workspace_service import WorkspaceService
+
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
@@ -34,28 +35,27 @@ def clear_terminal_handler(context: CommandContext) -> CommandResult:
 
     except Exception as e:
         logger.error(f"Failed to clear terminal: {e}")
-        return CommandResult(
-            success=False, error=f"Failed to clear terminal: {str(e)}"
-        )
+        return CommandResult(success=False, error=f"Failed to clear terminal: {str(e)}")
 
 
 def new_terminal_handler(context: CommandContext) -> CommandResult:
     """Create a new terminal tab."""
     try:
         from viloapp.services.workspace_service import WorkspaceService
+
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
 
         # Create new terminal tab using workspace service
         index = workspace_service.add_terminal_tab()
-        return CommandResult(success=True, value={"message": "New terminal created", "index": index})
+        return CommandResult(
+            success=True, value={"message": "New terminal created", "index": index}
+        )
 
     except Exception as e:
         logger.error(f"Failed to create new terminal: {e}")
-        return CommandResult(
-            success=False, error=f"Failed to create terminal: {str(e)}"
-        )
+        return CommandResult(success=False, error=f"Failed to create terminal: {str(e)}")
 
 
 def copy_terminal_handler(context: CommandContext) -> CommandResult:
@@ -63,6 +63,7 @@ def copy_terminal_handler(context: CommandContext) -> CommandResult:
     try:
         # Get the active terminal widget using WorkspaceService
         from viloapp.services.workspace_service import WorkspaceService
+
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
@@ -88,6 +89,7 @@ def paste_terminal_handler(context: CommandContext) -> CommandResult:
 
         # Get the active terminal widget using WorkspaceService
         from viloapp.services.workspace_service import WorkspaceService
+
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
@@ -116,6 +118,7 @@ def kill_terminal_handler(context: CommandContext) -> CommandResult:
     try:
         # Get the active terminal widget using WorkspaceService
         from viloapp.services.workspace_service import WorkspaceService
+
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
@@ -133,9 +136,7 @@ def kill_terminal_handler(context: CommandContext) -> CommandResult:
 
     except Exception as e:
         logger.error(f"Failed to kill terminal: {e}")
-        return CommandResult(
-            success=False, error=f"Failed to kill terminal: {str(e)}"
-        )
+        return CommandResult(success=False, error=f"Failed to kill terminal: {str(e)}")
 
 
 def restart_terminal_handler(context: CommandContext) -> CommandResult:
@@ -143,6 +144,7 @@ def restart_terminal_handler(context: CommandContext) -> CommandResult:
     try:
         # Get the active terminal widget using WorkspaceService
         from viloapp.services.workspace_service import WorkspaceService
+
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
@@ -158,9 +160,7 @@ def restart_terminal_handler(context: CommandContext) -> CommandResult:
 
     except Exception as e:
         logger.error(f"Failed to restart terminal: {e}")
-        return CommandResult(
-            success=False, error=f"Failed to restart terminal: {str(e)}"
-        )
+        return CommandResult(success=False, error=f"Failed to restart terminal: {str(e)}")
 
 
 def register_terminal_commands():

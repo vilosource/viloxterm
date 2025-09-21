@@ -50,7 +50,9 @@ def duplicate_tab_command(context: CommandContext) -> CommandResult:
 
         # Duplicate the tab using WorkspaceService
         new_index = workspace_service.duplicate_tab(tab_index)
-        return CommandResult(success=True, value={"duplicated_tab": tab_index, "new_index": new_index})
+        return CommandResult(
+            success=True, value={"duplicated_tab": tab_index, "new_index": new_index}
+        )
 
     except Exception as e:
         logger.error(f"Error duplicating tab: {e}", exc_info=True)
@@ -145,10 +147,9 @@ def rename_tab_command(context: CommandContext) -> CommandResult:
             else:
                 return CommandResult(success=False, error="Failed to rename tab")
 
-        # Otherwise, start interactive rename
-        if hasattr(workspace, "start_tab_rename"):
-            current_text = workspace.tab_widget.tabText(tab_index) if workspace else ""
-            workspace.start_tab_rename(tab_index, current_text)
+        # Otherwise, start interactive rename using service
+        success = workspace_service.start_interactive_tab_rename(tab_index)
+        if success:
             return CommandResult(
                 success=True, value={"tab_index": tab_index, "mode": "interactive"}
             )
@@ -195,7 +196,9 @@ def close_other_tabs_command(context: CommandContext) -> CommandResult:
 
         # Close other tabs using WorkspaceService
         closed_count = workspace_service.close_other_tabs(tab_index)
-        return CommandResult(success=True, value={"kept_tab": tab_index, "closed_count": closed_count})
+        return CommandResult(
+            success=True, value={"kept_tab": tab_index, "closed_count": closed_count}
+        )
 
     except Exception as e:
         logger.error(f"Error closing other tabs: {e}", exc_info=True)

@@ -12,6 +12,7 @@ try:
     from pygments import highlight
     from pygments.lexers import get_lexer_for_filename, TextLexer
     from pygments.formatters import HtmlFormatter
+
     PYGMENTS_AVAILABLE = True
 except ImportError:
     PYGMENTS_AVAILABLE = False
@@ -70,13 +71,14 @@ class CodeEditor(QPlainTextEdit):
         self.setFont(font)
 
         # Tab settings
-        self.setTabStopDistance(4 * self.fontMetrics().horizontalAdvance(' '))
+        self.setTabStopDistance(4 * self.fontMetrics().horizontalAdvance(" "))
 
         # Word wrap
         self.setWordWrapMode(QTextOption.NoWrap)
 
         # Style
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QPlainTextEdit {
                 background-color: #1e1e1e;
                 color: #d4d4d4;
@@ -84,7 +86,8 @@ class CodeEditor(QPlainTextEdit):
                 selection-background-color: #264f78;
                 selection-color: #ffffff;
             }
-        """)
+        """
+        )
 
         # Initial highlight
         self.highlight_current_line()
@@ -108,7 +111,7 @@ class CodeEditor(QPlainTextEdit):
             max_num /= 10
             digits += 1
 
-        space = 3 + self.fontMetrics().horizontalAdvance('9') * digits
+        space = 3 + self.fontMetrics().horizontalAdvance("9") * digits
         return space
 
     def update_line_number_area_width(self, _):
@@ -120,9 +123,7 @@ class CodeEditor(QPlainTextEdit):
         if dy:
             self.line_number_area.scroll(0, dy)
         else:
-            self.line_number_area.update(0, rect.y(),
-                                        self.line_number_area.width(),
-                                        rect.height())
+            self.line_number_area.update(0, rect.y(), self.line_number_area.width(), rect.height())
 
         if rect.contains(self.viewport().rect()):
             self.update_line_number_area_width(0)
@@ -132,9 +133,9 @@ class CodeEditor(QPlainTextEdit):
         super().resizeEvent(event)
 
         cr = self.contentsRect()
-        self.line_number_area.setGeometry(QRect(cr.left(), cr.top(),
-                                                self.line_number_area_width(),
-                                                cr.height()))
+        self.line_number_area.setGeometry(
+            QRect(cr.left(), cr.top(), self.line_number_area_width(), cr.height())
+        )
 
     def line_number_area_paint_event(self, event):
         """Paint line numbers."""
@@ -150,9 +151,14 @@ class CodeEditor(QPlainTextEdit):
             if block.isVisible() and bottom >= event.rect().top():
                 number = str(block_number + 1)
                 painter.setPen(QColor("#858585"))
-                painter.drawText(0, int(top), self.line_number_area.width(),
-                               self.fontMetrics().height(),
-                               Qt.AlignRight, number)
+                painter.drawText(
+                    0,
+                    int(top),
+                    self.line_number_area.width(),
+                    self.fontMetrics().height(),
+                    Qt.AlignRight,
+                    number,
+                )
 
             block = block.next()
             top = bottom
@@ -189,7 +195,7 @@ class CodeEditor(QPlainTextEdit):
         try:
             self.file_path = Path(file_path)
 
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             self.setPlainText(content)
@@ -216,7 +222,7 @@ class CodeEditor(QPlainTextEdit):
             return False
 
         try:
-            with open(self.file_path, 'w', encoding='utf-8') as f:
+            with open(self.file_path, "w", encoding="utf-8") as f:
                 f.write(self.toPlainText())
 
             self.document().setModified(False)
@@ -238,7 +244,8 @@ class CodeEditor(QPlainTextEdit):
         fg_color = theme_data.get("editor.foreground", "#d4d4d4")
         selection_bg = theme_data.get("editor.selectionBackground", "#264f78")
 
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
             QPlainTextEdit {{
                 background-color: {bg_color};
                 color: {fg_color};
@@ -246,7 +253,8 @@ class CodeEditor(QPlainTextEdit):
                 selection-background-color: {selection_bg};
                 selection-color: #ffffff;
             }}
-        """)
+        """
+        )
 
         # Update line number area
         self.line_number_area.update()
@@ -264,6 +272,7 @@ class CodeEditor(QPlainTextEdit):
         if self.find_replace_widget is None:
             # Import here to avoid circular imports
             from .features.find_replace import FindReplace
+
             self.find_replace_widget = FindReplace(self.parent())
             self.find_replace_widget.set_editor(self)
         return self.find_replace_widget

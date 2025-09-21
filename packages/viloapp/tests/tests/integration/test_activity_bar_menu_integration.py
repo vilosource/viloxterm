@@ -57,9 +57,7 @@ class TestActivityBarMenuIntegration:
         # Get menu bar menus
         menubar = window.menuBar()
         menubar_actions = menubar.actions()
-        menubar_menu_names = [
-            action.text() for action in menubar_actions if action.menu()
-        ]
+        menubar_menu_names = [action.text() for action in menubar_actions if action.menu()]
 
         # We should have File, View, Debug menus
         assert "File" in menubar_menu_names
@@ -156,9 +154,7 @@ class TestActivityBarMenuIntegration:
             assert menu_position is not None
 
             # Position should be to the right of activity bar
-            button_rect = window.activity_bar.actionGeometry(
-                window.activity_bar.menu_action
-            )
+            button_rect = window.activity_bar.actionGeometry(window.activity_bar.menu_action)
             expected_pos = window.activity_bar.mapToGlobal(button_rect.topRight())
 
             # The position should be close to expected

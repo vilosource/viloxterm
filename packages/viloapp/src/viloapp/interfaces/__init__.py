@@ -1,10 +1,10 @@
 """Interfaces package for defining contracts between layers."""
 
 from .model_interfaces import (
-    IWorkspaceModel,
-    ITabModel,
-    IPaneModel,
     IModelObserver,
+    IPaneModel,
+    ITabModel,
+    IWorkspaceModel,
 )
 
 __all__ = [

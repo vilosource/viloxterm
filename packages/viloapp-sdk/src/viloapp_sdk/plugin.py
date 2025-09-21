@@ -6,8 +6,10 @@ from enum import Enum
 
 from .interfaces import IMetadata
 
+
 class PluginCapability(Enum):
     """Plugin capabilities that can be declared."""
+
     WIDGETS = "widgets"
     COMMANDS = "commands"
     THEMES = "themes"
@@ -18,9 +20,11 @@ class PluginCapability(Enum):
     VIEWS = "views"
     SETTINGS = "settings"
 
+
 @dataclass
 class PluginMetadata(IMetadata):
     """Plugin metadata and manifest information implementing IMetadata interface."""
+
     # Required fields
     id: str
     name: str
@@ -132,4 +136,3 @@ class PluginMetadata(IMetadata):
                     errors.append(f"Invalid capability: {cap}")
 
         return errors
-

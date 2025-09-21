@@ -323,9 +323,7 @@ class ThemePropertyCategories:
         return result
 
     @staticmethod
-    def get_properties_by_category(
-        category: str, subcategory: str = None
-    ) -> list[tuple[str, str]]:
+    def get_properties_by_category(category: str, subcategory: str = None) -> list[tuple[str, str]]:
         """
         Get properties for a specific category/subcategory.
 

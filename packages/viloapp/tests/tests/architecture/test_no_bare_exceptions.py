@@ -55,9 +55,7 @@ def test_no_bare_except_handlers():
                 ):
                     violations.append(
                         {
-                            "file": str(
-                                file_path.relative_to(file_path.parent.parent.parent)
-                            ),
+                            "file": str(file_path.relative_to(file_path.parent.parent.parent)),
                             "line": line_num,
                             "content": line.rstrip(),
                             "type": "bare_except",
@@ -70,9 +68,7 @@ def test_no_bare_except_handlers():
     if violations:
         error_msg = "Bare exception handlers found:\n"
         for violation in violations:
-            error_msg += (
-                f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
-            )
+            error_msg += f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
 
         error_msg += "\nBare except handlers should specify exception types:\n"
         error_msg += "  ❌ except:\n"
@@ -107,11 +103,7 @@ def test_exception_handling_best_practices():
                     continue
 
                 # Reset when we exit the try block
-                if (
-                    in_try_block
-                    and line.strip()
-                    and len(line) - len(line.lstrip()) <= indent_level
-                ):
+                if in_try_block and line.strip() and len(line) - len(line.lstrip()) <= indent_level:
                     if not line.strip().startswith(("except", "finally", "else")):
                         in_try_block = False
 
@@ -123,11 +115,7 @@ def test_exception_handling_best_practices():
                     ):
                         violations.append(
                             {
-                                "file": str(
-                                    file_path.relative_to(
-                                        file_path.parent.parent.parent
-                                    )
-                                ),
+                                "file": str(file_path.relative_to(file_path.parent.parent.parent)),
                                 "line": line_num,
                                 "content": line.rstrip(),
                                 "type": "bare_except",
@@ -136,22 +124,15 @@ def test_exception_handling_best_practices():
                         )
 
                     # except Exception without logging or handling
-                    elif re.match(
-                        r"^\s*except\s+Exception\s*:\s*$", line
-                    ) and line_num < len(lines):
-                        next_line = (
-                            lines[line_num].strip() if line_num < len(lines) else ""
-                        )
-                        if (
-                            next_line in ["pass", "continue", ""]
-                            and "# " not in next_line
-                        ):
+                    elif re.match(r"^\s*except\s+Exception\s*:\s*$", line) and line_num < len(
+                        lines
+                    ):
+                        next_line = lines[line_num].strip() if line_num < len(lines) else ""
+                        if next_line in ["pass", "continue", ""] and "# " not in next_line:
                             violations.append(
                                 {
                                     "file": str(
-                                        file_path.relative_to(
-                                            file_path.parent.parent.parent
-                                        )
+                                        file_path.relative_to(file_path.parent.parent.parent)
                                     ),
                                     "line": line_num,
                                     "content": line.rstrip(),
@@ -170,14 +151,10 @@ def test_exception_handling_best_practices():
     if high_severity:
         error_msg = "Critical exception handling violations:\n"
         for violation in high_severity:
-            error_msg += (
-                f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
-            )
+            error_msg += f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
 
         if medium_severity:
-            error_msg += (
-                f"\nAdditional concerns ({len(medium_severity)} silent exceptions):\n"
-            )
+            error_msg += f"\nAdditional concerns ({len(medium_severity)} silent exceptions):\n"
             for violation in medium_severity[:3]:  # Show first 3
                 error_msg += f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
             if len(medium_severity) > 3:
@@ -186,9 +163,7 @@ def test_exception_handling_best_practices():
         error_msg += "\nBest practices:\n"
         error_msg += "  ✅ except SpecificException as e: logger.error(f'Error: {e}')\n"
         error_msg += "  ✅ except Exception as e: logger.warning(f'Unexpected: {e}')\n"
-        error_msg += (
-            "  ❌ except: pass  # Hides all errors including KeyboardInterrupt\n"
-        )
+        error_msg += "  ❌ except: pass  # Hides all errors including KeyboardInterrupt\n"
 
         pytest.fail(error_msg)
 
@@ -228,11 +203,7 @@ def test_specific_exception_patterns():
 
                         violations.append(
                             {
-                                "file": str(
-                                    file_path.relative_to(
-                                        file_path.parent.parent.parent
-                                    )
-                                ),
+                                "file": str(file_path.relative_to(file_path.parent.parent.parent)),
                                 "line": line_num,
                                 "content": line.rstrip(),
                                 "type": violation_type,
@@ -248,19 +219,17 @@ def test_specific_exception_patterns():
     if critical_violations:
         error_msg = "Silent exception handling found:\n"
         for violation in critical_violations[:10]:  # Limit to first 10
-            error_msg += (
-                f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
-            )
+            error_msg += f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
 
         if len(critical_violations) > 10:
             error_msg += f"  ... and {len(critical_violations) - 10} more\n"
 
         error_msg += "\nSilent exception handling makes debugging difficult.\n"
         error_msg += "Consider:\n"
+        error_msg += "  ✅ except ValueError as e: logger.debug(f'Expected error: {e}')\n"
         error_msg += (
-            "  ✅ except ValueError as e: logger.debug(f'Expected error: {e}')\n"
+            "  ✅ except Exception as e: logger.warning(f'Ignoring error: {e}')  # Explicit\n"
         )
-        error_msg += "  ✅ except Exception as e: logger.warning(f'Ignoring error: {e}')  # Explicit\n"
 
         pytest.fail(error_msg)
 

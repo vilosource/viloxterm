@@ -5,20 +5,17 @@ the UI layer, following the dependency inversion principle.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Callable, Any
+from typing import Any, Callable, Optional
 
 from ..models import (
+    ClosePaneRequest,
     OperationResult,
-    WorkspaceState,
-    TabState,
+    PaneFocusRequest,
     PaneState,
     SplitPaneRequest,
-    ClosePaneRequest,
-    TabOperationRequest,
-    PaneFocusRequest,
+    TabState,
     WidgetStateUpdateRequest,
-    SplitPaneResponse,
-    TabOperationResponse,
+    WorkspaceState,
 )
 
 

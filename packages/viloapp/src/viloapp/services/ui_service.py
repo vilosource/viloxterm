@@ -85,9 +85,7 @@ class UIService(Service):
         # Log for debugging
         logger.info(f"Toggled frameless mode from {current} to {new_mode}")
         logger.info(f"Settings file: {self._settings.fileName()}")
-        logger.info(
-            f"Verified setting value: {self._settings.value('UI/FramelessMode')}"
-        )
+        logger.info(f"Verified setting value: {self._settings.value('UI/FramelessMode')}")
 
         return new_mode
 
@@ -275,9 +273,7 @@ class UIService(Service):
         """
         self.validate_initialized()
 
-        if not self._main_window or not hasattr(
-            self._main_window, "toggle_activity_bar"
-        ):
+        if not self._main_window or not hasattr(self._main_window, "toggle_activity_bar"):
             logger.error("Main window doesn't support activity bar toggle")
             return False
 
@@ -417,15 +413,11 @@ class UIService(Service):
                 self._current_theme = saved_theme
 
             # Load sidebar state
-            self._sidebar_visible = self._settings.value(
-                "sidebar_visible", True, type=bool
-            )
+            self._sidebar_visible = self._settings.value("sidebar_visible", True, type=bool)
             self._sidebar_view = self._settings.value("sidebar_view", "explorer")
 
             # Load menu bar state
-            self._menu_bar_visible = self._settings.value(
-                "menu_bar_visible", True, type=bool
-            )
+            self._menu_bar_visible = self._settings.value("menu_bar_visible", True, type=bool)
 
             logger.info("UI state loaded from settings")
 
@@ -459,9 +451,7 @@ class UIService(Service):
             "sidebar_visible": self._sidebar_visible,
             "sidebar_view": self._sidebar_view,
             "menu_bar_visible": self._menu_bar_visible,
-            "window_fullscreen": (
-                self._main_window.isFullScreen() if self._main_window else False
-            ),
+            "window_fullscreen": (self._main_window.isFullScreen() if self._main_window else False),
         }
 
     def restore_ui_state(self, state: dict[str, Any]) -> None:

@@ -182,9 +182,7 @@ class ThemeEditorAppWidget(AppWidget):
 
         # Left: Controls (will be set up in _setup_components)
         self._controls_placeholder = QFrame()
-        self._controls_placeholder.setMinimumWidth(
-            500
-        )  # Ensure enough space for color controls
+        self._controls_placeholder.setMinimumWidth(500)  # Ensure enough space for color controls
         # Add a temporary label to make it visible
         placeholder_layout = QVBoxLayout()
         placeholder_layout.addWidget(QLabel("Loading color controls..."))
@@ -266,16 +264,12 @@ class ThemeEditorAppWidget(AppWidget):
             index = self._splitter.indexOf(self._controls_placeholder)
             logger.debug(f"Placeholder index in splitter: {index}")
             if index >= 0:
-                logger.debug(
-                    f"Replacing placeholder at index {index} with controls widget"
-                )
+                logger.debug(f"Replacing placeholder at index {index} with controls widget")
                 self._splitter.replaceWidget(index, self._controls_widget)
                 self._controls_placeholder.deleteLater()
                 # Ensure the controls widget is visible
                 self._controls_widget.show()
-                logger.debug(
-                    f"Controls widget visible: {self._controls_widget.isVisible()}"
-                )
+                logger.debug(f"Controls widget visible: {self._controls_widget.isVisible()}")
         else:
             logger.error("Splitter not found!")
 
@@ -309,9 +303,7 @@ class ThemeEditorAppWidget(AppWidget):
         """Connect signals from controls widget."""
         if self._controls_widget:
             self._controls_widget.color_changed.connect(self._on_color_changed)
-            self._controls_widget.typography_changed.connect(
-                self._on_typography_changed
-            )
+            self._controls_widget.typography_changed.connect(self._on_typography_changed)
             self._controls_widget.preset_changed.connect(self._on_preset_changed)
 
     def _connect_persistence_signals(self):
@@ -321,9 +313,7 @@ class ThemeEditorAppWidget(AppWidget):
             self._persistence_manager.theme_saved.connect(self._on_theme_saved)
             self._persistence_manager.theme_created.connect(self._on_theme_created)
             self._persistence_manager.theme_deleted.connect(self._on_theme_deleted)
-            self._persistence_manager.operation_failed.connect(
-                self._on_operation_failed
-            )
+            self._persistence_manager.operation_failed.connect(self._on_operation_failed)
 
     def _create_toolbar(self) -> QToolBar:
         """Create editor toolbar."""
@@ -334,9 +324,7 @@ class ThemeEditorAppWidget(AppWidget):
         import_action.setToolTip("Import theme from file")
         import_action.triggered.connect(
             lambda: (
-                self._persistence_manager.import_theme()
-                if self._persistence_manager
-                else None
+                self._persistence_manager.import_theme() if self._persistence_manager else None
             )
         )
         toolbar.addAction(import_action)
@@ -431,9 +419,7 @@ class ThemeEditorAppWidget(AppWidget):
                     )
                 else:
                     # Use defaults
-                    self._controls_widget.load_typography_settings(
-                        "Fira Code", 14, 1.5, "default"
-                    )
+                    self._controls_widget.load_typography_settings("Fira Code", 14, 1.5, "default")
 
             # Update preview
             if self._preview_widget:
@@ -475,8 +461,7 @@ class ThemeEditorAppWidget(AppWidget):
                     # Check if this is a different theme than currently loaded
                     # Only mark as modified if we had a previous theme and it's different
                     theme_changed = (
-                        self._current_theme is not None
-                        and theme.id != self._current_theme.id
+                        self._current_theme is not None and theme.id != self._current_theme.id
                     )
 
                     # Load theme and mark as modified if it's a different theme
@@ -518,9 +503,7 @@ class ThemeEditorAppWidget(AppWidget):
 
         colors = self._get_current_colors()
         typography_data = (
-            self._controls_widget.get_typography_settings()
-            if self._controls_widget
-            else {}
+            self._controls_widget.get_typography_settings() if self._controls_widget else {}
         )
 
         success = self._persistence_manager.apply_theme(
@@ -540,14 +523,10 @@ class ThemeEditorAppWidget(AppWidget):
 
         colors = self._get_current_colors()
         typography_data = (
-            self._controls_widget.get_typography_settings()
-            if self._controls_widget
-            else {}
+            self._controls_widget.get_typography_settings() if self._controls_widget else {}
         )
 
-        success = self._persistence_manager.save_theme(
-            self._current_theme, colors, typography_data
-        )
+        success = self._persistence_manager.save_theme(self._current_theme, colors, typography_data)
         if success:
             self._modified = False
             self._update_button_states()
@@ -579,9 +558,7 @@ class ThemeEditorAppWidget(AppWidget):
         """Duplicate current theme using persistence manager."""
         if self._persistence_manager and self._current_theme:
             colors = self._get_current_colors()
-            theme_id = self._persistence_manager.duplicate_theme(
-                self._current_theme, colors
-            )
+            theme_id = self._persistence_manager.duplicate_theme(self._current_theme, colors)
             if theme_id:
                 self._load_current_theme()
                 # Select new theme
@@ -683,9 +660,7 @@ class ThemeEditorAppWidget(AppWidget):
             from viloapp.core.commands.executor import execute_command
 
             result = execute_command("theme.getCurrentTheme")
-            current_theme = (
-                result.value.get("theme") if result.success and result.value else None
-            )
+            current_theme = result.value.get("theme") if result.success and result.value else None
             if current_theme and (
                 not self._current_theme or current_theme.id != self._current_theme.id
             ):

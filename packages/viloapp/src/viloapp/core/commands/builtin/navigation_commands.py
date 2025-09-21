@@ -104,9 +104,7 @@ def close_other_tabs_command(context: CommandContext) -> CommandResult:
 
         # Show status message
         if context.main_window and hasattr(context.main_window, "status_bar"):
-            context.main_window.status_bar.set_message(
-                f"Closed {closed_count} other tabs", 2000
-            )
+            context.main_window.status_bar.set_message(f"Closed {closed_count} other tabs", 2000)
 
         return CommandResult(success=True, value={"closed_count": closed_count})
 
@@ -140,9 +138,7 @@ def close_all_tabs_command(context: CommandContext) -> CommandResult:
 
         # Show status message
         if context.main_window and hasattr(context.main_window, "status_bar"):
-            context.main_window.status_bar.set_message(
-                f"Closed {closed_count} tabs", 2000
-            )
+            context.main_window.status_bar.set_message(f"Closed {closed_count} tabs", 2000)
 
         return CommandResult(success=True, value={"closed_count": closed_count})
 

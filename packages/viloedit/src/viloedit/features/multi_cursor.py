@@ -6,9 +6,7 @@ from dataclasses import dataclass
 
 from PySide6.QtWidgets import QTextEdit
 from PySide6.QtCore import Qt, Signal, QObject
-from PySide6.QtGui import (
-    QTextCursor, QKeySequence, QShortcut, QTextFormat, QColor
-)
+from PySide6.QtGui import QTextCursor, QKeySequence, QShortcut, QTextFormat, QColor
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CursorInfo:
     """Information about a cursor position."""
+
     position: int
     anchor: int = None  # For selections
 
@@ -42,7 +41,7 @@ class CursorInfo:
         """Get the selected text."""
         if not self.has_selection:
             return ""
-        return document_text[self.selection_start:self.selection_end]
+        return document_text[self.selection_start : self.selection_end]
 
 
 class MultiCursor(QObject):
@@ -305,7 +304,7 @@ class MultiCursor(QObject):
         sorted_cursors = sorted(
             [c for c in self.cursors if c.has_selection],
             key=lambda c: c.selection_start,
-            reverse=True
+            reverse=True,
         )
 
         if not sorted_cursors:
@@ -399,12 +398,12 @@ class MultiCursor(QObject):
             return True
 
         elif key == Qt.Key_Return or key == Qt.Key_Enter:
-            self.insert_text('\n')
+            self.insert_text("\n")
             return True
 
         elif key == Qt.Key_Tab:
             if modifiers == Qt.NoModifier:
-                self.insert_text('    ')  # 4 spaces
+                self.insert_text("    ")  # 4 spaces
                 return True
 
         return False

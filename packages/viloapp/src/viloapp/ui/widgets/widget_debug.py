@@ -67,9 +67,7 @@ class WidgetDebugger:
         self._callback_count[widget_id] = 0
 
         # Register state transition callback for tracking
-        widget.on_state_transition(
-            callback=lambda w, f, t: self._on_state_change(w, f, t)
-        )
+        widget.on_state_transition(callback=lambda w, f, t: self._on_state_change(w, f, t))
 
         logger.debug(f"Started tracking widget {widget_id}")
 
@@ -85,9 +83,7 @@ class WidgetDebugger:
             del self._tracked_widgets[widget_id]
             logger.debug(f"Stopped tracking widget {widget_id}")
 
-    def _on_state_change(
-        self, widget: AppWidget, from_state: WidgetState, to_state: WidgetState
-    ):
+    def _on_state_change(self, widget: AppWidget, from_state: WidgetState, to_state: WidgetState):
         """Handle state change for tracked widgets."""
         if not self._debug_enabled:
             return
@@ -147,8 +143,7 @@ class WidgetDebugger:
                 "backoff_factor": widget._retry_backoff_factor,
             },
             "signal_connections": widget._signal_manager.get_connection_count(),
-            "state_callbacks": len(widget._state_callbacks)
-            + len(widget._any_state_callbacks),
+            "state_callbacks": len(widget._state_callbacks) + len(widget._any_state_callbacks),
         }
 
         # Add tracked metrics if available
@@ -266,9 +261,7 @@ class WidgetDebugger:
         # Store timer to prevent garbage collection
         widget._debug_timer = timer
 
-        logger.info(
-            f"Started watching widget {widget.widget_id} with {interval_ms}ms interval"
-        )
+        logger.info(f"Started watching widget {widget.widget_id} with {interval_ms}ms interval")
         return timer
 
     def stop_watching(self, widget: AppWidget):
@@ -346,9 +339,7 @@ class WidgetInspector:
             WidgetState.READY,
             WidgetState.SUSPENDED,
         ]:
-            issues.append(
-                f"Widget has focus but is in {widget.widget_state.value} state"
-            )
+            issues.append(f"Widget has focus but is in {widget.widget_state.value} state")
 
         return issues
 

@@ -40,7 +40,7 @@ class EditorWidgetFactory(IWidget):
         if instance_id in self._instances:
             widget = self._instances[instance_id]
             # Save any unsaved changes before destroying
-            if hasattr(widget, 'close_file'):
+            if hasattr(widget, "close_file"):
                 widget.close_file()
             widget.deleteLater()
             del self._instances[instance_id]
@@ -54,7 +54,7 @@ class EditorWidgetFactory(IWidget):
 
             if instance_id in self._instances:
                 widget = self._instances[instance_id]
-                if hasattr(widget, 'open_file'):
+                if hasattr(widget, "open_file"):
                     widget.open_file(file_path)
                     return True
             return False
@@ -65,7 +65,7 @@ class EditorWidgetFactory(IWidget):
 
             if instance_id in self._instances:
                 widget = self._instances[instance_id]
-                if hasattr(widget, 'save_file'):
+                if hasattr(widget, "save_file"):
                     widget.save_file()
                     return True
             return False
@@ -76,7 +76,7 @@ class EditorWidgetFactory(IWidget):
 
             if instance_id in self._instances:
                 widget = self._instances[instance_id]
-                if hasattr(widget, 'toPlainText'):
+                if hasattr(widget, "toPlainText"):
                     return widget.toPlainText()
             return ""
 
@@ -87,7 +87,7 @@ class EditorWidgetFactory(IWidget):
 
             if instance_id in self._instances:
                 widget = self._instances[instance_id]
-                if hasattr(widget, 'setPlainText'):
+                if hasattr(widget, "setPlainText"):
                     widget.setPlainText(text)
                     return True
             return False
@@ -99,7 +99,7 @@ class EditorWidgetFactory(IWidget):
 
             if instance_id in self._instances:
                 widget = self._instances[instance_id]
-                if hasattr(widget, 'find'):
+                if hasattr(widget, "find"):
                     return widget.find(pattern)
             return False
 
@@ -112,7 +112,7 @@ class EditorWidgetFactory(IWidget):
             if instance_id in self._instances:
                 widget = self._instances[instance_id]
                 # Basic replace functionality
-                if hasattr(widget, 'toPlainText') and hasattr(widget, 'setPlainText'):
+                if hasattr(widget, "toPlainText") and hasattr(widget, "setPlainText"):
                     current_text = widget.toPlainText()
                     new_text = current_text.replace(find_text, replace_text)
                     widget.setPlainText(new_text)
@@ -123,8 +123,10 @@ class EditorWidgetFactory(IWidget):
             # Get list of active editor instances
             return {
                 instance_id: {
-                    "has_content": bool(widget.toPlainText() if hasattr(widget, 'toPlainText') else False),
-                    "file_path": getattr(widget, 'current_file', None)
+                    "has_content": bool(
+                        widget.toPlainText() if hasattr(widget, "toPlainText") else False
+                    ),
+                    "file_path": getattr(widget, "current_file", None),
                 }
                 for instance_id, widget in self._instances.items()
             }
@@ -137,11 +139,15 @@ class EditorWidgetFactory(IWidget):
             "instance_count": len(self._instances),
             "instances": {
                 instance_id: {
-                    "file_path": getattr(widget, 'current_file', None),
-                    "has_unsaved_changes": getattr(widget, 'document', lambda: None)().isModified() if hasattr(widget, 'document') else False
+                    "file_path": getattr(widget, "current_file", None),
+                    "has_unsaved_changes": (
+                        getattr(widget, "document", lambda: None)().isModified()
+                        if hasattr(widget, "document")
+                        else False
+                    ),
                 }
                 for instance_id, widget in self._instances.items()
-            }
+            },
         }
 
     def restore_state(self, state: Dict[str, Any]) -> None:

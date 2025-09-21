@@ -1,11 +1,19 @@
 """Plugin settings widget."""
 
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QListWidget,
-    QPushButton, QLabel, QGroupBox, QTextEdit,
-    QListWidgetItem, QMessageBox
-)
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+
 
 class PluginSettingsWidget(QWidget):
     """Widget for managing plugins."""
@@ -77,13 +85,13 @@ class PluginSettingsWidget(QWidget):
 
         plugins = self.plugin_manager.list_plugins()
         for plugin in plugins:
-            item = QListWidgetItem(plugin['name'])
+            item = QListWidgetItem(plugin["name"])
             item.setData(Qt.UserRole, plugin)
 
             # Set icon based on state
-            if plugin['state'] == 'ACTIVATED':
+            if plugin["state"] == "ACTIVATED":
                 item.setText(f"✓ {plugin['name']}")
-            elif plugin['state'] == 'FAILED':
+            elif plugin["state"] == "FAILED":
                 item.setText(f"✗ {plugin['name']}")
 
             self.plugin_list.addItem(item)
@@ -98,25 +106,25 @@ class PluginSettingsWidget(QWidget):
             return
 
         # Get full metadata
-        metadata = self.plugin_manager.get_plugin_metadata(plugin_data['id'])
+        metadata = self.plugin_manager.get_plugin_metadata(plugin_data["id"])
         if metadata:
             self.name_label.setText(f"Name: {metadata['name']}")
             self.version_label.setText(f"Version: {metadata['version']}")
             self.author_label.setText(f"Author: {metadata['author']}")
-            self.description_text.setPlainText(metadata['description'])
+            self.description_text.setPlainText(metadata["description"])
 
             # Update button states
-            state = metadata['state']
-            self.enable_button.setEnabled(state not in ['ACTIVATED', 'LOADED'])
-            self.disable_button.setEnabled(state == 'ACTIVATED')
-            self.reload_button.setEnabled(state in ['ACTIVATED', 'FAILED'])
+            state = metadata["state"]
+            self.enable_button.setEnabled(state not in ["ACTIVATED", "LOADED"])
+            self.disable_button.setEnabled(state == "ACTIVATED")
+            self.reload_button.setEnabled(state in ["ACTIVATED", "FAILED"])
 
     def enable_plugin(self):
         """Enable selected plugin."""
         current = self.plugin_list.currentItem()
         if current:
             plugin_data = current.data(Qt.UserRole)
-            if self.plugin_manager.enable_plugin(plugin_data['id']):
+            if self.plugin_manager.enable_plugin(plugin_data["id"]):
                 QMessageBox.information(self, "Success", f"Plugin {plugin_data['name']} enabled")
                 self.load_plugins()
             else:
@@ -127,7 +135,7 @@ class PluginSettingsWidget(QWidget):
         current = self.plugin_list.currentItem()
         if current:
             plugin_data = current.data(Qt.UserRole)
-            if self.plugin_manager.disable_plugin(plugin_data['id']):
+            if self.plugin_manager.disable_plugin(plugin_data["id"]):
                 QMessageBox.information(self, "Success", f"Plugin {plugin_data['name']} disabled")
                 self.load_plugins()
             else:
@@ -138,7 +146,7 @@ class PluginSettingsWidget(QWidget):
         current = self.plugin_list.currentItem()
         if current:
             plugin_data = current.data(Qt.UserRole)
-            if self.plugin_manager.reload_plugin(plugin_data['id']):
+            if self.plugin_manager.reload_plugin(plugin_data["id"]):
                 QMessageBox.information(self, "Success", f"Plugin {plugin_data['name']} reloaded")
                 self.load_plugins()
             else:
@@ -149,8 +157,7 @@ class PluginSettingsWidget(QWidget):
         new_plugins = self.plugin_manager.discover_plugins()
         if new_plugins:
             QMessageBox.information(
-                self, "Plugins Discovered",
-                f"Found {len(new_plugins)} new plugins"
+                self, "Plugins Discovered", f"Found {len(new_plugins)} new plugins"
             )
             self.load_plugins()
         else:

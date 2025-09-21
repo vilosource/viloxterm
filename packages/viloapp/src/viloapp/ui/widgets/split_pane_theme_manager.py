@@ -78,10 +78,7 @@ class SplitPaneThemeManager:
             result = execute_command("theme.getCurrentTheme")
             if result and result.success and result.value:
                 theme_provider = result.value
-                if (
-                    hasattr(theme_provider, "_theme_service")
-                    and theme_provider._theme_service
-                ):
+                if hasattr(theme_provider, "_theme_service") and theme_provider._theme_service:
                     colors = theme_provider._theme_service.get_colors()
                     background_color = colors.get("editor.background", "#1e1e1e")
                     widget.setStyleSheet(
@@ -91,9 +88,7 @@ class SplitPaneThemeManager:
                         }}
                     """
                     )
-                    logger.debug(
-                        f"Applied theme to widget with background: {background_color}"
-                    )
+                    logger.debug(f"Applied theme to widget with background: {background_color}")
                     return True
 
             # Fallback styling
@@ -127,10 +122,7 @@ class SplitPaneThemeManager:
             result = execute_command("theme.getCurrentTheme")
             if result and result.success and result.value:
                 theme_provider = result.value
-                if (
-                    hasattr(theme_provider, "_theme_service")
-                    and theme_provider._theme_service
-                ):
+                if hasattr(theme_provider, "_theme_service") and theme_provider._theme_service:
                     return theme_provider._theme_service.get_colors()
         except Exception as e:
             logger.error(f"Failed to get theme colors: {e}")

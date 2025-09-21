@@ -110,9 +110,7 @@ class EnvironmentDetector:
         """Check if GPU acceleration is available."""
         try:
             # Try to run glxinfo
-            result = subprocess.run(
-                ["glxinfo"], capture_output=True, text=True, timeout=2
-            )
+            result = subprocess.run(["glxinfo"], capture_output=True, text=True, timeout=2)
             return "direct rendering: Yes" in result.stdout
         except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
             logger.debug(f"Cannot run glxinfo to check GPU: {e}")
@@ -122,9 +120,7 @@ class EnvironmentDetector:
     def _detect_gpu_vendor() -> Optional[str]:
         """Detect GPU vendor."""
         try:
-            result = subprocess.run(
-                ["glxinfo"], capture_output=True, text=True, timeout=2
-            )
+            result = subprocess.run(["glxinfo"], capture_output=True, text=True, timeout=2)
             output = result.stdout.lower()
 
             if "nvidia" in output:
@@ -192,9 +188,7 @@ class WSLStrategy(EnvironmentStrategy):
         # WSLg can use either Wayland or X11 depending on setup
 
         if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
-            logger.warning(
-                "No DISPLAY or WAYLAND_DISPLAY set - application may not show"
-            )
+            logger.warning("No DISPLAY or WAYLAND_DISPLAY set - application may not show")
 
         return env_vars
 

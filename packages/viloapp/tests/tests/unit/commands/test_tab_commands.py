@@ -8,14 +8,15 @@ rather than complex UI interactions.
 """
 
 from unittest.mock import Mock
+
 import pytest
 
 from viloapp.core.commands.base import CommandContext
 from viloapp.core.commands.builtin.tab_commands import (
-    duplicate_tab_command,
-    close_tabs_to_right_command,
-    rename_tab_command,
     close_other_tabs_command,
+    close_tabs_to_right_command,
+    duplicate_tab_command,
+    rename_tab_command,
 )
 from viloapp.services.workspace_service import WorkspaceService
 
@@ -39,9 +40,7 @@ class TestDuplicateTabCommand:
         service.duplicate_tab.return_value = 2
         return service
 
-    def test_duplicate_tab_uses_workspace_service(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_duplicate_tab_uses_workspace_service(self, mock_context, mock_workspace_service):
         """Test that duplicate_tab_command delegates to WorkspaceService."""
         # Mock the service
         mock_context.get_service.return_value = mock_workspace_service
@@ -81,9 +80,7 @@ class TestDuplicateTabCommand:
         assert result.success is False
         assert "WorkspaceService not available" in result.error
 
-    def test_duplicate_tab_handles_no_workspace(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_duplicate_tab_handles_no_workspace(self, mock_context, mock_workspace_service):
         """Test duplicate_tab_command handles no workspace available."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_workspace_service.get_workspace.return_value = None
@@ -93,9 +90,7 @@ class TestDuplicateTabCommand:
         assert result.success is False
         assert "No workspace available" in result.error
 
-    def test_duplicate_tab_handles_exception(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_duplicate_tab_handles_exception(self, mock_context, mock_workspace_service):
         """Test duplicate_tab_command handles exceptions properly."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_workspace_service.duplicate_tab.side_effect = Exception("Test error")
@@ -126,9 +121,7 @@ class TestCloseTabsToRightCommand:
         service.close_tabs_to_right.return_value = 3
         return service
 
-    def test_close_tabs_to_right_uses_workspace_service(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_close_tabs_to_right_uses_workspace_service(self, mock_context, mock_workspace_service):
         """Test that close_tabs_to_right_command delegates to WorkspaceService."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_context.args = {"tab_index": 2}
@@ -164,9 +157,7 @@ class TestCloseTabsToRightCommand:
         assert result.success is False
         assert "WorkspaceService not available" in result.error
 
-    def test_close_tabs_to_right_handles_no_workspace(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_close_tabs_to_right_handles_no_workspace(self, mock_context, mock_workspace_service):
         """Test close_tabs_to_right_command handles no workspace available."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_workspace_service.get_workspace.return_value = None
@@ -176,9 +167,7 @@ class TestCloseTabsToRightCommand:
         assert result.success is False
         assert "No workspace available" in result.error
 
-    def test_close_tabs_to_right_handles_exception(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_close_tabs_to_right_handles_exception(self, mock_context, mock_workspace_service):
         """Test close_tabs_to_right_command handles exceptions properly."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_workspace_service.close_tabs_to_right.side_effect = Exception("Test error")
@@ -223,9 +212,7 @@ class TestRenameTabCommand:
         assert result.value["tab_index"] == 1
         assert result.value["new_name"] == "My Tab"
 
-    def test_rename_tab_uses_current_tab_when_no_index(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_rename_tab_uses_current_tab_when_no_index(self, mock_context, mock_workspace_service):
         """Test rename_tab_command uses current tab when no index provided."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_workspace_service.get_current_tab_index.return_value = 2
@@ -237,9 +224,7 @@ class TestRenameTabCommand:
         mock_workspace_service.get_current_tab_index.assert_called_once()
         mock_workspace_service.rename_tab.assert_called_once_with(2, "Custom Name")
 
-    def test_rename_tab_interactive_mode_fallback(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_rename_tab_interactive_mode_fallback(self, mock_context, mock_workspace_service):
         """Test rename_tab_command falls back to interactive mode."""
         mock_workspace = Mock()
         mock_workspace.tab_widget.tabText.return_value = "Current Tab"
@@ -254,9 +239,7 @@ class TestRenameTabCommand:
         assert result.value["mode"] == "interactive"
         mock_workspace.start_tab_rename.assert_called_once_with(1, "Current Tab")
 
-    def test_rename_tab_handles_rename_failure(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_rename_tab_handles_rename_failure(self, mock_context, mock_workspace_service):
         """Test rename_tab_command handles rename failure from service."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_workspace_service.rename_tab.return_value = False
@@ -276,9 +259,7 @@ class TestRenameTabCommand:
         assert result.success is False
         assert "WorkspaceService not available" in result.error
 
-    def test_rename_tab_handles_no_workspace(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_rename_tab_handles_no_workspace(self, mock_context, mock_workspace_service):
         """Test rename_tab_command handles no workspace available."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_workspace_service.get_workspace.return_value = None
@@ -288,9 +269,7 @@ class TestRenameTabCommand:
         assert result.success is False
         assert "No workspace available" in result.error
 
-    def test_rename_tab_handles_exception(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_rename_tab_handles_exception(self, mock_context, mock_workspace_service):
         """Test rename_tab_command handles exceptions properly."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_workspace_service.rename_tab.side_effect = Exception("Test error")
@@ -321,9 +300,7 @@ class TestCloseOtherTabsCommand:
         service.close_other_tabs.return_value = 4
         return service
 
-    def test_close_other_tabs_uses_workspace_service(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_close_other_tabs_uses_workspace_service(self, mock_context, mock_workspace_service):
         """Test that close_other_tabs_command delegates to WorkspaceService."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_context.args = {"tab_index": 2}
@@ -360,9 +337,7 @@ class TestCloseOtherTabsCommand:
         assert result.success is False
         assert "WorkspaceService not available" in result.error
 
-    def test_close_other_tabs_handles_no_workspace(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_close_other_tabs_handles_no_workspace(self, mock_context, mock_workspace_service):
         """Test close_other_tabs_command handles no workspace available."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_workspace_service.get_workspace.return_value = None
@@ -372,9 +347,7 @@ class TestCloseOtherTabsCommand:
         assert result.success is False
         assert "No workspace available" in result.error
 
-    def test_close_other_tabs_handles_exception(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_close_other_tabs_handles_exception(self, mock_context, mock_workspace_service):
         """Test close_other_tabs_command handles exceptions properly."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_workspace_service.close_other_tabs.side_effect = Exception("Test error")
@@ -403,9 +376,7 @@ class TestTabCommandsEdgeCases:
         service.get_workspace.return_value = Mock()
         return service
 
-    def test_tab_commands_with_negative_index(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_tab_commands_with_negative_index(self, mock_context, mock_workspace_service):
         """Test tab commands handle negative tab indices."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_context.args = {"tab_index": -1}
@@ -416,9 +387,7 @@ class TestTabCommandsEdgeCases:
         assert result.success is True
         mock_workspace_service.duplicate_tab.assert_called_with(-1)
 
-    def test_tab_commands_with_zero_index(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_tab_commands_with_zero_index(self, mock_context, mock_workspace_service):
         """Test tab commands handle zero tab index."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_context.args = {"tab_index": 0}
@@ -430,9 +399,7 @@ class TestTabCommandsEdgeCases:
         mock_workspace_service.close_tabs_to_right.assert_called_with(0)
         assert result.value["closed_from_index"] == 1  # tab_index + 1
 
-    def test_tab_commands_with_very_large_index(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_tab_commands_with_very_large_index(self, mock_context, mock_workspace_service):
         """Test tab commands handle very large tab indices."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_context.args = {"tab_index": 99999}
@@ -443,9 +410,7 @@ class TestTabCommandsEdgeCases:
         assert result.success is True
         mock_workspace_service.close_other_tabs.assert_called_with(99999)
 
-    def test_rename_tab_with_empty_name(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_rename_tab_with_empty_name(self, mock_context, mock_workspace_service):
         """Test rename_tab_command handles empty name."""
         mock_context.get_service.return_value = mock_workspace_service
         mock_workspace_service.rename_tab.return_value = True
@@ -456,9 +421,7 @@ class TestTabCommandsEdgeCases:
         assert result.success is True
         mock_workspace_service.rename_tab.assert_called_once_with(1, "")
 
-    def test_rename_tab_with_none_name(
-        self, mock_context, mock_workspace_service
-    ):
+    def test_rename_tab_with_none_name(self, mock_context, mock_workspace_service):
         """Test rename_tab_command handles None name."""
         mock_workspace = Mock()
         mock_workspace.tab_widget.tabText.return_value = "Current Tab"

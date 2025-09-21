@@ -20,8 +20,14 @@ class TestIMetadataInterface:
         abstract_methods = IMetadata.__abstractmethods__
 
         required_methods = {
-            "get_id", "get_name", "get_version", "get_description",
-            "get_author", "get_license", "get_dependencies", "get_keywords"
+            "get_id",
+            "get_name",
+            "get_version",
+            "get_description",
+            "get_author",
+            "get_license",
+            "get_dependencies",
+            "get_keywords",
         }
 
         for method in required_methods:
@@ -45,7 +51,7 @@ class MockMetadata(IMetadata):
             "repository": "https://github.com/example/test-plugin",
             "icon": "test-icon",
             "categories": ["testing", "development"],
-            **kwargs
+            **kwargs,
         }
 
     def get_id(self) -> str:
@@ -253,7 +259,7 @@ class TestPluginMetadataImplementation:
             name="Test Plugin",
             version="1.0.0",
             description="Test description",
-            author="Test Author"
+            author="Test Author",
         )
 
         assert isinstance(metadata, IMetadata)
@@ -272,7 +278,7 @@ class TestPluginMetadataImplementation:
             icon="test-icon",
             categories=["test"],
             keywords=["test", "plugin"],
-            dependencies_dict={"viloapp": ">=2.0.0"}
+            dependencies_dict={"viloapp": ">=2.0.0"},
         )
 
         # Test interface methods
@@ -297,7 +303,7 @@ class TestPluginMetadataImplementation:
             name="Test Plugin",
             version="1.0.0",
             description="Test description",
-            author="Test Author"
+            author="Test Author",
         )
 
         author = metadata.get_author()
@@ -312,7 +318,7 @@ class TestPluginMetadataImplementation:
             description="Test description",
             author="Test Author",
             dependencies=["viloapp", "python"],
-            engines={"viloapp": ">=2.0.0"}
+            engines={"viloapp": ">=2.0.0"},
         )
 
         deps = metadata.get_dependencies()
@@ -328,20 +334,14 @@ class TestPluginMetadataImplementation:
             name="Test Plugin",
             version="1.0.0",
             description="Test description",
-            author="Test Author"
+            author="Test Author",
         )
 
         errors = metadata.validate()
         assert len(errors) == 0
 
         # Invalid metadata
-        metadata = PluginMetadata(
-            id="",
-            name="",
-            version="invalid",
-            description="",
-            author=""
-        )
+        metadata = PluginMetadata(id="", name="", version="invalid", description="", author="")
 
         errors = metadata.validate()
         assert len(errors) > 0

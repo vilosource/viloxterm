@@ -3,13 +3,13 @@
 import sys
 import time
 from pathlib import Path
-from typing import Dict, Set, Optional, Callable, Any
+from typing import Any, Callable, Dict, Optional, Set
 
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-from ..plugin_manager import PluginManager
 from ..plugin_loader import PluginInfo
+from ..plugin_manager import PluginManager
 
 
 class PluginReloadHandler(FileSystemEventHandler):
@@ -19,7 +19,7 @@ class PluginReloadHandler(FileSystemEventHandler):
         self,
         plugin_path: Path,
         reload_callback: Callable[[Path], None],
-        debounce_delay: float = 1.0
+        debounce_delay: float = 1.0,
     ) -> None:
         """Initialize the handler.
 
@@ -179,8 +179,7 @@ class HotReloadManager:
         try:
             # Create reload handler
             handler = PluginReloadHandler(
-                plugin_path,
-                lambda file_path: self._reload_plugin(plugin_id, file_path)
+                plugin_path, lambda file_path: self._reload_plugin(plugin_id, file_path)
             )
 
             # Create observer
@@ -246,9 +245,9 @@ class HotReloadManager:
             Plugin path or None if not found
         """
         # For now, try to determine path from the plugin module
-        if hasattr(plugin_info, 'module') and plugin_info.module:
+        if hasattr(plugin_info, "module") and plugin_info.module:
             module = plugin_info.module
-            if hasattr(module, '__file__') and module.__file__:
+            if hasattr(module, "__file__") and module.__file__:
                 module_path = Path(module.__file__)
                 # Go up to find the plugin root directory
                 for parent in module_path.parents:
@@ -269,6 +268,7 @@ class HotReloadManager:
                     if plugin_dir.is_dir() and (plugin_dir / "plugin.json").exists():
                         try:
                             import json
+
                             with open(plugin_dir / "plugin.json") as f:
                                 manifest = json.load(f)
                             if manifest.get("id") == plugin_info.plugin_id:
@@ -328,7 +328,7 @@ class HotReloadManager:
         """
         try:
             plugin = self.plugin_manager.get_plugin(plugin_id)
-            if plugin and hasattr(plugin, 'get_state'):
+            if plugin and hasattr(plugin, "get_state"):
                 return plugin.get_state()
         except Exception as e:
             print(f"⚠️  Could not preserve state for {plugin_id}: {e}")
@@ -346,7 +346,7 @@ class HotReloadManager:
 
         try:
             plugin = self.plugin_manager.get_plugin(plugin_id)
-            if plugin and hasattr(plugin, 'restore_state'):
+            if plugin and hasattr(plugin, "restore_state"):
                 plugin.restore_state(state)
         except Exception as e:
             print(f"⚠️  Could not restore state for {plugin_id}: {e}")
@@ -358,7 +358,7 @@ class HotReloadManager:
             plugin_info: Plugin information
         """
         try:
-            if hasattr(plugin_info, 'module') and plugin_info.module:
+            if hasattr(plugin_info, "module") and plugin_info.module:
                 module_name = plugin_info.module.__name__
 
                 # Find all modules that belong to this plugin

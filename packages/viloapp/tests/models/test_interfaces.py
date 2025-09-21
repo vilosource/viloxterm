@@ -1,12 +1,14 @@
 """Tests for interface contracts."""
 
-import pytest
 from abc import ABC
+
+import pytest
+
 from viloapp.interfaces.model_interfaces import (
-    IWorkspaceModel,
-    ITabModel,
-    IPaneModel,
     IModelObserver,
+    IPaneModel,
+    ITabModel,
+    IWorkspaceModel,
 )
 
 
@@ -45,65 +47,73 @@ class TestInterfaceContracts:
     def test_iworkspace_model_required_methods(self):
         """Test that IWorkspaceModel has all required abstract methods."""
         required_methods = [
-            'get_state',
-            'add_observer',
-            'remove_observer',
-            'add_tab',
-            'close_tab',
-            'rename_tab',
-            'duplicate_tab',
-            'set_active_tab',
-            'split_pane',
-            'close_pane',
-            'focus_pane',
-            'update_widget_state',
-            'get_tab_by_id',
-            'get_pane_by_id',
-            'get_active_pane',
+            "get_state",
+            "add_observer",
+            "remove_observer",
+            "add_tab",
+            "close_tab",
+            "rename_tab",
+            "duplicate_tab",
+            "set_active_tab",
+            "split_pane",
+            "close_pane",
+            "focus_pane",
+            "update_widget_state",
+            "get_tab_by_id",
+            "get_pane_by_id",
+            "get_active_pane",
         ]
 
         for method_name in required_methods:
             assert hasattr(IWorkspaceModel, method_name)
             method = getattr(IWorkspaceModel, method_name)
-            assert getattr(method, '__isabstractmethod__', False), f"{method_name} should be abstract"
+            assert getattr(
+                method, "__isabstractmethod__", False
+            ), f"{method_name} should be abstract"
 
     def test_itab_model_required_methods(self):
         """Test that ITabModel has all required abstract methods."""
         required_methods = [
-            'get_state',
-            'split_pane',
-            'close_pane',
-            'set_active_pane',
+            "get_state",
+            "split_pane",
+            "close_pane",
+            "set_active_pane",
         ]
 
         for method_name in required_methods:
             assert hasattr(ITabModel, method_name)
             method = getattr(ITabModel, method_name)
-            assert getattr(method, '__isabstractmethod__', False), f"{method_name} should be abstract"
+            assert getattr(
+                method, "__isabstractmethod__", False
+            ), f"{method_name} should be abstract"
 
     def test_ipane_model_required_methods(self):
         """Test that IPaneModel has all required abstract methods."""
         required_methods = [
-            'get_state',
-            'update_widget_state',
-            'set_widget_type',
+            "get_state",
+            "update_widget_state",
+            "set_widget_type",
         ]
 
         for method_name in required_methods:
             assert hasattr(IPaneModel, method_name)
             method = getattr(IPaneModel, method_name)
-            assert getattr(method, '__isabstractmethod__', False), f"{method_name} should be abstract"
+            assert getattr(
+                method, "__isabstractmethod__", False
+            ), f"{method_name} should be abstract"
 
     def test_imodel_observer_required_methods(self):
         """Test that IModelObserver has all required abstract methods."""
         required_methods = [
-            'on_model_changed',
+            "on_model_changed",
         ]
 
         for method_name in required_methods:
             assert hasattr(IModelObserver, method_name)
             method = getattr(IModelObserver, method_name)
-            assert getattr(method, '__isabstractmethod__', False), f"{method_name} should be abstract"
+            assert getattr(
+                method, "__isabstractmethod__", False
+            ), f"{method_name} should be abstract"
 
 
 class MockWorkspaceModel(IWorkspaceModel):
@@ -183,9 +193,9 @@ class TestInterfaceImplementation:
         model = MockWorkspaceModel()
 
         assert isinstance(model, IWorkspaceModel)
-        assert hasattr(model, 'get_state')
-        assert hasattr(model, 'add_tab')
-        assert hasattr(model, 'split_pane')
+        assert hasattr(model, "get_state")
+        assert hasattr(model, "add_tab")
+        assert hasattr(model, "split_pane")
 
 
 class MockModelObserver(IModelObserver):

@@ -58,10 +58,10 @@ def _install_from_package(
 
         # Extract package
         if package_path.suffix == ".zip":
-            with zipfile.ZipFile(package_path, 'r') as zf:
+            with zipfile.ZipFile(package_path, "r") as zf:
                 zf.extractall(extract_path)
         elif package_path.name.endswith(".tar.gz"):
-            with tarfile.open(package_path, 'r:gz') as tf:
+            with tarfile.open(package_path, "r:gz") as tf:
                 tf.extractall(extract_path)
         else:
             raise click.ClickException(f"Unsupported package format: {package_path.suffix}")
@@ -128,7 +128,7 @@ def _install_from_directory(
                 [sys.executable, "-m", "pip", "install", "-e", str(target_dir)],
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
             if config.verbose:
                 click.echo(result.stdout)

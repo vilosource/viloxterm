@@ -358,11 +358,7 @@ class ThemeService(Service):
             description="Temporary preview theme",
             version="1.0.0",
             author="Theme Editor",
-            colors=(
-                {**self._current_theme.colors, **colors}
-                if self._current_theme
-                else colors
-            ),
+            colors=({**self._current_theme.colors, **colors} if self._current_theme else colors),
             typography=typography
             or (self._current_theme.typography if self._current_theme else None),
         )

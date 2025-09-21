@@ -6,13 +6,17 @@ from unittest.mock import Mock
 try:
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import Qt
+
     QT_AVAILABLE = True
 except ImportError:
     QT_AVAILABLE = False
 
 from viloedit.features.autocomplete import (
-    AutoComplete, KeywordCompletionProvider, SnippetCompletionProvider,
-    VariableCompletionProvider, CompletionPopup
+    AutoComplete,
+    KeywordCompletionProvider,
+    SnippetCompletionProvider,
+    VariableCompletionProvider,
+    CompletionPopup,
 )
 
 
@@ -33,7 +37,7 @@ class TestAutoComplete:
 
     def teardown_method(self):
         """Cleanup test environment."""
-        if hasattr(self.autocomplete, 'completion_popup') and self.autocomplete.completion_popup:
+        if hasattr(self.autocomplete, "completion_popup") and self.autocomplete.completion_popup:
             self.autocomplete.completion_popup.close()
 
     def test_initialization(self):
@@ -159,8 +163,8 @@ class TestVariableCompletionProvider:
 
     def test_initialization(self):
         """Test provider initialization."""
-        assert hasattr(self.provider, 'variable_cache')
-        assert hasattr(self.provider, 'last_text')
+        assert hasattr(self.provider, "variable_cache")
+        assert hasattr(self.provider, "last_text")
 
     def test_extract_variables_python(self):
         """Test variable extraction for Python code."""
@@ -217,15 +221,11 @@ class MyClass {
         self.provider.last_text = ""  # Force cache update
 
         # Test with 'my' should suggest 'my_variable'
-        completions = self.provider.get_completions(
-            test_code + "\nmy", len(test_code) + 3, {}
-        )
+        completions = self.provider.get_completions(test_code + "\nmy", len(test_code) + 3, {})
         assert "my_variable" in completions
 
         # Test with 'ot' should suggest 'other_var'
-        completions = self.provider.get_completions(
-            test_code + "\not", len(test_code) + 3, {}
-        )
+        completions = self.provider.get_completions(test_code + "\not", len(test_code) + 3, {})
         assert "other_var" in completions
 
     def test_provider_name(self):
@@ -288,6 +288,7 @@ class TestAutoCompleteWithoutQt:
     def test_import_without_qt(self):
         """Test that module can be imported without Qt."""
         from viloedit.features import autocomplete
-        assert hasattr(autocomplete, 'AutoComplete')
-        assert hasattr(autocomplete, 'CompletionProvider')
-        assert hasattr(autocomplete, 'KeywordCompletionProvider')
+
+        assert hasattr(autocomplete, "AutoComplete")
+        assert hasattr(autocomplete, "CompletionProvider")
+        assert hasattr(autocomplete, "KeywordCompletionProvider")

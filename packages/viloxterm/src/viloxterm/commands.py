@@ -15,43 +15,43 @@ def register_terminal_commands(command_service):
             "handler": create_new_terminal,
             "title": "New Terminal",
             "category": "Terminal",
-            "description": "Create a new terminal instance"
+            "description": "Create a new terminal instance",
         },
         {
             "id": "terminal.clear",
             "handler": clear_terminal,
             "title": "Clear Terminal",
             "category": "Terminal",
-            "description": "Clear the terminal screen"
+            "description": "Clear the terminal screen",
         },
         {
             "id": "terminal.close",
             "handler": close_terminal,
             "title": "Close Terminal",
             "category": "Terminal",
-            "description": "Close the current terminal"
+            "description": "Close the current terminal",
         },
         {
             "id": "terminal.split",
             "handler": split_terminal,
             "title": "Split Terminal",
             "category": "Terminal",
-            "description": "Split the terminal pane"
+            "description": "Split the terminal pane",
         },
         {
             "id": "terminal.focus",
             "handler": focus_terminal,
             "title": "Focus Terminal",
             "category": "Terminal",
-            "description": "Focus on the terminal"
+            "description": "Focus on the terminal",
         },
         {
             "id": "terminal.selectDefaultShell",
             "handler": select_default_shell,
             "title": "Select Default Shell",
             "category": "Terminal",
-            "description": "Choose the default shell for new terminals"
-        }
+            "description": "Choose the default shell for new terminals",
+        },
     ]
 
     for cmd in commands:
@@ -60,7 +60,7 @@ def register_terminal_commands(command_service):
             cmd["handler"],
             title=cmd.get("title"),
             category=cmd.get("category"),
-            description=cmd.get("description")
+            description=cmd.get("description"),
         )
 
 
@@ -79,6 +79,7 @@ def create_new_terminal(context, **kwargs) -> Dict[str, Any]:
     config_service = context.get_service("configuration")
     if config_service:
         import platform
+
         if platform.system() == "Windows":
             shell = config_service.get("terminal.shell.windows", "powershell.exe")
         else:
@@ -104,7 +105,7 @@ def clear_terminal(context, **kwargs) -> Dict[str, Any]:
 
     # Get active widget
     widget = workspace_service.get_active_widget()
-    if widget and hasattr(widget, 'clear_terminal'):
+    if widget and hasattr(widget, "clear_terminal"):
         widget.clear_terminal()
         return {"success": True}
 
@@ -119,7 +120,7 @@ def close_terminal(context, **kwargs) -> Dict[str, Any]:
 
     # Get active widget
     widget = workspace_service.get_active_widget()
-    if widget and hasattr(widget, 'stop_terminal'):
+    if widget and hasattr(widget, "stop_terminal"):
         widget.stop_terminal()
         workspace_service.remove_widget(widget)
         return {"success": True}
@@ -141,7 +142,7 @@ def focus_terminal(context, **kwargs) -> Dict[str, Any]:
 
     # Get active widget
     widget = workspace_service.get_active_widget()
-    if widget and hasattr(widget, 'focus_terminal'):
+    if widget and hasattr(widget, "focus_terminal"):
         widget.focus_terminal()
         return {"success": True}
 

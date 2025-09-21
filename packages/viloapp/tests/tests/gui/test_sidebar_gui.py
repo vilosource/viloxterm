@@ -66,9 +66,7 @@ class TestSidebarGUI(SidebarGUITestBase):
         """Test sidebar widget properties."""
         assert gui_sidebar.objectName() == "sidebar"
         # Sidebar now has a minimum width to prevent complete collapse (Qt compat enhancement)
-        assert (
-            gui_sidebar.minimumWidth() == 50
-        )  # Minimum width to keep sidebar accessible
+        assert gui_sidebar.minimumWidth() == 50  # Minimum width to keep sidebar accessible
         assert gui_sidebar.maximumWidth() == 250
 
 
@@ -246,9 +244,7 @@ class TestSidebarIntegrationGUI(SidebarGUITestBase):
         assert main_splitter.count() >= 2  # Should have at least sidebar and workspace
 
         # Verify sidebar is in splitter
-        splitter_widgets = [
-            main_splitter.widget(i) for i in range(main_splitter.count())
-        ]
+        splitter_widgets = [main_splitter.widget(i) for i in range(main_splitter.count())]
         assert sidebar in splitter_widgets
 
         # Test collapse doesn't break splitter

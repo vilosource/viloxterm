@@ -23,9 +23,14 @@ class TestIWidgetInterface:
 
         # New interface has these abstract methods
         required_methods = {
-            "get_widget_id", "get_title", "get_icon",
-            "create_instance", "destroy_instance", "handle_command",
-            "get_state", "restore_state"
+            "get_widget_id",
+            "get_title",
+            "get_icon",
+            "create_instance",
+            "destroy_instance",
+            "handle_command",
+            "get_state",
+            "restore_state",
         }
 
         # Check all required abstract methods exist
@@ -179,6 +184,7 @@ class TestNewIWidgetMethods:
         assert isinstance(state, dict)
         # Should be JSON serializable
         import json
+
         json.dumps(state)  # Should not raise
 
     def test_restore_state_accepts_dict(self, widget_factory):
@@ -251,7 +257,7 @@ class TestBackwardCompatibility:
                     id="legacy-widget",
                     title="Legacy Widget",
                     position=WidgetPosition.MAIN,
-                    icon="legacy-icon"
+                    icon="legacy-icon",
                 )
 
             def create_widget(self, parent=None):
@@ -293,9 +299,7 @@ class TestInterfaceEvolution:
         class LegacyWidget:
             def get_metadata(self):
                 return WidgetMetadata(
-                    id="migration-test",
-                    title="Migration Test",
-                    position=WidgetPosition.MAIN
+                    id="migration-test", title="Migration Test", position=WidgetPosition.MAIN
                 )
 
             def create_widget(self, parent=None):

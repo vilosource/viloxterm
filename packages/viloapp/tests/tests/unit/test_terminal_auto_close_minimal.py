@@ -131,9 +131,7 @@ class TestDataStructures:
         """Test TerminalSession dataclass."""
         from viloapp.ui.terminal.terminal_server import TerminalSession
 
-        session = TerminalSession(
-            session_id="test_123", fd=1, child_pid=1234, active=True
-        )
+        session = TerminalSession(session_id="test_123", fd=1, child_pid=1234, active=True)
 
         assert session.session_id == "test_123"
         assert session.fd == 1

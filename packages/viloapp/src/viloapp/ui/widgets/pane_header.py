@@ -101,24 +101,16 @@ class PaneHeaderBar(QWidget):
             layout.addWidget(self.type_button)
 
         # Split horizontal button
-        self.split_h_button = self.create_tool_button(
-            "↔", "Split horizontal (new pane on right)"
-        )
+        self.split_h_button = self.create_tool_button("↔", "Split horizontal (new pane on right)")
         self.split_h_button.clicked.connect(
-            lambda: execute_command(
-                "workbench.action.splitPaneHorizontal", pane=self.parent()
-            )
+            lambda: execute_command("workbench.action.splitPaneHorizontal", pane=self.parent())
         )
         layout.addWidget(self.split_h_button)
 
         # Split vertical button
-        self.split_v_button = self.create_tool_button(
-            "↕", "Split vertical (new pane below)"
-        )
+        self.split_v_button = self.create_tool_button("↕", "Split vertical (new pane below)")
         self.split_v_button.clicked.connect(
-            lambda: execute_command(
-                "workbench.action.splitPaneVertical", pane=self.parent()
-            )
+            lambda: execute_command("workbench.action.splitPaneVertical", pane=self.parent())
         )
         layout.addWidget(self.split_v_button)
 
@@ -201,9 +193,7 @@ class PaneHeaderBar(QWidget):
             ]
             sorted_categories = sorted(
                 categories.items(),
-                key=lambda x: (
-                    category_order.index(x[0]) if x[0] in category_order else 999
-                ),
+                key=lambda x: (category_order.index(x[0]) if x[0] in category_order else 999),
             )
 
             # Add widgets by category
@@ -222,9 +212,7 @@ class PaneHeaderBar(QWidget):
 
                         # Always use replacement behavior in pane header context
                         action.triggered.connect(
-                            lambda checked, wm=widget_meta: self._handle_widget_selection(
-                                wm
-                            )
+                            lambda checked, wm=widget_meta: self._handle_widget_selection(wm)
                         )
                         menu.addAction(action)
 
@@ -328,9 +316,7 @@ class PaneHeaderBar(QWidget):
 
         # Theme Editor
         theme_editor_action = QAction("🎨 Theme Editor", self)
-        theme_editor_action.triggered.connect(
-            lambda: execute_command("theme.openEditor")
-        )
+        theme_editor_action.triggered.connect(lambda: execute_command("theme.openEditor"))
         menu.addAction(theme_editor_action)
 
         # Keyboard Shortcuts Editor (if available)
@@ -354,9 +340,7 @@ class PaneHeaderBar(QWidget):
             WidgetType.CUSTOM: "🔧 Custom Widget",
             WidgetType.PLACEHOLDER: "⬜ Empty Pane",
         }
-        return display_names.get(
-            widget_type, widget_type.value.replace("_", " ").title()
-        )
+        return display_names.get(widget_type, widget_type.value.replace("_", " ").title())
 
     def _handle_widget_selection(self, widget_meta):
         """
@@ -378,10 +362,7 @@ class PaneHeaderBar(QWidget):
                 pane_id=pane_id,
                 widget_id=widget_meta.widget_id,
             )
-        elif (
-            hasattr(widget_meta, "supports_replacement")
-            and widget_meta.supports_replacement
-        ):
+        elif hasattr(widget_meta, "supports_replacement") and widget_meta.supports_replacement:
             # Use generic replacement for widgets that support it
             execute_command(
                 "workbench.action.replaceWidgetInPane",

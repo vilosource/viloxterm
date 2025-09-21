@@ -162,9 +162,7 @@ class FocusManager(QObject):
         )
 
         # Remove from queue
-        self._focus_queue = [
-            req for req in self._focus_queue if req.widget_id != widget_id
-        ]
+        self._focus_queue = [req for req in self._focus_queue if req.widget_id != widget_id]
 
         # Clear current focus if it was this widget
         if self._current_focus == widget_id:
@@ -219,9 +217,7 @@ class FocusManager(QObject):
             return True
         else:
             # Cannot focus (ERROR, DESTROYING, DESTROYED)
-            logger.debug(
-                f"Cannot focus widget {widget_id} in state {widget.widget_state.value}"
-            )
+            logger.debug(f"Cannot focus widget {widget_id} in state {widget.widget_state.value}")
             self._stats["focus_denied"] += 1
             return False
 
@@ -256,9 +252,7 @@ class FocusManager(QObject):
             # Emit signal
             self.focus_changed.emit(old_focus or "", widget_id)
 
-            logger.info(
-                f"Focus changed from {old_focus} to {widget_id} (reason: {reason})"
-            )
+            logger.info(f"Focus changed from {old_focus} to {widget_id} (reason: {reason})")
             return True
 
         return False
@@ -392,9 +386,7 @@ class FocusManager(QObject):
         else:
             # All ready widgets
             widget_ids = [
-                wid
-                for wid, w in self._widgets.items()
-                if w.widget_state == WidgetState.READY
+                wid for wid, w in self._widgets.items() if w.widget_state == WidgetState.READY
             ]
 
         if not widget_ids:
@@ -475,9 +467,7 @@ class FocusManager(QObject):
             widget_ids: List of widget IDs in the group
         """
         self._focus_groups[group_name] = widget_ids
-        logger.debug(
-            f"Created focus group '{group_name}' with {len(widget_ids)} widgets"
-        )
+        logger.debug(f"Created focus group '{group_name}' with {len(widget_ids)} widgets")
 
     def _on_focus_requested(self, widget_id: str):
         """

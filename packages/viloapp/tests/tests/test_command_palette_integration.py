@@ -55,9 +55,7 @@ def test_keyboard_service_has_palette_shortcut(main_window):
                 found_palette_shortcut = True
                 break
 
-    assert (
-        found_palette_shortcut
-    ), "commandPalette.show shortcut not found in keyboard registry"
+    assert found_palette_shortcut, "commandPalette.show shortcut not found in keyboard registry"
 
 
 def test_execute_show_palette_command(main_window, qtbot):
@@ -156,9 +154,7 @@ def test_command_filtering_by_context(main_window, qtbot):
 
     # Check that commandPalette.hide IS in the list (when="commandPaletteVisible")
     hide_cmd_in_list = any(cmd.id == "commandPalette.hide" for cmd in commands)
-    assert (
-        hide_cmd_in_list
-    ), "commandPalette.hide should be available when palette is visible"
+    assert hide_cmd_in_list, "commandPalette.hide should be available when palette is visible"
 
     # Clean up
     main_window.command_palette_controller.hide_palette()
@@ -240,9 +236,7 @@ def test_shortcut_conflicts_resolved():
     all_commands = command_registry.get_all_commands()
 
     for shortcut, expected_commands in resolved_conflicts:
-        commands_with_shortcut = [
-            cmd.id for cmd in all_commands if cmd.shortcut == shortcut
-        ]
+        commands_with_shortcut = [cmd.id for cmd in all_commands if cmd.shortcut == shortcut]
         assert (
             commands_with_shortcut == expected_commands
         ), f"Shortcut {shortcut} should only be assigned to {expected_commands}, found {commands_with_shortcut}"

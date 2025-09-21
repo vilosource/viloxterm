@@ -4,8 +4,10 @@ from unittest.mock import Mock
 import platform
 
 from viloxterm.features import (
-    TerminalProfile, TerminalProfileManager,
-    TerminalSessionManager, TerminalSearch
+    TerminalProfile,
+    TerminalProfileManager,
+    TerminalSessionManager,
+    TerminalSearch,
 )
 from viloxterm.settings import TerminalSettings, TerminalSettingsManager
 
@@ -16,11 +18,7 @@ class TestTerminalProfile:
     def test_profile_creation(self):
         """Test profile creation."""
         profile = TerminalProfile(
-            name="Test Shell",
-            shell="/bin/test",
-            args=["-l"],
-            env={"TEST": "value"},
-            cwd="/tmp"
+            name="Test Shell", shell="/bin/test", args=["-l"], env={"TEST": "value"}, cwd="/tmp"
         )
 
         assert profile.name == "Test Shell"
@@ -52,10 +50,7 @@ class TestTerminalProfileManager:
 
     def test_add_custom_profile(self):
         """Test adding custom profile."""
-        custom_profile = TerminalProfile(
-            name="Custom Shell",
-            shell="/bin/custom"
-        )
+        custom_profile = TerminalProfile(name="Custom Shell", shell="/bin/custom")
 
         initial_count = len(self.manager.list_profiles())
         self.manager.add_profile("custom", custom_profile)
@@ -84,19 +79,13 @@ class TestTerminalSessionManager:
 
     def test_create_session_with_profile(self):
         """Test creating session with profile."""
-        profile = TerminalProfile(
-            name="Test Shell",
-            shell="/bin/test",
-            args=["-l"]
-        )
+        profile = TerminalProfile(name="Test Shell", shell="/bin/test", args=["-l"])
 
         session_id = self.manager.create_session(profile, "Test Session")
 
         assert session_id == "session_123"
         self.mock_server.create_session.assert_called_once_with(
-            command="/bin/test",
-            cmd_args="-l",
-            cwd=None
+            command="/bin/test", cmd_args="-l", cwd=None
         )
 
         # Check session is tracked
@@ -211,10 +200,7 @@ class TestTerminalSettings:
 
     def test_settings_serialization(self):
         """Test settings to/from dict."""
-        settings = TerminalSettings(
-            font_size=16,
-            cursor_blink=False
-        )
+        settings = TerminalSettings(font_size=16, cursor_blink=False)
 
         # Test to_dict
         data = settings.to_dict()
@@ -269,10 +255,7 @@ class TestTerminalSettingsManager:
 
     def test_sync_with_theme(self):
         """Test syncing with theme colors."""
-        theme_colors = {
-            "terminal.background": "#000000",
-            "terminal.foreground": "#ffffff"
-        }
+        theme_colors = {"terminal.background": "#000000", "terminal.foreground": "#ffffff"}
 
         self.manager.sync_with_theme(theme_colors)
 

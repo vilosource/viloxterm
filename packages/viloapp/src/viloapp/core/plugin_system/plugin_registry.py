@@ -1,18 +1,20 @@
 """Plugin registry for managing plugin metadata and state."""
 
+import json
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set
 from pathlib import Path
-import json
+from typing import Dict, List, Optional, Set
 
-from viloapp_sdk import PluginMetadata, LifecycleState
+from viloapp_sdk import LifecycleState, PluginMetadata
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class PluginInfo:
     """Complete plugin information."""
+
     metadata: PluginMetadata
     path: Path
     state: LifecycleState = LifecycleState.DISCOVERED
@@ -21,6 +23,7 @@ class PluginInfo:
     error: Optional[str] = None
     dependencies_met: bool = False
     load_order: int = 0
+
 
 class PluginRegistry:
     """Registry for all discovered and loaded plugins."""
@@ -200,14 +203,14 @@ class PluginRegistry:
                         "path": str(info.path),
                         "state": info.state.name,
                         "error": info.error,
-                        "load_order": info.load_order
+                        "load_order": info.load_order,
                     }
                     for pid, info in self._plugins.items()
                 }
             }
 
             path.parent.mkdir(parents=True, exist_ok=True)
-            with open(path, 'w') as f:
+            with open(path, "w") as f:
                 json.dump(state_data, f, indent=2)
 
             return True
@@ -229,7 +232,7 @@ class PluginRegistry:
             if not path.exists():
                 return False
 
-            with open(path, 'r') as f:
+            with open(path) as f:
                 state_data = json.load(f)
 
             # Note: This only loads metadata, not actual plugin instances

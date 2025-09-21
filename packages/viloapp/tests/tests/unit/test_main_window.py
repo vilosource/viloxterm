@@ -358,9 +358,7 @@ class TestMainWindow:
 
     @patch("viloapp.ui.main_window.QMessageBox.question")
     @patch("viloapp.ui.main_window.QSettings")
-    def test_reset_app_state_user_cancels(
-        self, mock_settings_class, mock_question, qtbot
-    ):
+    def test_reset_app_state_user_cancels(self, mock_settings_class, mock_question, qtbot):
         """Test reset app state when user cancels."""
         # Mock user clicking No
         mock_question.return_value = QMessageBox.No
@@ -394,9 +392,7 @@ class TestMainWindow:
         qtbot.addWidget(window)
 
         # Mock execute_command to return an error
-        window.execute_command = Mock(
-            return_value={"success": False, "error": "Settings error"}
-        )
+        window.execute_command = Mock(return_value={"success": False, "error": "Settings error"})
 
         # Call reset
         result = window.reset_app_state()

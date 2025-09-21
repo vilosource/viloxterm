@@ -30,7 +30,6 @@ __all__ = [
     "service",
     "activation_event",
     "contribution",
-
     # Validators
     "ManifestValidator",
     "VersionCompatibilityChecker",

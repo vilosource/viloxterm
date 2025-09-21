@@ -36,17 +36,13 @@ def split_pane_horizontal_command(context: CommandContext) -> CommandResult:
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
 
-        # Get workspace
-        workspace = workspace_service.get_workspace()
-        if not workspace:
-            return CommandResult(success=False, error="No workspace available")
+        # Call service method ONLY - no UI access
+        result_pane_id = workspace_service.split_active_pane("horizontal")
 
-        # Use the workspace's split method directly
-        if hasattr(workspace, "split_active_pane_horizontal"):
-            workspace.split_active_pane_horizontal()
-            return CommandResult(success=True, value={"action": "split_horizontal"})
-
-        return CommandResult(success=False, error="Could not split pane")
+        if result_pane_id:
+            return CommandResult(success=True, value={"action": "split_horizontal", "pane_id": result_pane_id})
+        else:
+            return CommandResult(success=False, error="Could not split pane")
 
     except Exception as e:
         logger.error(f"Error splitting pane horizontally: {e}", exc_info=True)
@@ -74,17 +70,13 @@ def split_pane_vertical_command(context: CommandContext) -> CommandResult:
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
 
-        # Get workspace
-        workspace = workspace_service.get_workspace()
-        if not workspace:
-            return CommandResult(success=False, error="No workspace available")
+        # Call service method ONLY - no UI access
+        result_pane_id = workspace_service.split_active_pane("vertical")
 
-        # Use the workspace's split method directly
-        if hasattr(workspace, "split_active_pane_vertical"):
-            workspace.split_active_pane_vertical()
-            return CommandResult(success=True, value={"action": "split_vertical"})
-
-        return CommandResult(success=False, error="Could not split pane")
+        if result_pane_id:
+            return CommandResult(success=True, value={"action": "split_vertical", "pane_id": result_pane_id})
+        else:
+            return CommandResult(success=False, error="Could not split pane")
 
     except Exception as e:
         logger.error(f"Error splitting pane vertically: {e}", exc_info=True)
@@ -214,18 +206,6 @@ def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
 
-        # Get workspace
-        workspace = workspace_service.get_workspace()
-        if not workspace:
-            return CommandResult(success=False, error="No workspace available")
-
-        # Get current tab's split widget
-        current_tab = workspace.tab_widget.currentWidget()
-        if not current_tab or not hasattr(current_tab, "model"):
-            return CommandResult(success=False, error="No split widget available")
-
-        split_widget = current_tab
-
         # Try to get pane_id from different sources
         if not pane_id:
             # Try from PaneContent wrapper
@@ -235,28 +215,19 @@ def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
                 pane_id = pane.pane_id
 
         if pane_id:
-
             # Get widget metadata
             manager = AppWidgetManager.get_instance()
             metadata = manager.get_widget_metadata(widget_id)
 
             if metadata:
-                # Change the pane to use the new widget
-                # We'll use the existing change_pane_type if it's a basic widget type
+                # Call service method ONLY - no direct model access
                 if hasattr(metadata, "widget_type"):
-                    success = split_widget.model.change_pane_type(
-                        pane_id, metadata.widget_type
-                    )
+                    success = workspace_service.change_pane_widget_type(pane_id, metadata.widget_type)
                     if success:
-                        split_widget.refresh_view()
                         logger.info(f"Replaced pane {pane_id} with widget {widget_id}")
-                        return CommandResult(
-                            success=True, value={"widget_id": widget_id}
-                        )
+                        return CommandResult(success=True, value={"widget_id": widget_id})
 
-            return CommandResult(
-                success=False, error=f"Could not find widget {widget_id}"
-            )
+            return CommandResult(success=False, error=f"Could not find widget {widget_id}")
 
         return CommandResult(success=False, error="Could not identify pane")
 

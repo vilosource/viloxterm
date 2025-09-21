@@ -61,7 +61,9 @@ class AppWidget(QWidget):
 
         # Windows-specific optimizations to prevent flashing during creation
         import sys
+
         from PySide6.QtCore import Qt
+
         if sys.platform == "win32":
             self.setAttribute(Qt.WA_DontCreateNativeAncestors, True)
             self.setAttribute(Qt.WA_OpaquePaintEvent, True)
@@ -80,9 +82,7 @@ class AppWidget(QWidget):
         self._retry_backoff_factor = 1.5  # Exponential backoff factor
 
         # State transition callbacks
-        self._state_callbacks = (
-            {}
-        )  # Dict[Tuple[WidgetState, WidgetState], List[Callable]]
+        self._state_callbacks = {}  # Dict[Tuple[WidgetState, WidgetState], List[Callable]]
         self._any_state_callbacks = []  # Callbacks for any state transition
 
         # Signal management
@@ -135,8 +135,7 @@ class AppWidget(QWidget):
         if self._error_count < self._max_retries:
             # Calculate retry delay with exponential backoff
             retry_delay = int(
-                self._retry_base_delay
-                * (self._retry_backoff_factor ** (self._error_count - 1))
+                self._retry_base_delay * (self._retry_backoff_factor ** (self._error_count - 1))
             )
             logger.info(
                 f"Retrying widget {self.widget_id} initialization in {retry_delay}ms (attempt {self._error_count + 1}/{self._max_retries})"
@@ -151,9 +150,7 @@ class AppWidget(QWidget):
         """Suspend widget when hidden/inactive."""
         # Check if widget can be suspended
         if not self.can_suspend:
-            logger.debug(
-                f"Widget {self.widget_id} cannot be suspended (can_suspend=False)"
-            )
+            logger.debug(f"Widget {self.widget_id} cannot be suspended (can_suspend=False)")
             return
 
         if self.widget_state == WidgetState.READY:
@@ -456,9 +453,7 @@ class AppWidget(QWidget):
         if WidgetStateValidator.is_valid_transition(old_state, new_state):
             self.widget_state = new_state
             self.widget_state_changed.emit(new_state.value)
-            logger.debug(
-                f"Widget {self.widget_id}: {old_state.value} → {new_state.value}"
-            )
+            logger.debug(f"Widget {self.widget_id}: {old_state.value} → {new_state.value}")
 
             # Trigger state transition callbacks
             self._trigger_state_callbacks(old_state, new_state)

@@ -7,7 +7,7 @@ with the ServiceLocator.
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 from viloapp.services.base import Service
 

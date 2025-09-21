@@ -5,17 +5,21 @@ from enum import Enum, auto
 from typing import Optional, List, Callable, Dict
 from dataclasses import dataclass
 
+
 class LifecycleState(Enum):
     """Plugin lifecycle states."""
+
     DISCOVERED = auto()  # Plugin found but not loaded
-    LOADED = auto()      # Plugin code loaded
-    ACTIVATED = auto()   # Plugin activated and running
-    DEACTIVATED = auto() # Plugin deactivated
-    FAILED = auto()      # Plugin failed to load/activate
-    UNLOADED = auto()    # Plugin unloaded from memory
+    LOADED = auto()  # Plugin code loaded
+    ACTIVATED = auto()  # Plugin activated and running
+    DEACTIVATED = auto()  # Plugin deactivated
+    FAILED = auto()  # Plugin failed to load/activate
+    UNLOADED = auto()  # Plugin unloaded from memory
+
 
 class LifecycleHook(Enum):
     """Lifecycle hook points."""
+
     BEFORE_LOAD = "before_load"
     AFTER_LOAD = "after_load"
     BEFORE_ACTIVATE = "before_activate"
@@ -25,14 +29,17 @@ class LifecycleHook(Enum):
     BEFORE_UNLOAD = "before_unload"
     AFTER_UNLOAD = "after_unload"
 
+
 @dataclass
 class LifecycleTransition:
     """Represents a state transition."""
+
     from_state: LifecycleState
     to_state: LifecycleState
     timestamp: float
     reason: Optional[str] = None
     error: Optional[Exception] = None
+
 
 class ILifecycle(ABC):
     """Interface for lifecycle management."""
@@ -62,17 +69,22 @@ class ILifecycle(ABC):
         """Get state transition history."""
         pass
 
+
 class PluginLifecycle(ILifecycle):
     """Implementation of plugin lifecycle management."""
 
     # Valid state transitions
     VALID_TRANSITIONS = {
         LifecycleState.DISCOVERED: [LifecycleState.LOADED, LifecycleState.FAILED],
-        LifecycleState.LOADED: [LifecycleState.ACTIVATED, LifecycleState.FAILED, LifecycleState.UNLOADED],
+        LifecycleState.LOADED: [
+            LifecycleState.ACTIVATED,
+            LifecycleState.FAILED,
+            LifecycleState.UNLOADED,
+        ],
         LifecycleState.ACTIVATED: [LifecycleState.DEACTIVATED, LifecycleState.FAILED],
         LifecycleState.DEACTIVATED: [LifecycleState.ACTIVATED, LifecycleState.UNLOADED],
         LifecycleState.FAILED: [LifecycleState.UNLOADED],
-        LifecycleState.UNLOADED: [LifecycleState.LOADED]
+        LifecycleState.UNLOADED: [LifecycleState.LOADED],
     }
 
     def __init__(self):
@@ -88,10 +100,7 @@ class PluginLifecycle(ILifecycle):
         return state in self.VALID_TRANSITIONS.get(self._state, [])
 
     def transition_to(
-        self,
-        state: LifecycleState,
-        reason: Optional[str] = None,
-        error: Optional[Exception] = None
+        self, state: LifecycleState, reason: Optional[str] = None, error: Optional[Exception] = None
     ) -> bool:
         """
         Transition to a new state.
@@ -104,12 +113,13 @@ class PluginLifecycle(ILifecycle):
 
         # Create transition record
         import time
+
         transition = LifecycleTransition(
             from_state=self._state,
             to_state=state,
             timestamp=time.time(),
             reason=reason,
-            error=error
+            error=error,
         )
 
         # Execute hooks
@@ -137,24 +147,26 @@ class PluginLifecycle(ILifecycle):
         return list(self._history)
 
     def _execute_hooks_for_transition(
-        self,
-        from_state: LifecycleState,
-        to_state: LifecycleState
+        self, from_state: LifecycleState, to_state: LifecycleState
     ) -> None:
         """Execute relevant hooks for a state transition."""
         # Map transitions to hooks
         hook_mapping = {
             (LifecycleState.DISCOVERED, LifecycleState.LOADED): [
-                LifecycleHook.BEFORE_LOAD, LifecycleHook.AFTER_LOAD
+                LifecycleHook.BEFORE_LOAD,
+                LifecycleHook.AFTER_LOAD,
             ],
             (LifecycleState.LOADED, LifecycleState.ACTIVATED): [
-                LifecycleHook.BEFORE_ACTIVATE, LifecycleHook.AFTER_ACTIVATE
+                LifecycleHook.BEFORE_ACTIVATE,
+                LifecycleHook.AFTER_ACTIVATE,
             ],
             (LifecycleState.ACTIVATED, LifecycleState.DEACTIVATED): [
-                LifecycleHook.BEFORE_DEACTIVATE, LifecycleHook.AFTER_DEACTIVATE
+                LifecycleHook.BEFORE_DEACTIVATE,
+                LifecycleHook.AFTER_DEACTIVATE,
             ],
             (LifecycleState.DEACTIVATED, LifecycleState.UNLOADED): [
-                LifecycleHook.BEFORE_UNLOAD, LifecycleHook.AFTER_UNLOAD
+                LifecycleHook.BEFORE_UNLOAD,
+                LifecycleHook.AFTER_UNLOAD,
             ],
         }
 

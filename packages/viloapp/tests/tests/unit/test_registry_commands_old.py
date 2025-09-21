@@ -64,9 +64,7 @@ class TestRegistryCommands:
         result = unregister_widget_command._original_func(self.mock_context)
 
         assert result.success
-        assert (
-            "com.viloapp.settings" not in self.mock_workspace_service._widget_registry
-        )
+        assert "com.viloapp.settings" not in self.mock_workspace_service._widget_registry
 
     def test_unregister_nonexistent_widget(self):
         """Test unregistering a widget that doesn't exist."""
@@ -199,8 +197,8 @@ class TestRegistryCommands:
         """Test that commands handle exceptions gracefully."""
         # Make service raise exception
         self.mock_workspace_service._widget_registry = MagicMock()
-        self.mock_workspace_service._widget_registry.__setitem__.side_effect = (
-            Exception("Test error")
+        self.mock_workspace_service._widget_registry.__setitem__.side_effect = Exception(
+            "Test error"
         )
 
         self.mock_context.args = {"widget_id": "test", "tab_index": 0}

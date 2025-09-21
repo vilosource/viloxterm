@@ -1,21 +1,21 @@
 """Models package for data structures and business logic."""
 
 from .base import OperationResult
+from .operations import (
+    ClosePaneRequest,
+    PaneFocusRequest,
+    SplitPaneRequest,
+    SplitPaneResponse,
+    TabOperationRequest,
+    TabOperationResponse,
+    WidgetStateUpdateRequest,
+)
 from .workspace_models import (
-    WidgetType,
     PaneState,
     SplitConfiguration,
     TabState,
+    WidgetType,
     WorkspaceState,
-)
-from .operations import (
-    SplitPaneRequest,
-    ClosePaneRequest,
-    TabOperationRequest,
-    PaneFocusRequest,
-    WidgetStateUpdateRequest,
-    SplitPaneResponse,
-    TabOperationResponse,
 )
 
 __all__ = [

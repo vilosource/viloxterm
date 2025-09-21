@@ -7,6 +7,7 @@ try:
     from PySide6.QtWidgets import QApplication, QTextEdit
     from PySide6.QtCore import Qt
     from PySide6.QtGui import QTextCursor, QTextDocument
+
     QT_AVAILABLE = True
 except ImportError:
     QT_AVAILABLE = False
@@ -62,18 +63,18 @@ class TestFindReplace:
         """Test search options configuration."""
         # Default options
         options = self.find_replace.get_search_options()
-        assert options['wrap_around'] is True  # Default
-        assert options['case_sensitive'] is False  # Default
-        assert options['whole_word'] is False  # Default
-        assert options['regex'] is False  # Default
+        assert options["wrap_around"] is True  # Default
+        assert options["case_sensitive"] is False  # Default
+        assert options["whole_word"] is False  # Default
+        assert options["regex"] is False  # Default
 
         # Set options
         self.find_replace.case_sensitive_cb.setChecked(True)
         self.find_replace.regex_cb.setChecked(True)
 
         options = self.find_replace.get_search_options()
-        assert options['case_sensitive'] is True
-        assert options['regex'] is True
+        assert options["case_sensitive"] is True
+        assert options["regex"] is True
 
     def test_add_to_history(self):
         """Test adding items to search history."""
@@ -91,27 +92,27 @@ class TestFindReplace:
 
     def test_text_matches_normal(self):
         """Test text matching in normal mode."""
-        options = {'case_sensitive': False, 'whole_word': False, 'regex': False}
+        options = {"case_sensitive": False, "whole_word": False, "regex": False}
 
         # Case insensitive
         assert self.find_replace.text_matches("Hello", "hello", options)
         assert self.find_replace.text_matches("HELLO", "hello", options)
 
         # Case sensitive
-        options['case_sensitive'] = True
+        options["case_sensitive"] = True
         assert not self.find_replace.text_matches("Hello", "hello", options)
         assert self.find_replace.text_matches("hello", "hello", options)
 
     def test_text_matches_whole_word(self):
         """Test text matching with whole word option."""
-        options = {'case_sensitive': False, 'whole_word': True, 'regex': False}
+        options = {"case_sensitive": False, "whole_word": True, "regex": False}
 
         assert self.find_replace.text_matches("hello", "hello", options)
         assert not self.find_replace.text_matches("hello world", "hello", options)
 
     def test_text_matches_regex(self):
         """Test text matching with regex option."""
-        options = {'case_sensitive': False, 'whole_word': False, 'regex': True}
+        options = {"case_sensitive": False, "whole_word": False, "regex": True}
 
         assert self.find_replace.text_matches("hello123", r"hello\d+", options)
         assert not self.find_replace.text_matches("hello", r"hello\d+", options)
@@ -129,7 +130,7 @@ class TestFindReplace:
         self.find_replace.close_widget()
         assert not self.find_replace.isVisible()
 
-    @patch('viloedit.features.find_replace.logger')
+    @patch("viloedit.features.find_replace.logger")
     def test_find_all_logging(self, mock_logger):
         """Test find all functionality with logging."""
         # Mock editor with document
@@ -158,9 +159,10 @@ class TestFindReplaceWithoutQt:
     def test_import_without_qt(self):
         """Test that module can be imported without Qt."""
         from viloedit.features import find_replace
-        assert hasattr(find_replace, 'FindReplace')
-        assert hasattr(find_replace, 'SearchDirection')
-        assert hasattr(find_replace, 'FindReplaceResult')
+
+        assert hasattr(find_replace, "FindReplace")
+        assert hasattr(find_replace, "SearchDirection")
+        assert hasattr(find_replace, "FindReplaceResult")
 
 
 class TestFindReplaceResult:

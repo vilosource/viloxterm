@@ -33,9 +33,7 @@ class TestMainWindowGUI(MainWindowGUITestBase):
 
         # Test that splitter prevents complete collapse of sidebar
         # This is a deliberate design choice to ensure sidebar is always accessible
-        assert (
-            not splitter.childrenCollapsible()
-        )  # Sidebar cannot be completely collapsed
+        assert not splitter.childrenCollapsible()  # Sidebar cannot be completely collapsed
 
     def test_main_window_menu_bar_visibility(self, gui_main_window, qtbot):
         """Test menu bar visibility can be toggled."""
@@ -80,25 +78,19 @@ class TestMainWindowKeyboardGUI(KeyboardGUITestBase):
         gui_main_window.execute_command = Mock(return_value={"success": True})
 
         # Simulate Ctrl+B
-        qtbot.keyClick(
-            gui_main_window, Qt.Key.Key_B, Qt.KeyboardModifier.ControlModifier
-        )
+        qtbot.keyClick(gui_main_window, Qt.Key.Key_B, Qt.KeyboardModifier.ControlModifier)
         qtbot.wait(100)
 
         # Should have executed the toggle sidebar command
         gui_main_window.execute_command.assert_called_with("view.toggleSidebar")
 
-    def test_keyboard_shortcut_toggle_theme(
-        self, gui_main_window, qtbot, mock_icon_manager
-    ):
+    def test_keyboard_shortcut_toggle_theme(self, gui_main_window, qtbot, mock_icon_manager):
         """Test Ctrl+T keyboard shortcut toggles theme."""
         # Mock the execute_command method on the instance
         gui_main_window.execute_command = Mock(return_value={"success": True})
 
         # Simulate Ctrl+T
-        qtbot.keyClick(
-            gui_main_window, Qt.Key.Key_T, Qt.KeyboardModifier.ControlModifier
-        )
+        qtbot.keyClick(gui_main_window, Qt.Key.Key_T, Qt.KeyboardModifier.ControlModifier)
         qtbot.wait(100)
 
         # Should have executed the toggle theme command
@@ -142,9 +134,7 @@ class TestMainWindowKeyboardGUI(KeyboardGUITestBase):
 class TestMainWindowThemeGUI(ThemeGUITestBase):
     """GUI tests for main window theme interactions."""
 
-    def test_theme_toggle_visual_update(
-        self, gui_main_window, qtbot, mock_icon_manager
-    ):
+    def test_theme_toggle_visual_update(self, gui_main_window, qtbot, mock_icon_manager):
         """Test theme toggle updates visual appearance."""
         # Mock the execute_command method on the instance
         gui_main_window.execute_command = Mock(return_value={"success": True})
@@ -160,9 +150,7 @@ class TestMainWindowThemeGUI(ThemeGUITestBase):
         # Verify theme toggle was executed
         gui_main_window.execute_command.assert_called_with("view.toggleTheme")
 
-    def test_theme_persistence_on_restart(
-        self, gui_main_window, qtbot, mock_icon_manager
-    ):
+    def test_theme_persistence_on_restart(self, gui_main_window, qtbot, mock_icon_manager):
         """Test theme setting persists across application restarts."""
         # This test verifies that theme state is saved/restored
         # The actual persistence is handled by QSettings in the app
@@ -218,9 +206,7 @@ class TestMainWindowStateGUI(MainWindowGUITestBase):
     """GUI tests for main window state management."""
 
     @patch("viloapp.ui.main_window.QSettings")
-    def test_window_state_save_on_close(
-        self, mock_settings_class, gui_main_window, qtbot
-    ):
+    def test_window_state_save_on_close(self, mock_settings_class, gui_main_window, qtbot):
         """Test window state is saved when window is closed."""
         mock_settings = Mock()
         mock_settings_class.return_value = mock_settings
@@ -242,9 +228,7 @@ class TestMainWindowStateGUI(MainWindowGUITestBase):
         close_event.accept.assert_called()
 
     @patch("viloapp.ui.main_window.QSettings")
-    def test_window_state_restore_on_startup(
-        self, mock_settings_class, qtbot, mock_icon_manager
-    ):
+    def test_window_state_restore_on_startup(self, mock_settings_class, qtbot, mock_icon_manager):
         """Test window state is restored on application startup."""
         mock_settings = Mock()
         mock_settings_class.return_value = mock_settings

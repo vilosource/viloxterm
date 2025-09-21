@@ -505,9 +505,7 @@ if __name__ == "__main__":
     validator = TestQualityValidator()
 
     # Validate a test function
-    result = validator.validate_qt_test_function(
-        SignalTestPatterns.test_signal_emission_pattern
-    )
+    result = validator.validate_qt_test_function(SignalTestPatterns.test_signal_emission_pattern)
     print(f"Test quality score: {result['score']}")
     for issue in result["issues"]:
         print(issue)

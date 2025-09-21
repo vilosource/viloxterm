@@ -194,9 +194,7 @@ class TestWorkspaceService:
         # Invalid tab index
         mock_workspace.tab_widget.setCurrentIndex.reset_mock()
         success = service.switch_to_tab(10)
-        assert (
-            success is False
-        ), "Expected failure when switching to invalid tab index 10"
+        assert success is False, "Expected failure when switching to invalid tab index 10"
         mock_workspace.tab_widget.setCurrentIndex.assert_not_called()
 
 

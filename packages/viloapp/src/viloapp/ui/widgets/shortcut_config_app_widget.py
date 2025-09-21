@@ -79,9 +79,7 @@ class ShortcutRecorder(QLineEdit):
         self.recording = True
         self.recorded_keys = []
         self.setText("Press shortcut keys...")
-        self.setStyleSheet(
-            "QLineEdit { background-color: #1e1e1e; border: 2px solid #007ACC; }"
-        )
+        self.setStyleSheet("QLineEdit { background-color: #1e1e1e; border: 2px solid #007ACC; }")
         self.recording_started.emit()
         self.setFocus()
 
@@ -219,9 +217,7 @@ class ShortcutConfigAppWidget(AppWidget):
 
         # Tree widget for shortcuts
         self.tree_widget = QTreeWidget()
-        self.tree_widget.setHeaderLabels(
-            ["Command", "Current Shortcut", "New Shortcut"]
-        )
+        self.tree_widget.setHeaderLabels(["Command", "Current Shortcut", "New Shortcut"])
         self.tree_widget.setRootIsDecorated(True)
         # Don't use alternating row colors - let theme handle it
         self.tree_widget.setAlternatingRowColors(False)
@@ -339,9 +335,7 @@ class ShortcutConfigAppWidget(AppWidget):
                 category=category,
                 description=command.description or "",
                 default_shortcut=command.shortcut or "",
-                current_shortcut=custom_shortcuts.get(
-                    command.id, command.shortcut or ""
-                ),
+                current_shortcut=custom_shortcuts.get(command.id, command.shortcut or ""),
             )
 
             categories[category].append(item)
@@ -363,9 +357,7 @@ class ShortcutConfigAppWidget(AppWidget):
             for shortcut_item in sorted(categories[category], key=lambda x: x.title):
                 self.add_shortcut_to_tree(shortcut_item, category_item)
 
-    def add_shortcut_to_tree(
-        self, shortcut_item: ShortcutItem, parent_item: QTreeWidgetItem
-    ):
+    def add_shortcut_to_tree(self, shortcut_item: ShortcutItem, parent_item: QTreeWidgetItem):
         """Add a shortcut item to the tree."""
         tree_item = QTreeWidgetItem(parent_item)
         tree_item.setText(0, shortcut_item.title)
@@ -376,9 +368,7 @@ class ShortcutConfigAppWidget(AppWidget):
         recorder = ShortcutRecorder()
         recorder.set_shortcut(shortcut_item.new_shortcut or "")
         recorder.shortcut_recorded.connect(
-            lambda s, cmd_id=shortcut_item.command_id: self.on_shortcut_changed(
-                cmd_id, s
-            )
+            lambda s, cmd_id=shortcut_item.command_id: self.on_shortcut_changed(cmd_id, s)
         )
 
         self.tree_widget.setItemWidget(tree_item, 2, recorder)
@@ -418,11 +408,7 @@ class ShortcutConfigAppWidget(AppWidget):
 
         # Build map of all shortcuts (current + modified)
         for cmd_id, item in self.shortcut_items.items():
-            shortcut = (
-                item.new_shortcut
-                if item.new_shortcut is not None
-                else item.current_shortcut
-            )
+            shortcut = item.new_shortcut if item.new_shortcut is not None else item.current_shortcut
             if shortcut:
                 if shortcut not in shortcut_map:
                     shortcut_map[shortcut] = []
@@ -529,9 +515,7 @@ class ShortcutConfigAppWidget(AppWidget):
         """Reset selected shortcuts to defaults."""
         selected_items = self.tree_widget.selectedItems()
         if not selected_items:
-            QMessageBox.information(
-                self, "No Selection", "Please select shortcuts to reset."
-            )
+            QMessageBox.information(self, "No Selection", "Please select shortcuts to reset.")
             return
 
         for tree_item in selected_items:
@@ -585,9 +569,7 @@ class ShortcutConfigAppWidget(AppWidget):
                 shortcut=new_shortcut,
             )
             if not result.success:
-                logger.warning(
-                    f"Failed to set shortcut for {command_id}: {result.error}"
-                )
+                logger.warning(f"Failed to set shortcut for {command_id}: {result.error}")
                 continue
 
             # Register the shortcut with keyboard service
@@ -597,9 +579,7 @@ class ShortcutConfigAppWidget(AppWidget):
                 shortcut=new_shortcut,
             )
             if not result.success:
-                logger.warning(
-                    f"Failed to register shortcut for {command_id}: {result.error}"
-                )
+                logger.warning(f"Failed to register shortcut for {command_id}: {result.error}")
 
         # Show success message
         QMessageBox.information(

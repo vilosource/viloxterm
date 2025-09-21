@@ -70,11 +70,13 @@ except ImportError as e:
 def initialize_plugins(window):
     """Initialize plugin system after main window is ready."""
     import logging
+
     logger = logging.getLogger(__name__)
 
     try:
         service_locator = window.service_locator
         from viloapp.services.plugin_service import PluginService
+
         plugin_service = service_locator.get(PluginService)
 
         if not plugin_service:
@@ -108,7 +110,7 @@ def initialize_plugins(window):
                 logger.info(f"Processing plugin: {plugin_id}")
 
                 # Skip built-in plugins (they're handled differently)
-                if plugin_id in ['core-commands', 'core-themes']:
+                if plugin_id in ["core-commands", "core-themes"]:
                     logger.info(f"Skipping built-in plugin: {plugin_id}")
                     continue
 
@@ -124,7 +126,7 @@ def initialize_plugins(window):
                         plugin = plugin_manager.get_plugin(plugin_id)
                         if plugin:
                             # Register widget factory if available
-                            if hasattr(plugin, 'widget_factory'):
+                            if hasattr(plugin, "widget_factory"):
                                 widget_bridge.register_plugin_widget(plugin.widget_factory)
                                 logger.info(f"Registered widget factory for: {plugin_id}")
                     else:

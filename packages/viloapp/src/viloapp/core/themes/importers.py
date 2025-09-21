@@ -159,9 +159,7 @@ class VSCodeThemeImporter:
             return None
 
     @classmethod
-    def convert_vscode_theme(
-        cls, vscode_data: dict[str, Any], theme_name: str
-    ) -> Theme:
+    def convert_vscode_theme(cls, vscode_data: dict[str, Any], theme_name: str) -> Theme:
         """
         Convert VSCode theme data to ViloxTerm Theme.
 
@@ -193,9 +191,7 @@ class VSCodeThemeImporter:
         # Extract metadata
         name = vscode_data.get("name", theme_name)
         author = vscode_data.get("author", vscode_data.get("publisher", "Unknown"))
-        description = vscode_data.get(
-            "description", f"Imported from VSCode theme: {theme_name}"
-        )
+        description = vscode_data.get("description", f"Imported from VSCode theme: {theme_name}")
 
         # Create Theme object
         import uuid
@@ -281,9 +277,7 @@ class VSCodeThemeImporter:
         if "editor.lineHighlightBackground" not in theme.colors:
             bg = theme.colors.get("editor.background", "#1e1e1e")
             # Make line highlight slightly lighter/darker
-            theme.colors["editor.lineHighlightBackground"] = cls._adjust_brightness(
-                bg, 0.1
-            )
+            theme.colors["editor.lineHighlightBackground"] = cls._adjust_brightness(bg, 0.1)
 
         if "editor.selectionBackground" not in theme.colors:
             theme.colors["editor.selectionBackground"] = "#264f78"

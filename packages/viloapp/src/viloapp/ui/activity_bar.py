@@ -51,9 +51,7 @@ class ActivityBar(QToolBar):
         icon_manager = get_icon_manager()
 
         # Explorer action
-        self.explorer_action = QAction(
-            icon_manager.get_icon("explorer"), "Explorer", self
-        )
+        self.explorer_action = QAction(icon_manager.get_icon("explorer"), "Explorer", self)
         self.explorer_action.setCheckable(True)
         self.explorer_action.setChecked(True)
         self.explorer_action.setToolTip("Explorer (Ctrl+Shift+E)")
@@ -76,18 +74,14 @@ class ActivityBar(QToolBar):
         self.git_action = QAction(icon_manager.get_icon("git"), "Git", self)
         self.git_action.setCheckable(True)
         self.git_action.setToolTip("Source Control (Ctrl+Shift+G)")
-        self.git_action.toggled.connect(
-            lambda checked: self.on_action_toggled("git", checked)
-        )
+        self.git_action.toggled.connect(lambda checked: self.on_action_toggled("git", checked))
         self.addAction(self.git_action)
 
         # Add separator
         self.addSeparator()
 
         # Settings action
-        self.settings_action = QAction(
-            icon_manager.get_icon("settings"), "Settings", self
-        )
+        self.settings_action = QAction(icon_manager.get_icon("settings"), "Settings", self)
         self.settings_action.setCheckable(True)
         self.settings_action.setToolTip("Settings (Ctrl+,)")
         self.settings_action.toggled.connect(
@@ -241,9 +235,7 @@ class ActivityBar(QToolBar):
         # Get theme provider from parent window
         main_window = self.window()
         if hasattr(main_window, "theme_provider"):
-            self.setStyleSheet(
-                main_window.theme_provider.get_stylesheet("activity_bar")
-            )
+            self.setStyleSheet(main_window.theme_provider.get_stylesheet("activity_bar"))
 
     def update_icons(self):
         """Update icons when theme changes."""
@@ -273,9 +265,7 @@ class ActivityBar(QToolBar):
             else:
                 # Action is already checked - this means we're toggling the same view
                 # Force trigger the toggle by unchecking and checking again
-                action.setChecked(
-                    False
-                )  # This will trigger on_action_toggled with False
+                action.setChecked(False)  # This will trigger on_action_toggled with False
                 action.setChecked(True)  # This will trigger on_action_toggled with True
 
     def on_menu_clicked(self):

@@ -109,9 +109,7 @@ def apply_theme_command(context: CommandContext, theme_id: str) -> CommandResult
     description="Save a custom theme",
     visible=False,  # Internal command, requires theme_data parameter
 )
-def save_custom_theme_command(
-    context: CommandContext, theme_data: dict[str, Any]
-) -> CommandResult:
+def save_custom_theme_command(context: CommandContext, theme_data: dict[str, Any]) -> CommandResult:
     """Save a custom theme."""
     theme_service = context.get_service(ThemeService)
     if not theme_service:
@@ -169,9 +167,7 @@ def create_custom_theme_command(
     description="Delete a custom theme",
     visible=False,  # Internal command, requires theme_id parameter
 )
-def delete_custom_theme_command(
-    context: CommandContext, theme_id: str
-) -> CommandResult:
+def delete_custom_theme_command(context: CommandContext, theme_id: str) -> CommandResult:
     """Delete a custom theme."""
     theme_service = context.get_service(ThemeService)
     if not theme_service:
@@ -182,9 +178,7 @@ def delete_custom_theme_command(
         if success:
             return CommandResult(success=True, value={"theme_id": theme_id})
         else:
-            return CommandResult(
-                success=False, error=f"Failed to delete theme {theme_id}"
-            )
+            return CommandResult(success=False, error=f"Failed to delete theme {theme_id}")
     except Exception as e:
         logger.error(f"Failed to delete custom theme {theme_id}: {e}")
         return CommandResult(success=False, error=str(e))
@@ -221,9 +215,7 @@ def import_theme_command(context: CommandContext, file_path: str) -> CommandResu
     description="Export a theme to a file",
     visible=False,  # Internal command, requires parameters
 )
-def export_theme_command(
-    context: CommandContext, theme_id: str, file_path: str
-) -> CommandResult:
+def export_theme_command(context: CommandContext, theme_id: str, file_path: str) -> CommandResult:
     """Export a theme to a file."""
     theme_service = context.get_service(ThemeService)
     if not theme_service:
@@ -232,13 +224,9 @@ def export_theme_command(
     try:
         success = theme_service.export_theme(theme_id, Path(file_path))
         if success:
-            return CommandResult(
-                success=True, value={"theme_id": theme_id, "file_path": file_path}
-            )
+            return CommandResult(success=True, value={"theme_id": theme_id, "file_path": file_path})
         else:
-            return CommandResult(
-                success=False, error=f"Failed to export theme {theme_id}"
-            )
+            return CommandResult(success=False, error=f"Failed to export theme {theme_id}")
     except Exception as e:
         logger.error(f"Failed to export theme {theme_id} to {file_path}: {e}")
         return CommandResult(success=False, error=str(e))
@@ -251,9 +239,7 @@ def export_theme_command(
     description="Apply a typography preset",
     visible=False,  # Internal command, requires preset parameter
 )
-def apply_typography_preset_command(
-    context: CommandContext, preset: str
-) -> CommandResult:
+def apply_typography_preset_command(context: CommandContext, preset: str) -> CommandResult:
     """Apply a typography preset."""
     theme_service = context.get_service(ThemeService)
     if not theme_service:
@@ -387,9 +373,7 @@ def update_theme_colors_command(
         if theme.is_custom:
             success = theme_service.save_custom_theme(theme)
             if not success:
-                return CommandResult(
-                    success=False, error="Failed to save theme changes"
-                )
+                return CommandResult(success=False, error="Failed to save theme changes")
 
         return CommandResult(
             success=True, value={"theme_id": theme_id, "updated_colors": len(colors)}

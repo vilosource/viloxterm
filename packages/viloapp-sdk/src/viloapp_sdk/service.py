@@ -4,11 +4,14 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Type, TypeVar
 from dataclasses import dataclass
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class ServiceNotAvailableError(Exception):
     """Raised when a requested service is not available."""
+
     pass
+
 
 class IService(ABC):
     """Base interface for services exposed to plugins."""
@@ -23,14 +26,17 @@ class IService(ABC):
         """Get service version."""
         pass
 
+
 @dataclass
 class ServiceDescriptor:
     """Describes a service available to plugins."""
+
     id: str
     version: str
     interface: Type[IService]
     description: str
     optional: bool = False
+
 
 class ServiceProxy:
     """Proxy for accessing host services from plugins."""
@@ -112,7 +118,9 @@ class ServiceProxy:
         """
         return list(self._services.keys())
 
+
 # Standard service interfaces
+
 
 class ICommandService(IService):
     """Service for executing commands."""
@@ -132,6 +140,7 @@ class ICommandService(IService):
         """Unregister a command."""
         pass
 
+
 class IConfigurationService(IService):
     """Service for accessing configuration."""
 
@@ -149,6 +158,7 @@ class IConfigurationService(IService):
     def on_change(self, key: str, callback: callable) -> None:
         """Register configuration change listener."""
         pass
+
 
 class IWorkspaceService(IService):
     """Service for workspace operations."""
@@ -168,6 +178,7 @@ class IWorkspaceService(IService):
         """Create a new pane with a widget."""
         pass
 
+
 class IThemeService(IService):
     """Service for theme operations."""
 
@@ -185,6 +196,7 @@ class IThemeService(IService):
     def on_theme_changed(self, callback: callable) -> None:
         """Register theme change listener."""
         pass
+
 
 class INotificationService(IService):
     """Service for showing notifications."""

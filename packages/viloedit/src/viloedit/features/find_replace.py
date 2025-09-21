@@ -6,8 +6,15 @@ from typing import List, Tuple, Dict, Any
 from enum import Enum
 
 from PySide6.QtWidgets import (
-    QWidget, QDialog, QVBoxLayout, QHBoxLayout, QPushButton,
-    QCheckBox, QLabel, QComboBox, QTextEdit
+    QWidget,
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QCheckBox,
+    QLabel,
+    QComboBox,
+    QTextEdit,
 )
 from PySide6.QtCore import Signal, QTimer, QRegularExpression
 from PySide6.QtGui import QTextCursor, QTextDocument, QKeySequence, QShortcut
@@ -17,12 +24,14 @@ logger = logging.getLogger(__name__)
 
 class SearchDirection(Enum):
     """Search direction enum."""
+
     FORWARD = "forward"
     BACKWARD = "backward"
 
 
 class SearchMode(Enum):
     """Search mode enum."""
+
     NORMAL = "normal"
     REGEX = "regex"
     WHOLE_WORD = "whole_word"
@@ -32,7 +41,9 @@ class SearchMode(Enum):
 class FindReplaceResult:
     """Result of a find/replace operation."""
 
-    def __init__(self, found: bool = False, position: int = -1, matches: int = 0, replaced: int = 0):
+    def __init__(
+        self, found: bool = False, position: int = -1, matches: int = 0, replaced: int = 0
+    ):
         self.found = found
         self.position = position
         self.matches = matches
@@ -157,7 +168,7 @@ class FindReplace(QWidget):
     def set_editor(self, editor):
         """Set the editor instance to work with."""
         self.editor = editor
-        if editor and hasattr(editor, 'textCursor'):
+        if editor and hasattr(editor, "textCursor"):
             # Initialize with selected text if any
             cursor = editor.textCursor()
             if cursor.hasSelection():
@@ -168,10 +179,10 @@ class FindReplace(QWidget):
     def get_search_options(self) -> Dict[str, Any]:
         """Get current search options."""
         return {
-            'case_sensitive': self.case_sensitive_cb.isChecked(),
-            'whole_word': self.whole_word_cb.isChecked(),
-            'regex': self.regex_cb.isChecked(),
-            'wrap_around': self.wrap_search_cb.isChecked()
+            "case_sensitive": self.case_sensitive_cb.isChecked(),
+            "whole_word": self.whole_word_cb.isChecked(),
+            "regex": self.regex_cb.isChecked(),
+            "wrap_around": self.wrap_search_cb.isChecked(),
         }
 
     def on_text_changed(self):
@@ -208,7 +219,9 @@ class FindReplace(QWidget):
             matches = self.find_all_matches(text)
             logger.info(f"Found {len(matches)} matches for '{text}'")
 
-    def find_text(self, text: str, direction: SearchDirection, from_current: bool = False) -> FindReplaceResult:
+    def find_text(
+        self, text: str, direction: SearchDirection, from_current: bool = False
+    ) -> FindReplaceResult:
         """Find text in the editor."""
         if not self.editor or not text:
             return FindReplaceResult()
@@ -218,17 +231,17 @@ class FindReplace(QWidget):
 
         # Set search flags
         search_flags = QTextDocument.FindFlags()
-        if options['case_sensitive']:
+        if options["case_sensitive"]:
             search_flags |= QTextDocument.FindCaseSensitively
-        if options['whole_word']:
+        if options["whole_word"]:
             search_flags |= QTextDocument.FindWholeWords
         if direction == SearchDirection.BACKWARD:
             search_flags |= QTextDocument.FindBackward
 
         # Prepare search pattern
-        if options['regex']:
+        if options["regex"]:
             pattern = QRegularExpression(text)
-            if not options['case_sensitive']:
+            if not options["case_sensitive"]:
                 pattern.setPatternOptions(QRegularExpression.CaseInsensitiveOption)
         else:
             pattern = text
@@ -239,19 +252,19 @@ class FindReplace(QWidget):
         elif not from_current and direction == SearchDirection.BACKWARD:
             cursor.movePosition(QTextCursor.End)
 
-        if options['regex']:
+        if options["regex"]:
             found_cursor = self.editor.document().find(pattern, cursor, search_flags)
         else:
             found_cursor = self.editor.document().find(text, cursor, search_flags)
 
         # Handle wrap around
-        if found_cursor.isNull() and options['wrap_around']:
+        if found_cursor.isNull() and options["wrap_around"]:
             if direction == SearchDirection.FORWARD:
                 cursor.movePosition(QTextCursor.Start)
             else:
                 cursor.movePosition(QTextCursor.End)
 
-            if options['regex']:
+            if options["regex"]:
                 found_cursor = self.editor.document().find(pattern, cursor, search_flags)
             else:
                 found_cursor = self.editor.document().find(text, cursor, search_flags)
@@ -277,22 +290,22 @@ class FindReplace(QWidget):
 
         # Set search flags
         search_flags = QTextDocument.FindFlags()
-        if options['case_sensitive']:
+        if options["case_sensitive"]:
             search_flags |= QTextDocument.FindCaseSensitively
-        if options['whole_word']:
+        if options["whole_word"]:
             search_flags |= QTextDocument.FindWholeWords
 
         # Prepare search pattern
-        if options['regex']:
+        if options["regex"]:
             pattern = QRegularExpression(text)
-            if not options['case_sensitive']:
+            if not options["case_sensitive"]:
                 pattern.setPatternOptions(QRegularExpression.CaseInsensitiveOption)
         else:
             pattern = text
 
         # Find all matches
         while True:
-            if options['regex']:
+            if options["regex"]:
                 found_cursor = self.editor.document().find(pattern, cursor, search_flags)
             else:
                 found_cursor = self.editor.document().find(text, cursor, search_flags)
@@ -386,15 +399,15 @@ class FindReplace(QWidget):
 
     def text_matches(self, text: str, pattern: str, options: Dict[str, Any]) -> bool:
         """Check if text matches the pattern with given options."""
-        if options['regex']:
-            flags = 0 if options['case_sensitive'] else re.IGNORECASE
+        if options["regex"]:
+            flags = 0 if options["case_sensitive"] else re.IGNORECASE
             return bool(re.fullmatch(pattern, text, flags))
         else:
-            if not options['case_sensitive']:
+            if not options["case_sensitive"]:
                 text = text.lower()
                 pattern = pattern.lower()
 
-            if options['whole_word']:
+            if options["whole_word"]:
                 # Simple whole word check
                 return text == pattern
             else:

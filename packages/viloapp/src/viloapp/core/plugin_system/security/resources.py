@@ -1,12 +1,12 @@
 """Resource monitoring and limiting for plugin security."""
 
-import time
-import threading
 import logging
-from enum import Enum
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Callable, Any
+import threading
+import time
 from collections import deque
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 try:
     import psutil
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class ResourceType(Enum):
     """Types of resources that can be monitored."""
+
     MEMORY = "memory"
     CPU = "cpu"
     DISK = "disk"
@@ -27,6 +28,7 @@ class ResourceType(Enum):
 @dataclass
 class ResourceViolation:
     """Represents a resource limit violation."""
+
     plugin_id: str
     resource_type: ResourceType
     current_usage: float
@@ -50,7 +52,7 @@ class ResourceMonitor:
         plugin_id: str,
         collection_interval: float = 1.0,
         history_size: int = 100,
-        resource_limiter: Optional['ResourceLimiter'] = None
+        resource_limiter: Optional["ResourceLimiter"] = None,
     ):
         """
         Initialize resource monitor.
@@ -72,8 +74,7 @@ class ResourceMonitor:
 
         # Resource usage history
         self._usage_history: Dict[ResourceType, deque] = {
-            resource_type: deque(maxlen=history_size)
-            for resource_type in ResourceType
+            resource_type: deque(maxlen=history_size) for resource_type in ResourceType
         }
 
         # Try to find the plugin process
@@ -101,9 +102,7 @@ class ResourceMonitor:
 
             self._monitoring = True
             self._monitor_thread = threading.Thread(
-                target=self._monitor_loop,
-                daemon=True,
-                name=f"ResourceMonitor-{self.plugin_id}"
+                target=self._monitor_loop, daemon=True, name=f"ResourceMonitor-{self.plugin_id}"
             )
             self._monitor_thread.start()
 
@@ -138,7 +137,7 @@ class ResourceMonitor:
                 # Check limits if limiter is configured
                 if self.resource_limiter:
                     violation = self.resource_limiter.check_limits()
-                    if violation and hasattr(self.resource_limiter, 'violation_callback'):
+                    if violation and hasattr(self.resource_limiter, "violation_callback"):
                         if self.resource_limiter.violation_callback:
                             self.resource_limiter.violation_callback(violation)
 
@@ -155,10 +154,7 @@ class ResourceMonitor:
         for resource_type in ResourceType:
             try:
                 usage = self._get_resource_usage_internal(resource_type)
-                entry = {
-                    'timestamp': timestamp,
-                    'usage': usage
-                }
+                entry = {"timestamp": timestamp, "usage": usage}
 
                 with self._lock:
                     self._usage_history[resource_type].append(entry)
@@ -227,7 +223,9 @@ class ResourceMonitor:
         with self._lock:
             return list(self._usage_history[resource_type])
 
-    def get_average_usage(self, resource_type: ResourceType, window_seconds: Optional[float] = None) -> float:
+    def get_average_usage(
+        self, resource_type: ResourceType, window_seconds: Optional[float] = None
+    ) -> float:
         """
         Get average usage over a time window.
 
@@ -245,15 +243,17 @@ class ResourceMonitor:
         # Filter by time window if specified
         if window_seconds:
             cutoff_time = time.time() - window_seconds
-            history = [entry for entry in history if entry['timestamp'] >= cutoff_time]
+            history = [entry for entry in history if entry["timestamp"] >= cutoff_time]
 
         if not history:
             return 0.0
 
-        total_usage = sum(entry['usage'] for entry in history)
+        total_usage = sum(entry["usage"] for entry in history)
         return total_usage / len(history)
 
-    def get_peak_usage(self, resource_type: ResourceType, window_seconds: Optional[float] = None) -> float:
+    def get_peak_usage(
+        self, resource_type: ResourceType, window_seconds: Optional[float] = None
+    ) -> float:
         """
         Get peak usage over a time window.
 
@@ -271,12 +271,12 @@ class ResourceMonitor:
         # Filter by time window if specified
         if window_seconds:
             cutoff_time = time.time() - window_seconds
-            history = [entry for entry in history if entry['timestamp'] >= cutoff_time]
+            history = [entry for entry in history if entry["timestamp"] >= cutoff_time]
 
         if not history:
             return 0.0
 
-        return max(entry['usage'] for entry in history)
+        return max(entry["usage"] for entry in history)
 
 
 class ResourceLimiter:
@@ -286,7 +286,7 @@ class ResourceLimiter:
         self,
         plugin_id: str,
         limits: Dict[ResourceType, float],
-        violation_callback: Optional[Callable[[ResourceViolation], None]] = None
+        violation_callback: Optional[Callable[[ResourceViolation], None]] = None,
     ):
         """
         Initialize resource limiter.
@@ -373,7 +373,7 @@ class ResourceLimiter:
                         resource_type=resource_type,
                         current_usage=current_usage,
                         limit=limit,
-                        timestamp=time.time()
+                        timestamp=time.time(),
                     )
 
                     logger.warning(str(violation))
@@ -408,7 +408,7 @@ class ResourceLimiter:
                 resource_type=resource_type,
                 current_usage=current_usage,
                 limit=limit,
-                timestamp=time.time()
+                timestamp=time.time(),
             )
 
         return None
@@ -420,22 +420,18 @@ class ResourceLimiter:
         Returns:
             Summary dictionary with usage and limits
         """
-        summary = {
-            'plugin_id': self.plugin_id,
-            'timestamp': time.time(),
-            'resources': {}
-        }
+        summary = {"plugin_id": self.plugin_id, "timestamp": time.time(), "resources": {}}
 
         with self._lock:
             for resource_type, limit in self._limits.items():
                 current_usage = self._get_current_usage(resource_type)
                 usage_percent = (current_usage / limit * 100) if limit > 0 else 0
 
-                summary['resources'][resource_type.value] = {
-                    'current_usage': current_usage,
-                    'limit': limit,
-                    'usage_percent': usage_percent,
-                    'is_violated': current_usage > limit
+                summary["resources"][resource_type.value] = {
+                    "current_usage": current_usage,
+                    "limit": limit,
+                    "usage_percent": usage_percent,
+                    "is_violated": current_usage > limit,
                 }
 
         return summary

@@ -63,8 +63,7 @@ class MainWindowGUITestBase(GUITestBase):
     def verify_main_window_components(self, main_window):
         """Verify all main window components are present."""
         assert (
-            hasattr(main_window, "activity_bar")
-            and main_window.activity_bar is not None
+            hasattr(main_window, "activity_bar") and main_window.activity_bar is not None
         ), "Main window should have activity_bar component"
         assert (
             hasattr(main_window, "sidebar") and main_window.sidebar is not None
@@ -76,8 +75,7 @@ class MainWindowGUITestBase(GUITestBase):
             hasattr(main_window, "status_bar") and main_window.status_bar is not None
         ), "Main window should have status_bar component"
         assert (
-            hasattr(main_window, "main_splitter")
-            and main_window.main_splitter is not None
+            hasattr(main_window, "main_splitter") and main_window.main_splitter is not None
         ), "Main window should have main_splitter component"
 
     def verify_component_visibility(self, main_window):
@@ -108,9 +106,7 @@ class ActivityBarGUITestBase(GUITestBase):
             if view_name == expected_active_view:
                 assert button.isChecked(), f"{view_name} button should be checked"
             else:
-                assert (
-                    not button.isChecked()
-                ), f"{view_name} button should not be checked"
+                assert not button.isChecked(), f"{view_name} button should not be checked"
 
     def click_activity_button(self, qtbot, activity_bar, view_name):
         """Click an activity button by view name."""

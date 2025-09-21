@@ -154,15 +154,11 @@ class TestActivityBarThemeGUI(ActivityBarGUITestBase, ThemeGUITestBase):
 
         # Verify get_icon was called for each button
         expected_icons = ["explorer", "search", "git", "settings"]
-        actual_calls = [
-            call[0][0] for call in mock_icon_manager.get_icon.call_args_list
-        ]
+        actual_calls = [call[0][0] for call in mock_icon_manager.get_icon.call_args_list]
 
         # All expected icons should have been requested
         for expected_icon in expected_icons:
-            assert (
-                expected_icon in actual_calls
-            ), f"Icon '{expected_icon}' was not updated"
+            assert expected_icon in actual_calls, f"Icon '{expected_icon}' was not updated"
 
     def test_activity_bar_visual_consistency_across_themes(
         self, gui_activity_bar, qtbot, mock_icon_manager

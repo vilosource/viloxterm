@@ -146,9 +146,7 @@ class AppDefaultsValidator:
         validators = {
             # Workspace settings
             "workspace.default_new_tab_widget": AppDefaultsValidator.validate_widget_type,
-            "workspace.max_tabs": lambda v: AppDefaultsValidator.validate_positive_int(
-                v, 100, 20
-            ),
+            "workspace.max_tabs": lambda v: AppDefaultsValidator.validate_positive_int(v, 100, 20),
             "workspace.close_last_tab_behavior": AppDefaultsValidator.validate_close_behavior,
             "workspace.restore_tabs_on_startup": lambda v: AppDefaultsValidator.validate_bool(
                 v, True
@@ -164,9 +162,7 @@ class AppDefaultsValidator:
             "pane.minimum_height": lambda v: AppDefaultsValidator.validate_positive_int(
                 v, 1000, 100
             ),
-            "pane.focus_new_on_split": lambda v: AppDefaultsValidator.validate_bool(
-                v, True
-            ),
+            "pane.focus_new_on_split": lambda v: AppDefaultsValidator.validate_bool(v, True),
             # UI settings
             "viloapp.ui.default_window_width": lambda v: AppDefaultsValidator.validate_positive_int(
                 v, 4000, 1200
@@ -181,25 +177,13 @@ class AppDefaultsValidator:
                 v, 800, 300
             ),
             "viloapp.ui.show_status_bar": lambda v: AppDefaultsValidator.validate_bool(v, True),
-            "viloapp.ui.start_maximized": lambda v: AppDefaultsValidator.validate_bool(
-                v, False
-            ),
-            "viloapp.ui.start_fullscreen": lambda v: AppDefaultsValidator.validate_bool(
-                v, False
-            ),
+            "viloapp.ui.start_maximized": lambda v: AppDefaultsValidator.validate_bool(v, False),
+            "viloapp.ui.start_fullscreen": lambda v: AppDefaultsValidator.validate_bool(v, False),
             # UX settings
-            "ux.confirm_app_exit": lambda v: AppDefaultsValidator.validate_bool(
-                v, True
-            ),
-            "ux.confirm_reload_window": lambda v: AppDefaultsValidator.validate_bool(
-                v, True
-            ),
-            "ux.show_notifications": lambda v: AppDefaultsValidator.validate_bool(
-                v, True
-            ),
-            "ux.enable_animations": lambda v: AppDefaultsValidator.validate_bool(
-                v, True
-            ),
+            "ux.confirm_app_exit": lambda v: AppDefaultsValidator.validate_bool(v, True),
+            "ux.confirm_reload_window": lambda v: AppDefaultsValidator.validate_bool(v, True),
+            "ux.show_notifications": lambda v: AppDefaultsValidator.validate_bool(v, True),
+            "ux.enable_animations": lambda v: AppDefaultsValidator.validate_bool(v, True),
         }
 
         # Use specific validator if available
@@ -240,9 +224,7 @@ class AppDefaults:
             value = self._settings.value(settings_key)
 
             # Validate the value
-            is_valid, safe_value = AppDefaultsValidator.validate_and_sanitize(
-                key, value
-            )
+            is_valid, safe_value = AppDefaultsValidator.validate_and_sanitize(key, value)
 
             if is_valid:
                 self._cache[key] = safe_value
@@ -502,9 +484,7 @@ if __name__ == "__main__":
     print(
         f"Set invalid widget type: {set_app_default('workspace.default_new_tab_widget', 'invalid')}"
     )
-    print(
-        f"Set valid widget type: {set_app_default('workspace.default_new_tab_widget', 'editor')}"
-    )
+    print(f"Set valid widget type: {set_app_default('workspace.default_new_tab_widget', 'editor')}")
     print(f"New default: {get_default_widget_type()}")
 
     # Test window state

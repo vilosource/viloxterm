@@ -36,7 +36,7 @@ class TestEditorPlugin:
         self.mock_context.get_service.side_effect = lambda name: {
             "command": command_service,
             "workspace": workspace_service,
-            "notification": notification_service
+            "notification": notification_service,
         }.get(name)
 
         # Activate plugin
@@ -46,7 +46,7 @@ class TestEditorPlugin:
         assert self.mock_context.get_service.called
         assert self.plugin.context == self.mock_context
 
-    @patch('viloedit.widget.CodeEditor')
+    @patch("viloedit.widget.CodeEditor")
     def test_new_file_command(self, mock_editor_class):
         """Test new file command."""
         # Setup mocks
@@ -64,7 +64,7 @@ class TestEditorPlugin:
         assert result["success"] is True
         workspace_service.add_widget.assert_called_once()
 
-    @patch('viloedit.widget.CodeEditor')
+    @patch("viloedit.widget.CodeEditor")
     def test_open_file_command(self, mock_editor_class):
         """Test open file command."""
         # Setup mocks
@@ -134,13 +134,7 @@ class TestEditorPlugin:
     def test_command_routing(self):
         """Test command routing."""
         # Test each command ID
-        commands = [
-            "editor.new",
-            "editor.open",
-            "editor.save",
-            "editor.saveAs",
-            "editor.close"
-        ]
+        commands = ["editor.new", "editor.open", "editor.save", "editor.saveAs", "editor.close"]
 
         for cmd in commands:
             # Mock the specific command method

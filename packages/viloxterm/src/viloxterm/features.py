@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TerminalProfile:
     """Terminal profile configuration."""
+
     name: str
     shell: str
     args: List[str] = None
@@ -33,52 +34,38 @@ class TerminalProfileManager:
 
         if platform.system() == "Windows":
             self.profiles["powershell"] = TerminalProfile(
-                name="PowerShell",
-                shell="powershell.exe",
-                icon="terminal-powershell"
+                name="PowerShell", shell="powershell.exe", icon="terminal-powershell"
             )
             self.profiles["cmd"] = TerminalProfile(
-                name="Command Prompt",
-                shell="cmd.exe",
-                icon="terminal-cmd"
+                name="Command Prompt", shell="cmd.exe", icon="terminal-cmd"
             )
             # Check for WSL
             try:
                 import subprocess
+
                 result = subprocess.run(["wsl", "--list"], capture_output=True)
                 if result.returncode == 0:
                     self.profiles["wsl"] = TerminalProfile(
-                        name="WSL",
-                        shell="wsl.exe",
-                        icon="terminal-linux"
+                        name="WSL", shell="wsl.exe", icon="terminal-linux"
                     )
             except:
                 pass
 
         else:  # Unix-like systems
             self.profiles["bash"] = TerminalProfile(
-                name="Bash",
-                shell="/bin/bash",
-                icon="terminal-bash"
+                name="Bash", shell="/bin/bash", icon="terminal-bash"
             )
             self.profiles["zsh"] = TerminalProfile(
-                name="Zsh",
-                shell="/bin/zsh",
-                icon="terminal-zsh"
+                name="Zsh", shell="/bin/zsh", icon="terminal-zsh"
             )
-            self.profiles["sh"] = TerminalProfile(
-                name="Shell",
-                shell="/bin/sh",
-                icon="terminal"
-            )
+            self.profiles["sh"] = TerminalProfile(name="Shell", shell="/bin/sh", icon="terminal")
 
             # Check for additional shells
             import os
+
             if os.path.exists("/usr/bin/fish"):
                 self.profiles["fish"] = TerminalProfile(
-                    name="Fish",
-                    shell="/usr/bin/fish",
-                    icon="terminal-fish"
+                    name="Fish", shell="/usr/bin/fish", icon="terminal-fish"
                 )
 
     def add_profile(self, profile_id: str, profile: TerminalProfile):
@@ -119,13 +106,13 @@ class TerminalSessionManager:
         session_id = self.server.create_session(
             command=profile.shell,
             cmd_args=" ".join(profile.args) if profile.args else "",
-            cwd=profile.cwd
+            cwd=profile.cwd,
         )
 
         self.sessions[session_id] = {
             "name": name or f"Terminal {len(self.sessions) + 1}",
             "profile": profile,
-            "created_at": time.time()
+            "created_at": time.time(),
         }
 
         return session_id
@@ -143,12 +130,14 @@ class TerminalSessionManager:
         """List all sessions with info."""
         result = []
         for session_id, info in self.sessions.items():
-            result.append({
-                "id": session_id,
-                "name": info["name"],
-                "profile": info["profile"].name,
-                "created_at": info["created_at"]
-            })
+            result.append(
+                {
+                    "id": session_id,
+                    "name": info["name"],
+                    "profile": info["profile"].name,
+                    "created_at": info["created_at"],
+                }
+            )
         return result
 
 

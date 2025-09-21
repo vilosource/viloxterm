@@ -85,10 +85,7 @@ class TestSettingsWidgetUI:
 
         # Check that the setting was modified
         assert "workspace.default_new_tab_widget" in settings_widget._modified_settings
-        assert (
-            settings_widget._modified_settings["workspace.default_new_tab_widget"]
-            == "editor"
-        )
+        assert settings_widget._modified_settings["workspace.default_new_tab_widget"] == "editor"
 
     def test_split_ratio_slider(self, settings_widget, qtbot):
         """Test the split ratio slider."""
@@ -182,9 +179,7 @@ class TestSettingsWidgetIntegration:
         """Test resetting all settings to defaults."""
         # Test that reset is called on the actual defaults manager
         with patch.object(settings_widget._defaults_manager, "reset_all") as mock_reset:
-            with patch(
-                "PySide6.QtWidgets.QMessageBox.question", return_value=QMessageBox.Yes
-            ):
+            with patch("PySide6.QtWidgets.QMessageBox.question", return_value=QMessageBox.Yes):
                 with patch("PySide6.QtWidgets.QMessageBox.information"):
                     settings_widget._reset_all_to_defaults()
 
@@ -196,21 +191,15 @@ class TestSettingsWidgetIntegration:
         settings_widget._modified_settings = {"test": "value"}
 
         # Test cancel
-        with patch(
-            "PySide6.QtWidgets.QMessageBox.question", return_value=QMessageBox.Cancel
-        ):
+        with patch("PySide6.QtWidgets.QMessageBox.question", return_value=QMessageBox.Cancel):
             assert settings_widget.can_close() is False
 
         # Test discard
-        with patch(
-            "PySide6.QtWidgets.QMessageBox.question", return_value=QMessageBox.Discard
-        ):
+        with patch("PySide6.QtWidgets.QMessageBox.question", return_value=QMessageBox.Discard):
             assert settings_widget.can_close() is True
 
         # Test save
-        with patch(
-            "PySide6.QtWidgets.QMessageBox.question", return_value=QMessageBox.Save
-        ):
+        with patch("PySide6.QtWidgets.QMessageBox.question", return_value=QMessageBox.Save):
             with patch.object(settings_widget, "_apply_settings", return_value=True):
                 assert settings_widget.can_close() is True
 
@@ -253,9 +242,7 @@ class TestSettingsWidgetAdvanced:
         # Mock import data
         mock_json_load.return_value = {"key": "value"}
 
-        with patch.object(
-            settings_widget._defaults_manager, "import_settings", return_value=1
-        ):
+        with patch.object(settings_widget._defaults_manager, "import_settings", return_value=1):
             with patch("PySide6.QtWidgets.QMessageBox.information"):
                 settings_widget._import_settings()
 
@@ -304,8 +291,7 @@ class TestSettingsWidgetValidation:
         qtbot.wait(10)
         assert "workspace.close_last_tab_behavior" in settings_widget._modified_settings
         assert (
-            settings_widget._modified_settings["workspace.close_last_tab_behavior"]
-            == "do_nothing"
+            settings_widget._modified_settings["workspace.close_last_tab_behavior"] == "do_nothing"
         )
 
         # Clear and test changing back to create_default

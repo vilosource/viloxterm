@@ -64,9 +64,7 @@ class KeyChord:
         """Check equality."""
         if not isinstance(other, KeyChord):
             return False
-        return (
-            self.modifiers == other.modifiers and self.key.lower() == other.key.lower()
-        )
+        return self.modifiers == other.modifiers and self.key.lower() == other.key.lower()
 
 
 @dataclass

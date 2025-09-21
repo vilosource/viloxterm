@@ -43,13 +43,13 @@ def cli(ctx: Context, config: Path | None, verbose: bool, debug: bool) -> None:
     "--template",
     type=click.Choice(["basic", "widget", "service", "command"]),
     default="basic",
-    help="Plugin template to use"
+    help="Plugin template to use",
 )
 @click.option(
     "--output-dir",
     type=click.Path(path_type=Path),
     default=Path.cwd(),
-    help="Output directory for the new plugin"
+    help="Output directory for the new plugin",
 )
 @click.pass_context
 def create(ctx: Context, name: str, template: str, output_dir: Path) -> None:
@@ -63,7 +63,7 @@ def create(ctx: Context, name: str, template: str, output_dir: Path) -> None:
     "--plugin",
     type=click.Path(exists=True, path_type=Path),
     default=Path.cwd(),
-    help="Path to plugin directory"
+    help="Path to plugin directory",
 )
 @click.option("--port", type=int, default=8080, help="Development server port")
 @click.option("--reload/--no-reload", default=True, help="Enable hot reload")
@@ -87,11 +87,7 @@ def test_cmd(ctx: Context, plugin: Path, coverage: bool, verbose: bool) -> None:
 
 @cli.command()
 @click.argument("plugin", type=click.Path(exists=True, path_type=Path))
-@click.option(
-    "--output",
-    type=click.Path(path_type=Path),
-    help="Output file for the package"
-)
+@click.option("--output", type=click.Path(path_type=Path), help="Output file for the package")
 @click.option("--format", type=click.Choice(["zip", "tar.gz"]), default="zip")
 @click.pass_context
 def package(ctx: Context, plugin: Path, output: Path | None, format: str) -> None:

@@ -64,15 +64,12 @@ class TestPluginIntegration:
         assert isinstance(result, dict)
 
         # Test text operations
-        result = factory.handle_command("set_text", {
-            "instance_id": "test-instance",
-            "text": "Hello, World!"
-        })
+        result = factory.handle_command(
+            "set_text", {"instance_id": "test-instance", "text": "Hello, World!"}
+        )
         assert result is True
 
-        result = factory.handle_command("get_text", {
-            "instance_id": "test-instance"
-        })
+        result = factory.handle_command("get_text", {"instance_id": "test-instance"})
         assert "Hello, World!" in str(result)
 
         # Test state management
@@ -89,12 +86,14 @@ class TestPluginIntegration:
 
         try:
             from viloxterm.widget import TerminalWidgetFactory
+
             plugins_to_test.append(TerminalWidgetFactory())
         except ImportError:
             pass
 
         try:
             from viloedit.widget import EditorWidgetFactory
+
             plugins_to_test.append(EditorWidgetFactory())
         except ImportError:
             pass
@@ -133,11 +132,12 @@ class TestPluginIntegration:
                     id="old-plugin",
                     title="Old Plugin",
                     position=WidgetPosition.MAIN,
-                    icon="old-icon"
+                    icon="old-icon",
                 )
 
             def create_widget(self, parent=None):
                 from PySide6.QtWidgets import QLabel
+
                 return QLabel("Old Plugin Widget", parent)
 
             def get_state(self):

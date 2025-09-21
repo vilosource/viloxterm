@@ -81,9 +81,7 @@ class TestMakeTargets:
 
     def test_make_help_includes_settings_targets(self):
         """Test that 'make help' includes the new settings-related targets."""
-        result = subprocess.run(
-            ["make", "help"], capture_output=True, text=True, timeout=5
-        )
+        result = subprocess.run(["make", "help"], capture_output=True, text=True, timeout=5)
 
         assert result.returncode == 0
         output = result.stdout
@@ -184,9 +182,7 @@ class TestMakeTargets:
                 process.wait()
 
             # Check that the dev settings directory was created
-            assert (
-                dev_settings_dir.exists()
-            ), "Development settings directory should be created"
+            assert dev_settings_dir.exists(), "Development settings directory should be created"
 
         finally:
             if dev_settings_dir.exists():
@@ -227,9 +223,7 @@ class TestMakeTargets:
 
             # Check that the custom settings file directory was created
             settings_path = Path(test_settings_file)
-            assert (
-                settings_path.parent.exists()
-            ), "Custom settings directory should be created"
+            assert settings_path.parent.exists(), "Custom settings directory should be created"
 
         finally:
             if Path(test_settings_file).exists():
@@ -259,10 +253,7 @@ class TestMakeTargets:
 
         # Check the output for temporary settings usage
         combined_output = stdout + stderr
-        assert (
-            "temporary settings" in combined_output.lower()
-            or "temp" in combined_output.lower()
-        )
+        assert "temporary settings" in combined_output.lower() or "temp" in combined_output.lower()
 
     @pytest.mark.slow
     def test_run_clean_target_resets_and_uses_temp(self):
@@ -290,13 +281,9 @@ class TestMakeTargets:
         combined_output = stdout + stderr
         # Should see both reset and temp settings messages
         has_reset = "reset" in combined_output.lower()
-        has_temp = (
-            "temporary" in combined_output.lower() or "temp" in combined_output.lower()
-        )
+        has_temp = "temporary" in combined_output.lower() or "temp" in combined_output.lower()
 
-        assert (
-            has_reset or has_temp
-        ), "Should indicate settings reset or temporary usage"
+        assert has_reset or has_temp, "Should indicate settings reset or temporary usage"
 
     @pytest.mark.slow
     def test_run_portable_target_creates_settings_directory(self):
@@ -329,9 +316,7 @@ class TestMakeTargets:
                 process.wait()
 
             # Check that the portable settings directory was created
-            assert (
-                settings_dir.exists()
-            ), "Portable settings directory should be created"
+            assert settings_dir.exists(), "Portable settings directory should be created"
 
         finally:
             if settings_dir.exists():
@@ -356,9 +341,7 @@ class TestMakeTargets:
             )
 
             # Should not fail (returncode 0 means target exists)
-            assert (
-                result.returncode == 0
-            ), f"Alias '{alias}' should exist and point to '{target}'"
+            assert result.returncode == 0, f"Alias '{alias}' should exist and point to '{target}'"
 
     def test_makefile_syntax_is_valid(self):
         """Test that the Makefile has valid syntax by running make -n."""

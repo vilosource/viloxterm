@@ -1,7 +1,9 @@
 """Service adapters for plugin SDK interfaces."""
 
-from typing import Any, Optional, Dict
+from typing import Any, Dict, Optional
+
 from viloapp_sdk import IService
+
 
 class CommandServiceAdapter(IService):
     """Adapter for command service."""
@@ -17,22 +19,23 @@ class CommandServiceAdapter(IService):
 
     def execute_command(self, command_id: str, **kwargs) -> Any:
         from viloapp.core.commands.executor import execute_command
+
         result = execute_command(command_id, **kwargs)
         return result.value if result.success else None
 
     def register_command(self, command_id: str, handler: callable) -> None:
         """Register a command with the command registry."""
-        from viloapp.core.commands.registry import command_registry
         from viloapp.core.commands.base import Command, CommandContext, CommandResult
+        from viloapp.core.commands.registry import command_registry
 
         # Create wrapper that converts plugin handler to command handler
         def command_wrapper(context: CommandContext) -> CommandResult:
             try:
                 # Convert CommandContext to plugin args
                 plugin_args = {
-                    'workspace': context.workspace,
-                    'active_widget': context.active_widget,
-                    **context.args
+                    "workspace": context.workspace,
+                    "active_widget": context.active_widget,
+                    **context.args,
                 }
                 result = handler(plugin_args)
                 return CommandResult(success=True, value=result)
@@ -42,9 +45,9 @@ class CommandServiceAdapter(IService):
         # Create Command instance
         command = Command(
             id=command_id,
-            title=command_id.replace('.', ' ').title(),
+            title=command_id.replace(".", " ").title(),
             category="Plugin",
-            handler=command_wrapper
+            handler=command_wrapper,
         )
 
         # Register with command registry
@@ -53,7 +56,9 @@ class CommandServiceAdapter(IService):
     def unregister_command(self, command_id: str) -> None:
         """Unregister a command from the command registry."""
         from viloapp.core.commands.registry import command_registry
+
         command_registry.unregister(command_id)
+
 
 class ConfigurationServiceAdapter(IService):
     """Adapter for configuration service."""
@@ -75,7 +80,7 @@ class ConfigurationServiceAdapter(IService):
 
     def on_change(self, key: str, callback: callable) -> None:
         """Subscribe to configuration changes."""
-        if hasattr(self.settings_service, 'setting_changed'):
+        if hasattr(self.settings_service, "setting_changed"):
             # Connect to settings service signal
             self.settings_service.setting_changed.connect(
                 lambda k, v: callback(v) if k == key else None
@@ -83,6 +88,7 @@ class ConfigurationServiceAdapter(IService):
         else:
             # Settings service doesn't support change notifications
             pass
+
 
 class WorkspaceServiceAdapter(IService):
     """Adapter for workspace service."""
@@ -100,24 +106,28 @@ class WorkspaceServiceAdapter(IService):
         """Open file in editor."""
         try:
             # Use workspace service to open file
-            if hasattr(self.workspace_service, 'open_file'):
+            if hasattr(self.workspace_service, "open_file"):
                 self.workspace_service.open_file(path)
             else:
                 # Fallback: create new editor tab with file
                 from viloapp.ui.widgets.widget_registry import WidgetType
+
                 widget_id = f"editor_{path.split('/')[-1]}"
-                if hasattr(self.workspace_service, 'add_tab'):
-                    self.workspace_service.add_tab(widget_id, WidgetType.TEXT_EDITOR, title=path.split('/')[-1])
+                if hasattr(self.workspace_service, "add_tab"):
+                    self.workspace_service.add_tab(
+                        widget_id, WidgetType.TEXT_EDITOR, title=path.split("/")[-1]
+                    )
         except Exception as e:
             print(f"Failed to open file {path}: {e}")
 
     def get_active_editor(self) -> Optional[Any]:
         """Return active editor widget."""
         try:
-            if hasattr(self.workspace_service, 'get_active_widget'):
+            if hasattr(self.workspace_service, "get_active_widget"):
                 widget = self.workspace_service.get_active_widget()
-                if widget and hasattr(widget, 'widget_type'):
+                if widget and hasattr(widget, "widget_type"):
                     from viloapp.ui.widgets.widget_registry import WidgetType
+
                     if widget.widget_type == WidgetType.TEXT_EDITOR:
                         return widget
             return None
@@ -128,12 +138,12 @@ class WorkspaceServiceAdapter(IService):
     def create_pane(self, widget: Any, position: str) -> None:
         """Create new pane with widget."""
         try:
-            if hasattr(self.workspace_service, 'workspace'):
+            if hasattr(self.workspace_service, "workspace"):
                 workspace = self.workspace_service.workspace
                 # Implementation depends on workspace structure
-                if hasattr(workspace, 'split_pane'):
+                if hasattr(workspace, "split_pane"):
                     workspace.split_pane(widget, position)
-                elif hasattr(self.workspace_service, 'split_current_pane'):
+                elif hasattr(self.workspace_service, "split_current_pane"):
                     # Alternative method
                     self.workspace_service.split_current_pane(position)
         except Exception as e:
@@ -142,7 +152,7 @@ class WorkspaceServiceAdapter(IService):
     def register_widget_factory(self, widget_id: str, factory: Any) -> None:
         """Register a widget factory (for plugins)."""
         try:
-            if hasattr(self.workspace_service, 'register_widget_factory'):
+            if hasattr(self.workspace_service, "register_widget_factory"):
                 self.workspace_service.register_widget_factory(widget_id, factory)
             else:
                 print("WorkspaceService doesn't support widget factory registration")
@@ -152,7 +162,7 @@ class WorkspaceServiceAdapter(IService):
     def create_widget(self, widget_id: str, instance_id: str) -> Optional[Any]:
         """Create a widget using registered factory."""
         try:
-            if hasattr(self.workspace_service, 'create_widget'):
+            if hasattr(self.workspace_service, "create_widget"):
                 return self.workspace_service.create_widget(widget_id, instance_id)
             else:
                 print("WorkspaceService doesn't support widget creation")
@@ -160,6 +170,7 @@ class WorkspaceServiceAdapter(IService):
         except Exception as e:
             print(f"Failed to create widget {widget_id}: {e}")
             return None
+
 
 class ThemeServiceAdapter(IService):
     """Adapter for theme service."""
@@ -175,17 +186,14 @@ class ThemeServiceAdapter(IService):
 
     def get_current_theme(self) -> Dict[str, Any]:
         theme = self.theme_service.get_current_theme()
-        return {
-            "id": theme.id,
-            "name": theme.name,
-            "colors": theme.colors
-        }
+        return {"id": theme.id, "name": theme.name, "colors": theme.colors}
 
     def get_color(self, key: str) -> str:
         return self.theme_service.get_color(key)
 
     def on_theme_changed(self, callback: callable) -> None:
         self.theme_service.theme_changed.connect(callback)
+
 
 class NotificationServiceAdapter(IService):
     """Adapter for notification service."""
@@ -211,28 +219,29 @@ class NotificationServiceAdapter(IService):
         # Show error notification
         print(f"ERROR: {title or ''} - {message}")
 
+
 def create_service_adapters(services: Dict[str, Any]) -> Dict[str, Any]:
     """Create service adapters for plugins."""
     adapters = {}
 
     # Add command service
-    if 'command_service' in services:
-        adapters['command'] = CommandServiceAdapter(services['command_service'])
+    if "command_service" in services:
+        adapters["command"] = CommandServiceAdapter(services["command_service"])
 
     # Add configuration service
-    if 'settings_service' in services:
-        adapters['configuration'] = ConfigurationServiceAdapter(services['settings_service'])
+    if "settings_service" in services:
+        adapters["configuration"] = ConfigurationServiceAdapter(services["settings_service"])
 
     # Add workspace service
-    if 'workspace_service' in services:
-        adapters['workspace'] = WorkspaceServiceAdapter(services['workspace_service'])
+    if "workspace_service" in services:
+        adapters["workspace"] = WorkspaceServiceAdapter(services["workspace_service"])
 
     # Add theme service
-    if 'theme_service' in services:
-        adapters['theme'] = ThemeServiceAdapter(services['theme_service'])
+    if "theme_service" in services:
+        adapters["theme"] = ThemeServiceAdapter(services["theme_service"])
 
     # Add notification service
-    if 'ui_service' in services:
-        adapters['notification'] = NotificationServiceAdapter(services['ui_service'])
+    if "ui_service" in services:
+        adapters["notification"] = NotificationServiceAdapter(services["ui_service"])
 
     return adapters

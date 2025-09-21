@@ -111,8 +111,7 @@ class SignalManager:
             connection.signal.disconnect(connection.slot)
             self.connections.remove(connection)
             logger.debug(
-                f"Disconnected signal for {self.owner}: "
-                f"{connection.description or 'unnamed'}"
+                f"Disconnected signal for {self.owner}: " f"{connection.description or 'unnamed'}"
             )
             return True
 
@@ -187,9 +186,7 @@ class SignalManager:
                 count += 1
 
         if count > 0:
-            logger.info(
-                f"Disconnected {count} signals in group '{group}' for {self.owner}"
-            )
+            logger.info(f"Disconnected {count} signals in group '{group}' for {self.owner}")
 
         return count
 
@@ -243,9 +240,7 @@ class SignalManager:
                 logger.error(f"Error enabling connection in group '{group}': {e}")
 
         if count > 0:
-            logger.debug(
-                f"Enabled {count} connections in group '{group}' for {self.owner}"
-            )
+            logger.debug(f"Enabled {count} connections in group '{group}' for {self.owner}")
 
         return count
 
@@ -273,9 +268,7 @@ class SignalManager:
                 logger.error(f"Error disabling connection in group '{group}': {e}")
 
         if count > 0:
-            logger.debug(
-                f"Disabled {count} connections in group '{group}' for {self.owner}"
-            )
+            logger.debug(f"Disabled {count} connections in group '{group}' for {self.owner}")
 
         return count
 

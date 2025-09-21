@@ -80,9 +80,7 @@ class FocusSinkWidget(QWidget):
         # Restore focus if requested
         if restore_focus and self._original_focus_widget:
             self._original_focus_widget.setFocus()
-            logger.debug(
-                f"Restored focus to {self._original_focus_widget.__class__.__name__}"
-            )
+            logger.debug(f"Restored focus to {self._original_focus_widget.__class__.__name__}")
 
         self._original_focus_widget = None
         self.commandModeExited.emit()
@@ -123,9 +121,7 @@ class FocusSinkWidget(QWidget):
 
         # Any other key exits command mode
         else:
-            logger.info(
-                f"FocusSink: Non-command key pressed ({key}), exiting command mode"
-            )
+            logger.info(f"FocusSink: Non-command key pressed ({key}), exiting command mode")
             self.exit_command_mode(restore_focus=True)
             # Don't accept the event - let it propagate
             event.ignore()

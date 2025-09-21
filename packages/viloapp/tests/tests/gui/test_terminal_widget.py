@@ -152,9 +152,7 @@ class TestTerminalWidget:
         custom_config.shell_args = "-l"
 
         # ACT - Create widget with custom config
-        widget = TerminalWidget(
-            config=custom_config, command="/usr/bin/fish", args="--login"
-        )
+        widget = TerminalWidget(config=custom_config, command="/usr/bin/fish", args="--login")
         qtbot.addWidget(widget)
 
         # ASSERT - Widget uses custom settings
@@ -172,9 +170,7 @@ class TestTerminalWidget:
         self.mock_terminal_server.create_session.assert_called_once_with(
             command="/bin/bash", cmd_args=""
         )
-        self.mock_terminal_server.get_session_url.assert_called_once_with(
-            "test_session_123"
-        )
+        self.mock_terminal_server.get_session_url.assert_called_once_with("test_session_123")
 
     def test_terminal_widget_loads_session_url_in_web_view(self, qtbot):
         """Test that TerminalWidget loads session URL in web view."""
@@ -188,14 +184,9 @@ class TestTerminalWidget:
             mock_load.assert_called_once()
             loaded_url = mock_load.call_args[0][0]
             assert isinstance(loaded_url, QUrl)
-            assert (
-                loaded_url.toString()
-                == "http://localhost:8000/terminal/test_session_123"
-            )
+            assert loaded_url.toString() == "http://localhost:8000/terminal/test_session_123"
 
-    def test_terminal_widget_web_view_load_finished_success_emits_ready_signal(
-        self, qtbot
-    ):
+    def test_terminal_widget_web_view_load_finished_success_emits_ready_signal(self, qtbot):
         """Test that web view load finished success emits ready signal."""
         # ARRANGE - Create widget and connect signal
         widget = TerminalWidget()
@@ -267,9 +258,7 @@ class TestTerminalWidget:
 
         # ASSERT - Focus was set and JavaScript executed
         mock_set_focus.assert_called_once()
-        mock_run_js.assert_called_once_with(
-            "if (typeof term !== 'undefined') { term.focus(); }"
-        )
+        mock_run_js.assert_called_once_with("if (typeof term !== 'undefined') { term.focus(); }")
 
     def test_terminal_widget_clear_terminal_runs_javascript_when_ready(self, qtbot):
         """Test that clear_terminal runs JavaScript when terminal is ready."""
@@ -286,9 +275,7 @@ class TestTerminalWidget:
         widget.clear_terminal()
 
         # ASSERT - Clear JavaScript was executed
-        mock_run_js.assert_called_once_with(
-            "if (typeof term !== 'undefined') { term.clear(); }"
-        )
+        mock_run_js.assert_called_once_with("if (typeof term !== 'undefined') { term.clear(); }")
 
     def test_terminal_widget_clear_terminal_does_nothing_when_not_ready(self, qtbot):
         """Test that clear_terminal does nothing when terminal is not ready."""
@@ -321,9 +308,7 @@ class TestTerminalWidget:
         widget.reset_terminal()
 
         # ASSERT - Reset JavaScript was executed
-        mock_run_js.assert_called_once_with(
-            "if (typeof term !== 'undefined') { term.reset(); }"
-        )
+        mock_run_js.assert_called_once_with("if (typeof term !== 'undefined') { term.reset(); }")
 
     def test_terminal_widget_write_to_terminal_escapes_text_correctly(self, qtbot):
         """Test that write_to_terminal properly escapes text for JavaScript."""
@@ -474,9 +459,7 @@ class TestTerminalWidget:
         assert widget.is_dark_theme is False
         widget.close_terminal.assert_called_once()
 
-    def test_terminal_widget_close_terminal_destroys_session_and_emits_signal(
-        self, qtbot
-    ):
+    def test_terminal_widget_close_terminal_destroys_session_and_emits_signal(self, qtbot):
         """Test that close_terminal destroys session and emits terminal_closed signal."""
         # ARRANGE - Create widget
         widget = TerminalWidget()
@@ -487,9 +470,7 @@ class TestTerminalWidget:
             widget.close_terminal()
 
         # ASSERT - Session was destroyed and signal emitted
-        self.mock_terminal_server.destroy_session.assert_called_once_with(
-            "test_session_123"
-        )
+        self.mock_terminal_server.destroy_session.assert_called_once_with("test_session_123")
         assert blocker.args[0] == "test_session_123"
         assert widget.session_id is None
 
@@ -537,9 +518,7 @@ class TestTerminalWidget:
 
         # Mock the terminal server to raise an exception during cleanup
         original_destroy = self.mock_terminal_server.destroy_session
-        self.mock_terminal_server.destroy_session = Mock(
-            side_effect=RuntimeError("Server error")
-        )
+        self.mock_terminal_server.destroy_session = Mock(side_effect=RuntimeError("Server error"))
 
         # ACT & ASSERT - Destructor should not raise exceptions
         try:
@@ -558,9 +537,7 @@ class TestTerminalWidget:
                 # Setup mocks
                 mock_config.get_shell_command.return_value = "/bin/bash"
                 mock_config.shell_args = ""
-                mock_server.create_session.side_effect = RuntimeError(
-                    "Server not available"
-                )
+                mock_server.create_session.side_effect = RuntimeError("Server not available")
 
                 # ACT - Create widget (should not crash)
                 widget = TerminalWidget()

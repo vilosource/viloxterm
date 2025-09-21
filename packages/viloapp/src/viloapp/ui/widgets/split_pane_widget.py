@@ -66,6 +66,7 @@ class PaneContent(QWidget):
 
         # Windows-specific optimizations to prevent flashing
         import sys
+
         if sys.platform == "win32":
             # Prevent this widget from creating native ancestors
             self.setAttribute(Qt.WA_DontCreateNativeAncestors, True)
@@ -96,17 +97,13 @@ class PaneContent(QWidget):
                 self.leaf_node.id,
                 show_type_menu=config.allow_type_change if config else False,
             )
-            logger.debug(
-                f"Created header bar with show_type_menu={config.allow_type_change}"
-            )
+            logger.debug(f"Created header bar with show_type_menu={config.allow_type_change}")
 
             # Connect header signals to request actions through AppWidget
             self.header_bar.split_horizontal_requested.connect(
                 lambda: self.request_split("horizontal")
             )
-            self.header_bar.split_vertical_requested.connect(
-                lambda: self.request_split("vertical")
-            )
+            self.header_bar.split_vertical_requested.connect(lambda: self.request_split("vertical"))
             self.header_bar.close_requested.connect(lambda: self.request_close())
             if hasattr(self.header_bar, "type_menu_requested"):
                 self.header_bar.type_menu_requested.connect(self.show_type_menu)
@@ -158,9 +155,7 @@ class PaneContent(QWidget):
     def request_close(self):
         """Request a close action through the AppWidget."""
         if self.leaf_node.app_widget:
-            self.leaf_node.app_widget.request_action(
-                "close", {"leaf_id": self.leaf_node.id}
-            )
+            self.leaf_node.app_widget.request_action("close", {"leaf_id": self.leaf_node.id})
 
     def mousePressEvent(self, event):
         """Handle mouse press to focus this pane."""
@@ -203,9 +198,7 @@ class PaneContent(QWidget):
         if not self.header_bar:
             split_h = QAction("Split Horizontal →", self)
             split_h.triggered.connect(
-                lambda: execute_command(
-                    "workbench.action.splitPaneHorizontal", pane=self
-                )
+                lambda: execute_command("workbench.action.splitPaneHorizontal", pane=self)
             )
             menu.addAction(split_h)
 
@@ -260,9 +253,7 @@ class PaneContent(QWidget):
 
         for widget_type in WidgetType:
             action = QAction(widget_type.value.replace("_", " ").title(), self)
-            action.triggered.connect(
-                lambda checked, wt=widget_type: self.change_widget_type(wt)
-            )
+            action.triggered.connect(lambda checked, wt=widget_type: self.change_widget_type(wt))
             if widget_type == self.leaf_node.widget_type:
                 action.setCheckable(True)
                 action.setChecked(True)
@@ -524,9 +515,7 @@ class SplitPaneWidget(QWidget):
             original_pane_id: ID of the pane that was split (now first child of split)
             new_pane_id: ID of the newly created pane (second child of split)
         """
-        logger.debug(
-            f"Incremental update for split: {original_pane_id} -> {new_pane_id}"
-        )
+        logger.debug(f"Incremental update for split: {original_pane_id} -> {new_pane_id}")
 
         # Disable updates during the incremental change
         self.setUpdatesEnabled(False)
@@ -543,9 +532,7 @@ class SplitPaneWidget(QWidget):
             # Find the parent widget of the old wrapper
             parent_widget = old_wrapper.parent()
             if not parent_widget:
-                logger.warning(
-                    "Old wrapper has no parent, falling back to full refresh"
-                )
+                logger.warning("Old wrapper has no parent, falling back to full refresh")
                 self.refresh_view()
                 return
 
@@ -570,9 +557,7 @@ class SplitPaneWidget(QWidget):
             # Create the new splitter widget for this split node with parent to prevent flash
             new_splitter = self.render_node(split_node, parent_widget=parent_widget)
             if not new_splitter:
-                logger.warning(
-                    "Failed to render split node, falling back to full refresh"
-                )
+                logger.warning("Failed to render split node, falling back to full refresh")
                 self.refresh_view()
                 return
 
@@ -698,19 +683,13 @@ class SplitPaneWidget(QWidget):
 
         elif isinstance(node, SplitNode):
             # Get splitter from pool or create new one
-            orientation = (
-                Qt.Horizontal if node.orientation == "horizontal" else Qt.Vertical
-            )
+            orientation = Qt.Horizontal if node.orientation == "horizontal" else Qt.Vertical
             # Pass parent to prevent flash on Windows
             splitter = self.widget_pool.acquire_splitter(orientation, parent=parent_widget)
 
             # Pool already configures optimal settings, but ensure they're set
-            splitter.setOpaqueResize(
-                True
-            )  # Real-time resize (actually reduces flashing)
-            splitter.setChildrenCollapsible(
-                False
-            )  # Prevent child widgets from collapsing
+            splitter.setOpaqueResize(True)  # Real-time resize (actually reduces flashing)
+            splitter.setChildrenCollapsible(False)  # Prevent child widgets from collapsing
 
             # Apply styling
             splitter.setStyleSheet(self._get_splitter_stylesheet())
@@ -758,9 +737,7 @@ class SplitPaneWidget(QWidget):
                     if current == wrapper or wrapper.isAncestorOf(current):
                         # Found which pane got focus - update active pane if different
                         if pane_id != self.model.get_active_pane_id():
-                            logger.debug(
-                                f"Focus detected on pane {pane_id} via event filter"
-                            )
+                            logger.debug(f"Focus detected on pane {pane_id} via event filter")
                             self.set_active_pane(pane_id)
                         return super().eventFilter(obj, event)
                 current = current.parent()

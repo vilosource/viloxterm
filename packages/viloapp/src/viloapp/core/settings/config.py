@@ -52,9 +52,7 @@ class SettingsConfig:
         return cls._instance
 
     @classmethod
-    def initialize_from_args(
-        cls, args: Optional[argparse.Namespace] = None
-    ) -> "SettingsConfig":
+    def initialize_from_args(cls, args: Optional[argparse.Namespace] = None) -> "SettingsConfig":
         """
         Initialize settings configuration from command line arguments.
 
@@ -77,9 +75,7 @@ class SettingsConfig:
     @staticmethod
     def _create_argument_parser() -> argparse.ArgumentParser:
         """Create argument parser for settings options."""
-        parser = argparse.ArgumentParser(
-            add_help=False
-        )  # Don't interfere with main arg parsing
+        parser = argparse.ArgumentParser(add_help=False)  # Don't interfere with main arg parsing
 
         settings_group = parser.add_argument_group("Settings Options")
 
@@ -127,9 +123,7 @@ class SettingsConfig:
             self.is_temporary = True
             self.temp_dir = Path(tempfile.mkdtemp(prefix="viloapp_settings_"))
             source = (
-                "command line"
-                if getattr(args, "temp_settings", False)
-                else "environment variable"
+                "command line" if getattr(args, "temp_settings", False) else "environment variable"
             )
             logger.info(f"Using temporary settings in: {self.temp_dir} (from {source})")
             return
@@ -140,14 +134,8 @@ class SettingsConfig:
             app_dir = Path(__file__).parent.parent.parent  # Go up to project root
             self.settings_dir = app_dir / "settings"
             self.settings_dir.mkdir(exist_ok=True)
-            source = (
-                "command line"
-                if getattr(args, "portable", False)
-                else "environment variable"
-            )
-            logger.info(
-                f"Using portable settings in: {self.settings_dir} (from {source})"
-            )
+            source = "command line" if getattr(args, "portable", False) else "environment variable"
+            logger.info(f"Using portable settings in: {self.settings_dir} (from {source})")
             return
 
         # Handle custom settings file (command line takes precedence over env var)
@@ -162,9 +150,7 @@ class SettingsConfig:
         if settings_file:
             self.settings_file = Path(settings_file).resolve()
             self.settings_file.parent.mkdir(parents=True, exist_ok=True)
-            logger.info(
-                f"Using custom settings file: {self.settings_file} (from {source})"
-            )
+            logger.info(f"Using custom settings file: {self.settings_file} (from {source})")
             return
 
         # Handle custom settings directory (command line takes precedence over env var)
@@ -179,9 +165,7 @@ class SettingsConfig:
         if settings_dir:
             self.settings_dir = Path(settings_dir).resolve()
             self.settings_dir.mkdir(parents=True, exist_ok=True)
-            logger.info(
-                f"Using custom settings directory: {self.settings_dir} (from {source})"
-            )
+            logger.info(f"Using custom settings directory: {self.settings_dir} (from {source})")
             return
 
         # Default behavior - use system default
@@ -290,9 +274,7 @@ class SettingsConfig:
 
 
 # Convenience functions for common usage patterns
-def get_settings(
-    organization: str = "ViloxTerm", application: str = "ViloxTerm"
-) -> QSettings:
+def get_settings(organization: str = "ViloxTerm", application: str = "ViloxTerm") -> QSettings:
     """
     Get a QSettings instance using the configured settings location.
 

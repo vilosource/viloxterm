@@ -179,9 +179,7 @@ class TestAppDefaults:
         """Test exporting settings."""
         # Mock QSettings to return test data
         with patch.object(app_defaults._settings, "allKeys", return_value=["test_key"]):
-            with patch.object(
-                app_defaults._settings, "value", return_value="test_value"
-            ):
+            with patch.object(app_defaults._settings, "value", return_value="test_value"):
                 settings = app_defaults.export_settings()
                 assert "test_key" in settings
                 assert settings["test_key"] == "test_value"
@@ -214,9 +212,7 @@ class TestConvenienceFunctions:
 
         result = get_default_widget_type()
         assert result == "editor"
-        mock_defaults.get.assert_called_with(
-            "workspace.default_new_tab_widget", "terminal"
-        )
+        mock_defaults.get.assert_called_with("workspace.default_new_tab_widget", "terminal")
 
     @patch("viloapp.core.settings.app_defaults.get_app_defaults")
     def test_get_default_split_direction(self, mock_get_defaults):

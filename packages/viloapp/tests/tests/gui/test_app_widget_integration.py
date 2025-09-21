@@ -102,9 +102,7 @@ class TestPaneHeaderMenuGeneration:
         assert "test.widget_1" in widget_ids  # Visible widget
 
     @patch("viloapp.core.commands.executor.execute_command")
-    def test_menu_action_triggers_command(
-        self, mock_execute, qtbot, pane_header, manager
-    ):
+    def test_menu_action_triggers_command(self, mock_execute, qtbot, pane_header, manager):
         """Test that menu actions trigger correct commands."""
         # We need to actually interact with the menu
         # Since we can't easily simulate menu interaction in tests,
@@ -135,9 +133,7 @@ class TestSplitPaneModelIntegration:
             widget = model.create_app_widget(WidgetType.CUSTOM, "test_id")
 
             assert widget == mock_widget
-            manager.create_widget_by_type.assert_called_once_with(
-                WidgetType.CUSTOM, "test_id"
-            )
+            manager.create_widget_by_type.assert_called_once_with(WidgetType.CUSTOM, "test_id")
 
     def test_fallback_to_placeholder(self, manager):
         """Test fallback to placeholder for unknown widget types."""

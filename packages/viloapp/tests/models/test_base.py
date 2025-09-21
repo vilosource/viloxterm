@@ -1,6 +1,7 @@
 """Tests for base model classes."""
 
 import pytest
+
 from viloapp.models.base import OperationResult
 
 

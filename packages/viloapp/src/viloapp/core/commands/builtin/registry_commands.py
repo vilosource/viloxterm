@@ -34,9 +34,7 @@ def register_widget_command(context: CommandContext) -> CommandResult:
     tab_index = context.args.get("tab_index")
 
     if widget_id is None or tab_index is None:
-        return CommandResult(
-            success=False, error="widget_id and tab_index are required"
-        )
+        return CommandResult(success=False, error="widget_id and tab_index are required")
 
     workspace_service = context.get_service(WorkspaceService)
     if not workspace_service:
@@ -82,9 +80,7 @@ def unregister_widget_command(context: CommandContext) -> CommandResult:
     try:
         # Unregister the widget using service method
         result = workspace_service.unregister_widget(widget_id)
-        return CommandResult(
-            success=True, value={"widget_id": widget_id, "unregistered": result}
-        )
+        return CommandResult(success=True, value={"widget_id": widget_id, "unregistered": result})
     except Exception as e:
         logger.error(f"Failed to unregister widget: {e}")
         return CommandResult(success=False, error=str(e))
@@ -121,9 +117,7 @@ def update_registry_after_close_command(context: CommandContext) -> CommandResul
 
     try:
         # Update registry using service method
-        updated_count = workspace_service.update_registry_after_tab_close(
-            closed_index, widget_id
-        )
+        updated_count = workspace_service.update_registry_after_tab_close(closed_index, widget_id)
 
         return CommandResult(
             success=True,
@@ -165,9 +159,7 @@ def get_widget_tab_index_command(context: CommandContext) -> CommandResult:
                 success=True, value={"widget_id": widget_id, "tab_index": tab_index}
             )
         else:
-            return CommandResult(
-                success=False, error=f"Widget {widget_id} not found in registry"
-            )
+            return CommandResult(success=False, error=f"Widget {widget_id} not found in registry")
     except Exception as e:
         logger.error(f"Failed to get widget tab index: {e}")
         return CommandResult(success=False, error=str(e))

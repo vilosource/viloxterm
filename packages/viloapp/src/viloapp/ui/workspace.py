@@ -76,9 +76,7 @@ class Workspace(QWidget):
 
         # Enable context menu on tab bar
         self.tab_widget.tabBar().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tab_widget.tabBar().customContextMenuRequested.connect(
-            self.show_tab_context_menu
-        )
+        self.tab_widget.tabBar().customContextMenuRequested.connect(self.show_tab_context_menu)
 
     def _cleanup_split_widget(self, split_widget: SplitPaneWidget):
         """Clean up a split widget and all its AppWidgets before removal."""
@@ -192,12 +190,8 @@ class Workspace(QWidget):
         split_widget = SplitPaneWidget(initial_widget_type=WidgetType.TEXT_EDITOR)
 
         # Connect split widget signals
-        split_widget.pane_added.connect(
-            lambda pane_id: self.on_pane_added(name, pane_id)
-        )
-        split_widget.pane_removed.connect(
-            lambda pane_id: self.on_pane_removed(name, pane_id)
-        )
+        split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(name, pane_id))
+        split_widget.pane_removed.connect(lambda pane_id: self.on_pane_removed(name, pane_id))
         split_widget.active_pane_changed.connect(
             lambda pane_id: self.active_pane_changed.emit(name, pane_id)
         )
@@ -225,12 +219,8 @@ class Workspace(QWidget):
         split_widget = SplitPaneWidget(initial_widget_type=WidgetType.TERMINAL)
 
         # Connect signals
-        split_widget.pane_added.connect(
-            lambda pane_id: self.on_pane_added(name, pane_id)
-        )
-        split_widget.pane_removed.connect(
-            lambda pane_id: self.on_pane_removed(name, pane_id)
-        )
+        split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(name, pane_id))
+        split_widget.pane_removed.connect(lambda pane_id: self.on_pane_removed(name, pane_id))
         split_widget.active_pane_changed.connect(
             lambda pane_id: self.active_pane_changed.emit(name, pane_id)
         )
@@ -268,12 +258,8 @@ class Workspace(QWidget):
         split_widget = SplitPaneWidget(initial_widget_type=WidgetType.OUTPUT)
 
         # Connect signals
-        split_widget.pane_added.connect(
-            lambda pane_id: self.on_pane_added(name, pane_id)
-        )
-        split_widget.pane_removed.connect(
-            lambda pane_id: self.on_pane_removed(name, pane_id)
-        )
+        split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(name, pane_id))
+        split_widget.pane_removed.connect(lambda pane_id: self.on_pane_removed(name, pane_id))
         split_widget.active_pane_changed.connect(
             lambda pane_id: self.active_pane_changed.emit(name, pane_id)
         )
@@ -317,12 +303,8 @@ class Workspace(QWidget):
             )
 
             # Connect signals
-            split_widget.pane_added.connect(
-                lambda pane_id: self.on_pane_added(name, pane_id)
-            )
-            split_widget.pane_removed.connect(
-                lambda pane_id: self.on_pane_removed(name, pane_id)
-            )
+            split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(name, pane_id))
+            split_widget.pane_removed.connect(lambda pane_id: self.on_pane_removed(name, pane_id))
             split_widget.active_pane_changed.connect(
                 lambda pane_id: self.active_pane_changed.emit(name, pane_id)
             )
@@ -516,9 +498,7 @@ class Workspace(QWidget):
         if self.tab_widget.count() > 1:
             close_others_action = QAction("Close Other Tabs", self)
             close_others_action.triggered.connect(
-                lambda: execute_command(
-                    "workbench.action.closeOtherTabs", tab_index=index
-                )
+                lambda: execute_command("workbench.action.closeOtherTabs", tab_index=index)
             )
             menu.addAction(close_others_action)
 
@@ -526,9 +506,7 @@ class Workspace(QWidget):
         if index < self.tab_widget.count() - 1:
             close_right_action = QAction("Close Tabs to the Right", self)
             close_right_action.triggered.connect(
-                lambda: execute_command(
-                    "workbench.action.closeTabsToRight", tab_index=index
-                )
+                lambda: execute_command("workbench.action.closeTabsToRight", tab_index=index)
             )
             menu.addAction(close_right_action)
 
@@ -545,9 +523,7 @@ class Workspace(QWidget):
 
         # Close tab
         close_action = QAction("Close Tab", self)
-        close_action.triggered.connect(
-            lambda: execute_command("file.closeTab", tab_index=index)
-        )
+        close_action.triggered.connect(lambda: execute_command("file.closeTab", tab_index=index))
         menu.addAction(close_action)
 
         menu.exec(self.tab_widget.tabBar().mapToGlobal(pos))
@@ -644,6 +620,7 @@ class Workspace(QWidget):
         # Delegate to WorkspaceService for consistent code path
         from viloapp.services.service_locator import ServiceLocator
         from viloapp.services.workspace_service import WorkspaceService
+
         workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
         if workspace_service:
             return workspace_service.close_active_pane()
@@ -717,9 +694,7 @@ class Workspace(QWidget):
                 # Restore split state
                 if index in self.tabs and "split_state" in tab_state:
                     try:
-                        success = self.tabs[index].split_widget.set_state(
-                            tab_state["split_state"]
-                        )
+                        success = self.tabs[index].split_widget.set_state(tab_state["split_state"])
                         if not success:
                             logger.warning(
                                 f"Failed to restore split state for tab: {tab_state.get('name', 'Unknown')}"

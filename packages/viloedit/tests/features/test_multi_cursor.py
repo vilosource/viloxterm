@@ -7,6 +7,7 @@ try:
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import Qt
     from PySide6.QtGui import QTextCursor, QKeyEvent
+
     QT_AVAILABLE = True
 except ImportError:
     QT_AVAILABLE = False
@@ -96,7 +97,7 @@ class TestMultiCursor:
 
     def teardown_method(self):
         """Cleanup test environment."""
-        if hasattr(self.multi_cursor, 'clear_cursors'):
+        if hasattr(self.multi_cursor, "clear_cursors"):
             self.multi_cursor.clear_cursors()
 
     def test_initialization(self):
@@ -202,7 +203,7 @@ class TestMultiCursor:
         self.multi_cursor.set_enabled(True)
         assert self.multi_cursor.enabled
 
-    @patch('viloedit.features.multi_cursor.QShortcut')
+    @patch("viloedit.features.multi_cursor.QShortcut")
     def test_setup_editor_integration(self, mock_shortcut):
         """Test editor integration setup."""
         multi_cursor = MultiCursor()
@@ -273,5 +274,6 @@ class TestMultiCursorWithoutQt:
     def test_import_without_qt(self):
         """Test that module can be imported without Qt."""
         from viloedit.features import multi_cursor
-        assert hasattr(multi_cursor, 'MultiCursor')
-        assert hasattr(multi_cursor, 'CursorInfo')
+
+        assert hasattr(multi_cursor, "MultiCursor")
+        assert hasattr(multi_cursor, "CursorInfo")

@@ -43,9 +43,7 @@ class TestThemeService:
         themes = initialized_theme_service.get_available_themes()
 
         # Should have loaded built-in themes
-        assert (
-            len(themes) >= 4
-        ), f"Expected at least 4 built-in themes, got {len(themes)}"
+        assert len(themes) >= 4, f"Expected at least 4 built-in themes, got {len(themes)}"
 
         # Check for expected themes
         theme_ids = [t.id for t in themes]
@@ -152,9 +150,7 @@ class TestThemeService:
 
     def test_export_theme(self, initialized_theme_service):
         """Test exporting a theme."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as tmp_file:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp_file:
             tmp_path = Path(tmp_file.name)
 
         try:
@@ -174,9 +170,7 @@ class TestThemeService:
 
     def test_export_nonexistent_theme(self, initialized_theme_service):
         """Test exporting non-existent theme."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as tmp_file:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp_file:
             tmp_path = Path(tmp_file.name)
 
         try:
@@ -197,9 +191,7 @@ class TestThemeService:
             "colors": {"editor.background": "#123456", "editor.foreground": "#abcdef"},
         }
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as tmp_file:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp_file:
             json.dump(test_theme_data, tmp_file)
             tmp_path = Path(tmp_file.name)
 
@@ -216,9 +208,7 @@ class TestThemeService:
 
     def test_import_invalid_theme(self, initialized_theme_service):
         """Test importing invalid theme file."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as tmp_file:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp_file:
             tmp_file.write("invalid json content")
             tmp_path = Path(tmp_file.name)
 

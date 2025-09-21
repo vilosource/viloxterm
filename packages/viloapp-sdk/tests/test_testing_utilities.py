@@ -3,9 +3,15 @@
 from unittest.mock import Mock
 
 from viloapp_sdk.testing.mock_host import (
-    MockPluginHost, MockService, MockCommandService, MockConfigurationService,
-    MockWorkspaceService, MockThemeService, MockNotificationService,
-    create_mock_plugin_context, create_mock_service_proxy
+    MockPluginHost,
+    MockService,
+    MockCommandService,
+    MockConfigurationService,
+    MockWorkspaceService,
+    MockThemeService,
+    MockNotificationService,
+    create_mock_plugin_context,
+    create_mock_service_proxy,
 )
 from viloapp_sdk.testing.fixtures import *  # Import all fixtures
 from viloapp_sdk.context import IPluginContext
@@ -22,7 +28,7 @@ class TestMockService:
 
         assert service.get_service_id() == "test-service"
         assert service.get_service_version() == "2.0.0"
-        assert hasattr(service, 'mock')
+        assert hasattr(service, "mock")
         assert isinstance(service.mock, Mock)
 
     def test_mock_service_defaults(self):
@@ -116,6 +122,7 @@ class TestMockConfigurationService:
 
         # Track changes
         changes = []
+
         def listener(key, new_value, old_value):
             changes.append((key, new_value, old_value))
 
@@ -206,6 +213,7 @@ class TestMockThemeService:
 
         # Track changes
         theme_changes = []
+
         def listener(theme):
             theme_changes.append(theme)
 
@@ -248,13 +256,19 @@ class TestMockNotificationService:
         assert len(service.notifications) == 3
 
         assert service.notifications[0] == {
-            "type": "info", "message": "Info message", "title": "Info Title"
+            "type": "info",
+            "message": "Info message",
+            "title": "Info Title",
         }
         assert service.notifications[1] == {
-            "type": "warning", "message": "Warning message", "title": None
+            "type": "warning",
+            "message": "Warning message",
+            "title": None,
         }
         assert service.notifications[2] == {
-            "type": "error", "message": "Error message", "title": "Error Title"
+            "type": "error",
+            "message": "Error message",
+            "title": "Error Title",
         }
 
         # Verify mock calls

@@ -118,9 +118,7 @@ def test_file_size_limits():
     # Report critical violations that MUST be fixed
     if violations["critical"]:
         error_msg = f"Files exceed critical size limit ({LIMITS['critical']} lines):\n"
-        for file_info in sorted(
-            violations["critical"], key=lambda x: x["loc"], reverse=True
-        ):
+        for file_info in sorted(violations["critical"], key=lambda x: x["loc"], reverse=True):
             error_msg += f"  {file_info['file']}: {file_info['loc']} lines\n"
 
         error_msg += "\nFiles this large violate Single Responsibility Principle.\n"
@@ -135,9 +133,7 @@ def test_file_size_limits():
     # Report warnings for files that should be refactored
     if violations["warning"]:
         warning_msg = f"Files exceed warning size limit ({LIMITS['warning']} lines):\n"
-        for file_info in sorted(
-            violations["warning"], key=lambda x: x["loc"], reverse=True
-        )[:5]:
+        for file_info in sorted(violations["warning"], key=lambda x: x["loc"], reverse=True)[:5]:
             warning_msg += f"  {file_info['file']}: {file_info['loc']} lines\n"
 
         if len(violations["warning"]) > 5:
@@ -262,9 +258,7 @@ def test_specific_file_type_limits():
                 f"({violation['type']} should be ≤ {violation['limit']})\n"
             )
 
-        error_msg += (
-            "\nConsider breaking these files into smaller, focused components.\n"
-        )
+        error_msg += "\nConsider breaking these files into smaller, focused components.\n"
 
         # Only fail if there are many violations or very large ones
         severe_violations = [v for v in violations if v["loc"] > v["limit"] * 1.5]

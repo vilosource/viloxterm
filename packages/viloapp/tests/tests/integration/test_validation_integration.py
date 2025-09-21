@@ -92,11 +92,7 @@ class TestValidationIntegration:
             category="Test",
             register=False,
         )
-        @validate(
-            name=ParameterSpec(
-                "name", String(min_length=3, max_length=20), required=True
-            )
-        )
+        @validate(name=ParameterSpec("name", String(min_length=3, max_length=20), required=True))
         def test_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=True, value={"name": context.args["name"]})
 
@@ -157,9 +153,7 @@ class TestValidationIntegration:
                 String(min_length=1),
                 required=True,
             ),
-            options=ParameterSpec(
-                "options", OneOf("create", "update", "delete"), default="create"
-            ),
+            options=ParameterSpec("options", OneOf("create", "update", "delete"), default="create"),
         )
         def complex_command(context: CommandContext) -> CommandResult:
             return CommandResult(success=True, value=context.args)
@@ -172,9 +166,7 @@ class TestValidationIntegration:
         assert result.value["options"] == "update"
 
         # Test with invalid option
-        context = CommandContext(
-            args={"file_paths": "test.txt", "options": "invalid_option"}
-        )
+        context = CommandContext(args={"file_paths": "test.txt", "options": "invalid_option"})
         result = complex_command.execute(context)
         assert result.success is False
         assert "not in allowed values" in result.error

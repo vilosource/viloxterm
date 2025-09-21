@@ -30,23 +30,13 @@ def pytest_configure(config):
 
     # Register custom markers for test organization
     config.addinivalue_line("markers", "gui: GUI interaction tests using pytest-qt")
-    config.addinivalue_line(
-        "markers", "animation: Tests that involve animations or transitions"
-    )
-    config.addinivalue_line(
-        "markers", "keyboard: Tests that involve keyboard shortcuts and input"
-    )
+    config.addinivalue_line("markers", "animation: Tests that involve animations or transitions")
+    config.addinivalue_line("markers", "keyboard: Tests that involve keyboard shortcuts and input")
     config.addinivalue_line("markers", "mouse: Tests that involve mouse interactions")
-    config.addinivalue_line(
-        "markers", "theme: Tests related to theme switching and visual states"
-    )
-    config.addinivalue_line(
-        "markers", "slow: Slow running tests (e.g., with animations)"
-    )
+    config.addinivalue_line("markers", "theme: Tests related to theme switching and visual states")
+    config.addinivalue_line("markers", "slow: Slow running tests (e.g., with animations)")
     config.addinivalue_line("markers", "performance: Performance and load testing")
-    config.addinivalue_line(
-        "markers", "accessibility: Accessibility and keyboard navigation tests"
-    )
+    config.addinivalue_line("markers", "accessibility: Accessibility and keyboard navigation tests")
     config.addinivalue_line("markers", "state: State management and persistence tests")
 
 

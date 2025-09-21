@@ -1,11 +1,13 @@
 """Tests for plugin system."""
 
-import pytest
 from pathlib import Path
 from unittest.mock import Mock
 
+import pytest
+from viloapp_sdk import EventBus, IPlugin, PluginMetadata
+
 from viloapp.core.plugin_system import PluginManager, PluginRegistry
-from viloapp_sdk import IPlugin, PluginMetadata, EventBus
+
 
 class TestPlugin(IPlugin):
     """Test plugin implementation."""
@@ -20,7 +22,7 @@ class TestPlugin(IPlugin):
             name="Test Plugin",
             version="1.0.0",
             description="Test plugin",
-            author="Test"
+            author="Test",
         )
 
     def activate(self, context):
@@ -29,16 +31,14 @@ class TestPlugin(IPlugin):
     def deactivate(self):
         self.deactivated = True
 
+
 @pytest.fixture
 def plugin_manager():
     """Create plugin manager for testing."""
     event_bus = EventBus()
-    services = {
-        'command': Mock(),
-        'configuration': Mock(),
-        'workspace': Mock()
-    }
+    services = {"command": Mock(), "configuration": Mock(), "workspace": Mock()}
     return PluginManager(event_bus, services)
+
 
 def test_plugin_discovery(plugin_manager):
     """Test plugin discovery."""
@@ -49,22 +49,20 @@ def test_plugin_discovery(plugin_manager):
     plugins = plugin_manager.discover_plugins()
     assert isinstance(plugins, list)
 
+
 def test_plugin_loading(plugin_manager):
     """Test plugin loading."""
     # Register test plugin
-    from viloapp.core.plugin_system.plugin_registry import PluginInfo
     from viloapp_sdk import LifecycleState
+
+    from viloapp.core.plugin_system.plugin_registry import PluginInfo
 
     plugin_info = PluginInfo(
         metadata=PluginMetadata(
-            id="test-plugin",
-            name="Test Plugin",
-            version="1.0.0",
-            description="Test",
-            author="Test"
+            id="test-plugin", name="Test Plugin", version="1.0.0", description="Test", author="Test"
         ),
         path=Path("test"),
-        state=LifecycleState.DISCOVERED
+        state=LifecycleState.DISCOVERED,
     )
 
     plugin_manager.registry.register(plugin_info)
@@ -74,6 +72,7 @@ def test_plugin_loading(plugin_manager):
 
     # Load plugin
     assert plugin_manager.load_plugin("test-plugin")
+
 
 def test_plugin_activation(plugin_manager):
     """Test plugin activation."""
@@ -87,6 +86,7 @@ def test_plugin_activation(plugin_manager):
     # Activate
     assert plugin_manager.activate_plugin("test-plugin")
 
+
 def test_dependency_resolution():
     """Test dependency resolution."""
     from viloapp.core.plugin_system import DependencyResolver
@@ -95,8 +95,9 @@ def test_dependency_resolution():
     resolver = DependencyResolver(registry)
 
     # Create plugins with dependencies
-    from viloapp.core.plugin_system.plugin_registry import PluginInfo
     from viloapp_sdk import LifecycleState
+
+    from viloapp.core.plugin_system.plugin_registry import PluginInfo
 
     plugin_a = PluginInfo(
         metadata=PluginMetadata(
@@ -105,10 +106,10 @@ def test_dependency_resolution():
             version="1.0.0",
             description="A",
             author="Test",
-            dependencies=[]
+            dependencies=[],
         ),
         path=Path("a"),
-        state=LifecycleState.DISCOVERED
+        state=LifecycleState.DISCOVERED,
     )
 
     plugin_b = PluginInfo(
@@ -118,10 +119,10 @@ def test_dependency_resolution():
             version="1.0.0",
             description="B",
             author="Test",
-            dependencies=["plugin-a@>=1.0.0"]
+            dependencies=["plugin-a@>=1.0.0"],
         ),
         path=Path("b"),
-        state=LifecycleState.DISCOVERED
+        state=LifecycleState.DISCOVERED,
     )
 
     registry.register(plugin_a)

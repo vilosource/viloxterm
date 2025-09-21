@@ -81,9 +81,7 @@ class AppWidgetMetadata:
 
     # === Requirements & Capabilities ===
     requires_services: list[str] = field(default_factory=list)  # Required services
-    provides_capabilities: list[str] = field(
-        default_factory=list
-    )  # Provided capabilities
+    provides_capabilities: list[str] = field(default_factory=list)  # Provided capabilities
     supported_file_types: list[str] = field(default_factory=list)  # File extensions
 
     # === Plugin preparation ===

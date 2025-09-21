@@ -59,9 +59,7 @@ class ShortcutRegistry:
     def __init__(self):
         """Initialize the registry."""
         self._shortcuts: dict[str, Shortcut] = {}  # id -> shortcut
-        self._by_sequence: dict[KeySequence, list[Shortcut]] = (
-            {}
-        )  # sequence -> shortcuts
+        self._by_sequence: dict[KeySequence, list[Shortcut]] = {}  # sequence -> shortcuts
         self._by_command: dict[str, list[Shortcut]] = {}  # command_id -> shortcuts
         self._observers: list[Callable[[str, Shortcut], None]] = []
         self._lock = Lock()
@@ -285,9 +283,7 @@ class ShortcutRegistry:
             if "sequence_str" in updates:
                 sequence = KeySequenceParser.parse(updates["sequence_str"])
                 if sequence is None:
-                    logger.error(
-                        f"Invalid sequence in update: {updates['sequence_str']}"
-                    )
+                    logger.error(f"Invalid sequence in update: {updates['sequence_str']}")
                     return False
                 new_data["sequence"] = sequence
                 del new_data["sequence_str"]
@@ -321,9 +317,7 @@ class ShortcutRegistry:
                 self._by_command.clear()
             else:
                 # Clear by source
-                to_remove = [
-                    s.id for s in self._shortcuts.values() if s.source == source
-                ]
+                to_remove = [s.id for s in self._shortcuts.values() if s.source == source]
                 for shortcut_id in to_remove:
                     self.unregister(shortcut_id)
 
@@ -373,9 +367,7 @@ class ShortcutRegistry:
             for s in shortcuts
         ]
 
-    def import_shortcuts(
-        self, shortcuts_data: list[dict[str, Any]], source: str = "import"
-    ) -> int:
+    def import_shortcuts(self, shortcuts_data: list[dict[str, Any]], source: str = "import") -> int:
         """
         Import shortcuts from serialized data.
 

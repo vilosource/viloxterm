@@ -142,9 +142,7 @@ class SplitPaneModel:
                         )
                 return widget
         except ImportError:
-            logger.warning(
-                "AppWidgetManager not available, falling back to legacy creation"
-            )
+            logger.warning("AppWidgetManager not available, falling back to legacy creation")
         except Exception as e:
             logger.error(f"Failed to create widget via AppWidgetManager: {e}")
 
@@ -190,7 +188,9 @@ class SplitPaneModel:
                     if plugin_widget:
                         logger.info(f"Created plugin widget: {plugin_widget_id} -> {widget_id}")
                         # Special handling for terminal signals
-                        if widget_type == WidgetType.TERMINAL and hasattr(plugin_widget, "pane_close_requested"):
+                        if widget_type == WidgetType.TERMINAL and hasattr(
+                            plugin_widget, "pane_close_requested"
+                        ):
                             plugin_widget.pane_close_requested.connect(
                                 lambda: self.on_terminal_close_requested(widget_id)
                             )
@@ -212,9 +212,7 @@ class SplitPaneModel:
             return PlaceholderAppWidget(widget_id, widget_type)
         else:
             # Default fallback
-            logger.warning(
-                f"No handler for widget type {widget_type}, using placeholder"
-            )
+            logger.warning(f"No handler for widget type {widget_type}, using placeholder")
             return PlaceholderAppWidget(widget_id, widget_type)
 
     def set_terminal_close_callback(self, callback: Callable[[str], None]):
@@ -237,9 +235,7 @@ class SplitPaneModel:
         if self.terminal_close_callback:
             self.terminal_close_callback(pane_id)
         else:
-            logger.warning(
-                f"No terminal close callback set - cannot close pane {pane_id}"
-            )
+            logger.warning(f"No terminal close callback set - cannot close pane {pane_id}")
 
     def traverse_tree(
         self,
@@ -516,9 +512,7 @@ class SplitPaneModel:
         if not leaf:
             return False
 
-        logger.info(
-            f"Changing pane {pane_id} type from {leaf.widget_type} to {new_type}"
-        )
+        logger.info(f"Changing pane {pane_id} type from {leaf.widget_type} to {new_type}")
 
         # Clean up old widget
         leaf.cleanup()
@@ -620,9 +614,7 @@ class SplitPaneModel:
                     "type": "leaf",
                     "id": node.id,
                     "widget_type": node.widget_type.value,
-                    "widget_state": (
-                        node.app_widget.get_state() if node.app_widget else {}
-                    ),
+                    "widget_state": (node.app_widget.get_state() if node.app_widget else {}),
                 }
             elif isinstance(node, SplitNode):
                 return {
@@ -681,12 +673,8 @@ class SplitPaneModel:
                         )
                         # Create a placeholder editor widget as fallback
                         leaf.widget_type = WidgetType.TEXT_EDITOR
-                        logger.info(
-                            f"Attempting fallback to TEXT_EDITOR for leaf {leaf.id}"
-                        )
-                        leaf.app_widget = self.create_app_widget(
-                            leaf.widget_type, leaf.id
-                        )
+                        logger.info(f"Attempting fallback to TEXT_EDITOR for leaf {leaf.id}")
+                        leaf.app_widget = self.create_app_widget(leaf.widget_type, leaf.id)
                         if not leaf.app_widget:
                             logger.critical(
                                 f"Even fallback widget creation failed for leaf {leaf.id}"
@@ -703,9 +691,7 @@ class SplitPaneModel:
                         try:
                             leaf.app_widget.set_state(node_dict["widget_state"])
                         except Exception as e:
-                            logger.warning(
-                                f"Failed to restore widget state for {leaf.id}: {e}"
-                            )
+                            logger.warning(f"Failed to restore widget state for {leaf.id}: {e}")
 
                     self.leaves[leaf.id] = leaf
                     return leaf
@@ -753,9 +739,7 @@ class SplitPaneModel:
             logger.error("Failed to restore root node, creating default")
             default_id = f"default_{uuid.uuid4().hex[:8]}"
             self.root = LeafNode(id=default_id, widget_type=WidgetType.TEXT_EDITOR)
-            self.root.app_widget = self.create_app_widget(
-                self.root.widget_type, default_id
-            )
+            self.root.app_widget = self.create_app_widget(self.root.widget_type, default_id)
             self.root.app_widget.leaf_node = self.root
             self.leaves[default_id] = self.root
 
@@ -805,38 +789,28 @@ class SplitPaneModel:
                 split_x = x1 + (x2 - x1) * node.ratio
 
                 # Check first (left) child
-                result = self.calculate_pane_bounds(
-                    pane_id, node.first, (x1, y1, split_x, y2)
-                )
+                result = self.calculate_pane_bounds(pane_id, node.first, (x1, y1, split_x, y2))
                 if result:
                     return result
 
                 # Check second (right) child
-                return self.calculate_pane_bounds(
-                    pane_id, node.second, (split_x, y1, x2, y2)
-                )
+                return self.calculate_pane_bounds(pane_id, node.second, (split_x, y1, x2, y2))
 
             else:  # vertical split
                 # Split vertically: first is top, second is bottom
                 split_y = y1 + (y2 - y1) * node.ratio
 
                 # Check first (top) child
-                result = self.calculate_pane_bounds(
-                    pane_id, node.first, (x1, y1, x2, split_y)
-                )
+                result = self.calculate_pane_bounds(pane_id, node.first, (x1, y1, x2, split_y))
                 if result:
                     return result
 
                 # Check second (bottom) child
-                return self.calculate_pane_bounds(
-                    pane_id, node.second, (x1, split_y, x2, y2)
-                )
+                return self.calculate_pane_bounds(pane_id, node.second, (x1, split_y, x2, y2))
 
         return None
 
-    def find_pane_in_direction(
-        self, from_pane_id: str, direction: str
-    ) -> Optional[str]:
+    def find_pane_in_direction(self, from_pane_id: str, direction: str) -> Optional[str]:
         """
         Find the best pane to navigate to in the given direction.
 

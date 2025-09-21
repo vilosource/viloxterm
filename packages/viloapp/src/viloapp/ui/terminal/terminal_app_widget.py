@@ -132,9 +132,7 @@ class TerminalAppWidget(AppWidget):
         from PySide6.QtWebChannel import QWebChannel
 
         self.channel = QWebChannel()
-        self.channel.registerObject(
-            "terminal", self.bridge
-        )  # Register bridge, not self
+        self.channel.registerObject("terminal", self.bridge)  # Register bridge, not self
         self.web_view.page().setWebChannel(self.channel)
 
         # Connect to log when terminal loads (no longer need to show/hide)
@@ -151,9 +149,7 @@ class TerminalAppWidget(AppWidget):
 
     def mousePressEvent(self, event):
         """Handle mouse press to focus this terminal."""
-        logger.debug(
-            f"TerminalAppWidget.mousePressEvent called for widget {self.widget_id}"
-        )
+        logger.debug(f"TerminalAppWidget.mousePressEvent called for widget {self.widget_id}")
         # Request focus when user clicks anywhere on the terminal widget
         self.request_focus()
         logger.debug(f"request_focus() called for terminal {self.widget_id}")
@@ -189,9 +185,7 @@ class TerminalAppWidget(AppWidget):
     def on_terminal_loaded(self, success: bool):
         """Called when the web view finishes loading terminal content."""
         if success:
-            logger.info(
-                f"Terminal content loaded successfully for widget {self.widget_id}"
-            )
+            logger.info(f"Terminal content loaded successfully for widget {self.widget_id}")
             # Inject a test to see if JavaScript runs
             self.web_view.page().runJavaScript(
                 "console.log('Page loaded, checking libraries...'); "
@@ -361,8 +355,6 @@ class TerminalAppWidget(AppWidget):
             ended_session_id: The session ID that ended
         """
         if ended_session_id == self.session_id:
-            logger.info(
-                f"Terminal session {self.session_id} ended, requesting pane close"
-            )
+            logger.info(f"Terminal session {self.session_id} ended, requesting pane close")
             # Emit signal to request pane closure
             self.pane_close_requested.emit()

@@ -110,9 +110,7 @@ class ConflictResolver:
         """Set the default conflict resolution strategy."""
         self._default_resolution = resolution
 
-    def register_resolution_callback(
-        self, conflict_type: str, callback: callable
-    ) -> None:
+    def register_resolution_callback(self, conflict_type: str, callback: callable) -> None:
         """Register a callback for resolving specific conflict types."""
         self._resolution_callbacks[conflict_type] = callback
 
@@ -292,9 +290,7 @@ class ConflictResolver:
             # Remove existing shortcuts
             for existing in conflict.existing_shortcuts:
                 registry.unregister(existing.id)
-                logger.info(
-                    f"Replaced shortcut {existing.id} with {conflict.new_shortcut.id}"
-                )
+                logger.info(f"Replaced shortcut {existing.id} with {conflict.new_shortcut.id}")
             return True
 
         elif resolution == ConflictResolution.REJECT:
@@ -310,8 +306,6 @@ class ConflictResolver:
             # For now, default to priority-based resolution
             # In a real implementation, this would show a dialog
             logger.warning(f"User choice needed for conflict: {conflict}")
-            return self._apply_resolution(
-                ConflictResolution.PRIORITY, conflict, registry
-            )
+            return self._apply_resolution(ConflictResolution.PRIORITY, conflict, registry)
 
         return False

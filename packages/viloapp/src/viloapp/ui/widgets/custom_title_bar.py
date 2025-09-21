@@ -94,9 +94,7 @@ class CustomTitleBar(QWidget):
 
         # Use red background for dev mode
         title_bar_bg = "#8B0000" if app_config.dev_mode else "#2d2d30"
-        logger.info(
-            f"CustomTitleBar: dev_mode={app_config.dev_mode}, bg_color={title_bar_bg}"
-        )
+        logger.info(f"CustomTitleBar: dev_mode={app_config.dev_mode}, bg_color={title_bar_bg}")
 
         # Set background using palette
         self.setAutoFillBackground(True)

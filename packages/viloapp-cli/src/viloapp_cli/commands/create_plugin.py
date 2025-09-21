@@ -9,9 +9,7 @@ from jinja2 import Environment
 from ..config import CLIConfig
 
 
-def create_plugin(
-    config: CLIConfig, name: str, template: str, output_dir: Path
-) -> None:
+def create_plugin(config: CLIConfig, name: str, template: str, output_dir: Path) -> None:
     """Create a new plugin from template.
 
     Args:
@@ -68,9 +66,7 @@ def _create_plugin_structure(plugin_dir: Path, name: str, template: str) -> None
         (plugin_dir / "src" / python_name / "commands").mkdir(parents=True)
 
 
-def _generate_plugin_files(
-    config: CLIConfig, plugin_dir: Path, name: str, template: str
-) -> None:
+def _generate_plugin_files(config: CLIConfig, plugin_dir: Path, name: str, template: str) -> None:
     """Generate plugin files from templates.
 
     Args:
@@ -98,21 +94,35 @@ def _generate_plugin_files(
     _generate_file(plugin_dir / "pyproject.toml", templates["pyproject.toml"], context)
     _generate_file(plugin_dir / "plugin.json", templates["plugin.json"], context)
     _generate_file(plugin_dir / "README.md", templates["README.md"], context)
-    _generate_file(plugin_dir / "src" / python_name / "__init__.py", templates["__init__.py"], context)
+    _generate_file(
+        plugin_dir / "src" / python_name / "__init__.py", templates["__init__.py"], context
+    )
     _generate_file(plugin_dir / "src" / python_name / "plugin.py", templates["plugin.py"], context)
     _generate_file(plugin_dir / "tests" / "__init__.py", templates["test_init.py"], context)
     _generate_file(plugin_dir / "tests" / "test_plugin.py", templates["test_plugin.py"], context)
 
     # Generate template-specific files
     if template == "widget":
-        _generate_file(plugin_dir / "src" / python_name / "widget.py", templates["widget.py"], context)
-        _generate_file(plugin_dir / "tests" / "test_widget.py", templates["test_widget.py"], context)
+        _generate_file(
+            plugin_dir / "src" / python_name / "widget.py", templates["widget.py"], context
+        )
+        _generate_file(
+            plugin_dir / "tests" / "test_widget.py", templates["test_widget.py"], context
+        )
     elif template == "service":
-        _generate_file(plugin_dir / "src" / python_name / "service.py", templates["service.py"], context)
-        _generate_file(plugin_dir / "tests" / "test_service.py", templates["test_service.py"], context)
+        _generate_file(
+            plugin_dir / "src" / python_name / "service.py", templates["service.py"], context
+        )
+        _generate_file(
+            plugin_dir / "tests" / "test_service.py", templates["test_service.py"], context
+        )
     elif template == "command":
-        _generate_file(plugin_dir / "src" / python_name / "commands.py", templates["commands.py"], context)
-        _generate_file(plugin_dir / "tests" / "test_commands.py", templates["test_commands.py"], context)
+        _generate_file(
+            plugin_dir / "src" / python_name / "commands.py", templates["commands.py"], context
+        )
+        _generate_file(
+            plugin_dir / "tests" / "test_commands.py", templates["test_commands.py"], context
+        )
 
 
 def _generate_file(file_path: Path, template_content: str, context: dict[str, Any]) -> None:
@@ -150,7 +160,7 @@ def _get_embedded_templates() -> dict[str, str]:
         Dictionary of template name to content
     """
     return {
-        "pyproject.toml": '''[project]
+        "pyproject.toml": """[project]
 name = "{{ plugin_name }}"
 version = "0.1.0"
 description = "{{ plugin_name }} plugin for ViloxTerm"
@@ -180,9 +190,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-''',
-
-        "plugin.json": '''{
+""",
+        "plugin.json": """{
     "id": "{{ plugin_id }}",
     "name": "{{ plugin_name }}",
     "version": "0.1.0",
@@ -230,9 +239,8 @@ where = ["src"]
         "viloapp.ui.read"
     ]
 }
-''',
-
-        "README.md": '''# {{ plugin_name }}
+""",
+        "README.md": """# {{ plugin_name }}
 
 {{ plugin_name }} plugin for ViloxTerm.
 
@@ -264,13 +272,11 @@ viloapp dev --plugin .
 ## Usage
 
 Describe how to use your plugin here.
-''',
-
+""",
         "__init__.py": '''"""{{ plugin_name }} plugin for ViloxTerm."""
 
 __version__ = "0.1.0"
 ''',
-
         "plugin.py": '''"""Main plugin class for {{ plugin_name }}."""
 
 from viloapp_sdk import IPlugin, PluginContext
@@ -315,7 +321,6 @@ class {{ plugin_class }}Plugin(IPlugin):
         """Get plugin version."""
         return "0.1.0"
 ''',
-
         "widget.py": '''"""Widget implementation for {{ plugin_name }}."""
 
 from typing import Optional, Dict, Any
@@ -410,7 +415,6 @@ class {{ plugin_class }}Widget(QWidget):
         label = QLabel(f"{{ plugin_class }} Widget\\nInstance: {self.instance_id}")
         layout.addWidget(label)
 ''',
-
         "service.py": '''"""Service implementation for {{ plugin_name }}."""
 
 from abc import ABC, abstractmethod
@@ -450,7 +454,6 @@ class {{ plugin_class }}Service(IService, I{{ plugin_class }}Service):
         """Get service ID."""
         return "{{ plugin_id }}.service"
 ''',
-
         "commands.py": '''"""Commands implementation for {{ plugin_name }}."""
 
 from viloapp_sdk import CommandContext, CommandResult
@@ -477,10 +480,8 @@ def hello_command(context: CommandContext) -> CommandResult:
         value="Hello World"
     )
 ''',
-
         "test_init.py": '''"""Tests package for {{ plugin_name }}."""
 ''',
-
         "test_plugin.py": '''"""Tests for {{ plugin_name }} plugin."""
 
 import pytest
@@ -531,7 +532,6 @@ class Test{{ plugin_class }}Plugin:
         plugin.deactivate()
         assert plugin._context is None
 ''',
-
         "test_widget.py": '''"""Tests for {{ plugin_name }} widget."""
 
 import pytest
@@ -579,7 +579,6 @@ class Test{{ plugin_class }}Widget:
         assert widget is not None
         assert widget.instance_id == "test-instance"
 ''',
-
         "test_service.py": '''"""Tests for {{ plugin_name }} service."""
 
 import pytest
@@ -605,7 +604,6 @@ class Test{{ plugin_class }}Service:
         result = service.do_something()
         assert result == "{{ plugin_class }} service did something!"
 ''',
-
         "test_commands.py": '''"""Tests for {{ plugin_name }} commands."""
 
 import pytest
@@ -626,5 +624,5 @@ class TestCommands:
         assert result.success is True
         assert "Hello from {{ plugin_name }}!" in result.message
         assert result.value == "Hello World"
-'''
+''',
     }

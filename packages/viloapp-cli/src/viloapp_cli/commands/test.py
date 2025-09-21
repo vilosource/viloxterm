@@ -9,9 +9,7 @@ import click
 from ..config import CLIConfig
 
 
-def run_tests(
-    config: CLIConfig, plugin_path: Path, coverage: bool, verbose: bool
-) -> None:
+def run_tests(config: CLIConfig, plugin_path: Path, coverage: bool, verbose: bool) -> None:
     """Run tests for a plugin.
 
     Args:
@@ -45,14 +43,21 @@ def run_tests(
             # Determine package name for coverage
             src_dir = plugin_path / "src"
             if src_dir.exists():
-                package_dirs = [d for d in src_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+                package_dirs = [
+                    d for d in src_dir.iterdir() if d.is_dir() and not d.name.startswith(".")
+                ]
                 if package_dirs:
                     package_name = package_dirs[0].name
-                    cmd.extend([
-                        "--cov", package_name,
-                        "--cov-report", "term-missing",
-                        "--cov-report", f"html:{plugin_path}/htmlcov"
-                    ])
+                    cmd.extend(
+                        [
+                            "--cov",
+                            package_name,
+                            "--cov-report",
+                            "term-missing",
+                            "--cov-report",
+                            f"html:{plugin_path}/htmlcov",
+                        ]
+                    )
 
         # Run tests
         click.echo(f"📋 Command: {' '.join(cmd)}")
@@ -68,9 +73,7 @@ def run_tests(
             raise click.ClickException(f"Tests failed with exit code {result.returncode}")
 
     except FileNotFoundError:
-        raise click.ClickException(
-            "pytest not found. Install it with: pip install pytest"
-        )
+        raise click.ClickException("pytest not found. Install it with: pip install pytest")
     except Exception as e:
         raise click.ClickException(f"Failed to run tests: {e}")
 

@@ -52,9 +52,7 @@ def test_no_service_locator_imports_in_ui():
 
                     violations.append(
                         {
-                            "file": str(
-                                file_path.relative_to(file_path.parent.parent.parent)
-                            ),
+                            "file": str(file_path.relative_to(file_path.parent.parent.parent)),
                             "line": line_num,
                             "content": line_stripped,
                             "type": "import",
@@ -68,12 +66,8 @@ def test_no_service_locator_imports_in_ui():
     if violations:
         error_msg = "ServiceLocator imports found in UI files:\n"
         for violation in violations:
-            error_msg += (
-                f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
-            )
-        error_msg += (
-            "\nUI components should use commands instead of direct service access."
-        )
+            error_msg += f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
+        error_msg += "\nUI components should use commands instead of direct service access."
 
         pytest.fail(error_msg)
 
@@ -106,8 +100,7 @@ def test_no_service_locator_usage_in_ui():
 
                     # Allow certain exceptions (like comments explaining what NOT to do)
                     if (
-                        "# Get theme colors using command instead of ServiceLocator"
-                        in line
+                        "# Get theme colors using command instead of ServiceLocator" in line
                         or "# NEVER use ServiceLocator" in line
                         or "# Don't use ServiceLocator" in line
                     ):
@@ -115,9 +108,7 @@ def test_no_service_locator_usage_in_ui():
 
                     violations.append(
                         {
-                            "file": str(
-                                file_path.relative_to(file_path.parent.parent.parent)
-                            ),
+                            "file": str(file_path.relative_to(file_path.parent.parent.parent)),
                             "line": line_num,
                             "content": line_stripped,
                             "type": "usage",
@@ -130,9 +121,7 @@ def test_no_service_locator_usage_in_ui():
     if violations:
         error_msg = "ServiceLocator usage found in UI files:\n"
         for violation in violations:
-            error_msg += (
-                f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
-            )
+            error_msg += f"  {violation['file']}:{violation['line']} - {violation['content']}\n"
         error_msg += "\nUI components should use commands for service access."
 
         pytest.fail(error_msg)
@@ -170,9 +159,7 @@ def test_ui_architecture_compliance():
                 if "ServiceLocator" in line and "# " not in line:
                     violations["service_locator_usage"].append(
                         {
-                            "file": str(
-                                file_path.relative_to(file_path.parent.parent.parent)
-                            ),
+                            "file": str(file_path.relative_to(file_path.parent.parent.parent)),
                             "line": line_num,
                             "content": line_stripped,
                         }
@@ -186,9 +173,7 @@ def test_ui_architecture_compliance():
                 ):
                     violations["direct_service_access"].append(
                         {
-                            "file": str(
-                                file_path.relative_to(file_path.parent.parent.parent)
-                            ),
+                            "file": str(file_path.relative_to(file_path.parent.parent.parent)),
                             "line": line_num,
                             "content": line_stripped,
                         }
@@ -205,18 +190,14 @@ def test_ui_architecture_compliance():
         for v in violations["service_locator_usage"][:5]:  # Limit to first 5
             error_messages.append(f"  {v['file']}:{v['line']} - {v['content']}")
         if len(violations["service_locator_usage"]) > 5:
-            error_messages.append(
-                f"  ... and {len(violations['service_locator_usage']) - 5} more"
-            )
+            error_messages.append(f"  ... and {len(violations['service_locator_usage']) - 5} more")
 
     if violations["direct_service_access"]:
         error_messages.append("\nDirect service imports in UI files:")
         for v in violations["direct_service_access"][:5]:
             error_messages.append(f"  {v['file']}:{v['line']} - {v['content']}")
         if len(violations["direct_service_access"]) > 5:
-            error_messages.append(
-                f"  ... and {len(violations['direct_service_access']) - 5} more"
-            )
+            error_messages.append(f"  ... and {len(violations['direct_service_access']) - 5} more")
 
     if error_messages:
         error_messages.append("\nUI components should use the Command Pattern:")

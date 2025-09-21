@@ -156,9 +156,7 @@ class TestIconManager:
 
             # Check addPixmap was called multiple times for different states
             calls = mock_icon.addPixmap.call_args_list
-            assert (
-                len(calls) == 3
-            )  # Normal, Active, Selected (as per actual implementation)
+            assert len(calls) == 3  # Normal, Active, Selected (as per actual implementation)
 
             # get_icon_with_states now just calls get_icon, so they should be the same
             regular_icon = manager.get_icon("settings")

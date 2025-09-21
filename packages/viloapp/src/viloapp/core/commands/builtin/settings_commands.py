@@ -49,18 +49,14 @@ def open_settings_command(context: CommandContext) -> CommandResult:
             )
 
         # Add a Settings tab using the proper WidgetType
-        success = workspace_service.add_app_widget(
-            WidgetType.SETTINGS, widget_id, "Settings"
-        )
+        success = workspace_service.add_app_widget(WidgetType.SETTINGS, widget_id, "Settings")
 
         if success:
             return CommandResult(
                 success=True, value={"widget_id": widget_id, "action": "created_new"}
             )
         else:
-            return CommandResult(
-                success=False, error="Failed to add Settings to workspace"
-            )
+            return CommandResult(success=False, error="Failed to add Settings to workspace")
 
     except Exception as e:
         logger.error(f"Failed to open settings: {e}")
@@ -182,9 +178,7 @@ def toggle_theme_command(context: CommandContext) -> CommandResult:
             if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message(message, 2000)
 
-            return CommandResult(
-                success=True, message=message, value={"theme": new_theme}
-            )
+            return CommandResult(success=True, message=message, value={"theme": new_theme})
         else:
             return CommandResult(success=False, error="Failed to toggle theme")
 
@@ -237,9 +231,7 @@ def change_font_size_command(context: CommandContext) -> CommandResult:
             if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message(message, 2000)
 
-            return CommandResult(
-                success=True, message=message, value={"font_size": new_size}
-            )
+            return CommandResult(success=True, message=message, value={"font_size": new_size})
         else:
             return CommandResult(success=False, error="Failed to change font size")
 
@@ -288,9 +280,7 @@ def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
 
             return CommandResult(success=True, message=message)
         else:
-            return CommandResult(
-                success=False, error="Failed to reset keyboard shortcuts"
-            )
+            return CommandResult(success=False, error="Failed to reset keyboard shortcuts")
 
     except Exception as e:
         logger.error(f"Failed to reset keyboard shortcuts: {e}")
@@ -395,16 +385,13 @@ def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandR
                 pane_id = pane.leaf_node.id
 
         if pane_id:
-            # Change the pane type directly to SETTINGS (which triggers the shortcuts widget factory)
-            success = split_widget.model.change_pane_type(pane_id, WidgetType.SETTINGS)
+            # Change the pane type through service
+            success = workspace_service.change_pane_widget_type(pane_id, "settings")
             if success:
-                split_widget.refresh_view()
                 logger.info(f"Replaced pane {pane_id} with keyboard shortcuts editor")
                 return CommandResult(success=True)
 
-        return CommandResult(
-            success=False, error="Could not identify pane for replacement"
-        )
+        return CommandResult(success=False, error="Could not identify pane for replacement")
 
     except Exception as e:
         logger.error(f"Failed to replace pane with keyboard shortcuts editor: {e}")
@@ -478,9 +465,7 @@ def set_keyboard_shortcut_command(context: CommandContext) -> CommandResult:
         # Set the shortcut
         settings_service.set_keyboard_shortcut(command_id, shortcut or "")
 
-        return CommandResult(
-            success=True, value={"command_id": command_id, "shortcut": shortcut}
-        )
+        return CommandResult(success=True, value={"command_id": command_id, "shortcut": shortcut})
 
     except Exception as e:
         logger.error(f"Failed to set keyboard shortcut: {e}")
@@ -525,9 +510,7 @@ def register_keyboard_shortcut_command(context: CommandContext) -> CommandResult
                     priority=100,  # User shortcuts have higher priority
                 )
 
-        return CommandResult(
-            success=True, value={"command_id": command_id, "shortcut": shortcut}
-        )
+        return CommandResult(success=True, value={"command_id": command_id, "shortcut": shortcut})
 
     except Exception as e:
         logger.error(f"Failed to register keyboard shortcut: {e}")

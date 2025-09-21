@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 from .service import ServiceProxy, IService
 from .events import EventBus
 
+
 class IPluginContext(ABC):
     """Interface for plugin context."""
 
@@ -40,6 +41,7 @@ class IPluginContext(ABC):
         """Get plugin configuration."""
         pass
 
+
 class PluginContext(IPluginContext):
     """Implementation of plugin context."""
 
@@ -50,7 +52,7 @@ class PluginContext(IPluginContext):
         data_path: Path,
         service_proxy: ServiceProxy,
         event_bus: EventBus,
-        configuration: Optional[Dict[str, Any]] = None
+        configuration: Optional[Dict[str, Any]] = None,
     ):
         self._plugin_id = plugin_id
         self._plugin_path = plugin_path
@@ -89,17 +91,9 @@ class PluginContext(IPluginContext):
         """Shortcut to emit an event."""
         from .events import PluginEvent
 
-        event = PluginEvent(
-            type=event_type,
-            source=self._plugin_id,
-            data=data or {}
-        )
+        event = PluginEvent(type=event_type, source=self._plugin_id, data=data or {})
         self._event_bus.emit(event)
 
     def subscribe_event(self, event_type, handler) -> None:
         """Shortcut to subscribe to an event."""
-        self._event_bus.subscribe(
-            event_type,
-            handler,
-            subscriber_id=self._plugin_id
-        )
+        self._event_bus.subscribe(event_type, handler, subscriber_id=self._plugin_id)

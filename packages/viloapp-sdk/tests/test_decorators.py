@@ -4,11 +4,22 @@ import pytest
 from unittest.mock import Mock
 
 from viloapp_sdk.utils.decorators import (
-    plugin, command, widget, service, activation_event, contribution,
-    ActivationEventType, ContributionPointType,
-    get_plugin_metadata, get_command_metadata, get_widget_metadata,
-    get_service_metadata, get_activation_events, get_contributions,
-    get_commands_from_class, create_manifest_from_decorators
+    plugin,
+    command,
+    widget,
+    service,
+    activation_event,
+    contribution,
+    ActivationEventType,
+    ContributionPointType,
+    get_plugin_metadata,
+    get_command_metadata,
+    get_widget_metadata,
+    get_service_metadata,
+    get_activation_events,
+    get_contributions,
+    get_commands_from_class,
+    create_manifest_from_decorators,
 )
 from viloapp_sdk.interfaces import IPlugin
 from viloapp_sdk.widget import IWidget
@@ -21,17 +32,20 @@ class TestPluginDecorator:
 
     def test_plugin_decorator_basic(self):
         """Test basic plugin decoration."""
+
         @plugin(
             plugin_id="test-plugin",
             name="Test Plugin",
             version="1.0.0",
-            description="A test plugin"
+            description="A test plugin",
         )
         class TestPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -44,12 +58,15 @@ class TestPluginDecorator:
 
     def test_plugin_decorator_defaults(self):
         """Test plugin decorator with default values."""
+
         @plugin(name="Test Plugin")
         class TestPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -62,15 +79,15 @@ class TestPluginDecorator:
 
     def test_plugin_decorator_author_string(self):
         """Test plugin decorator with string author."""
-        @plugin(
-            name="Test Plugin",
-            author="John Doe"
-        )
+
+        @plugin(name="Test Plugin", author="John Doe")
         class TestPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -79,15 +96,15 @@ class TestPluginDecorator:
 
     def test_plugin_decorator_author_dict(self):
         """Test plugin decorator with dict author."""
-        @plugin(
-            name="Test Plugin",
-            author={"name": "John Doe", "email": "john@example.com"}
-        )
+
+        @plugin(name="Test Plugin", author={"name": "John Doe", "email": "john@example.com"})
         class TestPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -97,17 +114,20 @@ class TestPluginDecorator:
     def test_plugin_decorator_validation_errors(self):
         """Test plugin decorator validation errors."""
         with pytest.raises(PluginError, match="Plugin name is required"):
+
             @plugin()
             class TestPlugin(IPlugin):
                 pass
 
         with pytest.raises(PluginError, match="Invalid plugin ID format"):
+
             @plugin(name="Test Plugin", plugin_id="invalid@id")
             class TestPlugin2(IPlugin):
                 pass
 
     def test_plugin_decorator_full_config(self):
         """Test plugin decorator with full configuration."""
+
         @plugin(
             plugin_id="my-awesome-plugin",
             name="My Awesome Plugin",
@@ -119,13 +139,15 @@ class TestPluginDecorator:
             engines={"viloapp": ">=2.1.0", "python": ">=3.8"},
             categories=["Programming Languages"],
             icon="my-icon",
-            preview=True
+            preview=True,
         )
         class AwesomePlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -145,11 +167,9 @@ class TestCommandDecorator:
 
     def test_command_decorator_basic(self):
         """Test basic command decoration."""
+
         class TestPlugin:
-            @command(
-                command_id="test.hello",
-                title="Say Hello"
-            )
+            @command(command_id="test.hello", title="Say Hello")
             def hello_command(self):
                 pass
 
@@ -161,6 +181,7 @@ class TestCommandDecorator:
 
     def test_command_decorator_full_config(self):
         """Test command decorator with full configuration."""
+
         class TestPlugin:
             @command(
                 command_id="test.openFile",
@@ -169,7 +190,7 @@ class TestCommandDecorator:
                 description="Opens a file dialog",
                 icon="file-open",
                 shortcut="ctrl+o",
-                when="editorFocus"
+                when="editorFocus",
             )
             def open_file_command(self):
                 pass
@@ -186,12 +207,14 @@ class TestCommandDecorator:
     def test_command_decorator_validation_errors(self):
         """Test command decorator validation errors."""
         with pytest.raises(PluginError, match="Command ID is required"):
+
             class TestPlugin:
                 @command(command_id="", title="Test")
                 def test_command(self):
                     pass
 
         with pytest.raises(PluginError, match="Invalid command ID format"):
+
             class TestPlugin2:
                 @command(command_id="invalid@command", title="Test")
                 def test_command(self):
@@ -199,6 +222,7 @@ class TestCommandDecorator:
 
     def test_get_commands_from_class(self):
         """Test extracting all commands from a class."""
+
         class TestPlugin:
             @command(command_id="test.cmd1", title="Command 1")
             def command1(self):
@@ -224,25 +248,30 @@ class TestWidgetDecorator:
 
     def test_widget_decorator_basic(self):
         """Test basic widget decoration."""
-        @widget(
-            widget_id="test-widget",
-            title="Test Widget"
-        )
+
+        @widget(widget_id="test-widget", title="Test Widget")
         class TestWidget(IWidget):
             def get_widget_id(self):
                 return "test-widget"
+
             def get_title(self):
                 return "Test Widget"
+
             def get_icon(self):
                 return None
+
             def create_instance(self, instance_id):
                 return Mock()
+
             def destroy_instance(self, instance_id):
                 pass
+
             def handle_command(self, command, args):
                 pass
+
             def get_state(self):
                 return {}
+
             def restore_state(self, state):
                 pass
 
@@ -254,6 +283,7 @@ class TestWidgetDecorator:
 
     def test_widget_decorator_full_config(self):
         """Test widget decorator with full configuration."""
+
         @widget(
             widget_id="terminal",
             title="Terminal",
@@ -261,23 +291,30 @@ class TestWidgetDecorator:
             position="main",
             closable=True,
             singleton=False,
-            group="editors"
+            group="editors",
         )
         class TerminalWidget(IWidget):
             def get_widget_id(self):
                 return "terminal"
+
             def get_title(self):
                 return "Terminal"
+
             def get_icon(self):
                 return "terminal"
+
             def create_instance(self, instance_id):
                 return Mock()
+
             def destroy_instance(self, instance_id):
                 pass
+
             def handle_command(self, command, args):
                 pass
+
             def get_state(self):
                 return {}
+
             def restore_state(self, state):
                 pass
 
@@ -293,16 +330,19 @@ class TestWidgetDecorator:
     def test_widget_decorator_validation_errors(self):
         """Test widget decorator validation errors."""
         with pytest.raises(PluginError, match="Widget ID is required"):
+
             @widget(widget_id="", title="Test")
             class TestWidget(IWidget):
                 pass
 
         with pytest.raises(PluginError, match="Widget title is required"):
+
             @widget(widget_id="test", title="")
             class TestWidget2(IWidget):
                 pass
 
         with pytest.raises(PluginError, match="Invalid widget position"):
+
             @widget(widget_id="test", title="Test", position="invalid")
             class TestWidget3(IWidget):
                 pass
@@ -313,13 +353,12 @@ class TestServiceDecorator:
 
     def test_service_decorator_basic(self):
         """Test basic service decoration."""
-        @service(
-            service_id="test-service",
-            name="Test Service"
-        )
+
+        @service(service_id="test-service", name="Test Service")
         class TestService(IService):
             def get_service_id(self):
                 return "test-service"
+
             def get_service_version(self):
                 return "1.0.0"
 
@@ -333,17 +372,19 @@ class TestServiceDecorator:
 
     def test_service_decorator_full_config(self):
         """Test service decorator with full configuration."""
+
         @service(
             service_id="my-service",
             name="My Service",
             description="A custom service",
             version="2.0.0",
             singleton=False,
-            lazy=True
+            lazy=True,
         )
         class MyService(IService):
             def get_service_id(self):
                 return "my-service"
+
             def get_service_version(self):
                 return "2.0.0"
 
@@ -358,11 +399,13 @@ class TestServiceDecorator:
     def test_service_decorator_validation_errors(self):
         """Test service decorator validation errors."""
         with pytest.raises(PluginError, match="Service ID is required"):
+
             @service(service_id="", name="Test")
             class TestService(IService):
                 pass
 
         with pytest.raises(PluginError, match="Service name is required"):
+
             @service(service_id="test", name="")
             class TestService2(IService):
                 pass
@@ -373,12 +416,15 @@ class TestActivationEventDecorator:
 
     def test_activation_event_decorator_enum(self):
         """Test activation event decorator with enum."""
+
         @activation_event(ActivationEventType.ON_STARTUP)
         class TestPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -387,12 +433,15 @@ class TestActivationEventDecorator:
 
     def test_activation_event_decorator_with_parameter(self):
         """Test activation event decorator with parameter."""
+
         @activation_event(ActivationEventType.ON_COMMAND, "test.command")
         class TestPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -401,12 +450,15 @@ class TestActivationEventDecorator:
 
     def test_activation_event_decorator_string(self):
         """Test activation event decorator with string."""
+
         @activation_event("onLanguage", "python")
         class TestPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -415,14 +467,17 @@ class TestActivationEventDecorator:
 
     def test_multiple_activation_events(self):
         """Test multiple activation event decorators."""
+
         @activation_event(ActivationEventType.ON_STARTUP)
         @activation_event(ActivationEventType.ON_COMMAND, "test.command")
         @activation_event("onLanguage", "python")
         class TestPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -434,13 +489,16 @@ class TestActivationEventDecorator:
 
     def test_duplicate_activation_events(self):
         """Test duplicate activation events are not added twice."""
+
         @activation_event(ActivationEventType.ON_STARTUP)
         @activation_event(ActivationEventType.ON_STARTUP)
         class TestPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -453,15 +511,17 @@ class TestContributionDecorator:
 
     def test_contribution_decorator_enum(self):
         """Test contribution decorator with enum."""
+
         @contribution(
-            ContributionPointType.COMMANDS,
-            commands=[{"command": "test.hello", "title": "Hello"}]
+            ContributionPointType.COMMANDS, commands=[{"command": "test.hello", "title": "Hello"}]
         )
         class TestPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -469,16 +529,21 @@ class TestContributionDecorator:
         assert len(contributions) == 1
         assert contributions[0].contribution_point == "commands"
         assert contributions[0].contribution_type == ContributionPointType.COMMANDS
-        assert contributions[0].configuration == {"commands": [{"command": "test.hello", "title": "Hello"}]}
+        assert contributions[0].configuration == {
+            "commands": [{"command": "test.hello", "title": "Hello"}]
+        }
 
     def test_contribution_decorator_string(self):
         """Test contribution decorator with string."""
+
         @contribution("menus", menus={"editor/context": []})
         class TestPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -490,19 +555,23 @@ class TestContributionDecorator:
     def test_contribution_decorator_unknown_point(self):
         """Test contribution decorator with unknown contribution point."""
         with pytest.raises(PluginError, match="Unknown contribution point"):
+
             @contribution("unknown")
             class TestPlugin(IPlugin):
                 pass
 
     def test_multiple_contributions(self):
         """Test multiple contribution decorators."""
+
         @contribution(ContributionPointType.COMMANDS, commands=[])
         @contribution(ContributionPointType.MENUS, menus={})
         class TestPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -518,6 +587,7 @@ class TestManifestCreation:
 
     def test_create_manifest_complete(self):
         """Test creating complete manifest from decorators."""
+
         @plugin(
             plugin_id="my-plugin",
             name="My Plugin",
@@ -525,7 +595,7 @@ class TestManifestCreation:
             description="A test plugin",
             author={"name": "John Doe", "email": "john@example.com"},
             keywords=["test", "example"],
-            categories=["Other"]
+            categories=["Other"],
         )
         @activation_event(ActivationEventType.ON_STARTUP)
         @activation_event(ActivationEventType.ON_COMMAND, "myPlugin.hello")
@@ -533,8 +603,10 @@ class TestManifestCreation:
         class MyPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -569,12 +641,15 @@ class TestManifestCreation:
 
     def test_create_manifest_minimal(self):
         """Test creating minimal manifest from decorators."""
+
         @plugin(name="Minimal Plugin")
         class MinimalPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 
@@ -589,11 +664,14 @@ class TestManifestCreation:
 
     def test_create_manifest_no_decorators(self):
         """Test creating manifest from class without decorators."""
+
         class PlainPlugin(IPlugin):
             def get_metadata(self):
                 return None
+
             def activate(self, context):
                 pass
+
             def deactivate(self):
                 pass
 

@@ -165,9 +165,7 @@ class TestThemeGUI:
         assert widget.styleSheet() != initial_stylesheet
 
     @patch("viloapp.ui.main_window.MainWindow.show")  # Prevent window from actually showing
-    def test_main_window_theme_integration(
-        self, mock_show, qtbot, theme_service, service_locator
-    ):
+    def test_main_window_theme_integration(self, mock_show, qtbot, theme_service, service_locator):
         """Test theme integration with MainWindow."""
         # This test is more complex and would require careful mocking
         # to avoid creating a full GUI during testing
@@ -188,9 +186,7 @@ class TestThemeGUI:
                 # If MainWindow is too complex to test directly, skip or mock more components
                 pytest.skip(f"MainWindow too complex for GUI testing: {e}")
 
-    def test_split_pane_widget_theme_support(
-        self, qtbot, theme_service, service_locator
-    ):
+    def test_split_pane_widget_theme_support(self, qtbot, theme_service, service_locator):
         """Test that SplitPaneWidget supports theme changes."""
         # Mock the dependencies that SplitPaneWidget needs
         with patch("viloapp.ui.widgets.split_pane_widget.SplitPaneModel") as mock_model:
@@ -231,9 +227,7 @@ class TestThemeGUI:
         # Cache should be populated
         assert component in theme_provider._stylesheet_cache
 
-    def test_cache_invalidation_on_theme_change(
-        self, qtbot, theme_service, theme_provider
-    ):
+    def test_cache_invalidation_on_theme_change(self, qtbot, theme_service, theme_provider):
         """Test that stylesheet cache is cleared when theme changes."""
         # Generate cached stylesheet
         component = "test_component"
@@ -264,9 +258,7 @@ class TestThemeGUI:
         # Should return empty string or fallback stylesheet
         assert isinstance(stylesheet, str)
 
-    def test_multiple_widgets_theme_consistency(
-        self, qtbot, theme_service, theme_provider
-    ):
+    def test_multiple_widgets_theme_consistency(self, qtbot, theme_service, theme_provider):
         """Test that multiple widgets show consistent theming."""
         # Create multiple widgets
         widgets = []
@@ -349,9 +341,7 @@ class TestThemeGUI:
             timer.stop()
 
     @pytest.mark.parametrize("theme_id", ["test-dark", "test-light"])
-    def test_theme_switching_parametrized(
-        self, qtbot, theme_service, theme_provider, theme_id
-    ):
+    def test_theme_switching_parametrized(self, qtbot, theme_service, theme_provider, theme_id):
         """Parametrized test for different themes."""
         widget = QLabel("Parametrized Test")
         qtbot.addWidget(widget)
@@ -381,9 +371,7 @@ class TestThemeCommandsGUI:
         context.get_service.return_value = theme_service
         return context
 
-    def test_theme_select_command_gui_integration(
-        self, qtbot, theme_service, mock_context
-    ):
+    def test_theme_select_command_gui_integration(self, qtbot, theme_service, mock_context):
         """Test theme selection command in GUI context."""
         from viloapp.core.commands.builtin.theme_commands import select_theme_command
 

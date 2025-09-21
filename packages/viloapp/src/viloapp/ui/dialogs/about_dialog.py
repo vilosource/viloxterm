@@ -353,9 +353,7 @@ SOFTWARE."""
         ]
 
         if info["git"]["commit"]:
-            text_lines.append(
-                f"Git: {info['git']['branch']} @ {info['git']['commit_short']}"
-            )
+            text_lines.append(f"Git: {info['git']['branch']} @ {info['git']['commit_short']}")
 
         clipboard = QApplication.clipboard()
         clipboard.setText("\n".join(text_lines))

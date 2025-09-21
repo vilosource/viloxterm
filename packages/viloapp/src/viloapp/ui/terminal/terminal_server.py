@@ -75,9 +75,7 @@ class TerminalServerManager(QObject):
         """Setup Flask application with SocketIO."""
         self.app = Flask(__name__)
         self.app.config["SECRET_KEY"] = "terminal_server_secret!"
-        self.socketio = SocketIO(
-            self.app, cors_allowed_origins="*", async_mode="threading"
-        )
+        self.socketio = SocketIO(self.app, cors_allowed_origins="*", async_mode="threading")
 
         @self.app.route("/terminal/<session_id>")
         def terminal_page(session_id):
@@ -140,9 +138,7 @@ class TerminalServerManager(QObject):
                     rows = data.get("rows", 24)
                     cols = data.get("cols", 80)
                     if self.backend.resize(session, rows, cols):
-                        logger.debug(
-                            f"Resized session {session_id} to {rows}x{cols}"
-                        )
+                        logger.debug(f"Resized session {session_id} to {rows}x{cols}")
 
     def _start_terminal_process(self, session_id: str):
         """Start a terminal process for a session."""
@@ -215,9 +211,7 @@ class TerminalServerManager(QObject):
     ) -> str:
         """Create a new terminal session."""
         if len(self.sessions) >= self.max_sessions:
-            raise RuntimeError(
-                f"Maximum number of sessions ({self.max_sessions}) reached"
-            )
+            raise RuntimeError(f"Maximum number of sessions ({self.max_sessions}) reached")
 
         session_id = str(uuid.uuid4())[:8]
         args_list = shlex.split(cmd_args) if cmd_args else []

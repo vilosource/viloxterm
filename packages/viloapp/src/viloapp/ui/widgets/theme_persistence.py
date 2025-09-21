@@ -156,9 +156,7 @@ class ThemePersistenceManager(QObject):
                     else:
                         self.operation_failed.emit("Failed to create duplicate theme")
                 else:
-                    self.operation_failed.emit(
-                        result.error or "Failed to create duplicate theme"
-                    )
+                    self.operation_failed.emit(result.error or "Failed to create duplicate theme")
 
             except Exception as e:
                 logger.error(f"Failed to duplicate theme: {e}")
@@ -195,9 +193,7 @@ class ThemePersistenceManager(QObject):
                 result = execute_command("theme.deleteCustomTheme", theme_id=theme.id)
 
                 if result.success:
-                    QMessageBox.information(
-                        self._parent, "Success", "Theme deleted successfully!"
-                    )
+                    QMessageBox.information(self._parent, "Success", "Theme deleted successfully!")
                     self.theme_deleted.emit(theme.id)
                     return True
                 else:
@@ -249,9 +245,7 @@ class ThemePersistenceManager(QObject):
             result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
 
             if result.success:
-                QMessageBox.information(
-                    self._parent, "Success", "Theme saved successfully!"
-                )
+                QMessageBox.information(self._parent, "Success", "Theme saved successfully!")
                 self.theme_saved.emit(theme.id)
                 return True
             else:
@@ -300,9 +294,7 @@ class ThemePersistenceManager(QObject):
             result = execute_command("theme.applyTheme", theme_id=theme.id)
 
             if result.success:
-                QMessageBox.information(
-                    self._parent, "Success", "Theme applied successfully!"
-                )
+                QMessageBox.information(self._parent, "Success", "Theme applied successfully!")
                 return True
             else:
                 self.operation_failed.emit(f"Failed to apply theme: {result.error}")
@@ -332,9 +324,7 @@ class ThemePersistenceManager(QObject):
 
                 if result.success and result.value:
                     theme_id = result.value.get("theme_id")
-                    QMessageBox.information(
-                        self._parent, "Success", "Theme imported successfully!"
-                    )
+                    QMessageBox.information(self._parent, "Success", "Theme imported successfully!")
                     self.theme_imported.emit(theme_id)
                     return theme_id
                 else:
@@ -348,9 +338,7 @@ class ThemePersistenceManager(QObject):
 
         return None
 
-    def export_theme(
-        self, theme: Theme, colors: Optional[dict[str, str]] = None
-    ) -> bool:
+    def export_theme(self, theme: Theme, colors: Optional[dict[str, str]] = None) -> bool:
         """
         Export theme to file.
 
@@ -382,9 +370,7 @@ class ThemePersistenceManager(QObject):
                 )
 
                 if result.success:
-                    QMessageBox.information(
-                        self._parent, "Success", "Theme exported successfully!"
-                    )
+                    QMessageBox.information(self._parent, "Success", "Theme exported successfully!")
                     return True
                 else:
                     self.operation_failed.emit(result.error or "Failed to export theme")
@@ -419,9 +405,7 @@ class ThemePersistenceManager(QObject):
 
                     # Save imported theme using command
                     theme_data = theme.to_dict()
-                    result = execute_command(
-                        "theme.saveCustomTheme", theme_data=theme_data
-                    )
+                    result = execute_command("theme.saveCustomTheme", theme_data=theme_data)
 
                     if result.success:
                         QMessageBox.information(
@@ -432,9 +416,7 @@ class ThemePersistenceManager(QObject):
                         self.theme_imported.emit(theme.id)
                         return theme.id
                     else:
-                        self.operation_failed.emit(
-                            result.error or "Failed to save imported theme"
-                        )
+                        self.operation_failed.emit(result.error or "Failed to save imported theme")
                         return None
                 else:
                     self.operation_failed.emit("Failed to parse VSCode theme file")

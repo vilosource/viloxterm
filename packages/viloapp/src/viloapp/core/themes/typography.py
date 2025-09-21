@@ -134,9 +134,7 @@ class ThemeTypography:
         }
 
         return cls(
-            font_family=data.get(
-                "fontFamily", "Fira Code, Consolas, Monaco, monospace"
-            ),
+            font_family=data.get("fontFamily", "Fira Code, Consolas, Monaco, monospace"),
             font_size_base=data.get("fontSizeBase", 14),
             line_height=data.get("lineHeight", 1.5),
             font_weight_normal=data.get("fontWeightNormal", 400),

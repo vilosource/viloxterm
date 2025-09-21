@@ -9,9 +9,4 @@ from .editor import CodeEditor
 from .widget import EditorWidgetFactory
 from .syntax import SyntaxHighlighter
 
-__all__ = [
-    "EditorPlugin",
-    "CodeEditor",
-    "EditorWidgetFactory",
-    "SyntaxHighlighter"
-]
+__all__ = ["EditorPlugin", "CodeEditor", "EditorWidgetFactory", "SyntaxHighlighter"]

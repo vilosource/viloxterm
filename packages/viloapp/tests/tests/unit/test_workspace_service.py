@@ -121,9 +121,7 @@ class TestWorkspaceServiceWidgetRegistry:
 
         # Assert
         assert result is True
-        service_with_mocks._widget_registry.has_widget.assert_called_once_with(
-            "test-widget"
-        )
+        service_with_mocks._widget_registry.has_widget.assert_called_once_with("test-widget")
 
     def test_register_widget_delegates_to_registry(self, service_with_mocks):
         """Test register_widget delegates to widget registry."""
@@ -149,9 +147,7 @@ class TestWorkspaceServiceWidgetRegistry:
 
         # Assert
         assert result is True
-        service_with_mocks._widget_registry.unregister_widget.assert_called_once_with(
-            "test-widget"
-        )
+        service_with_mocks._widget_registry.unregister_widget.assert_called_once_with("test-widget")
 
     def test_focus_widget_delegates_to_tab_manager(self, service_with_mocks):
         """Test focus_widget delegates to tab manager."""
@@ -163,9 +159,7 @@ class TestWorkspaceServiceWidgetRegistry:
 
         # Assert
         assert result is True
-        service_with_mocks._tab_manager.focus_widget.assert_called_once_with(
-            "test-widget"
-        )
+        service_with_mocks._tab_manager.focus_widget.assert_called_once_with("test-widget")
 
     def test_get_widget_tab_index_returns_correct_index(self, service_with_mocks):
         """Test get_widget_tab_index returns correct tab index."""
@@ -195,14 +189,10 @@ class TestWorkspaceServiceWidgetRegistry:
             "test-widget"
         )
 
-    def test_update_registry_after_tab_close_delegates_correctly(
-        self, service_with_mocks
-    ):
+    def test_update_registry_after_tab_close_delegates_correctly(self, service_with_mocks):
         """Test update_registry_after_tab_close delegates with correct parameters."""
         # Arrange
-        service_with_mocks._widget_registry.update_registry_after_tab_close.return_value = (
-            3
-        )
+        service_with_mocks._widget_registry.update_registry_after_tab_close.return_value = 3
 
         # Act
         result = service_with_mocks.update_registry_after_tab_close(1, "test-widget")
@@ -250,9 +240,7 @@ class TestWorkspaceServiceTabOperations:
 
         # Assert
         assert result == 1
-        service_with_workspace._tab_manager.add_editor_tab.assert_called_once_with(
-            "MyEditor"
-        )
+        service_with_workspace._tab_manager.add_editor_tab.assert_called_once_with("MyEditor")
 
         # Check notification
         assert len(observers) == 1
@@ -285,9 +273,7 @@ class TestWorkspaceServiceTabOperations:
 
         # Assert
         assert result == 2
-        service_with_workspace._tab_manager.add_terminal_tab.assert_called_once_with(
-            "MyTerminal"
-        )
+        service_with_workspace._tab_manager.add_terminal_tab.assert_called_once_with("MyTerminal")
 
         # Check notification
         assert len(observers) == 1
@@ -304,9 +290,7 @@ class TestWorkspaceServiceTabOperations:
         # Don't mark as initialized
 
         # Act & Assert
-        with pytest.raises(
-            RuntimeError, match="Service WorkspaceService is not initialized"
-        ):
+        with pytest.raises(RuntimeError, match="Service WorkspaceService is not initialized"):
             service.add_editor_tab("Test")
 
     @patch("viloapp.core.context.manager.context_manager")
@@ -328,9 +312,7 @@ class TestWorkspaceServiceTabOperations:
         )
 
         # Act
-        result = service_with_workspace.add_app_widget(
-            widget_type, "settings-1", "Settings"
-        )
+        result = service_with_workspace.add_app_widget(widget_type, "settings-1", "Settings")
 
         # Assert
         assert result is True
@@ -358,9 +340,7 @@ class TestWorkspaceServiceTabOperations:
         )
 
         # Act
-        result = service_with_workspace.add_app_widget(
-            widget_type, "settings-1", "Settings"
-        )
+        result = service_with_workspace.add_app_widget(widget_type, "settings-1", "Settings")
 
         # Assert
         assert result is False
@@ -399,9 +379,7 @@ class TestWorkspaceServiceTabOperations:
         """Test close_tab without index uses current tab index."""
         # Arrange
         service_with_workspace._workspace.tab_widget.currentIndex.return_value = 2
-        service_with_workspace._workspace.tab_widget.tabText.return_value = (
-            "Current Tab"
-        )
+        service_with_workspace._workspace.tab_widget.tabText.return_value = "Current Tab"
         service_with_workspace._tab_manager.close_tab.return_value = True
         service_with_workspace._tab_manager.get_tab_count.return_value = 1
 
@@ -436,9 +414,7 @@ class TestWorkspaceServiceTabOperations:
         assert result == 5
         service_with_workspace._tab_manager.get_tab_count.assert_called_once()
 
-    def test_switch_to_tab_delegates_and_notifies_on_success(
-        self, service_with_workspace
-    ):
+    def test_switch_to_tab_delegates_and_notifies_on_success(self, service_with_workspace):
         """Test switch_to_tab delegates to manager and notifies on success."""
         # Arrange
         service_with_workspace._tab_manager.switch_to_tab.return_value = True
@@ -513,9 +489,7 @@ class TestWorkspaceServicePaneOperations:
 
         # Assert
         assert result == "pane-2"
-        service_with_workspace._pane_manager.split_active_pane.assert_called_once_with(
-            "vertical"
-        )
+        service_with_workspace._pane_manager.split_active_pane.assert_called_once_with("vertical")
 
         # Check notification
         assert len(observers) == 1
@@ -540,9 +514,7 @@ class TestWorkspaceServicePaneOperations:
 
         # Assert
         assert result == "pane-2"
-        service_with_workspace._pane_manager.split_active_pane.assert_called_once_with(
-            None
-        )
+        service_with_workspace._pane_manager.split_active_pane.assert_called_once_with(None)
 
     def test_split_active_pane_failure_does_not_notify(self, service_with_workspace):
         """Test split_active_pane failure does not send notification."""
@@ -604,9 +576,7 @@ class TestWorkspaceServicePaneOperations:
 
         # Assert
         assert result is True
-        service_with_workspace._pane_manager.focus_pane.assert_called_once_with(
-            "pane-3"
-        )
+        service_with_workspace._pane_manager.focus_pane.assert_called_once_with("pane-3")
 
         # Check notification
         assert len(observers) == 1
@@ -632,9 +602,7 @@ class TestWorkspaceServicePaneOperations:
 
         # Assert
         assert result is True
-        mock_context_manager.set.assert_called_once_with(
-            "workbench.panes.numbersVisible", True
-        )
+        mock_context_manager.set.assert_called_once_with("workbench.panes.numbersVisible", True)
 
         # Check notification
         assert len(observers) == 1
@@ -642,9 +610,7 @@ class TestWorkspaceServicePaneOperations:
         assert event == "pane_numbers_toggled"
         assert data["visible"] is True
 
-    def test_navigate_in_direction_tracks_navigation_and_notifies(
-        self, service_with_workspace
-    ):
+    def test_navigate_in_direction_tracks_navigation_and_notifies(self, service_with_workspace):
         """Test navigate_in_direction tracks from/to panes and notifies."""
         # Arrange
         service_with_workspace._pane_manager.get_active_pane_id.side_effect = [
@@ -663,9 +629,7 @@ class TestWorkspaceServicePaneOperations:
 
         # Assert
         assert result is True
-        service_with_workspace._pane_manager.navigate_in_direction.assert_called_once_with(
-            "right"
-        )
+        service_with_workspace._pane_manager.navigate_in_direction.assert_called_once_with("right")
 
         # Check notification
         assert len(observers) == 1
@@ -690,9 +654,7 @@ class TestWorkspaceServicePaneOperations:
     def test_get_active_pane_id_delegates_to_manager(self, service_with_workspace):
         """Test get_active_pane_id delegates to pane manager."""
         # Arrange
-        service_with_workspace._pane_manager.get_active_pane_id.return_value = (
-            "active-pane"
-        )
+        service_with_workspace._pane_manager.get_active_pane_id.return_value = "active-pane"
 
         # Act
         result = service_with_workspace.get_active_pane_id()
@@ -764,9 +726,7 @@ class TestWorkspaceServiceLayoutOperations:
         """Test restore_layout handles workspace exceptions gracefully."""
         # Arrange
         state = {"invalid": "state"}
-        service_with_workspace._workspace.set_state.side_effect = ValueError(
-            "Invalid state"
-        )
+        service_with_workspace._workspace.set_state.side_effect = ValueError("Invalid state")
 
         # Act
         result = service_with_workspace.restore_layout(state)
@@ -812,14 +772,10 @@ class TestWorkspaceServiceNavigationOperations:
         assert result is True
         service_with_workspace._pane_manager.navigate_to_next_pane.assert_called_once()
 
-    def test_navigate_to_previous_pane_delegates_to_manager(
-        self, service_with_workspace
-    ):
+    def test_navigate_to_previous_pane_delegates_to_manager(self, service_with_workspace):
         """Test navigate_to_previous_pane delegates to pane manager."""
         # Arrange
-        service_with_workspace._pane_manager.navigate_to_previous_pane.return_value = (
-            True
-        )
+        service_with_workspace._pane_manager.navigate_to_previous_pane.return_value = True
 
         # Act
         result = service_with_workspace.navigate_to_previous_pane()
@@ -888,29 +844,19 @@ class TestWorkspaceServiceErrorConditions:
         # Don't mark as initialized
 
         # Act & Assert
-        with pytest.raises(
-            RuntimeError, match="Service WorkspaceService is not initialized"
-        ):
+        with pytest.raises(RuntimeError, match="Service WorkspaceService is not initialized"):
             service.add_editor_tab("Test")
 
-        with pytest.raises(
-            RuntimeError, match="Service WorkspaceService is not initialized"
-        ):
+        with pytest.raises(RuntimeError, match="Service WorkspaceService is not initialized"):
             service.add_terminal_tab("Test")
 
-        with pytest.raises(
-            RuntimeError, match="Service WorkspaceService is not initialized"
-        ):
+        with pytest.raises(RuntimeError, match="Service WorkspaceService is not initialized"):
             service.close_tab(0)
 
-        with pytest.raises(
-            RuntimeError, match="Service WorkspaceService is not initialized"
-        ):
+        with pytest.raises(RuntimeError, match="Service WorkspaceService is not initialized"):
             service.switch_to_tab(0)
 
-        with pytest.raises(
-            RuntimeError, match="Service WorkspaceService is not initialized"
-        ):
+        with pytest.raises(RuntimeError, match="Service WorkspaceService is not initialized"):
             service.split_active_pane("horizontal")
 
     def test_operations_with_none_workspace_handle_gracefully(self):

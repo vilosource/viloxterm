@@ -9,10 +9,10 @@ from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
 
-
 @dataclass
 class ValidationError:
     """Represents a validation error."""
+
     field: str
     message: str
     severity: str = "error"  # error, warning, info
@@ -22,6 +22,7 @@ class ValidationError:
 @dataclass
 class ValidationResult:
     """Result of a validation operation."""
+
     valid: bool
     errors: List[ValidationError] = field(default_factory=list)
     warnings: List[ValidationError] = field(default_factory=list)
@@ -35,7 +36,7 @@ class ValidationResult:
         """Add a warning to the result."""
         self.warnings.append(ValidationError(field, message, "warning", value))
 
-    def merge(self, other: 'ValidationResult') -> None:
+    def merge(self, other: "ValidationResult") -> None:
         """Merge another validation result into this one."""
         self.errors.extend(other.errors)
         self.warnings.extend(other.warnings)
@@ -79,16 +80,32 @@ class ManifestValidator(BaseValidator):
 
     # Required fields in manifest
     REQUIRED_FIELDS = {
-        "name", "displayName", "version", "description",
-        "author", "license", "engines"
+        "name",
+        "displayName",
+        "version",
+        "description",
+        "author",
+        "license",
+        "engines",
     }
 
     # Valid contribution points
     VALID_CONTRIBUTION_POINTS = {
-        "commands", "menus", "keybindings", "languages", "grammars",
-        "themes", "snippets", "debuggers", "breakpoints", "views",
-        "viewsContainers", "problemMatchers", "problemPatterns",
-        "taskDefinitions", "configuration"
+        "commands",
+        "menus",
+        "keybindings",
+        "languages",
+        "grammars",
+        "themes",
+        "snippets",
+        "debuggers",
+        "breakpoints",
+        "views",
+        "viewsContainers",
+        "problemMatchers",
+        "problemPatterns",
+        "taskDefinitions",
+        "configuration",
     }
 
     # Valid activation event patterns
@@ -161,7 +178,7 @@ class ManifestValidator(BaseValidator):
             path = Path(manifest)
             if path.exists():
                 # File path
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(path, "r", encoding="utf-8") as f:
                     return json.load(f)
             else:
                 # JSON string
@@ -181,16 +198,28 @@ class ManifestValidator(BaseValidator):
         # Check for unknown top-level fields in strict mode
         if self.strict:
             known_fields = {
-                "name", "displayName", "version", "description", "author",
-                "license", "keywords", "engines", "categories", "main",
-                "icon", "galleryBanner", "preview", "extensionPack",
-                "extensionDependencies", "activationEvents", "contributes"
+                "name",
+                "displayName",
+                "version",
+                "description",
+                "author",
+                "license",
+                "keywords",
+                "engines",
+                "categories",
+                "main",
+                "icon",
+                "galleryBanner",
+                "preview",
+                "extensionPack",
+                "extensionDependencies",
+                "activationEvents",
+                "contributes",
             }
             unknown_fields = set(data.keys()) - known_fields
             if unknown_fields:
                 result.add_warning(
-                    "manifest",
-                    f"Unknown fields in manifest: {', '.join(unknown_fields)}"
+                    "manifest", f"Unknown fields in manifest: {', '.join(unknown_fields)}"
                 )
 
     def _validate_required_fields(self, data: Dict[str, Any], result: ValidationResult) -> None:
@@ -208,11 +237,11 @@ class ManifestValidator(BaseValidator):
             return
 
         # Check format
-        if not re.match(r'^[a-z0-9][a-z0-9-_.]*[a-z0-9]$', name):
+        if not re.match(r"^[a-z0-9][a-z0-9-_.]*[a-z0-9]$", name):
             result.add_error(
                 "name",
                 "Name must be lowercase, start and end with alphanumeric characters, "
-                "and contain only letters, numbers, hyphens, dots, and underscores"
+                "and contain only letters, numbers, hyphens, dots, and underscores",
             )
 
         # Check length
@@ -238,8 +267,7 @@ class ManifestValidator(BaseValidator):
             semver.VersionInfo.parse(version)
         except ValueError:
             result.add_error(
-                "version",
-                f"Version '{version}' is not a valid semantic version (e.g., '1.0.0')"
+                "version", f"Version '{version}' is not a valid semantic version (e.g., '1.0.0')"
             )
 
     def _validate_author(self, data: Dict[str, Any], result: ValidationResult) -> None:
@@ -260,14 +288,16 @@ class ManifestValidator(BaseValidator):
             # Validate email format if present
             if "email" in author:
                 email = author["email"]
-                if not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+                if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
                     result.add_warning("author.email", f"Email '{email}' may not be valid")
 
             # Validate URL format if present
             if "url" in author:
                 url = author["url"]
-                if not re.match(r'^https?://', url):
-                    result.add_warning("author.url", f"URL '{url}' should start with http:// or https://")
+                if not re.match(r"^https?://", url):
+                    result.add_warning(
+                        "author.url", f"URL '{url}' should start with http:// or https://"
+                    )
         else:
             result.add_error("author", "Author must be a string or object with 'name' field")
 
@@ -292,10 +322,9 @@ class ManifestValidator(BaseValidator):
                 continue
 
             # Basic version constraint validation - allow for >=, <=, ~, ^, =, or just version
-            if not re.match(r'^([><=^~]+)?[\d.]+', constraint):
+            if not re.match(r"^([><=^~]+)?[\d.]+", constraint):
                 result.add_warning(
-                    f"engines.{engine}",
-                    f"Version constraint '{constraint}' may not be valid"
+                    f"engines.{engine}", f"Version constraint '{constraint}' may not be valid"
                 )
 
     def _validate_activation_events(self, data: Dict[str, Any], result: ValidationResult) -> None:
@@ -322,8 +351,7 @@ class ManifestValidator(BaseValidator):
 
             if not valid:
                 result.add_error(
-                    f"activationEvents[{i}]",
-                    f"Invalid activation event format: '{event}'"
+                    f"activationEvents[{i}]", f"Invalid activation event format: '{event}'"
                 )
 
     def _validate_contributions(self, data: Dict[str, Any], result: ValidationResult) -> None:
@@ -339,10 +367,7 @@ class ManifestValidator(BaseValidator):
         # Check contribution points
         for point, config in contributes.items():
             if point not in self.VALID_CONTRIBUTION_POINTS:
-                result.add_warning(
-                    f"contributes.{point}",
-                    f"Unknown contribution point: '{point}'"
-                )
+                result.add_warning(f"contributes.{point}", f"Unknown contribution point: '{point}'")
 
             # Validate specific contribution types
             if point == "commands":
@@ -350,7 +375,9 @@ class ManifestValidator(BaseValidator):
             elif point == "configuration":
                 self._validate_configuration_contribution(config, result, f"contributes.{point}")
 
-    def _validate_commands_contribution(self, commands: Any, result: ValidationResult, prefix: str) -> None:
+    def _validate_commands_contribution(
+        self, commands: Any, result: ValidationResult, prefix: str
+    ) -> None:
         """Validate commands contribution."""
         if not isinstance(commands, list):
             result.add_error(prefix, "Commands contribution must be an array")
@@ -368,16 +395,17 @@ class ManifestValidator(BaseValidator):
                 result.add_error(f"{cmd_prefix}.command", "Command ID is required")
             else:
                 # Check command ID format
-                if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9._-]*$', cmd["command"]):
+                if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$", cmd["command"]):
                     result.add_error(
-                        f"{cmd_prefix}.command",
-                        f"Invalid command ID format: '{cmd['command']}'"
+                        f"{cmd_prefix}.command", f"Invalid command ID format: '{cmd['command']}'"
                     )
 
             if "title" not in cmd:
                 result.add_error(f"{cmd_prefix}.title", "Command title is required")
 
-    def _validate_configuration_contribution(self, config: Any, result: ValidationResult, prefix: str) -> None:
+    def _validate_configuration_contribution(
+        self, config: Any, result: ValidationResult, prefix: str
+    ) -> None:
         """Validate configuration contribution."""
         if not isinstance(config, dict):
             result.add_error(prefix, "Configuration contribution must be an object")
@@ -398,11 +426,24 @@ class ManifestValidator(BaseValidator):
             return
 
         valid_categories = {
-            "Azure", "Data Science", "Debuggers", "Extension Packs",
-            "Education", "Formatters", "Keymaps", "Language Packs",
-            "Linters", "Machine Learning", "Notebooks", "Other",
-            "Programming Languages", "SCM Providers", "Snippets",
-            "Testing", "Themes", "Visualization"
+            "Azure",
+            "Data Science",
+            "Debuggers",
+            "Extension Packs",
+            "Education",
+            "Formatters",
+            "Keymaps",
+            "Language Packs",
+            "Linters",
+            "Machine Learning",
+            "Notebooks",
+            "Other",
+            "Programming Languages",
+            "SCM Providers",
+            "Snippets",
+            "Testing",
+            "Themes",
+            "Visualization",
         }
 
         for i, category in enumerate(categories):
@@ -411,7 +452,7 @@ class ManifestValidator(BaseValidator):
             elif category not in valid_categories:
                 result.add_warning(
                     f"categories[{i}]",
-                    f"Unknown category: '{category}'. Valid categories: {', '.join(sorted(valid_categories))}"
+                    f"Unknown category: '{category}'. Valid categories: {', '.join(sorted(valid_categories))}",
                 )
 
     def _validate_keywords(self, data: Dict[str, Any], result: ValidationResult) -> None:
@@ -443,10 +484,7 @@ class ManifestValidator(BaseValidator):
 
         # Require homepage or repository
         if "homepage" not in data and "repository" not in data:
-            result.add_warning(
-                "metadata",
-                "Consider adding 'homepage' or 'repository' field"
-            )
+            result.add_warning("metadata", "Consider adding 'homepage' or 'repository' field")
 
 
 class VersionCompatibilityChecker(BaseValidator):
@@ -480,8 +518,7 @@ class VersionCompatibilityChecker(BaseValidator):
                 self._check_python_compatibility(constraint, result)
             else:
                 result.add_warning(
-                    f"engines.{engine}",
-                    f"Unknown engine '{engine}' - cannot verify compatibility"
+                    f"engines.{engine}", f"Unknown engine '{engine}' - cannot verify compatibility"
                 )
 
         return result
@@ -495,21 +532,25 @@ class VersionCompatibilityChecker(BaseValidator):
                 if self.host_version < min_version:
                     result.add_error(
                         "engines.viloapp",
-                        f"Host version {self.host_version} is below minimum required {min_version}"
+                        f"Host version {self.host_version} is below minimum required {min_version}",
                     )
             elif constraint.startswith("^"):
                 base_version = semver.VersionInfo.parse(constraint[1:].strip())
-                if not (base_version.major == self.host_version.major and
-                       self.host_version >= base_version):
+                if not (
+                    base_version.major == self.host_version.major
+                    and self.host_version >= base_version
+                ):
                     result.add_error(
                         "engines.viloapp",
-                        f"Host version {self.host_version} is not compatible with ^{base_version}"
+                        f"Host version {self.host_version} is not compatible with ^{base_version}",
                     )
             else:
                 # Try to parse as a direct version constraint
                 # If it doesn't start with a known operator, validate the format at least
-                if not re.match(r'^([><=^~]+)?[\d.]+', constraint):
-                    result.add_error("engines.viloapp", f"Invalid version constraint format: '{constraint}'")
+                if not re.match(r"^([><=^~]+)?[\d.]+", constraint):
+                    result.add_error(
+                        "engines.viloapp", f"Invalid version constraint format: '{constraint}'"
+                    )
             # Add more constraint types as needed
         except ValueError as e:
             result.add_error("engines.viloapp", f"Invalid version constraint: {e}")
@@ -518,8 +559,7 @@ class VersionCompatibilityChecker(BaseValidator):
         """Check Python compatibility."""
         # This would check against current Python version
         result.add_warning(
-            "engines.python",
-            "Python version compatibility checking not fully implemented"
+            "engines.python", "Python version compatibility checking not fully implemented"
         )
 
 
@@ -557,27 +597,26 @@ class DependencyValidator(BaseValidator):
 
         return result
 
-    def _validate_dependency(self, plugin_id: str, version_constraint: str, result: ValidationResult) -> None:
+    def _validate_dependency(
+        self, plugin_id: str, version_constraint: str, result: ValidationResult
+    ) -> None:
         """Validate a single dependency."""
         # Check plugin ID format
-        if not re.match(r'^[a-z0-9][a-z0-9-_.]*[a-z0-9]$', plugin_id):
+        if not re.match(r"^[a-z0-9][a-z0-9-_.]*[a-z0-9]$", plugin_id):
             result.add_error(
-                f"dependencies.{plugin_id}",
-                f"Invalid plugin ID format: '{plugin_id}'"
+                f"dependencies.{plugin_id}", f"Invalid plugin ID format: '{plugin_id}'"
             )
 
         # Check if plugin is available
         if self.available_plugins and plugin_id not in self.available_plugins:
             result.add_warning(
-                f"dependencies.{plugin_id}",
-                f"Plugin '{plugin_id}' is not available"
+                f"dependencies.{plugin_id}", f"Plugin '{plugin_id}' is not available"
             )
 
         # Validate version constraint format - allow *, >=, <=, ~, ^, =, or just version
-        if version_constraint != "*" and not re.match(r'^([><=^~]+)?[\d.]+.*', version_constraint):
+        if version_constraint != "*" and not re.match(r"^([><=^~]+)?[\d.]+.*", version_constraint):
             result.add_error(
-                f"dependencies.{plugin_id}",
-                f"Invalid version constraint: '{version_constraint}'"
+                f"dependencies.{plugin_id}", f"Invalid version constraint: '{version_constraint}'"
             )
 
 
@@ -585,13 +624,19 @@ class PermissionValidator(BaseValidator):
     """Validator for plugin permissions."""
 
     VALID_PERMISSION_CATEGORIES = {
-        "filesystem", "network", "system", "ui", "clipboard",
-        "notification", "workspace", "editor", "terminal", "debug"
+        "filesystem",
+        "network",
+        "system",
+        "ui",
+        "clipboard",
+        "notification",
+        "workspace",
+        "editor",
+        "terminal",
+        "debug",
     }
 
-    VALID_PERMISSION_SCOPES = {
-        "read", "write", "execute", "create", "delete", "modify"
-    }
+    VALID_PERMISSION_SCOPES = {"read", "write", "execute", "create", "delete", "modify"}
 
     def validate(self, permissions: Union[List[str], Dict[str, Any]]) -> ValidationResult:
         """
@@ -616,7 +661,9 @@ class PermissionValidator(BaseValidator):
 
         return result
 
-    def _validate_permission_string(self, permission: str, result: ValidationResult, field: str) -> None:
+    def _validate_permission_string(
+        self, permission: str, result: ValidationResult, field: str
+    ) -> None:
         """Validate a permission string."""
         if not isinstance(permission, str):
             result.add_error(field, "Permission must be a string")
@@ -625,7 +672,10 @@ class PermissionValidator(BaseValidator):
         # Parse permission format: category:scope:resource
         parts = permission.split(":")
         if len(parts) < 2:
-            result.add_error(field, f"Invalid permission format: '{permission}'. Expected 'category:scope' or 'category:scope:resource'")
+            result.add_error(
+                field,
+                f"Invalid permission format: '{permission}'. Expected 'category:scope' or 'category:scope:resource'",
+            )
             return
 
         category, scope = parts[0], parts[1]
@@ -633,24 +683,23 @@ class PermissionValidator(BaseValidator):
         if category not in self.VALID_PERMISSION_CATEGORIES:
             result.add_error(
                 field,
-                f"Invalid permission category: '{category}'. Valid categories: {', '.join(sorted(self.VALID_PERMISSION_CATEGORIES))}"
+                f"Invalid permission category: '{category}'. Valid categories: {', '.join(sorted(self.VALID_PERMISSION_CATEGORIES))}",
             )
 
         if scope not in self.VALID_PERMISSION_SCOPES:
             result.add_error(
                 field,
-                f"Invalid permission scope: '{scope}'. Valid scopes: {', '.join(sorted(self.VALID_PERMISSION_SCOPES))}"
+                f"Invalid permission scope: '{scope}'. Valid scopes: {', '.join(sorted(self.VALID_PERMISSION_SCOPES))}",
             )
 
-    def _validate_permission_category(self, category: str, scopes: Any, result: ValidationResult) -> None:
+    def _validate_permission_category(
+        self, category: str, scopes: Any, result: ValidationResult
+    ) -> None:
         """Validate a permission category."""
         field = f"permissions.{category}"
 
         if category not in self.VALID_PERMISSION_CATEGORIES:
-            result.add_error(
-                field,
-                f"Invalid permission category: '{category}'"
-            )
+            result.add_error(field, f"Invalid permission category: '{category}'")
 
         if not isinstance(scopes, list):
             result.add_error(field, "Permission scopes must be an array")
@@ -658,18 +707,13 @@ class PermissionValidator(BaseValidator):
 
         for i, scope in enumerate(scopes):
             if scope not in self.VALID_PERMISSION_SCOPES:
-                result.add_error(
-                    f"{field}[{i}]",
-                    f"Invalid permission scope: '{scope}'"
-                )
+                result.add_error(f"{field}[{i}]", f"Invalid permission scope: '{scope}'")
 
 
 class ConfigurationSchemaValidator(BaseValidator):
     """Validator for plugin configuration schemas."""
 
-    VALID_TYPES = {
-        "string", "number", "integer", "boolean", "array", "object", "null"
-    }
+    VALID_TYPES = {"string", "number", "integer", "boolean", "array", "object", "null"}
 
     def validate(self, schema: Dict[str, Any]) -> ValidationResult:
         """
@@ -724,7 +768,7 @@ class ConfigurationSchemaValidator(BaseValidator):
             if prop_type not in self.VALID_TYPES:
                 result.add_error(
                     f"{prefix}.type",
-                    f"Invalid type: '{prop_type}'. Valid types: {', '.join(sorted(self.VALID_TYPES))}"
+                    f"Invalid type: '{prop_type}'. Valid types: {', '.join(sorted(self.VALID_TYPES))}",
                 )
 
         # Validate type-specific constraints
@@ -737,7 +781,10 @@ class ConfigurationSchemaValidator(BaseValidator):
 
 # Convenience functions for validation
 
-def validate_manifest(manifest: Union[str, Path, Dict[str, Any]], strict: bool = False) -> ValidationResult:
+
+def validate_manifest(
+    manifest: Union[str, Path, Dict[str, Any]], strict: bool = False
+) -> ValidationResult:
     """
     Validate a plugin manifest.
 
@@ -752,7 +799,9 @@ def validate_manifest(manifest: Union[str, Path, Dict[str, Any]], strict: bool =
     return validator.validate(manifest)
 
 
-def validate_version_compatibility(version_constraints: Dict[str, str], host_version: str = "2.0.0") -> ValidationResult:
+def validate_version_compatibility(
+    version_constraints: Dict[str, str], host_version: str = "2.0.0"
+) -> ValidationResult:
     """
     Validate version compatibility.
 
@@ -767,7 +816,9 @@ def validate_version_compatibility(version_constraints: Dict[str, str], host_ver
     return validator.validate(version_constraints)
 
 
-def validate_dependencies(dependencies: Union[List[str], Dict[str, str]], available_plugins: Optional[Set[str]] = None) -> ValidationResult:
+def validate_dependencies(
+    dependencies: Union[List[str], Dict[str, str]], available_plugins: Optional[Set[str]] = None
+) -> ValidationResult:
     """
     Validate plugin dependencies.
 
@@ -810,7 +861,9 @@ def validate_configuration_schema(schema: Dict[str, Any]) -> ValidationResult:
     return validator.validate(schema)
 
 
-def validate_plugin_complete(manifest_path: Union[str, Path], strict: bool = False) -> ValidationResult:
+def validate_plugin_complete(
+    manifest_path: Union[str, Path], strict: bool = False
+) -> ValidationResult:
     """
     Perform complete validation of a plugin.
 
@@ -832,7 +885,7 @@ def validate_plugin_complete(manifest_path: Union[str, Path], strict: bool = Fal
 
     # Parse manifest for additional validations
     try:
-        with open(manifest_path, 'r', encoding='utf-8') as f:
+        with open(manifest_path, "r", encoding="utf-8") as f:
             manifest_data = json.load(f)
     except Exception as e:
         result.add_error("manifest", f"Failed to parse manifest: {e}")

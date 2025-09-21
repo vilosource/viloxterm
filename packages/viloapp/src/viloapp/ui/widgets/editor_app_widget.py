@@ -144,9 +144,7 @@ class EditorAppWidget(AppWidget):
             self.editor.horizontalScrollBar().setValue(
                 state["scroll_position"].get("horizontal", 0)
             )
-            self.editor.verticalScrollBar().setValue(
-                state["scroll_position"].get("vertical", 0)
-            )
+            self.editor.verticalScrollBar().setValue(state["scroll_position"].get("vertical", 0))
 
     def get_title(self) -> str:
         """Get editor title."""

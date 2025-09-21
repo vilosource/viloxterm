@@ -5,8 +5,7 @@ ensuring type safety and clear contracts between layers.
 """
 
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
-from enum import Enum
+from typing import Any, Dict, Optional
 
 from .workspace_models import WidgetType
 
@@ -21,6 +20,7 @@ class SplitPaneRequest:
         ratio: Split ratio (0.1 to 0.9)
         new_widget_type: Type of widget for the new pane
     """
+
     pane_id: str
     orientation: str  # "horizontal" or "vertical"
     ratio: float = 0.5
@@ -42,6 +42,7 @@ class ClosePaneRequest:
         pane_id: ID of the pane to close
         force: If True, close even if pane has unsaved data
     """
+
     pane_id: str
     force: bool = False
 
@@ -57,6 +58,7 @@ class TabOperationRequest:
         tab_type: Type of tab for add operations
         widget_type: Initial widget type for new tabs
     """
+
     operation: str  # "add", "close", "rename", "duplicate"
     tab_index: Optional[int] = None
     tab_name: Optional[str] = None
@@ -67,7 +69,9 @@ class TabOperationRequest:
         """Validate tab operation request."""
         valid_operations = {"add", "close", "rename", "duplicate"}
         if self.operation not in valid_operations:
-            raise ValueError(f"Invalid operation: {self.operation}. Must be one of {valid_operations}")
+            raise ValueError(
+                f"Invalid operation: {self.operation}. Must be one of {valid_operations}"
+            )
 
         # Validate required fields for specific operations
         if self.operation == "close" and self.tab_index is None:
@@ -86,6 +90,7 @@ class PaneFocusRequest:
         pane_id: ID of the pane to focus
         tab_index: Optional tab index if focusing pane in different tab
     """
+
     pane_id: str
     tab_index: Optional[int] = None
 
@@ -99,6 +104,7 @@ class WidgetStateUpdateRequest:
         state_updates: Dictionary of state updates to apply
         merge: If True, merge with existing state; if False, replace
     """
+
     pane_id: str
     state_updates: Dict[str, Any]
     merge: bool = True
@@ -118,6 +124,7 @@ class SplitPaneResponse:
         new_pane_id: ID of the newly created pane
         split_config: Configuration used for the split
     """
+
     original_pane_id: str
     new_pane_id: str
     split_config: Dict[str, Any]
@@ -132,6 +139,7 @@ class TabOperationResponse:
         tab_index: Index of the affected tab
         operation_data: Additional data specific to the operation
     """
+
     tab_id: str
     tab_index: int
     operation_data: Optional[Dict[str, Any]] = None

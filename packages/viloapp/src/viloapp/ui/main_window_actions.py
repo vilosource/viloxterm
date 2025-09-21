@@ -34,9 +34,7 @@ class MainWindowActionManager:
         file_menu.addAction(new_tab_action)
 
         new_tab_with_type_action = QAction("New Tab (Choose Type)...", self.main_window)
-        new_tab_with_type_action.setToolTip(
-            "Create a new tab with specific type (Ctrl+Shift+T)"
-        )
+        new_tab_with_type_action.setToolTip("Create a new tab with specific type (Ctrl+Shift+T)")
         new_tab_with_type_action.triggered.connect(
             lambda: self.main_window.execute_command("workspace.newTabWithType")
         )
@@ -49,9 +47,7 @@ class MainWindowActionManager:
 
         # Settings action
         settings_action = QAction("Settings...", self.main_window)
-        settings_action.setToolTip(
-            "Configure application settings and defaults (Ctrl+,)"
-        )
+        settings_action.setToolTip("Configure application settings and defaults (Ctrl+,)")
         settings_action.triggered.connect(
             lambda: self.main_window.execute_command("settings.openSettings")
         )
@@ -59,9 +55,7 @@ class MainWindowActionManager:
 
         # Keyboard Shortcuts action (now using commands)
         keyboard_shortcuts_action = QAction("Keyboard Shortcuts...", self.main_window)
-        keyboard_shortcuts_action.setToolTip(
-            "Configure keyboard shortcuts (Ctrl+K, Ctrl+S)"
-        )
+        keyboard_shortcuts_action.setToolTip("Configure keyboard shortcuts (Ctrl+K, Ctrl+S)")
         keyboard_shortcuts_action.triggered.connect(
             lambda: self.main_window.execute_command("settings.openKeyboardShortcuts")
         )
@@ -72,9 +66,7 @@ class MainWindowActionManager:
         # About action
         about_action = QAction("About ViloxTerm", self.main_window)
         about_action.setToolTip("Show information about ViloxTerm")
-        about_action.triggered.connect(
-            lambda: self.main_window.execute_command("help.about")
-        )
+        about_action.triggered.connect(lambda: self.main_window.execute_command("help.about"))
         file_menu.addAction(about_action)
 
         # View menu
@@ -91,9 +83,7 @@ class MainWindowActionManager:
 
         # Theme Editor action
         theme_editor_action = QAction("Theme Editor...", self.main_window)
-        theme_editor_action.setToolTip(
-            "Open the theme editor to customize themes (Ctrl+K, Ctrl+M)"
-        )
+        theme_editor_action.setToolTip("Open the theme editor to customize themes (Ctrl+K, Ctrl+M)")
         theme_editor_action.triggered.connect(
             lambda: self.main_window.execute_command("theme.openEditor")
         )
@@ -123,9 +113,7 @@ class MainWindowActionManager:
         # Split actions (now using commands)
         split_horizontal_action = QAction("Split Pane Right", self.main_window)
         # Shortcut handled by command system, not QAction
-        split_horizontal_action.setToolTip(
-            "Split the active pane horizontally (Ctrl+\\)"
-        )
+        split_horizontal_action.setToolTip("Split the active pane horizontally (Ctrl+\\)")
         split_horizontal_action.triggered.connect(
             lambda: self.main_window.execute_command("workbench.action.splitRight")
         )
@@ -133,9 +121,7 @@ class MainWindowActionManager:
 
         split_vertical_action = QAction("Split Pane Down", self.main_window)
         # Shortcut handled by command system, not QAction
-        split_vertical_action.setToolTip(
-            "Split the active pane vertically (Ctrl+Shift+\\)"
-        )
+        split_vertical_action.setToolTip("Split the active pane vertically (Ctrl+Shift+\\)")
         split_vertical_action.triggered.connect(
             lambda: self.main_window.execute_command("workbench.action.splitDown")
         )
@@ -153,9 +139,7 @@ class MainWindowActionManager:
 
         # Menu bar toggle action (shortcut handled by global QShortcut)
         self.main_window.menubar_action = QAction("Toggle Menu Bar", self.main_window)
-        self.main_window.menubar_action.setToolTip(
-            "Toggle menu bar visibility (Ctrl+Shift+M)"
-        )
+        self.main_window.menubar_action.setToolTip("Toggle menu bar visibility (Ctrl+Shift+M)")
         self.main_window.menubar_action.triggered.connect(
             lambda: self.main_window.execute_command("view.toggleMenuBar")
         )
@@ -169,9 +153,7 @@ class MainWindowActionManager:
         self.main_window.auto_hide_menubar_action.setToolTip(
             "Hide menu bar and use activity bar menu icon instead"
         )
-        self.main_window.auto_hide_menubar_action.toggled.connect(
-            self.on_auto_hide_menubar_toggled
-        )
+        self.main_window.auto_hide_menubar_action.toggled.connect(self.on_auto_hide_menubar_toggled)
         view_menu.addAction(self.main_window.auto_hide_menubar_action)
 
         view_menu.addSeparator()
@@ -183,9 +165,7 @@ class MainWindowActionManager:
             "Use frameless window for maximum screen space (requires restart)"
         )
         settings = QSettings("ViloxTerm", "ViloxTerm")
-        frameless_action.setChecked(
-            settings.value("UI/FramelessMode", False, type=bool)
-        )
+        frameless_action.setChecked(settings.value("UI/FramelessMode", False, type=bool))
         frameless_action.triggered.connect(
             lambda: self.main_window.execute_command("window.toggleFrameless")
         )
@@ -219,9 +199,7 @@ class MainWindowActionManager:
         # Report issue action
         issue_action = QAction("Report Issue", self.main_window)
         issue_action.setToolTip("Report an issue on GitHub")
-        issue_action.triggered.connect(
-            lambda: self.main_window.execute_command("help.reportIssue")
-        )
+        issue_action.triggered.connect(lambda: self.main_window.execute_command("help.reportIssue"))
         help_menu.addAction(issue_action)
 
         help_menu.addSeparator()
@@ -239,9 +217,7 @@ class MainWindowActionManager:
         # About action (also in Help menu)
         about_help_action = QAction("About ViloxTerm", self.main_window)
         about_help_action.setToolTip("Show information about ViloxTerm")
-        about_help_action.triggered.connect(
-            lambda: self.main_window.execute_command("help.about")
-        )
+        about_help_action.triggered.connect(lambda: self.main_window.execute_command("help.about"))
         help_menu.addAction(about_help_action)
 
     def toggle_theme(self):
@@ -336,9 +312,7 @@ class MainWindowActionManager:
             icon_manager = get_icon_manager()
             icon_manager.detect_system_theme()
 
-            self.main_window.status_bar.set_message(
-                "Application reset to default state", 2000
-            )
+            self.main_window.status_bar.set_message("Application reset to default state", 2000)
 
         except Exception as e:
             QMessageBox.warning(

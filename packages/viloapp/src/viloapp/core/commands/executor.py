@@ -95,17 +95,13 @@ class CommandExecutor:
         # Prevent recursive execution
         if self._executing:
             logger.warning(f"Recursive execution prevented for command: {command_id}")
-            return CommandResult(
-                success=False, error="Command execution already in progress"
-            )
+            return CommandResult(success=False, error="Command execution already in progress")
 
         # Get the command
         command = command_registry.get_command(command_id)
         if not command:
             logger.error(f"Command not found: {command_id}")
-            return CommandResult(
-                success=False, error=f"Command not found: {command_id}"
-            )
+            return CommandResult(success=False, error=f"Command not found: {command_id}")
 
         # Create context if not provided
         if context is None:
@@ -117,9 +113,7 @@ class CommandExecutor:
         # Check if command can execute in current context
         if not command.enabled:
             logger.warning(f"Command is disabled: {command_id}")
-            return CommandResult(
-                success=False, error=f"Command is disabled: {command_id}"
-            )
+            return CommandResult(success=False, error=f"Command is disabled: {command_id}")
 
         # TODO: Check when clause once context system is implemented
         # if command.when and not command.can_execute(context_dict):
@@ -139,9 +133,7 @@ class CommandExecutor:
                 if validation_spec:
                     logger.debug(f"Validating parameters for command: {command_id}")
                     context = validation_spec.validate_context(context)
-                    logger.debug(
-                        f"Parameter validation passed for command: {command_id}"
-                    )
+                    logger.debug(f"Parameter validation passed for command: {command_id}")
             except Exception as validation_error:
                 logger.warning(
                     f"Parameter validation failed for command {command_id}: {validation_error}"
@@ -180,12 +172,8 @@ class CommandExecutor:
             return result
 
         except Exception as e:
-            logger.error(
-                f"Exception executing command {command_id}: {e}", exc_info=True
-            )
-            return CommandResult(
-                success=False, error=f"Exception during execution: {str(e)}"
-            )
+            logger.error(f"Exception executing command {command_id}: {e}", exc_info=True)
+            return CommandResult(success=False, error=f"Exception during execution: {str(e)}")
         finally:
             self._executing = False
 
@@ -250,9 +238,7 @@ class CommandExecutor:
         except Exception as e:
             logger.error(f"Exception during undo: {e}", exc_info=True)
             self._undo_stack.append(entry)  # Put it back
-            return CommandResult(
-                success=False, error=f"Exception during undo: {str(e)}"
-            )
+            return CommandResult(success=False, error=f"Exception during undo: {str(e)}")
 
     def redo(self) -> CommandResult:
         """
@@ -271,9 +257,7 @@ class CommandExecutor:
         if not command:
             logger.error(f"Cannot redo command: {entry.command_id}")
             self._redo_stack.append(entry)  # Put it back
-            return CommandResult(
-                success=False, error=f"Command not found: {entry.command_id}"
-            )
+            return CommandResult(success=False, error=f"Command not found: {entry.command_id}")
 
         try:
             logger.info(f"Redoing command: {entry.command_id}")
@@ -297,9 +281,7 @@ class CommandExecutor:
         except Exception as e:
             logger.error(f"Exception during redo: {e}", exc_info=True)
             self._redo_stack.append(entry)  # Put it back
-            return CommandResult(
-                success=False, error=f"Exception during redo: {str(e)}"
-            )
+            return CommandResult(success=False, error=f"Exception during redo: {str(e)}")
 
     def get_history(self, limit: int = 50) -> list[CommandHistoryEntry]:
         """

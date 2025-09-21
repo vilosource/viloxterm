@@ -1,6 +1,5 @@
 """Integration tests for terminal server."""
 
-
 from viloxterm.server import TerminalServerManager
 from viloxterm.backends import TerminalBackendFactory
 

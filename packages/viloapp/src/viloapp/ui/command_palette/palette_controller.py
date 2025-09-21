@@ -168,23 +168,17 @@ class CommandPaletteController(QObject):
                 self._track_command_usage(command_id, context)
 
                 # Emit success signal
-                self.command_executed.emit(
-                    command_id, {"success": True, "value": result.value}
-                )
+                self.command_executed.emit(command_id, {"success": True, "value": result.value})
 
             else:
                 logger.warning(f"Command {command_id} failed: {result.error}")
 
                 # Emit failure signal
-                self.command_executed.emit(
-                    command_id, {"success": False, "error": result.error}
-                )
+                self.command_executed.emit(command_id, {"success": False, "error": result.error})
 
                 # Show error to user if main window available
                 if self.main_window and hasattr(self.main_window, "status_bar"):
-                    self.main_window.status_bar.set_message(
-                        f"Command failed: {result.error}", 5000
-                    )
+                    self.main_window.status_bar.set_message(f"Command failed: {result.error}", 5000)
 
         except Exception as e:
             logger.error(f"Failed to execute command {command_id}: {e}")

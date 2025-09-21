@@ -3,10 +3,7 @@
 import logging
 from typing import Optional, Dict, Any
 
-from viloapp_sdk import (
-    IPlugin, PluginMetadata, PluginCapability,
-    IPluginContext, EventType
-)
+from viloapp_sdk import IPlugin, PluginMetadata, PluginCapability, IPluginContext, EventType
 
 from .widget import TerminalWidgetFactory
 from .server import terminal_server
@@ -48,92 +45,62 @@ class TerminalPlugin(IPlugin):
                 "onCommand:terminal.new",
                 "onCommand:terminal.open",
                 "onView:terminal",
-                "onStartup"
+                "onStartup",
             ],
             capabilities=[PluginCapability.WIDGETS, PluginCapability.COMMANDS],
             contributes={
                 "widgets": [
-                    {
-                        "id": "terminal",
-                        "factory": "viloxterm.widget:TerminalWidgetFactory"
-                    }
+                    {"id": "terminal", "factory": "viloxterm.widget:TerminalWidgetFactory"}
                 ],
                 "commands": [
-                    {
-                        "id": "terminal.new",
-                        "title": "New Terminal",
-                        "category": "Terminal"
-                    },
+                    {"id": "terminal.new", "title": "New Terminal", "category": "Terminal"},
                     {
                         "id": "terminal.newWithProfile",
                         "title": "New Terminal with Profile",
-                        "category": "Terminal"
+                        "category": "Terminal",
                     },
-                    {
-                        "id": "terminal.clear",
-                        "title": "Clear Terminal",
-                        "category": "Terminal"
-                    },
-                    {
-                        "id": "terminal.close",
-                        "title": "Close Terminal",
-                        "category": "Terminal"
-                    },
-                    {
-                        "id": "terminal.split",
-                        "title": "Split Terminal",
-                        "category": "Terminal"
-                    },
-                    {
-                        "id": "terminal.focus",
-                        "title": "Focus Terminal",
-                        "category": "Terminal"
-                    },
+                    {"id": "terminal.clear", "title": "Clear Terminal", "category": "Terminal"},
+                    {"id": "terminal.close", "title": "Close Terminal", "category": "Terminal"},
+                    {"id": "terminal.split", "title": "Split Terminal", "category": "Terminal"},
+                    {"id": "terminal.focus", "title": "Focus Terminal", "category": "Terminal"},
                     {
                         "id": "terminal.search",
                         "title": "Search in Terminal",
-                        "category": "Terminal"
+                        "category": "Terminal",
                     },
                     {
                         "id": "terminal.renameSession",
                         "title": "Rename Terminal Session",
-                        "category": "Terminal"
+                        "category": "Terminal",
                     },
                     {
                         "id": "terminal.listSessions",
                         "title": "List Terminal Sessions",
-                        "category": "Terminal"
-                    }
+                        "category": "Terminal",
+                    },
                 ],
                 "configuration": {
                     "terminal.shell.linux": {
                         "type": "string",
                         "default": "/bin/bash",
-                        "description": "Path to shell executable on Linux"
+                        "description": "Path to shell executable on Linux",
                     },
                     "terminal.shell.windows": {
                         "type": "string",
                         "default": "powershell.exe",
-                        "description": "Path to shell executable on Windows"
+                        "description": "Path to shell executable on Windows",
                     },
                     "terminal.fontSize": {
                         "type": "number",
                         "default": 14,
-                        "description": "Terminal font size"
-                    }
+                        "description": "Terminal font size",
+                    },
                 },
                 "keybindings": [
-                    {
-                        "command": "terminal.new",
-                        "key": "ctrl+shift+`"
-                    },
-                    {
-                        "command": "terminal.clear",
-                        "key": "ctrl+shift+k",
-                        "when": "terminalFocus"
-                    }
-                ]
-            }
+                    {"command": "terminal.new", "key": "ctrl+shift+`"},
+                    {"command": "terminal.clear", "key": "ctrl+shift+k", "when": "terminalFocus"},
+                ],
+            },
         )
 
     def activate(self, context: IPluginContext) -> None:
@@ -225,7 +192,9 @@ class TerminalPlugin(IPlugin):
         if command_service:
             # Register command handlers
             command_service.register_command("terminal.new", self._create_new_terminal)
-            command_service.register_command("terminal.newWithProfile", self._create_new_terminal_with_profile)
+            command_service.register_command(
+                "terminal.newWithProfile", self._create_new_terminal_with_profile
+            )
             command_service.register_command("terminal.clear", self._clear_terminal)
             command_service.register_command("terminal.close", self._close_terminal)
             command_service.register_command("terminal.split", self._split_terminal)
@@ -298,7 +267,7 @@ class TerminalPlugin(IPlugin):
         if workspace_service:
             # Get active terminal widget
             active_widget = workspace_service.get_active_widget()
-            if active_widget and hasattr(active_widget, 'clear_terminal'):
+            if active_widget and hasattr(active_widget, "clear_terminal"):
                 active_widget.clear_terminal()
                 return {"success": True}
 
@@ -310,7 +279,7 @@ class TerminalPlugin(IPlugin):
         if workspace_service:
             # Get active terminal widget
             active_widget = workspace_service.get_active_widget()
-            if active_widget and hasattr(active_widget, 'stop_terminal'):
+            if active_widget and hasattr(active_widget, "stop_terminal"):
                 active_widget.stop_terminal()
                 workspace_service.remove_widget(active_widget)
                 return {"success": True}
@@ -328,7 +297,7 @@ class TerminalPlugin(IPlugin):
         if workspace_service:
             # Get active terminal widget
             active_widget = workspace_service.get_active_widget()
-            if active_widget and hasattr(active_widget, 'focus_terminal'):
+            if active_widget and hasattr(active_widget, "focus_terminal"):
                 active_widget.focus_terminal()
                 return {"success": True}
 
@@ -336,7 +305,7 @@ class TerminalPlugin(IPlugin):
 
     def _create_new_terminal_with_profile(self, args: Dict[str, Any] = None) -> Any:
         """Create a new terminal with a specific profile."""
-        profile_name = args.get('profile') if args else None
+        profile_name = args.get("profile") if args else None
 
         # Get profile
         if profile_name:
@@ -373,16 +342,16 @@ class TerminalPlugin(IPlugin):
 
     def _search_in_terminal(self, args: Dict[str, Any] = None) -> Any:
         """Search in the active terminal."""
-        if not args or 'pattern' not in args:
+        if not args or "pattern" not in args:
             return {"success": False, "error": "Search pattern required"}
 
-        pattern = args['pattern']
-        case_sensitive = args.get('case_sensitive', False)
+        pattern = args["pattern"]
+        case_sensitive = args.get("case_sensitive", False)
 
         workspace_service = self.context.get_service("workspace")
         if workspace_service:
             active_widget = workspace_service.get_active_widget()
-            if active_widget and hasattr(active_widget, 'web_view'):
+            if active_widget and hasattr(active_widget, "web_view"):
                 self.search.search_in_terminal(active_widget, pattern, case_sensitive)
                 return {"success": True, "pattern": pattern}
 
@@ -390,11 +359,11 @@ class TerminalPlugin(IPlugin):
 
     def _rename_session(self, args: Dict[str, Any] = None) -> Any:
         """Rename a terminal session."""
-        if not args or 'session_id' not in args or 'name' not in args:
+        if not args or "session_id" not in args or "name" not in args:
             return {"success": False, "error": "Session ID and name required"}
 
-        session_id = args['session_id']
-        name = args['name']
+        session_id = args["session_id"]
+        name = args["name"]
 
         if self.session_manager:
             self.session_manager.rename_session(session_id, name)

@@ -151,9 +151,7 @@ class SplitPaneController(QObject):
                 QTimer.singleShot(10, lambda: self._emit_focus_ready(pane_id))
             else:
                 # Widget needs async initialization
-                logger.debug(
-                    f"Widget {pane_id} not ready, connecting to widget_ready signal"
-                )
+                logger.debug(f"Widget {pane_id} not ready, connecting to widget_ready signal")
                 leaf.app_widget.widget_ready.connect(
                     lambda: self._emit_focus_ready(pane_id),
                     # Qt.SingleShotConnection  # Auto-disconnect after firing

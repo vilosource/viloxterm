@@ -47,9 +47,7 @@ class WebShortcutGuard(QObject):
         self._reserved_shortcuts = [
             s if isinstance(s, QKeySequence) else QKeySequence(s) for s in shortcuts
         ]
-        logger.info(
-            f"WebShortcutGuard reserved {len(self._reserved_shortcuts)} shortcuts"
-        )
+        logger.info(f"WebShortcutGuard reserved {len(self._reserved_shortcuts)} shortcuts")
         for shortcut in self._reserved_shortcuts:
             logger.debug(f"  Reserved: {shortcut.toString()}")
 
@@ -126,9 +124,7 @@ class WebShortcutGuard(QObject):
                             # IMPORTANT: Return False to let Qt process the shortcut
                             return False
                         else:  # KeyPress
-                            logger.info(
-                                f"WebShortcutGuard blocked KeyPress: {reserved.toString()}"
-                            )
+                            logger.info(f"WebShortcutGuard blocked KeyPress: {reserved.toString()}")
                             return True  # Block the event from reaching the widget
 
         # Not a reserved shortcut - let widget handle it normally

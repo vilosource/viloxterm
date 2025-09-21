@@ -1,17 +1,19 @@
 """Main plugin manager orchestrating all plugin operations."""
 
 import logging
-from typing import List, Dict, Any, Optional
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from viloapp_sdk import EventBus, IPlugin
-from .plugin_registry import PluginRegistry
+
+from .dependency_resolver import DependencyResolver
 from .plugin_discovery import PluginDiscovery
 from .plugin_loader import PluginLoader
-from .dependency_resolver import DependencyResolver
+from .plugin_registry import PluginRegistry
 from .service_adapters import create_service_adapters
 
 logger = logging.getLogger(__name__)
+
 
 class PluginManager:
     """Central manager for all plugin operations."""
@@ -207,7 +209,7 @@ class PluginManager:
                 "author": plugin_info.metadata.author,
                 "state": plugin_info.state.name,
                 "error": plugin_info.error,
-                "dependencies": plugin_info.metadata.dependencies
+                "dependencies": plugin_info.metadata.dependencies,
             }
         return None
 
@@ -220,13 +222,15 @@ class PluginManager:
         """
         plugins = []
         for plugin_info in self.registry.get_all_plugins():
-            plugins.append({
-                "id": plugin_info.metadata.id,
-                "name": plugin_info.metadata.name,
-                "version": plugin_info.metadata.version,
-                "state": plugin_info.state.name,
-                "error": plugin_info.error
-            })
+            plugins.append(
+                {
+                    "id": plugin_info.metadata.id,
+                    "name": plugin_info.metadata.name,
+                    "version": plugin_info.metadata.version,
+                    "state": plugin_info.state.name,
+                    "error": plugin_info.error,
+                }
+            )
         return plugins
 
     def enable_plugin(self, plugin_id: str) -> bool:
@@ -283,6 +287,7 @@ class PluginManager:
         """
         if not path:
             import platformdirs
+
             path = Path(platformdirs.user_data_dir("ViloxTerm")) / "plugin_state.json"
 
         return self.registry.save_state(path)
@@ -299,6 +304,7 @@ class PluginManager:
         """
         if not path:
             import platformdirs
+
             path = Path(platformdirs.user_data_dir("ViloxTerm")) / "plugin_state.json"
 
         return self.registry.load_state(path)

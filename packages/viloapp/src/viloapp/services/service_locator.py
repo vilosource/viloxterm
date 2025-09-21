@@ -182,11 +182,7 @@ class ServiceLocator:
         Returns:
             List of services that are instances of base_type
         """
-        return [
-            service
-            for service in self._services.values()
-            if isinstance(service, base_type)
-        ]
+        return [service for service in self._services.values() if isinstance(service, base_type)]
 
     def has_service(self, service_type: type[Service]) -> bool:
         """

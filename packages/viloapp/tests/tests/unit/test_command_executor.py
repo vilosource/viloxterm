@@ -499,12 +499,8 @@ class TestCommandExecutorHistory:
         def mock_handler(context):
             return CommandResult(success=True)
 
-        command1 = Command(
-            id="test.first", title="First", category="Test", handler=mock_handler
-        )
-        command2 = Command(
-            id="test.second", title="Second", category="Test", handler=mock_handler
-        )
+        command1 = Command(id="test.first", title="First", category="Test", handler=mock_handler)
+        command2 = Command(id="test.second", title="Second", category="Test", handler=mock_handler)
         command_registry.register(command1)
         command_registry.register(command2)
 
@@ -687,9 +683,7 @@ class TestCommandExecutorValidation:
         mock_spec.validate_context.assert_called_once()
 
     @patch("viloapp.core.commands.validation.get_validation_spec")
-    def test_execute_returns_failure_when_validation_fails(
-        self, mock_get_validation_spec
-    ):
+    def test_execute_returns_failure_when_validation_fails(self, mock_get_validation_spec):
         """Test that execute returns failure when parameter validation fails."""
 
         # Arrange
@@ -756,9 +750,7 @@ class TestCommandExecutorValidation:
             )
 
     @patch("viloapp.core.commands.validation.get_validation_spec")
-    def test_execute_handles_validation_module_import_failure(
-        self, mock_get_validation_spec
-    ):
+    def test_execute_handles_validation_module_import_failure(self, mock_get_validation_spec):
         """Test that execute handles validation module import failure gracefully."""
 
         # Arrange
@@ -774,9 +766,7 @@ class TestCommandExecutorValidation:
         command_registry.register(command)
 
         # Make get_validation_spec raise ImportError
-        mock_get_validation_spec.side_effect = ImportError(
-            "Validation module not found"
-        )
+        mock_get_validation_spec.side_effect = ImportError("Validation module not found")
 
         executor = CommandExecutor()
 
@@ -1474,9 +1464,7 @@ class TestCommandExecutorEdgeCases:
         # Assert
         assert result.success is True
         assert received_context.args["unicode_text"] == "Hello 世界! 🚀"
-        assert (
-            received_context.args["special_chars"] == "!@#$%^&*()_+-=[]{}|;':\",./<>?"
-        )
+        assert received_context.args["special_chars"] == "!@#$%^&*()_+-=[]{}|;':\",./<>?"
         assert received_context.args["newlines"] == "line1\nline2\r\nline3"
         assert received_context.args["empty_string"] == ""
         assert received_context.args["none_value"] is None
@@ -1555,9 +1543,7 @@ class TestCommandExecutorEdgeCases:
         context = CommandContext(args={"existing": "value", "shared": "original"})
 
         # Act
-        result = executor.execute(
-            "test.preserve_args", context, shared="updated", new="added"
-        )
+        result = executor.execute("test.preserve_args", context, shared="updated", new="added")
 
         # Assert
         assert result.success is True
@@ -1572,9 +1558,7 @@ class TestCommandExecutorEdgeCases:
         def mock_handler(context):
             return CommandResult(success=True)
 
-        command = Command(
-            id="test.zero_limit", title="Test", category="Test", handler=mock_handler
-        )
+        command = Command(id="test.zero_limit", title="Test", category="Test", handler=mock_handler)
         command_registry.register(command)
 
         executor = CommandExecutor()
@@ -1615,9 +1599,7 @@ class TestCommandExecutorEdgeCases:
 
         # Arrange
         def mock_handler(context):
-            return CommandResult(
-                success=True, value=context.args.get("value", "default")
-            )
+            return CommandResult(success=True, value=context.args.get("value", "default"))
 
         def mock_undo_handler(context):
             return CommandResult(success=True, value="undone")

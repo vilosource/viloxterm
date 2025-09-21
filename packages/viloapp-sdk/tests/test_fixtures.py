@@ -134,6 +134,7 @@ class TestDirectoryFixtures:
 
         # Should be valid JSON
         import json
+
         with open(manifest_file) as f:
             manifest_data = json.load(f)
 
@@ -176,12 +177,14 @@ class TestServiceFixtures:
     def test_mock_command_service_fixture(self, mock_command_service):
         """Test the mock_command_service fixture."""
         from viloapp_sdk.testing.mock_host import MockCommandService
+
         assert isinstance(mock_command_service, MockCommandService)
         assert mock_command_service.get_service_id() == "command"
 
     def test_mock_configuration_service_fixture(self, mock_configuration_service):
         """Test the mock_configuration_service fixture with pre-populated settings."""
         from viloapp_sdk.testing.mock_host import MockConfigurationService
+
         assert isinstance(mock_configuration_service, MockConfigurationService)
 
         # Should have pre-populated settings
@@ -215,16 +218,12 @@ class TestUtilityFixtures:
 
         # Test assertion helpers
         assert_mock_calls.assert_called_once(
-            mock_command_service.mock.execute_command,
-            "test.command"
+            mock_command_service.mock.execute_command, "test.command"
         )
 
         # Make more calls
         mock_command_service.execute_command("another.command")
-        assert_mock_calls.assert_called_n_times(
-            mock_command_service.mock.execute_command,
-            2
-        )
+        assert_mock_calls.assert_called_n_times(mock_command_service.mock.execute_command, 2)
 
         # Test not called assertion
         mock_method = Mock()
@@ -299,16 +298,18 @@ class TestFixtureReusability:
 class TestParameterizedFixtures:
     """Test parameterized fixtures run multiple times."""
 
-    @pytest.mark.parametrize("expected_debug,expected_verbose", [
-        (True, False),
-        (False, True),
-        (True, True)
-    ])
-    def test_various_configurations_coverage(self, various_configurations, expected_debug, expected_verbose):
+    @pytest.mark.parametrize(
+        "expected_debug,expected_verbose", [(True, False), (False, True), (True, True)]
+    )
+    def test_various_configurations_coverage(
+        self, various_configurations, expected_debug, expected_verbose
+    ):
         """Test that various_configurations covers expected combinations."""
         # This test will run 3 times, and at least one of them should match each combination
-        if (various_configurations["debug"] == expected_debug and
-            various_configurations["verbose"] == expected_verbose):
+        if (
+            various_configurations["debug"] == expected_debug
+            and various_configurations["verbose"] == expected_verbose
+        ):
             # Found the expected combination
             assert True
             return

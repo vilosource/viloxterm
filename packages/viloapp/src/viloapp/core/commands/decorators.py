@@ -93,9 +93,7 @@ def command(
                             kwargs[param_name] = param.default
                         else:
                             # Required parameter missing
-                            raise ValueError(
-                                f"Required parameter '{param_name}' not provided"
-                            )
+                            raise ValueError(f"Required parameter '{param_name}' not provided")
 
                     result = func(context, **kwargs)
 
@@ -178,13 +176,9 @@ def command(
                             priority=75,  # Default priority for command shortcuts
                         )
                         if success:
-                            logger.debug(
-                                f"Auto-registered shortcut for {id}: {shortcut}"
-                            )
+                            logger.debug(f"Auto-registered shortcut for {id}: {shortcut}")
                         else:
-                            logger.warning(
-                                f"Failed to register shortcut for {id}: {shortcut}"
-                            )
+                            logger.warning(f"Failed to register shortcut for {id}: {shortcut}")
                     else:
                         # Store for later registration when keyboard service is available
                         if not hasattr(command_registry, "_pending_shortcuts"):
@@ -400,9 +394,7 @@ def register_pending_shortcuts():
                 )
                 if success:
                     registered_count += 1
-                    logger.debug(
-                        f"Registered pending shortcut for {command_id}: {shortcut}"
-                    )
+                    logger.debug(f"Registered pending shortcut for {command_id}: {shortcut}")
                 else:
                     logger.warning(
                         f"Failed to register pending shortcut for {command_id}: {shortcut}"

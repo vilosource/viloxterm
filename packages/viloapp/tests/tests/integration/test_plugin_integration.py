@@ -1,19 +1,22 @@
 """Integration tests for plugin interactions."""
 
-from unittest.mock import Mock, patch
 import tempfile
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 # Mock the SDK imports to avoid dependency issues in tests
-with patch.dict('sys.modules', {
-    'viloapp_sdk': Mock(),
-    'viloapp_sdk.base': Mock(),
-    'viloapp_sdk.interfaces': Mock(),
-    'viloapp_sdk.metadata': Mock(),
-    'viloapp_sdk.context': Mock(),
-}):
-    from packages.viloxterm.src.viloxterm.plugin import TerminalPlugin
+with patch.dict(
+    "sys.modules",
+    {
+        "viloapp_sdk": Mock(),
+        "viloapp_sdk.base": Mock(),
+        "viloapp_sdk.interfaces": Mock(),
+        "viloapp_sdk.metadata": Mock(),
+        "viloapp_sdk.context": Mock(),
+    },
+):
     from packages.viloedit.src.viloedit.plugin import EditorPlugin
+    from packages.viloxterm.src.viloxterm.plugin import TerminalPlugin
 
 
 class TestPluginIntegration:
@@ -36,7 +39,7 @@ class TestPluginIntegration:
         self.editor_plugin.context = self.mock_context
 
         # Create a test file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("print('Hello from terminal')")
             test_file = f.name
 

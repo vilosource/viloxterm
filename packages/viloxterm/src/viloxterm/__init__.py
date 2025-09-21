@@ -11,12 +11,7 @@ from .server import terminal_server
 __version__ = "1.0.0"
 __author__ = "ViloxTerm Team"
 
-__all__ = [
-    "TerminalPlugin",
-    "TerminalWidget",
-    "TerminalWidgetFactory",
-    "terminal_server"
-]
+__all__ = ["TerminalPlugin", "TerminalWidget", "TerminalWidgetFactory", "terminal_server"]
 
 # Plugin entry point
 Plugin = TerminalPlugin

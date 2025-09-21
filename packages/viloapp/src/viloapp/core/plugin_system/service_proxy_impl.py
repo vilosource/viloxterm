@@ -1,13 +1,16 @@
 """Service proxy implementation for plugins."""
 
 import logging
-from typing import Dict, Any, Optional, List, Type, TypeVar
-from viloapp_sdk import ServiceProxy, IService, ServiceNotAvailableError
+from typing import Any, Dict, List, Optional, Type, TypeVar
+
+from viloapp_sdk import IService, ServiceNotAvailableError, ServiceProxy
+
 from .service_adapters import create_service_adapters
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class ServiceProxyImpl(ServiceProxy):
     """Implementation of service proxy for ViloxTerm."""
@@ -47,45 +50,18 @@ class PermissionAwareServiceProxy:
         # Map service IDs to required permissions
         service_permission_map = {
             "configuration": Permission(
-                PermissionCategory.SYSTEM,
-                PermissionScope.READ,
-                "configuration"
+                PermissionCategory.SYSTEM, PermissionScope.READ, "configuration"
             ),
-            "filesystem": Permission(
-                PermissionCategory.FILESYSTEM,
-                PermissionScope.READ,
-                "*"
-            ),
-            "network": Permission(
-                PermissionCategory.NETWORK,
-                PermissionScope.EXECUTE,
-                "*"
-            ),
-            "workspace": Permission(
-                PermissionCategory.UI,
-                PermissionScope.WRITE,
-                "*"
-            ),
-            "theme": Permission(
-                PermissionCategory.UI,
-                PermissionScope.READ,
-                "*"
-            ),
-            "notification": Permission(
-                PermissionCategory.UI,
-                PermissionScope.WRITE,
-                "*"
-            ),
-            "command": Permission(
-                PermissionCategory.UI,
-                PermissionScope.EXECUTE,
-                "commands"
-            ),
+            "filesystem": Permission(PermissionCategory.FILESYSTEM, PermissionScope.READ, "*"),
+            "network": Permission(PermissionCategory.NETWORK, PermissionScope.EXECUTE, "*"),
+            "workspace": Permission(PermissionCategory.UI, PermissionScope.WRITE, "*"),
+            "theme": Permission(PermissionCategory.UI, PermissionScope.READ, "*"),
+            "notification": Permission(PermissionCategory.UI, PermissionScope.WRITE, "*"),
+            "command": Permission(PermissionCategory.UI, PermissionScope.EXECUTE, "commands"),
         }
 
         return service_permission_map.get(
-            service_id,
-            Permission(PermissionCategory.SYSTEM, PermissionScope.READ, service_id)
+            service_id, Permission(PermissionCategory.SYSTEM, PermissionScope.READ, service_id)
         )
 
     def _check_service_permission(self, service_id: str) -> bool:
@@ -132,16 +108,16 @@ class PermissionAwareServiceProxy:
 
                 # Define method permission requirements
                 method_permissions = {
-                    'set': PermissionScope.WRITE,
-                    'write': PermissionScope.WRITE,
-                    'save': PermissionScope.WRITE,
-                    'create': PermissionScope.WRITE,
-                    'delete': PermissionScope.WRITE,
-                    'execute': PermissionScope.EXECUTE,
-                    'run': PermissionScope.EXECUTE,
-                    'get': PermissionScope.READ,
-                    'read': PermissionScope.READ,
-                    'list': PermissionScope.READ,
+                    "set": PermissionScope.WRITE,
+                    "write": PermissionScope.WRITE,
+                    "save": PermissionScope.WRITE,
+                    "create": PermissionScope.WRITE,
+                    "delete": PermissionScope.WRITE,
+                    "execute": PermissionScope.EXECUTE,
+                    "run": PermissionScope.EXECUTE,
+                    "get": PermissionScope.READ,
+                    "read": PermissionScope.READ,
+                    "list": PermissionScope.READ,
                 }
 
                 required_scope = method_permissions.get(name)
@@ -151,20 +127,23 @@ class PermissionAwareServiceProxy:
                     if required_permission.scope != required_scope:
                         # Create permission with required scope
                         from .security import Permission
+
                         specific_permission = Permission(
                             required_permission.category,
                             required_scope,
-                            required_permission.resource
+                            required_permission.resource,
                         )
 
                         if not self._proxy._permission_manager.has_permission(
                             self._proxy.plugin_id, specific_permission
                         ):
+
                             def permission_denied(*args, **kwargs):
                                 raise PermissionError(
                                     f"Plugin '{self._proxy.plugin_id}' lacks {required_scope.value} "
                                     f"permission for service '{service_id}'"
                                 )
+
                             return permission_denied
 
                 return attr
@@ -250,8 +229,7 @@ class PermissionAwareServiceProxy:
         Returns:
             True if service is available and plugin has permission
         """
-        return (service_id in self._services and
-                self._check_service_permission(service_id))
+        return service_id in self._services and self._check_service_permission(service_id)
 
     def list_services(self) -> List[str]:
         """

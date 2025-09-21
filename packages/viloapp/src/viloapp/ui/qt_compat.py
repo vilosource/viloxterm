@@ -134,10 +134,8 @@ def get_qt_version_info():
 # Version-specific feature flags
 FEATURES = {
     "signal_receivers": get_pyside_version() < (6, 0, 0),  # Not available in PySide6
-    "key_sequence_combined": get_pyside_version()
-    < (6, 5, 0),  # Overflow issues in some versions
-    "splitter_restore_respect": get_pyside_version()
-    >= (6, 2, 0),  # Better state restoration
+    "key_sequence_combined": get_pyside_version() < (6, 5, 0),  # Overflow issues in some versions
+    "splitter_restore_respect": get_pyside_version() >= (6, 2, 0),  # Better state restoration
 }
 
 

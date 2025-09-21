@@ -149,13 +149,13 @@ class IMetadata(ABC):
 
         # Validate ID format (alphanumeric with hyphens and dots)
         plugin_id = self.get_id()
-        if plugin_id and not all(c.isalnum() or c in '-.' for c in plugin_id):
+        if plugin_id and not all(c.isalnum() or c in "-." for c in plugin_id):
             errors.append("Plugin ID must be alphanumeric with hyphens and dots only")
 
         # Validate version format (basic semver check)
         version = self.get_version()
         if version:
-            version_parts = version.split('.')
+            version_parts = version.split(".")
             if len(version_parts) != 3 or not all(part.isdigit() for part in version_parts):
                 errors.append("Plugin version must be in semantic versioning format (x.y.z)")
 
@@ -163,7 +163,7 @@ class IMetadata(ABC):
         author = self.get_author()
         if author and not isinstance(author, dict):
             errors.append("Plugin author must be a dictionary")
-        elif author and 'name' not in author:
+        elif author and "name" not in author:
             errors.append("Plugin author must include 'name' field")
 
         return errors
@@ -173,7 +173,7 @@ class IPlugin(ABC):
     """Base interface for all plugins."""
 
     @abstractmethod
-    def get_metadata(self) -> 'PluginMetadata':
+    def get_metadata(self) -> "PluginMetadata":
         """
         Get plugin metadata.
 
@@ -183,7 +183,7 @@ class IPlugin(ABC):
         pass
 
     @abstractmethod
-    def activate(self, context: 'IPluginContext') -> None:
+    def activate(self, context: "IPluginContext") -> None:
         """
         Called when the plugin is activated.
 
@@ -231,4 +231,5 @@ class IPluginWithMetadata(IPlugin, IMetadata):
     This interface allows plugins to implement both the core plugin functionality
     and provide metadata through the new IMetadata interface methods.
     """
+
     pass

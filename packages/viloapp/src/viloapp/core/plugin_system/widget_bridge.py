@@ -2,7 +2,7 @@
 """Bridge between plugin widgets and core UI system."""
 
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 from PySide6.QtWidgets import QVBoxLayout
 
@@ -45,8 +45,7 @@ class PluginWidgetBridge:
 
             # Register factory with workspace service
             self.workspace_service.register_widget_factory(
-                widget_id,
-                lambda instance_id: self._create_widget_adapter(widget_id, instance_id)
+                widget_id, lambda instance_id: self._create_widget_adapter(widget_id, instance_id)
             )
             logger.info(f"Registered widget factory for: {widget_id}")
 
@@ -76,10 +75,7 @@ class PluginAppWidgetAdapter(AppWidget):
     def __init__(self, plugin_widget, qt_widget, instance_id: str):
         try:
             widget_type = self._determine_widget_type(plugin_widget.get_widget_id())
-            super().__init__(
-                widget_id=instance_id,
-                widget_type=widget_type
-            )
+            super().__init__(widget_id=instance_id, widget_type=widget_type)
             self.plugin_widget = plugin_widget
             self.qt_widget = qt_widget
 
@@ -100,9 +96,9 @@ class PluginAppWidgetAdapter(AppWidget):
             return None
 
         widget_id_lower = widget_id.lower()
-        if 'terminal' in widget_id_lower:
+        if "terminal" in widget_id_lower:
             return WidgetType.TERMINAL
-        elif 'editor' in widget_id_lower or 'text' in widget_id_lower:
+        elif "editor" in widget_id_lower or "text" in widget_id_lower:
             return WidgetType.TEXT_EDITOR
         else:
             return WidgetType.CUSTOM
@@ -110,7 +106,7 @@ class PluginAppWidgetAdapter(AppWidget):
     def get_state(self) -> Dict[str, Any]:
         """Get widget state."""
         try:
-            if hasattr(self.plugin_widget, 'get_state'):
+            if hasattr(self.plugin_widget, "get_state"):
                 return self.plugin_widget.get_state()
             return {}
         except Exception as e:
@@ -120,7 +116,7 @@ class PluginAppWidgetAdapter(AppWidget):
     def restore_state(self, state: Dict[str, Any]) -> None:
         """Restore widget state."""
         try:
-            if hasattr(self.plugin_widget, 'restore_state'):
+            if hasattr(self.plugin_widget, "restore_state"):
                 self.plugin_widget.restore_state(state)
         except Exception as e:
             logger.error(f"Failed to restore plugin widget state: {e}")
@@ -128,7 +124,7 @@ class PluginAppWidgetAdapter(AppWidget):
     def cleanup(self) -> None:
         """Cleanup widget resources."""
         try:
-            if hasattr(self.plugin_widget, 'destroy_instance'):
+            if hasattr(self.plugin_widget, "destroy_instance"):
                 self.plugin_widget.destroy_instance(self.widget_id)
             super().cleanup()
             logger.info(f"Cleaned up plugin widget adapter: {self.widget_id}")

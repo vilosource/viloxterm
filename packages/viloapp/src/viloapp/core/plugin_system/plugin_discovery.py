@@ -1,15 +1,17 @@
 """Plugin discovery system."""
 
-import logging
-import json
 import importlib.metadata
+import json
+import logging
 from pathlib import Path
-from typing import List, Set, Optional
+from typing import List, Optional, Set
 
 from viloapp_sdk import PluginMetadata
-from .plugin_registry import PluginInfo, LifecycleState
+
+from .plugin_registry import LifecycleState, PluginInfo
 
 logger = logging.getLogger(__name__)
+
 
 class PluginDiscovery:
     """Discovers plugins from various sources."""
@@ -60,9 +62,9 @@ class PluginDiscovery:
 
         try:
             # Python 3.8+ compatible entry points discovery
-            if hasattr(importlib.metadata, 'entry_points'):
+            if hasattr(importlib.metadata, "entry_points"):
                 eps = importlib.metadata.entry_points()
-                if hasattr(eps, 'select'):
+                if hasattr(eps, "select"):
                     # Python 3.10+
                     entry_points = eps.select(group=group)
                 else:
@@ -80,16 +82,14 @@ class PluginDiscovery:
                     # Create minimal metadata from entry point
                     metadata = PluginMetadata(
                         id=entry_point.name,
-                        name=entry_point.name.replace('-', ' ').title(),
+                        name=entry_point.name.replace("-", " ").title(),
                         version="0.0.0",  # Will be updated when loaded
                         description=f"Plugin from {entry_point.value}",
-                        author="Unknown"
+                        author="Unknown",
                     )
 
                     plugin_info = PluginInfo(
-                        metadata=metadata,
-                        path=plugin_path,
-                        state=LifecycleState.DISCOVERED
+                        metadata=metadata, path=plugin_path, state=LifecycleState.DISCOVERED
                     )
 
                     plugins.append(plugin_info)
@@ -157,13 +157,9 @@ class PluginDiscovery:
             {
                 "id": "core-commands",
                 "name": "Core Commands",
-                "description": "Built-in command palette and shortcuts"
+                "description": "Built-in command palette and shortcuts",
             },
-            {
-                "id": "core-themes",
-                "name": "Core Themes",
-                "description": "Built-in theme support"
-            }
+            {"id": "core-themes", "name": "Core Themes", "description": "Built-in theme support"},
         ]
 
         for plugin_data in builtin_plugins:
@@ -172,13 +168,13 @@ class PluginDiscovery:
                 name=plugin_data["name"],
                 version="builtin",
                 description=plugin_data["description"],
-                author="ViloxTerm Team"
+                author="ViloxTerm Team",
             )
 
             plugin_info = PluginInfo(
                 metadata=metadata,
                 path=Path("builtin") / plugin_data["id"],
-                state=LifecycleState.DISCOVERED
+                state=LifecycleState.DISCOVERED,
             )
 
             plugins.append(plugin_info)
@@ -188,7 +184,7 @@ class PluginDiscovery:
     def _load_plugin_manifest(self, manifest_path: Path) -> Optional[PluginInfo]:
         """Load plugin metadata from manifest file."""
         try:
-            with open(manifest_path, 'r') as f:
+            with open(manifest_path) as f:
                 data = json.load(f)
 
             metadata = PluginMetadata(
@@ -206,7 +202,7 @@ class PluginDiscovery:
                 engines=data.get("engines", {}),
                 dependencies=data.get("dependencies", []),
                 activation_events=data.get("activationEvents", []),
-                contributes=data.get("contributes", {})
+                contributes=data.get("contributes", {}),
             )
 
             # Validate metadata
@@ -216,9 +212,7 @@ class PluginDiscovery:
                 return None
 
             return PluginInfo(
-                metadata=metadata,
-                path=manifest_path.parent,
-                state=LifecycleState.DISCOVERED
+                metadata=metadata, path=manifest_path.parent, state=LifecycleState.DISCOVERED
             )
 
         except Exception as e:
@@ -232,8 +226,7 @@ class PluginDiscovery:
             import importlib.util
 
             spec = importlib.util.spec_from_file_location(
-                f"{plugin_dir.name}.__plugin__",
-                plugin_dir / "__plugin__.py"
+                f"{plugin_dir.name}.__plugin__", plugin_dir / "__plugin__.py"
             )
 
             if not spec or not spec.loader:
@@ -243,18 +236,14 @@ class PluginDiscovery:
             spec.loader.exec_module(module)
 
             # Get metadata from module
-            if hasattr(module, 'METADATA'):
+            if hasattr(module, "METADATA"):
                 metadata = module.METADATA
-            elif hasattr(module, 'get_metadata'):
+            elif hasattr(module, "get_metadata"):
                 metadata = module.get_metadata()
             else:
                 return None
 
-            return PluginInfo(
-                metadata=metadata,
-                path=plugin_dir,
-                state=LifecycleState.DISCOVERED
-            )
+            return PluginInfo(metadata=metadata, path=plugin_dir, state=LifecycleState.DISCOVERED)
 
         except Exception as e:
             logger.error(f"Failed to load Python plugin {plugin_dir}: {e}")
@@ -264,9 +253,9 @@ class PluginDiscovery:
         """Get path for an entry point."""
         # Try to determine the package location
         try:
-            module_name = entry_point.value.split(':')[0]
+            module_name = entry_point.value.split(":")[0]
             module = importlib.import_module(module_name)
-            if hasattr(module, '__file__'):
+            if hasattr(module, "__file__"):
                 return Path(module.__file__).parent
         except Exception:
             pass
@@ -276,8 +265,8 @@ class PluginDiscovery:
     def _get_packages_dir(self) -> Path:
         """Get local packages directory for development."""
         # Get the project root (where main.py is)
-        from pathlib import Path
         import os
+        from pathlib import Path
 
         # Try to find packages directory relative to current file
         current_file = Path(__file__)
@@ -300,9 +289,11 @@ class PluginDiscovery:
     def _get_user_plugin_dir(self) -> Path:
         """Get user plugin directory."""
         import platformdirs
+
         return Path(platformdirs.user_data_dir("ViloxTerm")) / "plugins"
 
     def _get_system_plugin_dir(self) -> Path:
         """Get system plugin directory."""
         import platformdirs
+
         return Path(platformdirs.site_data_dir("ViloxTerm")) / "plugins"

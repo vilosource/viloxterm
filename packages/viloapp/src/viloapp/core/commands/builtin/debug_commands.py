@@ -55,9 +55,7 @@ def reset_app_state_command(context: CommandContext) -> CommandResult:
 
         # Show confirmation message
         if context.main_window and hasattr(context.main_window, "status_bar"):
-            context.main_window.status_bar.set_message(
-                "Application state reset to defaults", 3000
-            )
+            context.main_window.status_bar.set_message("Application state reset to defaults", 3000)
 
         return CommandResult(success=True)
 
@@ -208,9 +206,7 @@ def show_workspace_info_command(context: CommandContext) -> CommandResult:
 def test_command(context: CommandContext) -> CommandResult:
     """Simple test command for debugging."""
     try:
-        test_message = context.args.get(
-            "message", "Test command executed successfully!"
-        )
+        test_message = context.args.get("message", "Test command executed successfully!")
 
         # Show in status bar
         if context.main_window and hasattr(context.main_window, "status_bar"):

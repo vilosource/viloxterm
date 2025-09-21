@@ -58,9 +58,7 @@ class WidgetStateValidator:
     }
 
     @classmethod
-    def is_valid_transition(
-        cls, from_state: WidgetState, to_state: WidgetState
-    ) -> bool:
+    def is_valid_transition(cls, from_state: WidgetState, to_state: WidgetState) -> bool:
         """
         Check if a state transition is valid.
 

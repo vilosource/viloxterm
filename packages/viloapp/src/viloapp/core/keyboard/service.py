@@ -85,9 +85,7 @@ class KeyboardService(Service):
         if conflicts:
             logger.warning(f"Shortcut conflicts detected for {shortcut}: {conflicts}")
             # Let conflict resolver decide how to handle
-            if not self._conflict_resolver.resolve_conflicts(
-                shortcut, conflicts, self._registry
-            ):
+            if not self._conflict_resolver.resolve_conflicts(shortcut, conflicts, self._registry):
                 return False
 
         success = self._registry.register(shortcut)
@@ -244,9 +242,7 @@ class KeyboardService(Service):
             self._cancel_chord_sequence()
             return False
 
-    def _check_chord_sequence_start(
-        self, chord: KeyChord, context: dict[str, Any]
-    ) -> bool:
+    def _check_chord_sequence_start(self, chord: KeyChord, context: dict[str, Any]) -> bool:
         """Check if a chord could start a chord sequence."""
         # Create sequence with just this chord
         KeySequence([chord])

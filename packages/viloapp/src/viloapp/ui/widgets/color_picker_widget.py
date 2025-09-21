@@ -138,9 +138,7 @@ class ColorPickerWidget(QWidget):
         """Update the color button's background."""
         # Create contrasting border based on luminance
         color = QColor(color_str)
-        luminance = (
-            0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()
-        ) / 255
+        luminance = (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()) / 255
 
         border_color = "#ffffff" if luminance < 0.5 else "#000000"
 
@@ -326,9 +324,7 @@ class ColorPickerField(QWidget):
         layout.addWidget(label_widget)
 
         # Color picker
-        self._picker = ColorPickerWidget(
-            initial_color=initial_color, show_hex_input=True
-        )
+        self._picker = ColorPickerWidget(initial_color=initial_color, show_hex_input=True)
         self._picker.color_changed.connect(self._on_color_changed)
         layout.addWidget(self._picker)
 

@@ -17,15 +17,15 @@ Key Principles Enforced:
 import ast
 import re
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
 from unittest.mock import Mock
 
 import pytest
 
 from viloapp.core.commands.base import CommandContext, CommandResult
-from viloapp.services.workspace_service import WorkspaceService
-from viloapp.services.ui_service import UIService
 from viloapp.services.state_service import StateService
+from viloapp.services.ui_service import UIService
+from viloapp.services.workspace_service import WorkspaceService
 
 
 class TestArchitectureCompliance:
@@ -48,20 +48,16 @@ class TestArchitectureCompliance:
             r"main_window\.workspace",
             r"context\.workspace\.tab_widget",
             r"context\.main_window\.status_bar",
-
             # Direct QMessageBox usage
             r"QMessageBox\.(?:information|warning|critical|question)",
-
             # Direct UI component imports in command files
             r"from ui\.",
             r"import.*ui\.",
-
             # Direct Qt widget operations (should use services)
             r"\.setTabText\(",
             r"\.tabText\(",
             r"\.currentIndex\(",
             r"\.setCurrentIndex\(",
-
             # Direct focus/visibility operations
             r"\.setFocus\(",
             r"\.setVisible\(",
@@ -94,29 +90,33 @@ class TestArchitectureCompliance:
                 continue
 
             try:
-                content = file_path.read_text(encoding='utf-8')
+                content = file_path.read_text(encoding="utf-8")
 
                 for pattern in forbidden_ui_patterns:
                     matches = re.finditer(pattern, content, re.MULTILINE)
                     for match in matches:
                         # Get line number for better error reporting
-                        line_num = content[:match.start()].count('\n') + 1
-                        line_content = content.split('\n')[line_num - 1].strip()
+                        line_num = content[: match.start()].count("\n") + 1
+                        line_content = content.split("\n")[line_num - 1].strip()
 
-                        violations.append({
-                            'file': str(file_path),
-                            'line': line_num,
-                            'pattern': pattern,
-                            'content': line_content,
-                            'violation_type': 'direct_ui_access'
-                        })
+                        violations.append(
+                            {
+                                "file": str(file_path),
+                                "line": line_num,
+                                "pattern": pattern,
+                                "content": line_content,
+                                "violation_type": "direct_ui_access",
+                            }
+                        )
 
             except Exception as e:
-                violations.append({
-                    'file': str(file_path),
-                    'error': f"Failed to read file: {e}",
-                    'violation_type': 'file_error'
-                })
+                violations.append(
+                    {
+                        "file": str(file_path),
+                        "error": f"Failed to read file: {e}",
+                        "violation_type": "file_error",
+                    }
+                )
 
         if violations:
             violation_report = self._format_violation_report(violations)
@@ -136,32 +136,41 @@ class TestArchitectureCompliance:
                 continue
 
             try:
-                content = file_path.read_text(encoding='utf-8')
+                content = file_path.read_text(encoding="utf-8")
 
                 # Check for command functions
                 if "@command(" in content or "def.*_command(" in content:
                     # Must have service usage
                     if "context.get_service(" not in content:
-                        violations.append({
-                            'file': str(file_path),
-                            'violation_type': 'missing_service_usage',
-                            'description': 'Command file contains commands but no service usage'
-                        })
+                        violations.append(
+                            {
+                                "file": str(file_path),
+                                "violation_type": "missing_service_usage",
+                                "description": "Command file contains commands but no service usage",
+                            }
+                        )
 
                     # Must handle service unavailability
-                    if "Service not available" not in content and "service.*not.*available" not in content:
-                        violations.append({
-                            'file': str(file_path),
-                            'violation_type': 'missing_service_error_handling',
-                            'description': 'Command file does not handle service unavailability'
-                        })
+                    if (
+                        "Service not available" not in content
+                        and "service.*not.*available" not in content
+                    ):
+                        violations.append(
+                            {
+                                "file": str(file_path),
+                                "violation_type": "missing_service_error_handling",
+                                "description": "Command file does not handle service unavailability",
+                            }
+                        )
 
             except Exception as e:
-                violations.append({
-                    'file': str(file_path),
-                    'error': f"Failed to analyze file: {e}",
-                    'violation_type': 'analysis_error'
-                })
+                violations.append(
+                    {
+                        "file": str(file_path),
+                        "error": f"Failed to analyze file: {e}",
+                        "violation_type": "analysis_error",
+                    }
+                )
 
         if violations:
             violation_report = self._format_violation_report(violations)
@@ -180,53 +189,67 @@ class TestArchitectureCompliance:
                 continue
 
             try:
-                content = file_path.read_text(encoding='utf-8')
+                content = file_path.read_text(encoding="utf-8")
                 tree = ast.parse(content)
 
                 for node in ast.walk(tree):
                     if isinstance(node, ast.FunctionDef):
                         # Check if this is a command function
-                        if (node.name.endswith('_command') or
-                            any(decorator.id == 'command' if isinstance(decorator, ast.Name)
-                                else getattr(decorator.func, 'id', None) == 'command'
-                                for decorator in node.decorator_list
-                                if hasattr(decorator, 'id') or hasattr(decorator, 'func'))):
+                        if node.name.endswith("_command") or any(
+                            (
+                                decorator.id == "command"
+                                if isinstance(decorator, ast.Name)
+                                else getattr(decorator.func, "id", None) == "command"
+                            )
+                            for decorator in node.decorator_list
+                            if hasattr(decorator, "id") or hasattr(decorator, "func")
+                        ):
 
                             # Check return type annotation
                             if node.returns:
-                                if not (isinstance(node.returns, ast.Name) and
-                                       node.returns.id == 'CommandResult'):
-                                    violations.append({
-                                        'file': str(file_path),
-                                        'function': node.name,
-                                        'line': node.lineno,
-                                        'violation_type': 'incorrect_return_type',
-                                        'description': 'Command function should return CommandResult'
-                                    })
+                                if not (
+                                    isinstance(node.returns, ast.Name)
+                                    and node.returns.id == "CommandResult"
+                                ):
+                                    violations.append(
+                                        {
+                                            "file": str(file_path),
+                                            "function": node.name,
+                                            "line": node.lineno,
+                                            "violation_type": "incorrect_return_type",
+                                            "description": "Command function should return CommandResult",
+                                        }
+                                    )
 
                             # Check for CommandResult usage in function body
                             has_command_result = False
                             for body_node in ast.walk(node):
-                                if (isinstance(body_node, ast.Name) and
-                                    body_node.id == 'CommandResult'):
+                                if (
+                                    isinstance(body_node, ast.Name)
+                                    and body_node.id == "CommandResult"
+                                ):
                                     has_command_result = True
                                     break
 
                             if not has_command_result:
-                                violations.append({
-                                    'file': str(file_path),
-                                    'function': node.name,
-                                    'line': node.lineno,
-                                    'violation_type': 'missing_commandresult',
-                                    'description': 'Command function does not use CommandResult'
-                                })
+                                violations.append(
+                                    {
+                                        "file": str(file_path),
+                                        "function": node.name,
+                                        "line": node.lineno,
+                                        "violation_type": "missing_commandresult",
+                                        "description": "Command function does not use CommandResult",
+                                    }
+                                )
 
             except Exception as e:
-                violations.append({
-                    'file': str(file_path),
-                    'error': f"Failed to parse file: {e}",
-                    'violation_type': 'parse_error'
-                })
+                violations.append(
+                    {
+                        "file": str(file_path),
+                        "error": f"Failed to parse file: {e}",
+                        "violation_type": "parse_error",
+                    }
+                )
 
         if violations:
             violation_report = self._format_violation_report(violations)
@@ -239,16 +262,16 @@ class TestArchitectureCompliance:
         Commands should only import services and command-related modules.
         """
         forbidden_imports = [
-            'from viloapp.ui.',
-            'from viloapp.ui.widgets',
-            'from viloapp.ui.main_window',
-            'from viloapp.ui.workspace',
-            'import viloapp.ui.',
-            'from PySide6.QtWidgets import QMessageBox',
+            "from viloapp.ui.",
+            "from viloapp.ui.widgets",
+            "from viloapp.ui.main_window",
+            "from viloapp.ui.workspace",
+            "import viloapp.ui.",
+            "from PySide6.QtWidgets import QMessageBox",
         ]
 
         allowed_ui_imports = [
-            'from viloapp.ui.widgets.widget_registry import WidgetType',  # Allowed for type references
+            "from viloapp.ui.widgets.widget_registry import WidgetType",  # Allowed for type references
         ]
 
         violations = []
@@ -258,8 +281,8 @@ class TestArchitectureCompliance:
                 continue
 
             try:
-                content = file_path.read_text(encoding='utf-8')
-                lines = content.split('\n')
+                content = file_path.read_text(encoding="utf-8")
+                lines = content.split("\n")
 
                 for line_num, line in enumerate(lines, 1):
                     line = line.strip()
@@ -271,20 +294,24 @@ class TestArchitectureCompliance:
                     # Check for forbidden imports
                     for forbidden in forbidden_imports:
                         if forbidden in line:
-                            violations.append({
-                                'file': str(file_path),
-                                'line': line_num,
-                                'content': line,
-                                'violation_type': 'forbidden_import',
-                                'description': f'Forbidden import: {forbidden}'
-                            })
+                            violations.append(
+                                {
+                                    "file": str(file_path),
+                                    "line": line_num,
+                                    "content": line,
+                                    "violation_type": "forbidden_import",
+                                    "description": f"Forbidden import: {forbidden}",
+                                }
+                            )
 
             except Exception as e:
-                violations.append({
-                    'file': str(file_path),
-                    'error': f"Failed to check imports: {e}",
-                    'violation_type': 'import_check_error'
-                })
+                violations.append(
+                    {
+                        "file": str(file_path),
+                        "error": f"Failed to check imports: {e}",
+                        "violation_type": "import_check_error",
+                    }
+                )
 
         if violations:
             violation_report = self._format_violation_report(violations)
@@ -297,17 +324,17 @@ class TestArchitectureCompliance:
         This prevents runtime errors when commands try to call service methods.
         """
         required_methods = [
-            'duplicate_tab',
-            'close_tabs_to_right',
-            'close_other_tabs',
-            'rename_tab',
-            'get_current_widget',
-            'get_current_split_widget',
-            'get_workspace',
-            'add_terminal_tab',
-            'add_editor_tab',
-            'close_tab',
-            'get_current_tab_index',
+            "duplicate_tab",
+            "close_tabs_to_right",
+            "close_other_tabs",
+            "rename_tab",
+            "get_current_widget",
+            "get_current_split_widget",
+            "get_workspace",
+            "add_terminal_tab",
+            "add_editor_tab",
+            "close_tab",
+            "get_current_tab_index",
         ]
 
         service = WorkspaceService()
@@ -335,6 +362,7 @@ class TestArchitectureCompliance:
         # Import and test a few representative commands
         try:
             from viloapp.core.commands.builtin.tab_commands import duplicate_tab_command
+
             result = duplicate_tab_command(mock_context)
             assert isinstance(result, CommandResult)
             assert not result.success
@@ -344,6 +372,7 @@ class TestArchitectureCompliance:
 
         try:
             from viloapp.core.commands.builtin.file_commands import save_state_command
+
             result = save_state_command(mock_context)
             assert isinstance(result, CommandResult)
             assert not result.success
@@ -365,27 +394,31 @@ class TestArchitectureCompliance:
                 continue
 
             try:
-                content = file_path.read_text(encoding='utf-8')
+                content = file_path.read_text(encoding="utf-8")
 
                 # Check for direct status bar usage
                 if "status_bar.set_message" in content:
-                    lines = content.split('\n')
+                    lines = content.split("\n")
                     for line_num, line in enumerate(lines, 1):
                         if "status_bar.set_message" in line:
-                            violations.append({
-                                'file': str(file_path),
-                                'line': line_num,
-                                'content': line.strip(),
-                                'violation_type': 'direct_status_bar_access',
-                                'description': 'Should use UIService.set_status_message() instead'
-                            })
+                            violations.append(
+                                {
+                                    "file": str(file_path),
+                                    "line": line_num,
+                                    "content": line.strip(),
+                                    "violation_type": "direct_status_bar_access",
+                                    "description": "Should use UIService.set_status_message() instead",
+                                }
+                            )
 
             except Exception as e:
-                violations.append({
-                    'file': str(file_path),
-                    'error': f"Failed to check status bar usage: {e}",
-                    'violation_type': 'status_check_error'
-                })
+                violations.append(
+                    {
+                        "file": str(file_path),
+                        "error": f"Failed to check status bar usage: {e}",
+                        "violation_type": "status_check_error",
+                    }
+                )
 
         if violations:
             violation_report = self._format_violation_report(violations)
@@ -404,37 +437,41 @@ class TestArchitectureCompliance:
                 continue
 
             try:
-                content = file_path.read_text(encoding='utf-8')
+                content = file_path.read_text(encoding="utf-8")
 
                 # Find @command decorators
-                command_decorators = re.finditer(r'@command\((.*?)\)', content, re.DOTALL)
+                command_decorators = re.finditer(r"@command\((.*?)\)", content, re.DOTALL)
 
                 for match in command_decorators:
                     decorator_content = match.group(1)
-                    line_num = content[:match.start()].count('\n') + 1
+                    line_num = content[: match.start()].count("\n") + 1
 
                     # Check for required fields
-                    required_fields = ['id=', 'title=', 'category=', 'description=']
+                    required_fields = ["id=", "title=", "category=", "description="]
                     missing_fields = []
 
                     for field in required_fields:
                         if field not in decorator_content:
-                            missing_fields.append(field.rstrip('='))
+                            missing_fields.append(field.rstrip("="))
 
                     if missing_fields:
-                        violations.append({
-                            'file': str(file_path),
-                            'line': line_num,
-                            'violation_type': 'incomplete_command_decorator',
-                            'description': f'Missing required fields: {missing_fields}'
-                        })
+                        violations.append(
+                            {
+                                "file": str(file_path),
+                                "line": line_num,
+                                "violation_type": "incomplete_command_decorator",
+                                "description": f"Missing required fields: {missing_fields}",
+                            }
+                        )
 
             except Exception as e:
-                violations.append({
-                    'file': str(file_path),
-                    'error': f"Failed to check command decorators: {e}",
-                    'violation_type': 'decorator_check_error'
-                })
+                violations.append(
+                    {
+                        "file": str(file_path),
+                        "error": f"Failed to check command decorators: {e}",
+                        "violation_type": "decorator_check_error",
+                    }
+                )
 
         if violations:
             violation_report = self._format_violation_report(violations)
@@ -453,7 +490,7 @@ class TestArchitectureCompliance:
         # Group violations by type
         by_type = {}
         for violation in violations:
-            vtype = violation.get('violation_type', 'unknown')
+            vtype = violation.get("violation_type", "unknown")
             if vtype not in by_type:
                 by_type[vtype] = []
             by_type[vtype].append(violation)
@@ -464,15 +501,15 @@ class TestArchitectureCompliance:
 
             for v in viols:
                 report.append(f"  File: {v.get('file', 'unknown')}")
-                if 'line' in v:
+                if "line" in v:
                     report.append(f"  Line: {v['line']}")
-                if 'content' in v:
+                if "content" in v:
                     report.append(f"  Code: {v['content']}")
-                if 'description' in v:
+                if "description" in v:
                     report.append(f"  Issue: {v['description']}")
-                if 'pattern' in v:
+                if "pattern" in v:
                     report.append(f"  Pattern: {v['pattern']}")
-                if 'error' in v:
+                if "error" in v:
                     report.append(f"  Error: {v['error']}")
                 report.append("")
 
@@ -499,10 +536,10 @@ class TestSpecificArchitecturePatterns:
 
         try:
             from viloapp.core.commands.builtin.tab_commands import (
-                duplicate_tab_command,
-                close_tabs_to_right_command,
                 close_other_tabs_command,
-                rename_tab_command
+                close_tabs_to_right_command,
+                duplicate_tab_command,
+                rename_tab_command,
             )
 
             # Test duplicate tab
@@ -547,7 +584,7 @@ class TestSpecificArchitecturePatterns:
             from viloapp.core.commands.builtin.terminal_commands import (
                 clear_terminal_handler,
                 copy_terminal_handler,
-                restart_terminal_handler
+                restart_terminal_handler,
             )
 
             # Test clear terminal
@@ -611,9 +648,9 @@ class TestSpecificArchitecturePatterns:
         mock_context.args = {}
 
         try:
+            from viloapp.core.commands.builtin.file_commands import save_state_command
             from viloapp.core.commands.builtin.tab_commands import duplicate_tab_command
             from viloapp.core.commands.builtin.terminal_commands import clear_terminal_handler
-            from viloapp.core.commands.builtin.file_commands import save_state_command
 
             # Test various commands with no services available
             commands_to_test = [
@@ -644,7 +681,7 @@ class TestRegressionPrevention:
             if file_path.name == "__init__.py":
                 continue
 
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
 
             # Check for specific violations we fixed
             patterns = [
@@ -658,7 +695,9 @@ class TestRegressionPrevention:
                 if re.search(pattern, content):
                     violations.append(f"{file_path}: {pattern}")
 
-        assert not violations, "Regression detected - direct tab_widget access:\n" + "\n".join(violations)
+        assert not violations, "Regression detected - direct tab_widget access:\n" + "\n".join(
+            violations
+        )
 
     def test_no_main_window_status_bar_access(self):
         """Prevent regression: commands should not access main_window.status_bar directly."""
@@ -669,16 +708,18 @@ class TestRegressionPrevention:
             if file_path.name == "__init__.py":
                 continue
 
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
 
             # Check for direct status bar access
             if "main_window.status_bar.set_message" in content:
-                lines = content.split('\n')
+                lines = content.split("\n")
                 for line_num, line in enumerate(lines, 1):
                     if "main_window.status_bar.set_message" in line:
                         violations.append(f"{file_path}:{line_num} - {line.strip()}")
 
-        assert not violations, "Regression detected - direct status bar access:\n" + "\n".join(violations)
+        assert not violations, "Regression detected - direct status bar access:\n" + "\n".join(
+            violations
+        )
 
     def test_commands_import_only_services(self):
         """Prevent regression: command files should only import services, not UI components."""
@@ -695,10 +736,12 @@ class TestRegressionPrevention:
             if file_path.name == "__init__.py":
                 continue
 
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
 
             for forbidden in forbidden_imports:
                 if forbidden in content:
                     violations.append(f"{file_path}: {forbidden}")
 
-        assert not violations, "Regression detected - forbidden UI imports:\n" + "\n".join(violations)
+        assert not violations, "Regression detected - forbidden UI imports:\n" + "\n".join(
+            violations
+        )

@@ -1,18 +1,19 @@
 """Plugin sandboxing for security and isolation."""
 
-import os
-import time
 import logging
+import os
 import threading
-from enum import Enum
-from typing import Dict, List, Optional, Callable, Any
+import time
 from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class RestartPolicy(Enum):
     """Plugin restart policies."""
+
     NEVER = "never"
     ON_FAILURE = "on_failure"
     ALWAYS = "always"
@@ -21,6 +22,7 @@ class RestartPolicy(Enum):
 @dataclass
 class OperationRecord:
     """Record of a plugin operation for telemetry."""
+
     timestamp: float
     operation_type: str
     target: str
@@ -39,7 +41,7 @@ class PluginSandbox:
         restart_policy: RestartPolicy = RestartPolicy.ON_FAILURE,
         max_restart_attempts: int = 3,
         crash_callback: Optional[Callable[[str, Exception], None]] = None,
-        restart_callback: Optional[Callable[[str], None]] = None
+        restart_callback: Optional[Callable[[str], None]] = None,
     ):
         """
         Initialize plugin sandbox.
@@ -87,7 +89,9 @@ class PluginSandbox:
         config_dir = f"/home/{os.getenv('USER', 'user')}/.config/viloapp/plugins/{self.plugin_id}"
 
         # Plugin-specific data directory
-        data_dir = f"/home/{os.getenv('USER', 'user')}/.local/share/viloapp/plugins/{self.plugin_id}"
+        data_dir = (
+            f"/home/{os.getenv('USER', 'user')}/.local/share/viloapp/plugins/{self.plugin_id}"
+        )
 
         self._allowed_paths = [plugin_temp, config_dir, data_dir]
 
@@ -155,7 +159,9 @@ class PluginSandbox:
 
         return False
 
-    def get_isolated_environment(self, additional_vars: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    def get_isolated_environment(
+        self, additional_vars: Optional[Dict[str, str]] = None
+    ) -> Dict[str, str]:
         """
         Get environment variables for isolated plugin execution.
 
@@ -265,9 +271,7 @@ class PluginSandbox:
         if not self.permission_manager:
             return True  # No permission manager means no restrictions
 
-        return self.permission_manager.can_access(
-            self.plugin_id, category, scope, resource
-        )
+        return self.permission_manager.can_access(self.plugin_id, category, scope, resource)
 
     def check_resource_limits(self):
         """
@@ -289,7 +293,9 @@ class PluginSandbox:
         """Disable telemetry collection."""
         self._telemetry_enabled = False
 
-    def record_operation(self, operation_type: str, target: str, success: bool = True, **details) -> None:
+    def record_operation(
+        self, operation_type: str, target: str, success: bool = True, **details
+    ) -> None:
         """
         Record a plugin operation for telemetry.
 
@@ -307,7 +313,7 @@ class PluginSandbox:
             operation_type=operation_type,
             target=target,
             success=success,
-            details=details
+            details=details,
         )
 
         with self._lock:
@@ -334,12 +340,12 @@ class PluginSandbox:
                         "type": op.operation_type,
                         "target": op.target,
                         "success": op.success,
-                        "details": op.details
+                        "details": op.details,
                     }
                     for op in self._operations
                 ],
                 "restart_attempts": self._restart_attempts,
-                "last_restart_time": self._last_restart_time
+                "last_restart_time": self._last_restart_time,
             }
 
     def get_security_summary(self) -> Dict[str, Any]:
@@ -354,21 +360,21 @@ class PluginSandbox:
             "isolation": {
                 "allowed_paths": self._allowed_paths,
                 "allowed_hosts": self._allowed_hosts,
-                "environment_vars": list(self._environment_vars.keys())
+                "environment_vars": list(self._environment_vars.keys()),
             },
             "restart_policy": {
                 "policy": self.restart_policy.value,
                 "max_attempts": self.max_restart_attempts,
-                "current_attempts": self._restart_attempts
+                "current_attempts": self._restart_attempts,
             },
             "telemetry": {
                 "enabled": self._telemetry_enabled,
-                "operation_count": len(self._operations)
+                "operation_count": len(self._operations),
             },
             "managers": {
                 "has_permission_manager": self.permission_manager is not None,
-                "has_resource_limiter": self.resource_limiter is not None
-            }
+                "has_resource_limiter": self.resource_limiter is not None,
+            },
         }
 
     def cleanup(self) -> None:

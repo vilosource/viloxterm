@@ -1,13 +1,16 @@
 """Tests for ServiceProxy permission checking."""
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
+
 
 def test_permission_aware_service_proxy_creation():
     """Test creating a permission-aware service proxy."""
+    from viloapp_sdk import IService
+
     from viloapp.core.plugin_system.security import PermissionManager
     from viloapp.core.plugin_system.service_proxy_impl import PermissionAwareServiceProxy
-    from viloapp_sdk import IService
 
     # Create mock services
     mock_service = Mock(spec=IService)
@@ -19,21 +22,24 @@ def test_permission_aware_service_proxy_creation():
 
     # Create permission-aware proxy
     proxy = PermissionAwareServiceProxy(
-        services=services,
-        permission_manager=permission_manager,
-        plugin_id="test-plugin"
+        services=services, permission_manager=permission_manager, plugin_id="test-plugin"
     )
 
     assert proxy is not None
     assert proxy.plugin_id == "test-plugin"
 
+
 def test_service_access_with_permission():
     """Test service access when plugin has permission."""
+    from viloapp_sdk import IService
+
     from viloapp.core.plugin_system.security import (
-        PermissionManager, Permission, PermissionCategory, PermissionScope
+        Permission,
+        PermissionCategory,
+        PermissionManager,
+        PermissionScope,
     )
     from viloapp.core.plugin_system.service_proxy_impl import PermissionAwareServiceProxy
-    from viloapp_sdk import IService
 
     # Create mock services
     mock_service = Mock(spec=IService)
@@ -43,30 +49,28 @@ def test_service_access_with_permission():
     # Create permission manager and grant permission
     permission_manager = PermissionManager()
     permission = Permission(
-        category=PermissionCategory.SYSTEM,
-        scope=PermissionScope.READ,
-        resource="configuration"
+        category=PermissionCategory.SYSTEM, scope=PermissionScope.READ, resource="configuration"
     )
     permission_manager.grant_permission("test-plugin", permission)
 
     # Create permission-aware proxy
     proxy = PermissionAwareServiceProxy(
-        services=services,
-        permission_manager=permission_manager,
-        plugin_id="test-plugin"
+        services=services, permission_manager=permission_manager, plugin_id="test-plugin"
     )
 
     # Should be able to access service
     service = proxy.get_service("configuration")
     assert service is not None
     # Service is wrapped, so check that we can access the original service methods
-    assert hasattr(service, 'get_service_id')
+    assert hasattr(service, "get_service_id")
+
 
 def test_service_access_without_permission():
     """Test service access when plugin lacks permission."""
+    from viloapp_sdk import IService
+
     from viloapp.core.plugin_system.security import PermissionManager
     from viloapp.core.plugin_system.service_proxy_impl import PermissionAwareServiceProxy
-    from viloapp_sdk import IService
 
     # Create mock services
     mock_service = Mock(spec=IService)
@@ -78,20 +82,20 @@ def test_service_access_without_permission():
 
     # Create permission-aware proxy
     proxy = PermissionAwareServiceProxy(
-        services=services,
-        permission_manager=permission_manager,
-        plugin_id="test-plugin"
+        services=services, permission_manager=permission_manager, plugin_id="test-plugin"
     )
 
     # Should not be able to access service
     service = proxy.get_service("filesystem")
     assert service is None
 
+
 def test_require_service_without_permission():
     """Test require_service throws error when permission denied."""
+    from viloapp_sdk import IService, ServiceNotAvailableError
+
     from viloapp.core.plugin_system.security import PermissionManager
     from viloapp.core.plugin_system.service_proxy_impl import PermissionAwareServiceProxy
-    from viloapp_sdk import IService, ServiceNotAvailableError
 
     # Create mock services
     mock_service = Mock(spec=IService)
@@ -103,19 +107,20 @@ def test_require_service_without_permission():
 
     # Create permission-aware proxy
     proxy = PermissionAwareServiceProxy(
-        services=services,
-        permission_manager=permission_manager,
-        plugin_id="test-plugin"
+        services=services, permission_manager=permission_manager, plugin_id="test-plugin"
     )
 
     # Should raise error when trying to require service
     with pytest.raises(ServiceNotAvailableError):
         proxy.require_service("filesystem")
 
+
 def test_service_mapping_permissions():
     """Test that services require appropriate permissions."""
     from viloapp.core.plugin_system.security import (
-        PermissionManager, PermissionCategory, PermissionScope
+        PermissionCategory,
+        PermissionManager,
+        PermissionScope,
     )
     from viloapp.core.plugin_system.service_proxy_impl import PermissionAwareServiceProxy
 
@@ -123,9 +128,7 @@ def test_service_mapping_permissions():
 
     # Mock proxy for testing permission mapping
     proxy = PermissionAwareServiceProxy(
-        services={},
-        permission_manager=permission_manager,
-        plugin_id="test-plugin"
+        services={}, permission_manager=permission_manager, plugin_id="test-plugin"
     )
 
     # Test permission mapping for different services
@@ -141,13 +144,18 @@ def test_service_mapping_permissions():
         assert required_permission.category == category
         assert required_permission.scope == scope
 
+
 def test_permission_caching():
     """Test that permission checks are cached for performance."""
+    from viloapp_sdk import IService
+
     from viloapp.core.plugin_system.security import (
-        PermissionManager, Permission, PermissionCategory, PermissionScope
+        Permission,
+        PermissionCategory,
+        PermissionManager,
+        PermissionScope,
     )
     from viloapp.core.plugin_system.service_proxy_impl import PermissionAwareServiceProxy
-    from viloapp_sdk import IService
 
     # Create mock services
     mock_service = Mock(spec=IService)
@@ -157,9 +165,7 @@ def test_permission_caching():
     # Create permission manager and grant permission
     permission_manager = PermissionManager()
     permission = Permission(
-        category=PermissionCategory.SYSTEM,
-        scope=PermissionScope.READ,
-        resource="configuration"
+        category=PermissionCategory.SYSTEM, scope=PermissionScope.READ, resource="configuration"
     )
     permission_manager.grant_permission("test-plugin", permission)
 
@@ -168,9 +174,7 @@ def test_permission_caching():
 
     # Create permission-aware proxy
     proxy = PermissionAwareServiceProxy(
-        services=services,
-        permission_manager=permission_manager,
-        plugin_id="test-plugin"
+        services=services, permission_manager=permission_manager, plugin_id="test-plugin"
     )
 
     # Access service multiple times
@@ -181,13 +185,18 @@ def test_permission_caching():
     # Permission should only be checked once (cached after first check)
     assert permission_manager.has_permission.call_count == 1
 
+
 def test_service_wrapper_permission_enforcement():
     """Test that service methods are wrapped with permission checks."""
+    from viloapp_sdk.service import IConfigurationService
+
     from viloapp.core.plugin_system.security import (
-        PermissionManager, Permission, PermissionCategory, PermissionScope
+        Permission,
+        PermissionCategory,
+        PermissionManager,
+        PermissionScope,
     )
     from viloapp.core.plugin_system.service_proxy_impl import PermissionAwareServiceProxy
-    from viloapp_sdk.service import IConfigurationService
 
     # Create mock configuration service
     mock_config_service = Mock(spec=IConfigurationService)
@@ -198,17 +207,13 @@ def test_service_wrapper_permission_enforcement():
     # Create permission manager and grant read permission only
     permission_manager = PermissionManager()
     read_permission = Permission(
-        category=PermissionCategory.SYSTEM,
-        scope=PermissionScope.READ,
-        resource="configuration"
+        category=PermissionCategory.SYSTEM, scope=PermissionScope.READ, resource="configuration"
     )
     permission_manager.grant_permission("test-plugin", read_permission)
 
     # Create permission-aware proxy
     proxy = PermissionAwareServiceProxy(
-        services=services,
-        permission_manager=permission_manager,
-        plugin_id="test-plugin"
+        services=services, permission_manager=permission_manager, plugin_id="test-plugin"
     )
 
     # Get the wrapped service
@@ -224,13 +229,18 @@ def test_service_wrapper_permission_enforcement():
     with pytest.raises(PermissionError):
         service.set("test_key", "new_value")
 
+
 def test_list_available_services_respects_permissions():
     """Test that list_services only shows services the plugin can access."""
+    from viloapp_sdk import IService
+
     from viloapp.core.plugin_system.security import (
-        PermissionManager, Permission, PermissionCategory, PermissionScope
+        Permission,
+        PermissionCategory,
+        PermissionManager,
+        PermissionScope,
     )
     from viloapp.core.plugin_system.service_proxy_impl import PermissionAwareServiceProxy
-    from viloapp_sdk import IService
 
     # Create multiple mock services
     services = {}
@@ -242,17 +252,13 @@ def test_list_available_services_respects_permissions():
     # Create permission manager and grant permission to only one service
     permission_manager = PermissionManager()
     permission = Permission(
-        category=PermissionCategory.SYSTEM,
-        scope=PermissionScope.READ,
-        resource="configuration"
+        category=PermissionCategory.SYSTEM, scope=PermissionScope.READ, resource="configuration"
     )
     permission_manager.grant_permission("test-plugin", permission)
 
     # Create permission-aware proxy
     proxy = PermissionAwareServiceProxy(
-        services=services,
-        permission_manager=permission_manager,
-        plugin_id="test-plugin"
+        services=services, permission_manager=permission_manager, plugin_id="test-plugin"
     )
 
     # Should only list services the plugin has permission to access
@@ -261,12 +267,15 @@ def test_list_available_services_respects_permissions():
     assert "filesystem" not in available_services
     assert "network" not in available_services
 
+
 def test_permission_denied_logging():
     """Test that permission denials are logged for security monitoring."""
+    from unittest.mock import patch
+
+    from viloapp_sdk import IService
+
     from viloapp.core.plugin_system.security import PermissionManager
     from viloapp.core.plugin_system.service_proxy_impl import PermissionAwareServiceProxy
-    from viloapp_sdk import IService
-    from unittest.mock import patch
 
     # Create mock services
     mock_service = Mock(spec=IService)
@@ -278,13 +287,11 @@ def test_permission_denied_logging():
 
     # Create permission-aware proxy
     proxy = PermissionAwareServiceProxy(
-        services=services,
-        permission_manager=permission_manager,
-        plugin_id="test-plugin"
+        services=services, permission_manager=permission_manager, plugin_id="test-plugin"
     )
 
     # Mock logging
-    with patch('core.plugin_system.service_proxy_impl.logger') as mock_logger:
+    with patch("core.plugin_system.service_proxy_impl.logger") as mock_logger:
         # Try to access service without permission
         service = proxy.get_service("filesystem")
         assert service is None

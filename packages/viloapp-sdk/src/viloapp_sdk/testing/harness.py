@@ -39,7 +39,7 @@ class PluginTestCase(unittest.TestCase):
     def tearDown(self) -> None:
         """Clean up test environment."""
         # Deactivate plugin if it was activated
-        if self.plugin and hasattr(self.plugin, 'deactivate'):
+        if self.plugin and hasattr(self.plugin, "deactivate"):
             try:
                 self.plugin.deactivate()
             except Exception:
@@ -73,7 +73,7 @@ class PluginTestCase(unittest.TestCase):
         """
         self.assertIsNotNone(plugin)
         # Check if plugin has a context (indicating activation)
-        if hasattr(plugin, '_context'):
+        if hasattr(plugin, "_context"):
             self.assertIsNotNone(plugin._context)
 
     def assert_plugin_deactivated(self, plugin: IPlugin) -> None:
@@ -84,7 +84,7 @@ class PluginTestCase(unittest.TestCase):
         """
         self.assertIsNotNone(plugin)
         # Check if plugin context is cleared
-        if hasattr(plugin, '_context'):
+        if hasattr(plugin, "_context"):
             self.assertIsNone(plugin._context)
 
     def get_mock_service(self, service_type: Type) -> Mock:
@@ -119,6 +119,7 @@ class PluginTestCase(unittest.TestCase):
             True if signal was emitted within timeout
         """
         from PySide6.QtTest import QSignalSpy
+
         spy = QSignalSpy(signal)
         return spy.wait(timeout)
 
@@ -235,7 +236,7 @@ class ServiceTestCase(PluginTestCase):
 
     def tearDown(self) -> None:
         """Clean up service test environment."""
-        if self.service and hasattr(self.service, 'dispose'):
+        if self.service and hasattr(self.service, "dispose"):
             try:
                 self.service.dispose()
             except Exception:
@@ -305,7 +306,7 @@ class CommandTestCase(PluginTestCase):
         """
         result = self.command_results.get(command_id)
         self.assertIsNotNone(result)
-        if hasattr(result, 'success'):
+        if hasattr(result, "success"):
             self.assertTrue(result.success)
 
     def assert_command_failed(self, command_id: str) -> None:
@@ -316,7 +317,7 @@ class CommandTestCase(PluginTestCase):
         """
         result = self.command_results.get(command_id)
         self.assertIsNotNone(result)
-        if hasattr(result, 'success'):
+        if hasattr(result, "success"):
             self.assertFalse(result.success)
 
     def get_command_result(self, command_id: str) -> Any:
@@ -388,7 +389,7 @@ class IntegrationTestCase(PluginTestCase):
         source_plugin_id: str,
         target_plugin_id: str,
         interaction_type: str,
-        data: Dict[str, Any]
+        data: Dict[str, Any],
     ) -> None:
         """Simulate interaction between plugins.
 
@@ -400,14 +401,13 @@ class IntegrationTestCase(PluginTestCase):
         """
         # Simulate event-based interaction
         event_type = f"{source_plugin_id}.{interaction_type}"
-        self.simulate_event(event_type, {
-            "source": source_plugin_id,
-            "target": target_plugin_id,
-            "data": data
-        })
+        self.simulate_event(
+            event_type, {"source": source_plugin_id, "target": target_plugin_id, "data": data}
+        )
 
 
 # Utility functions for test setup
+
 
 def create_test_plugin_manifest(plugin_id: str, **overrides) -> Dict[str, Any]:
     """Create a test plugin manifest.
@@ -428,13 +428,9 @@ def create_test_plugin_manifest(plugin_id: str, **overrides) -> Dict[str, Any]:
         "license": "MIT",
         "main": f"{plugin_id}.plugin:TestPlugin",
         "activation": "onStartup",
-        "contributes": {
-            "commands": [],
-            "widgets": [],
-            "services": []
-        },
+        "contributes": {"commands": [], "widgets": [], "services": []},
         "dependencies": {},
-        "permissions": ["viloapp.ui.read"]
+        "permissions": ["viloapp.ui.read"],
     }
 
     manifest.update(overrides)
@@ -451,9 +447,7 @@ def assert_plugin_interface_compliance(plugin: IPlugin) -> None:
         AssertionError: If plugin doesn't comply with interface
     """
     # Check required methods exist
-    required_methods = [
-        'activate', 'deactivate', 'get_id', 'get_name', 'get_version'
-    ]
+    required_methods = ["activate", "deactivate", "get_id", "get_name", "get_version"]
 
     for method_name in required_methods:
         assert hasattr(plugin, method_name), f"Plugin missing required method: {method_name}"
@@ -471,12 +465,20 @@ def assert_widget_interface_compliance(widget_factory: IWidget) -> None:
         AssertionError: If widget doesn't comply with interface
     """
     required_methods = [
-        'get_widget_id', 'get_title', 'get_icon', 'create_instance',
-        'destroy_instance', 'handle_command', 'get_state', 'restore_state'
+        "get_widget_id",
+        "get_title",
+        "get_icon",
+        "create_instance",
+        "destroy_instance",
+        "handle_command",
+        "get_state",
+        "restore_state",
     ]
 
     for method_name in required_methods:
-        assert hasattr(widget_factory, method_name), f"Widget missing required method: {method_name}"
+        assert hasattr(
+            widget_factory, method_name
+        ), f"Widget missing required method: {method_name}"
         method = getattr(widget_factory, method_name)
         assert callable(method), f"Widget method {method_name} is not callable"
 
@@ -490,7 +492,7 @@ def assert_service_interface_compliance(service: IService) -> None:
     Raises:
         AssertionError: If service doesn't comply with interface
     """
-    required_methods = ['get_service_id']
+    required_methods = ["get_service_id"]
 
     for method_name in required_methods:
         assert hasattr(service, method_name), f"Service missing required method: {method_name}"

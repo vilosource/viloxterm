@@ -7,8 +7,10 @@ import time
 import uuid
 from threading import Lock
 
+
 class EventType(Enum):
     """Standard event types."""
+
     # Lifecycle events
     PLUGIN_LOADED = "plugin.loaded"
     PLUGIN_UNLOADED = "plugin.unloaded"
@@ -39,16 +41,20 @@ class EventType(Enum):
     # Custom events
     CUSTOM = "custom"
 
+
 class EventPriority(Enum):
     """Event priority levels."""
+
     LOW = 0
     NORMAL = 1
     HIGH = 2
     CRITICAL = 3
 
+
 @dataclass
 class PluginEvent:
     """Event data structure."""
+
     type: EventType
     source: str  # Plugin ID or system component
     data: Dict[str, Any] = field(default_factory=dict)
@@ -70,6 +76,7 @@ class PluginEvent:
         except Exception:
             return False
 
+
 class EventSubscription:
     """Represents an event subscription."""
 
@@ -79,7 +86,7 @@ class EventSubscription:
         handler: Callable[[PluginEvent], None],
         filter_func: Optional[Callable[[PluginEvent], bool]] = None,
         priority: EventPriority = EventPriority.NORMAL,
-        subscriber_id: Optional[str] = None
+        subscriber_id: Optional[str] = None,
     ):
         self.event_type = event_type
         self.handler = handler
@@ -97,6 +104,7 @@ class EventSubscription:
         """Mark subscription as inactive."""
         self.active = False
 
+
 class EventBus:
     """Central event bus for plugin communication."""
 
@@ -112,7 +120,7 @@ class EventBus:
         handler: Callable[[PluginEvent], None],
         filter_func: Optional[Callable[[PluginEvent], bool]] = None,
         priority: EventPriority = EventPriority.NORMAL,
-        subscriber_id: Optional[str] = None
+        subscriber_id: Optional[str] = None,
     ) -> EventSubscription:
         """
         Subscribe to an event type.
@@ -127,9 +135,7 @@ class EventBus:
         Returns:
             EventSubscription object
         """
-        subscription = EventSubscription(
-            event_type, handler, filter_func, priority, subscriber_id
-        )
+        subscription = EventSubscription(event_type, handler, filter_func, priority, subscriber_id)
 
         with self._lock:
             if event_type not in self._subscriptions:
@@ -158,7 +164,8 @@ class EventBus:
         with self._lock:
             if subscription.event_type in self._subscriptions:
                 self._subscriptions[subscription.event_type] = [
-                    sub for sub in self._subscriptions[subscription.event_type]
+                    sub
+                    for sub in self._subscriptions[subscription.event_type]
                     if sub.subscriber_id != subscription.subscriber_id
                 ]
 
@@ -202,10 +209,7 @@ class EventBus:
         self.emit(event)
 
     def get_history(
-        self,
-        event_type: Optional[EventType] = None,
-        source: Optional[str] = None,
-        limit: int = 100
+        self, event_type: Optional[EventType] = None, source: Optional[str] = None, limit: int = 100
     ) -> List[PluginEvent]:
         """
         Get event history.

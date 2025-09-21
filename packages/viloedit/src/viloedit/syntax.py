@@ -8,6 +8,7 @@ from PySide6.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QFont
 try:
     from pygments import lex
     from pygments.token import Token
+
     PYGMENTS_AVAILABLE = True
 except ImportError:
     PYGMENTS_AVAILABLE = False
@@ -31,38 +32,38 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         keyword_format = QTextCharFormat()
         keyword_format.setForeground(QColor("#569cd6"))
         keyword_format.setFontWeight(QFont.Bold)
-        self.formats['keyword'] = keyword_format
+        self.formats["keyword"] = keyword_format
 
         # String format
         string_format = QTextCharFormat()
         string_format.setForeground(QColor("#ce9178"))
-        self.formats['string'] = string_format
+        self.formats["string"] = string_format
 
         # Comment format
         comment_format = QTextCharFormat()
         comment_format.setForeground(QColor("#6a9955"))
         comment_format.setFontItalic(True)
-        self.formats['comment'] = comment_format
+        self.formats["comment"] = comment_format
 
         # Function format
         function_format = QTextCharFormat()
         function_format.setForeground(QColor("#dcdcaa"))
-        self.formats['function'] = function_format
+        self.formats["function"] = function_format
 
         # Number format
         number_format = QTextCharFormat()
         number_format.setForeground(QColor("#b5cea8"))
-        self.formats['number'] = number_format
+        self.formats["number"] = number_format
 
         # Class format
         class_format = QTextCharFormat()
         class_format.setForeground(QColor("#4ec9b0"))
-        self.formats['class'] = class_format
+        self.formats["class"] = class_format
 
         # Variable format
         variable_format = QTextCharFormat()
         variable_format.setForeground(QColor("#9cdcfe"))
-        self.formats['variable'] = variable_format
+        self.formats["variable"] = variable_format
 
     def highlightBlock(self, text):
         """Highlight a block of text."""
@@ -92,31 +93,31 @@ class SyntaxHighlighter(QSyntaxHighlighter):
             return None
 
         if token_type in Token.Keyword:
-            return self.formats['keyword']
+            return self.formats["keyword"]
         elif token_type in Token.String:
-            return self.formats['string']
+            return self.formats["string"]
         elif token_type in Token.Comment:
-            return self.formats['comment']
+            return self.formats["comment"]
         elif token_type in Token.Name.Function:
-            return self.formats['function']
+            return self.formats["function"]
         elif token_type in Token.Name.Class:
-            return self.formats['class']
+            return self.formats["class"]
         elif token_type in Token.Name.Variable:
-            return self.formats['variable']
+            return self.formats["variable"]
         elif token_type in Token.Number:
-            return self.formats['number']
+            return self.formats["number"]
 
         return None
 
     def update_theme(self, theme_data: Dict[str, Any]):
         """Update highlighter colors based on theme."""
         # Update format colors
-        if 'keyword' in theme_data:
-            self.formats['keyword'].setForeground(QColor(theme_data['keyword']))
-        if 'string' in theme_data:
-            self.formats['string'].setForeground(QColor(theme_data['string']))
-        if 'comment' in theme_data:
-            self.formats['comment'].setForeground(QColor(theme_data['comment']))
+        if "keyword" in theme_data:
+            self.formats["keyword"].setForeground(QColor(theme_data["keyword"]))
+        if "string" in theme_data:
+            self.formats["string"].setForeground(QColor(theme_data["string"]))
+        if "comment" in theme_data:
+            self.formats["comment"].setForeground(QColor(theme_data["comment"]))
 
         # Re-highlight document
         self.rehighlight()

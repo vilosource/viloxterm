@@ -122,9 +122,7 @@ class TestWidgetRegistration:
 class TestWidgetCreation:
     """Test widget creation functionality."""
 
-    def test_create_widget_with_class(
-        self, manager, sample_metadata, mock_widget_class
-    ):
+    def test_create_widget_with_class(self, manager, sample_metadata, mock_widget_class):
         """Test creating widget using widget class."""
         manager.register_widget(sample_metadata)
 

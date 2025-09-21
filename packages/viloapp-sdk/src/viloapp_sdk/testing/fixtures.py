@@ -13,11 +13,16 @@ from ..events import EventBus
 from ..plugin import PluginMetadata, PluginCapability
 from ..interfaces import IPlugin
 from .mock_host import (
-    MockPluginHost, MockCommandService, MockConfigurationService,
-    MockWorkspaceService, MockThemeService, MockNotificationService
+    MockPluginHost,
+    MockCommandService,
+    MockConfigurationService,
+    MockWorkspaceService,
+    MockThemeService,
+    MockNotificationService,
 )
 
 # Core testing fixtures
+
 
 @pytest.fixture
 def mock_plugin_host():
@@ -34,6 +39,7 @@ def mock_plugin_host():
     with MockPluginHost() as host:
         yield host
 
+
 @pytest.fixture
 def mock_plugin_context(mock_plugin_host):
     """
@@ -46,6 +52,7 @@ def mock_plugin_context(mock_plugin_host):
             assert plugin.context == mock_plugin_context
     """
     return mock_plugin_host.create_context()
+
 
 @pytest.fixture
 def mock_services():
@@ -69,6 +76,7 @@ def mock_services():
         "notification": MockNotificationService(),
     }
 
+
 @pytest.fixture
 def mock_service_proxy(mock_services):
     """
@@ -80,6 +88,7 @@ def mock_service_proxy(mock_services):
             assert command_service is not None
     """
     return ServiceProxy(mock_services)
+
 
 @pytest.fixture
 def mock_event_bus():
@@ -102,7 +111,9 @@ def mock_event_bus():
     """
     return EventBus()
 
+
 # Plugin creation fixtures
+
 
 @pytest.fixture
 def sample_plugin_metadata():
@@ -120,8 +131,9 @@ def sample_plugin_metadata():
         version="1.0.0",
         description="A sample plugin for testing",
         author="Test Author",
-        capabilities=[PluginCapability.WIDGETS, PluginCapability.COMMANDS]
+        capabilities=[PluginCapability.WIDGETS, PluginCapability.COMMANDS],
     )
+
 
 @pytest.fixture
 def sample_plugin_class(sample_plugin_metadata):
@@ -134,6 +146,7 @@ def sample_plugin_class(sample_plugin_metadata):
             plugin.activate(mock_plugin_context)
             assert plugin.activated
     """
+
     class SamplePlugin(IPlugin):
         def __init__(self):
             self.activated = False
@@ -156,6 +169,7 @@ def sample_plugin_class(sample_plugin_metadata):
 
     return SamplePlugin
 
+
 @pytest.fixture
 def sample_plugin(sample_plugin_class):
     """
@@ -168,7 +182,9 @@ def sample_plugin(sample_plugin_class):
     """
     return sample_plugin_class()
 
+
 # Directory and file fixtures
+
 
 @pytest.fixture
 def temp_plugin_dir():
@@ -187,6 +203,7 @@ def temp_plugin_dir():
     finally:
         if temp_dir.exists():
             shutil.rmtree(temp_dir)
+
 
 @pytest.fixture
 def plugin_manifest_dir(temp_plugin_dir, sample_plugin_metadata):
@@ -207,16 +224,18 @@ def plugin_manifest_dir(temp_plugin_dir, sample_plugin_metadata):
         "description": sample_plugin_metadata.description,
         "author": sample_plugin_metadata.author,
         "capabilities": [cap.value for cap in sample_plugin_metadata.capabilities],
-        "entry_point": "plugin.SamplePlugin"
+        "entry_point": "plugin.SamplePlugin",
     }
 
     manifest_file = temp_plugin_dir / "plugin.json"
-    with open(manifest_file, 'w') as f:
+    with open(manifest_file, "w") as f:
         json.dump(manifest_data, f, indent=2)
 
     return temp_plugin_dir
 
+
 # Configuration fixtures
+
 
 @pytest.fixture
 def plugin_configuration():
@@ -232,22 +251,19 @@ def plugin_configuration():
         "debug": True,
         "theme": "dark",
         "max_connections": 10,
-        "features": {
-            "autocomplete": True,
-            "syntax_highlighting": True
-        },
-        "paths": {
-            "cache": "/tmp/plugin-cache",
-            "logs": "/tmp/plugin-logs"
-        }
+        "features": {"autocomplete": True, "syntax_highlighting": True},
+        "paths": {"cache": "/tmp/plugin-cache", "logs": "/tmp/plugin-logs"},
     }
 
+
 # Service-specific fixtures
+
 
 @pytest.fixture
 def mock_command_service():
     """Fixture providing a mock command service."""
     return MockCommandService()
+
 
 @pytest.fixture
 def mock_configuration_service():
@@ -259,22 +275,27 @@ def mock_configuration_service():
     service.set("workspace.autosave", True)
     return service
 
+
 @pytest.fixture
 def mock_workspace_service():
     """Fixture providing a mock workspace service."""
     return MockWorkspaceService()
+
 
 @pytest.fixture
 def mock_theme_service():
     """Fixture providing a mock theme service."""
     return MockThemeService()
 
+
 @pytest.fixture
 def mock_notification_service():
     """Fixture providing a mock notification service."""
     return MockNotificationService()
 
+
 # Utility fixtures
+
 
 @pytest.fixture
 def mock_widget():
@@ -291,13 +312,17 @@ def mock_widget():
     widget.size.return_value = (800, 600)
     return widget
 
+
 # Parameterized fixtures for testing different scenarios
 
-@pytest.fixture(params=[
-    {"debug": True, "verbose": False},
-    {"debug": False, "verbose": True},
-    {"debug": True, "verbose": True},
-])
+
+@pytest.fixture(
+    params=[
+        {"debug": True, "verbose": False},
+        {"debug": False, "verbose": True},
+        {"debug": True, "verbose": True},
+    ]
+)
 def various_configurations(request):
     """
     Parameterized fixture for testing with different configurations.
@@ -309,6 +334,7 @@ def various_configurations(request):
             verbose_mode = various_configurations["verbose"]
     """
     return request.param
+
 
 @pytest.fixture(params=["command", "configuration", "workspace", "theme", "notification"])
 def service_types(request):
@@ -322,7 +348,9 @@ def service_types(request):
     """
     return request.param
 
+
 # Integration testing fixtures
+
 
 @pytest.fixture
 def integrated_plugin_environment(mock_plugin_host, sample_plugin, plugin_configuration):
@@ -349,10 +377,12 @@ def integrated_plugin_environment(mock_plugin_host, sample_plugin, plugin_config
         "context": context,
         "configuration": plugin_configuration,
         "services": mock_plugin_host._services,
-        "event_bus": mock_plugin_host.get_event_bus()
+        "event_bus": mock_plugin_host.get_event_bus(),
     }
 
+
 # Cleanup fixtures
+
 
 @pytest.fixture(autouse=True)
 def cleanup_after_test():
@@ -364,7 +394,9 @@ def cleanup_after_test():
     # Cleanup code runs here after each test
     # This is useful for ensuring no state leaks between tests
 
+
 # Helper fixture for asserting mock calls
+
 
 @pytest.fixture
 def assert_mock_calls():
@@ -379,6 +411,7 @@ def assert_mock_calls():
                 "test"
             )
     """
+
     class MockCallAssertions:
         def assert_called_once(self, mock_method, *args, **kwargs):
             mock_method.assert_called_once_with(*args, **kwargs)

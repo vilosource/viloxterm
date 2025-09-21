@@ -5,11 +5,18 @@ import tempfile
 from pathlib import Path
 
 from viloapp_sdk.utils.validators import (
-    ManifestValidator, VersionCompatibilityChecker, DependencyValidator,
-    PermissionValidator, ConfigurationSchemaValidator,
-    validate_manifest, validate_version_compatibility, validate_dependencies,
-    validate_permissions, validate_configuration_schema, validate_plugin_complete,
-    ValidationResult
+    ManifestValidator,
+    VersionCompatibilityChecker,
+    DependencyValidator,
+    PermissionValidator,
+    ConfigurationSchemaValidator,
+    validate_manifest,
+    validate_version_compatibility,
+    validate_dependencies,
+    validate_permissions,
+    validate_configuration_schema,
+    validate_plugin_complete,
+    ValidationResult,
 )
 
 
@@ -101,7 +108,7 @@ class TestManifestValidator:
             "description": "A test plugin",
             "author": {"name": "John Doe", "email": "john@example.com"},
             "license": "MIT",
-            "engines": {"viloapp": ">=2.0.0"}
+            "engines": {"viloapp": ">=2.0.0"},
         }
 
         validator = ManifestValidator()
@@ -138,7 +145,7 @@ class TestManifestValidator:
             "description": "A test plugin",
             "author": "John Doe",
             "license": "MIT",
-            "engines": {"viloapp": ">=2.0.0"}
+            "engines": {"viloapp": ">=2.0.0"},
         }
 
         validator = ManifestValidator()
@@ -157,7 +164,7 @@ class TestManifestValidator:
             "description": "A test plugin",
             "author": "John Doe",
             "license": "MIT",
-            "engines": {"viloapp": ">=2.0.0"}
+            "engines": {"viloapp": ">=2.0.0"},
         }
 
         validator = ManifestValidator()
@@ -177,7 +184,7 @@ class TestManifestValidator:
             "description": "A test plugin",
             "author": "John Doe",
             "license": "MIT",
-            "engines": {"viloapp": ">=2.0.0"}
+            "engines": {"viloapp": ">=2.0.0"},
         }
 
         validator = ManifestValidator()
@@ -210,8 +217,8 @@ class TestManifestValidator:
                 "onStartup",
                 "onCommand:test.command",
                 "onLanguage:python",
-                "invalid-event"
-            ]
+                "invalid-event",
+            ],
         }
 
         validator = ManifestValidator()
@@ -233,20 +240,14 @@ class TestManifestValidator:
             "engines": {"viloapp": ">=2.0.0"},
             "contributes": {
                 "commands": [
-                    {
-                        "command": "test.validCommand",
-                        "title": "Valid Command"
-                    },
-                    {
-                        "command": "invalid@command",
-                        "title": "Invalid Command"
-                    },
+                    {"command": "test.validCommand", "title": "Valid Command"},
+                    {"command": "invalid@command", "title": "Invalid Command"},
                     {
                         # Missing command field
                         "title": "Missing Command ID"
-                    }
+                    },
                 ]
-            }
+            },
         }
 
         validator = ManifestValidator()
@@ -265,7 +266,7 @@ class TestManifestValidator:
             "description": "A test plugin",
             "author": "John Doe",
             "license": "MIT",
-            "engines": {"viloapp": ">=2.0.0"}
+            "engines": {"viloapp": ">=2.0.0"},
             # Missing keywords, categories in strict mode
         }
 
@@ -287,10 +288,10 @@ class TestManifestValidator:
             "description": "A test plugin",
             "author": "John Doe",
             "license": "MIT",
-            "engines": {"viloapp": ">=2.0.0"}
+            "engines": {"viloapp": ">=2.0.0"},
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(manifest_data, f)
             manifest_path = f.name
 
@@ -310,7 +311,7 @@ class TestManifestValidator:
             "description": "A test plugin",
             "author": "John Doe",
             "license": "MIT",
-            "engines": {"viloapp": ">=2.0.0"}
+            "engines": {"viloapp": ">=2.0.0"},
         }
 
         json_string = json.dumps(manifest_data)
@@ -422,12 +423,7 @@ class TestPermissionValidator:
     def test_valid_permission_strings(self):
         """Test valid permission strings."""
         validator = PermissionValidator()
-        permissions = [
-            "filesystem:read",
-            "network:write",
-            "ui:create:dialog",
-            "system:execute"
-        ]
+        permissions = ["filesystem:read", "network:write", "ui:create:dialog", "system:execute"]
 
         result = validator.validate(permissions)
         assert result.valid is True
@@ -438,7 +434,7 @@ class TestPermissionValidator:
         permissions = {
             "filesystem": ["read", "write"],
             "network": ["read"],
-            "ui": ["create", "modify"]
+            "ui": ["create", "modify"],
         }
 
         result = validator.validate(permissions)
@@ -471,10 +467,7 @@ class TestPermissionValidator:
     def test_invalid_permission_dict_format(self):
         """Test invalid permission dictionary format."""
         validator = PermissionValidator()
-        permissions = {
-            "filesystem": "not-a-list",
-            "invalid-category": ["read"]
-        }
+        permissions = {"filesystem": "not-a-list", "invalid-category": ["read"]}
 
         result = validator.validate(permissions)
         assert result.valid is False
@@ -489,15 +482,9 @@ class TestConfigurationSchemaValidator:
         schema = {
             "type": "object",
             "properties": {
-                "timeout": {
-                    "type": "number",
-                    "description": "Timeout in seconds"
-                },
-                "enabled": {
-                    "type": "boolean",
-                    "description": "Whether feature is enabled"
-                }
-            }
+                "timeout": {"type": "number", "description": "Timeout in seconds"},
+                "enabled": {"type": "boolean", "description": "Whether feature is enabled"},
+            },
         }
 
         result = validator.validate(schema)
@@ -511,12 +498,9 @@ class TestConfigurationSchemaValidator:
             "properties": {
                 "server": {
                     "type": "object",
-                    "properties": {
-                        "host": {"type": "string"},
-                        "port": {"type": "integer"}
-                    }
+                    "properties": {"host": {"type": "string"}, "port": {"type": "integer"}},
                 }
-            }
+            },
         }
 
         result = validator.validate(schema)
@@ -527,14 +511,7 @@ class TestConfigurationSchemaValidator:
         validator = ConfigurationSchemaValidator()
         schema = {
             "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
+            "properties": {"items": {"type": "array", "items": {"type": "string"}}},
         }
 
         result = validator.validate(schema)
@@ -543,14 +520,7 @@ class TestConfigurationSchemaValidator:
     def test_invalid_property_type(self):
         """Test invalid property type."""
         validator = ConfigurationSchemaValidator()
-        schema = {
-            "type": "object",
-            "properties": {
-                "field": {
-                    "type": "invalid-type"
-                }
-            }
-        }
+        schema = {"type": "object", "properties": {"field": {"type": "invalid-type"}}}
 
         result = validator.validate(schema)
         assert result.valid is False
@@ -560,11 +530,7 @@ class TestConfigurationSchemaValidator:
         validator = ConfigurationSchemaValidator()
         schema = {
             "type": "object",
-            "properties": {
-                "field": {
-                    "description": "A field without type"
-                }
-            }
+            "properties": {"field": {"description": "A field without type"}},
         }
 
         result = validator.validate(schema)
@@ -592,7 +558,7 @@ class TestConvenienceFunctions:
             "description": "A test plugin",
             "author": "John Doe",
             "license": "MIT",
-            "engines": {"viloapp": ">=2.0.0"}
+            "engines": {"viloapp": ">=2.0.0"},
         }
 
         result = validate_manifest(manifest)
@@ -621,12 +587,7 @@ class TestConvenienceFunctions:
 
     def test_validate_configuration_schema_function(self):
         """Test validate_configuration_schema convenience function."""
-        schema = {
-            "type": "object",
-            "properties": {
-                "setting": {"type": "string"}
-            }
-        }
+        schema = {"type": "object", "properties": {"setting": {"type": "string"}}}
 
         result = validate_configuration_schema(schema)
         assert result.valid is True
@@ -647,16 +608,11 @@ class TestCompletePluginValidation:
             "engines": {"viloapp": ">=2.0.0"},
             "extensionDependencies": ["other-plugin"],
             "contributes": {
-                "configuration": {
-                    "type": "object",
-                    "properties": {
-                        "setting": {"type": "string"}
-                    }
-                }
-            }
+                "configuration": {"type": "object", "properties": {"setting": {"type": "string"}}}
+            },
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(manifest_data, f)
             manifest_path = f.name
 
@@ -678,7 +634,7 @@ class TestCompletePluginValidation:
             "engines": {"viloapp": ">=999.0.0"},  # Incompatible version
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(manifest_data, f)
             manifest_path = f.name
 

@@ -72,9 +72,7 @@ class TerminalServerManager(QObject):
         """Setup Flask application with SocketIO."""
         self.app = Flask(__name__)
         self.app.config["SECRET_KEY"] = "terminal_server_secret!"
-        self.socketio = SocketIO(
-            self.app, cors_allowed_origins="*", async_mode="threading"
-        )
+        self.socketio = SocketIO(self.app, cors_allowed_origins="*", async_mode="threading")
 
         @self.app.route("/terminal/<session_id>")
         def terminal_page(session_id):
@@ -250,6 +248,7 @@ class TerminalServerManager(QObject):
         # Find available port
         if self.port == 0:
             import socket
+
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(("", 0))
                 self.port = s.getsockname()[1]
@@ -344,6 +343,7 @@ class TerminalServerManager(QObject):
 
     def _start_cleanup_timer(self):
         """Start periodic cleanup of inactive sessions."""
+
         def cleanup_task():
             while self.running:
                 time.sleep(60)  # Run cleanup every minute

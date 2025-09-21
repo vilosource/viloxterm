@@ -65,9 +65,7 @@ class MockAsyncWidget(AppWidget):
     def start_initialization(self):
         """Start async initialization."""
         self.initialize()
-        self._init_timer = QTimer.singleShot(
-            self.init_delay, self.complete_initialization
-        )
+        self._init_timer = QTimer.singleShot(self.init_delay, self.complete_initialization)
 
     def complete_initialization(self):
         """Complete initialization and become ready."""
@@ -115,9 +113,7 @@ class MockErrorWidget(AppWidget):
         self.attempt_count += 1
 
         if self.attempt_count < self.error_on_attempt:
-            QTimer.singleShot(
-                10, lambda: self.set_error(f"Error on attempt {self.attempt_count}")
-            )
+            QTimer.singleShot(10, lambda: self.set_error(f"Error on attempt {self.attempt_count}"))
         else:
             QTimer.singleShot(10, self.set_ready)
 
@@ -131,9 +127,7 @@ class WidgetTestHelper:
     """Helper class for widget testing."""
 
     @staticmethod
-    def wait_for_state(
-        widget: AppWidget, state: WidgetState, timeout_ms: int = 1000
-    ) -> bool:
+    def wait_for_state(widget: AppWidget, state: WidgetState, timeout_ms: int = 1000) -> bool:
         """
         Wait for widget to reach a specific state.
 

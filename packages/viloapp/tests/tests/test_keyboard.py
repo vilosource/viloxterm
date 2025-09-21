@@ -200,9 +200,7 @@ class TestShortcutRegistry:
             command_id="test.saveFile",
             description="Save file",
         )
-        assert (
-            success is True
-        ), "Failed to register shortcut from string for 'test.save'"
+        assert success is True, "Failed to register shortcut from string for 'test.save'"
 
         shortcut = self.registry.get_shortcut("test.save")
         assert isinstance(
@@ -335,9 +333,7 @@ class TestConflictResolver:
         )
 
         conflicts = self.resolver.find_conflicts(new_shortcut, self.registry)
-        success = self.resolver.resolve_conflicts(
-            new_shortcut, conflicts, self.registry
-        )
+        success = self.resolver.resolve_conflicts(new_shortcut, conflicts, self.registry)
 
         assert success is True, "Failed to resolve conflicts for high priority shortcut"
         # High priority shortcut should replace low priority one
@@ -379,9 +375,7 @@ class TestKeymaps:
         assert info.name == "ViloApp Default"
 
         shortcuts = provider.get_shortcuts()
-        assert (
-            len(shortcuts) >= 3
-        ), f"Expected at least 3 default shortcuts, got {len(shortcuts)}"
+        assert len(shortcuts) >= 3, f"Expected at least 3 default shortcuts, got {len(shortcuts)}"
 
         # Check for essential shortcuts
         shortcut_ids = [s["id"] for s in shortcuts]
@@ -398,9 +392,7 @@ class TestKeymaps:
         assert info.name == "VSCode"
 
         shortcuts = provider.get_shortcuts()
-        assert (
-            len(shortcuts) >= 2
-        ), f"Expected at least 2 VSCode shortcuts, got {len(shortcuts)}"
+        assert len(shortcuts) >= 2, f"Expected at least 2 VSCode shortcuts, got {len(shortcuts)}"
 
         # Check for VSCode-specific shortcuts
         sequences = [s["sequence"] for s in shortcuts]
@@ -416,14 +408,10 @@ class TestKeymaps:
         assert info.name == "Vim"
 
         shortcuts = provider.get_shortcuts()
-        assert (
-            len(shortcuts) >= 1
-        ), f"Expected at least 1 Vim shortcut, got {len(shortcuts)}"
+        assert len(shortcuts) >= 1, f"Expected at least 1 Vim shortcut, got {len(shortcuts)}"
 
         # Check for Vim-specific shortcuts
-        vim_shortcuts = [
-            s for s in shortcuts if s.get("when") and "vimMode" in s["when"]
-        ]
+        vim_shortcuts = [s for s in shortcuts if s.get("when") and "vimMode" in s["when"]]
         assert (
             len(vim_shortcuts) >= 1
         ), f"Expected at least 1 Vim-specific shortcut, got {len(vim_shortcuts)}"

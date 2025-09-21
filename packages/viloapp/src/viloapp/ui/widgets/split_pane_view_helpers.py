@@ -64,9 +64,7 @@ class SplitPaneViewHelpers(QObject):
                 install_on_children(child)
 
         install_on_children(widget)
-        logger.debug(
-            f"Installed event filters on {widget.__class__.__name__} and children"
-        )
+        logger.debug(f"Installed event filters on {widget.__class__.__name__} and children")
 
     def process_focus_event(self, obj: QObject, event: QEvent) -> Optional[str]:
         """
@@ -148,16 +146,10 @@ class SplitPaneViewHelpers(QObject):
         # Update each pane's header
         for pane_id, wrapper in self._pane_wrappers.items():
             if hasattr(wrapper, "header_bar") and wrapper.header_bar:
-                number = (
-                    model.get_pane_index(pane_id)
-                    if hasattr(model, "get_pane_index")
-                    else None
-                )
+                number = model.get_pane_index(pane_id) if hasattr(model, "get_pane_index") else None
                 wrapper.header_bar.set_pane_number(number, show_numbers)
 
-    def schedule_focus_restoration(
-        self, target_pane_id: str, focus_callback, delay_ms: int = 10
-    ):
+    def schedule_focus_restoration(self, target_pane_id: str, focus_callback, delay_ms: int = 10):
         """
         Schedule focus restoration to a specific pane after a delay.
 
@@ -191,9 +183,7 @@ class SplitPaneViewHelpers(QObject):
         self._focus_restoration_timer.timeout.connect(restore_focus)
         self._focus_restoration_timer.start(delay_ms)
 
-    def find_widget_in_tree(
-        self, root_widget: QWidget, target_class: type
-    ) -> list[QWidget]:
+    def find_widget_in_tree(self, root_widget: QWidget, target_class: type) -> list[QWidget]:
         """
         Find all widgets of a specific type in the widget tree.
 
@@ -231,9 +221,7 @@ class SplitPaneViewHelpers(QObject):
             "visible": widget.isVisible(),
             "enabled": widget.isEnabled(),
             "size": f"{widget.width()}x{widget.height()}",
-            "children_count": len(
-                widget.findChildren(QWidget, "", Qt.FindDirectChildrenOnly)
-            ),
+            "children_count": len(widget.findChildren(QWidget, "", Qt.FindDirectChildrenOnly)),
         }
 
         parent = widget.parent()
@@ -295,11 +283,7 @@ class SplitPaneViewHelpers(QObject):
                 issues["orphaned_widgets"].append(widget.__class__.__name__)
 
             # Check for invisible widgets that should be visible
-            if (
-                not widget.isVisible()
-                and widget.parent()
-                and widget.parent().isVisible()
-            ):
+            if not widget.isVisible() and widget.parent() and widget.parent().isVisible():
                 issues["invisible_widgets"].append(widget.__class__.__name__)
 
             # Check for unusually large widgets

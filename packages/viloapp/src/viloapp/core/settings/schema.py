@@ -236,9 +236,7 @@ class SettingsSchema:
         else:
             return self._validate_basic(settings)
 
-    def validate_category(
-        self, category: str, data: dict[str, Any]
-    ) -> tuple[bool, list[str]]:
+    def validate_category(self, category: str, data: dict[str, Any]) -> tuple[bool, list[str]]:
         """
         Validate settings for a specific category.
 
@@ -371,7 +369,9 @@ def validate_keyboard_shortcut(shortcut: str) -> bool:
     # Basic validation - should contain only valid key combinations
     import re
 
-    pattern = r"^(ctrl\+|alt\+|shift\+|meta\+)*[a-zA-Z0-9\+\-\\\[\]\/;'`~,\.<>\?:\"{}|!@#$%^&*()_=]$"
+    pattern = (
+        r"^(ctrl\+|alt\+|shift\+|meta\+)*[a-zA-Z0-9\+\-\\\[\]\/;'`~,\.<>\?:\"{}|!@#$%^&*()_=]$"
+    )
     return re.match(pattern, shortcut.lower()) is not None
 
 

@@ -65,9 +65,7 @@ class TestActivityBar:
 
             # Check actions are added to toolbar
             actions = activity_bar.actions()
-            action_texts = [
-                action.text() for action in actions if not action.isSeparator()
-            ]
+            action_texts = [action.text() for action in actions if not action.isSeparator()]
             assert "Explorer" in action_texts
             assert "Search" in action_texts
             assert "Git" in action_texts

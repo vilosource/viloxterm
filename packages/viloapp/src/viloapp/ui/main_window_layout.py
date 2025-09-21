@@ -33,9 +33,7 @@ class MainWindowLayoutManager:
 
         # Create activity bar
         self.activity_bar = ActivityBar()
-        self.activity_bar.view_changed.connect(
-            self.main_window.on_activity_view_changed
-        )
+        self.activity_bar.view_changed.connect(self.main_window.on_activity_view_changed)
         main_layout.addWidget(self.activity_bar)
 
         # Create main splitter for sidebar and workspace

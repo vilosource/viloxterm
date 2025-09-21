@@ -137,6 +137,7 @@ def save_state_command(context: CommandContext) -> CommandResult:
 
         # Show status message using UIService
         from viloapp.services.ui_service import UIService
+
         ui_service = context.get_service(UIService)
         if ui_service:
             ui_service.set_status_message("State saved", 2000)
@@ -166,6 +167,7 @@ def restore_state_command(context: CommandContext) -> CommandResult:
         if success:
             # Show status message using UIService
             from viloapp.services.ui_service import UIService
+
             ui_service = context.get_service(UIService)
             if ui_service:
                 ui_service.set_status_message("State restored", 2000)
@@ -209,16 +211,13 @@ def replace_with_terminal_command(context: CommandContext) -> CommandResult:
                 pane_id = pane.leaf_node.id
 
         if pane_id:
-            # Change the pane type directly to TERMINAL
-            success = split_widget.model.change_pane_type(pane_id, WidgetType.TERMINAL)
+            # Change the pane type through service
+            success = workspace_service.change_pane_widget_type(pane_id, "terminal")
             if success:
-                split_widget.refresh_view()
                 logger.info(f"Replaced pane {pane_id} with terminal")
                 return CommandResult(success=True)
 
-        return CommandResult(
-            success=False, error="Could not identify pane for replacement"
-        )
+        return CommandResult(success=False, error="Could not identify pane for replacement")
 
     except Exception as e:
         logger.error(f"Failed to replace pane with terminal: {e}")
@@ -255,18 +254,13 @@ def replace_with_editor_command(context: CommandContext) -> CommandResult:
                 pane_id = pane.leaf_node.id
 
         if pane_id:
-            # Change the pane type directly to TEXT_EDITOR
-            success = split_widget.model.change_pane_type(
-                pane_id, WidgetType.TEXT_EDITOR
-            )
+            # Change the pane type through service
+            success = workspace_service.change_pane_widget_type(pane_id, "editor")
             if success:
-                split_widget.refresh_view()
                 logger.info(f"Replaced pane {pane_id} with text editor")
                 return CommandResult(success=True)
 
-        return CommandResult(
-            success=False, error="Could not identify pane for replacement"
-        )
+        return CommandResult(success=False, error="Could not identify pane for replacement")
 
     except Exception as e:
         logger.error(f"Failed to replace pane with editor: {e}")

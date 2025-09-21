@@ -180,9 +180,7 @@ class TestKeyboardShortcutsGUI:
                                     }
                                 )
 
-        assert (
-            len(inconsistent) == 0
-        ), f"Found inconsistent shortcut formatting: {inconsistent}"
+        assert len(inconsistent) == 0, f"Found inconsistent shortcut formatting: {inconsistent}"
 
     def test_ctrl_comma_settings_shortcut(self, qtbot, main_window_fixture):
         """Test that Ctrl+, opens settings (not conflicting with view.showSettings)."""
@@ -199,11 +197,7 @@ class TestKeyboardShortcutsGUI:
         # If not, we can check via the registry
         commands_with_ctrl_comma = []
         for cmd in command_registry.get_all_commands():
-            if (
-                hasattr(cmd, "shortcut")
-                and cmd.shortcut
-                and cmd.shortcut.lower() == "ctrl+,"
-            ):
+            if hasattr(cmd, "shortcut") and cmd.shortcut and cmd.shortcut.lower() == "ctrl+,":
                 commands_with_ctrl_comma.append(cmd.id)
 
         # Should only have one command with this shortcut
@@ -226,9 +220,7 @@ class TestKeyboardShortcutsGUI:
         # Create a few tabs first
         QTest.keyClick(window, Qt.Key_N, Qt.ControlModifier)  # Create terminal tab
         qtbot.wait(100)
-        QTest.keyClick(
-            window, Qt.Key_N, Qt.ControlModifier | Qt.ShiftModifier
-        )  # Create editor tab
+        QTest.keyClick(window, Qt.Key_N, Qt.ControlModifier | Qt.ShiftModifier)  # Create editor tab
         qtbot.wait(100)
 
         # Should have 3 tabs now (initial + 2 new)

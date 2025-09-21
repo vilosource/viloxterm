@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 # Only import winpty on Windows
 try:
     import winpty
+
     WINPTY_AVAILABLE = True
 except ImportError:
     WINPTY_AVAILABLE = False
@@ -50,7 +51,8 @@ class WindowsTerminalBackend(TerminalBackend):
                 if not session.cmd_args:
                     session.cmd_args = [
                         "-NoLogo",  # Don't show PowerShell logo
-                        "-ExecutionPolicy", "Bypass"  # Allow scripts
+                        "-ExecutionPolicy",
+                        "Bypass",  # Allow scripts
                     ]
             elif session.command.lower() in ["cmd", "cmd.exe"]:
                 cmd = "cmd.exe"
@@ -71,20 +73,20 @@ class WindowsTerminalBackend(TerminalBackend):
             env = os.environ.copy()
 
             # Enable ANSI color support in Windows console
-            env['TERM'] = 'xterm-256color'
+            env["TERM"] = "xterm-256color"
 
             # For PowerShell, enable proper terminal behavior
-            if 'powershell' in cmd.lower():
+            if "powershell" in cmd.lower():
                 # Disable progress bars that mess up terminal output
-                env['PSStyle.Progress.View'] = 'Minimal'
+                env["PSStyle.Progress.View"] = "Minimal"
                 # Set output encoding to UTF-8
-                env['OutputEncoding'] = 'utf-8'
+                env["OutputEncoding"] = "utf-8"
 
             proc = winpty.PtyProcess.spawn(
                 spawn_cmd,
                 cwd=session.cwd or os.getcwd(),
                 dimensions=(session.rows, session.cols),
-                env=env
+                env=env,
             )
 
             # Store process information
@@ -104,7 +106,7 @@ class WindowsTerminalBackend(TerminalBackend):
             reader_thread = threading.Thread(
                 target=self._reader_thread,
                 args=(session.session_id, proc, output_queue),
-                daemon=True
+                daemon=True,
             )
             reader_thread.start()
             self._read_threads[session.session_id] = reader_thread
@@ -175,7 +177,9 @@ class WindowsTerminalBackend(TerminalBackend):
                 return None
 
         except Exception as e:
-            logger.error(f"Windows backend: Read error for session {session.session_id}: {e}", exc_info=True)
+            logger.error(
+                f"Windows backend: Read error for session {session.session_id}: {e}", exc_info=True
+            )
             return None
 
     def write_input(self, session: TerminalSession, data: str) -> bool:
@@ -192,7 +196,9 @@ class WindowsTerminalBackend(TerminalBackend):
             # Don't try to read response here - let the reader thread handle it
             return True
         except Exception as e:
-            logger.error(f"Windows backend: Write error for session {session.session_id}: {e}", exc_info=True)
+            logger.error(
+                f"Windows backend: Write error for session {session.session_id}: {e}", exc_info=True
+            )
             return False
 
     def resize(self, session: TerminalSession, rows: int, cols: int) -> bool:
@@ -295,8 +301,14 @@ class WindowsTerminalBackend(TerminalBackend):
     def supports_feature(self, feature: str) -> bool:
         """Check if this backend supports a specific feature."""
         windows_features = {
-            "resize", "colors", "unicode", "input", "output",
-            "conpty", "powershell", "cmd"
+            "resize",
+            "colors",
+            "unicode",
+            "input",
+            "output",
+            "conpty",
+            "powershell",
+            "cmd",
         }
         return feature in windows_features
 

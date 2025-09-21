@@ -5,9 +5,7 @@ from typing import List, Dict, Any, Set
 from abc import ABC, abstractmethod
 import re
 
-from PySide6.QtWidgets import (
-    QListWidget, QListWidgetItem, QFrame, QVBoxLayout
-)
+from PySide6.QtWidgets import QListWidget, QListWidgetItem, QFrame, QVBoxLayout
 from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QTextCursor, QKeySequence, QShortcut, QFont
 
@@ -18,7 +16,9 @@ class CompletionProvider(ABC):
     """Abstract base class for completion providers."""
 
     @abstractmethod
-    def get_completions(self, text: str, cursor_position: int, context: Dict[str, Any]) -> List[str]:
+    def get_completions(
+        self, text: str, cursor_position: int, context: Dict[str, Any]
+    ) -> List[str]:
         """Get completions for the given text and cursor position."""
         pass
 
@@ -39,35 +39,123 @@ class KeywordCompletionProvider(CompletionProvider):
         """Get keywords for the specified language."""
         keywords_dict = {
             "python": {
-                "False", "None", "True", "__peg_parser__", "and", "as", "assert", "async", "await",
-                "break", "class", "continue", "def", "del", "elif", "else", "except", "finally",
-                "for", "from", "global", "if", "import", "in", "is", "lambda", "nonlocal", "not",
-                "or", "pass", "raise", "return", "try", "while", "with", "yield"
+                "False",
+                "None",
+                "True",
+                "__peg_parser__",
+                "and",
+                "as",
+                "assert",
+                "async",
+                "await",
+                "break",
+                "class",
+                "continue",
+                "def",
+                "del",
+                "elif",
+                "else",
+                "except",
+                "finally",
+                "for",
+                "from",
+                "global",
+                "if",
+                "import",
+                "in",
+                "is",
+                "lambda",
+                "nonlocal",
+                "not",
+                "or",
+                "pass",
+                "raise",
+                "return",
+                "try",
+                "while",
+                "with",
+                "yield",
             },
             "javascript": {
-                "abstract", "arguments", "await", "boolean", "break", "byte", "case", "catch",
-                "char", "class", "const", "continue", "debugger", "default", "delete", "do",
-                "double", "else", "enum", "eval", "export", "extends", "false", "final",
-                "finally", "float", "for", "function", "goto", "if", "implements", "import",
-                "in", "instanceof", "int", "interface", "let", "long", "native", "new", "null",
-                "package", "private", "protected", "public", "return", "short", "static", "super",
-                "switch", "synchronized", "this", "throw", "throws", "transient", "true", "try",
-                "typeof", "var", "void", "volatile", "while", "with", "yield"
+                "abstract",
+                "arguments",
+                "await",
+                "boolean",
+                "break",
+                "byte",
+                "case",
+                "catch",
+                "char",
+                "class",
+                "const",
+                "continue",
+                "debugger",
+                "default",
+                "delete",
+                "do",
+                "double",
+                "else",
+                "enum",
+                "eval",
+                "export",
+                "extends",
+                "false",
+                "final",
+                "finally",
+                "float",
+                "for",
+                "function",
+                "goto",
+                "if",
+                "implements",
+                "import",
+                "in",
+                "instanceof",
+                "int",
+                "interface",
+                "let",
+                "long",
+                "native",
+                "new",
+                "null",
+                "package",
+                "private",
+                "protected",
+                "public",
+                "return",
+                "short",
+                "static",
+                "super",
+                "switch",
+                "synchronized",
+                "this",
+                "throw",
+                "throws",
+                "transient",
+                "true",
+                "try",
+                "typeof",
+                "var",
+                "void",
+                "volatile",
+                "while",
+                "with",
+                "yield",
             },
-            "json": {
-                "true", "false", "null"
-            }
+            "json": {"true", "false", "null"},
         }
         return keywords_dict.get(language, set())
 
-    def get_completions(self, text: str, cursor_position: int, context: Dict[str, Any]) -> List[str]:
+    def get_completions(
+        self, text: str, cursor_position: int, context: Dict[str, Any]
+    ) -> List[str]:
         """Get keyword completions."""
         # Extract the current word being typed
-        lines = text[:cursor_position].split('\n')
+        lines = text[:cursor_position].split("\n")
         current_line = lines[-1] if lines else ""
 
         # Find the word at cursor
-        word_match = re.search(r'\b\w*$', current_line)
+        word_match = re.search(r"\b\w*$", current_line)
         if not word_match:
             return []
 
@@ -77,7 +165,8 @@ class KeywordCompletionProvider(CompletionProvider):
 
         # Filter keywords that start with the current word
         completions = [
-            keyword for keyword in self.keywords
+            keyword
+            for keyword in self.keywords
             if keyword.startswith(current_word) and keyword != current_word
         ]
 
@@ -105,7 +194,7 @@ class SnippetCompletionProvider(CompletionProvider):
                 "while": "while ${1:condition}:\n    ${2:pass}",
                 "try": "try:\n    ${1:pass}\nexcept ${2:Exception} as e:\n    ${3:pass}",
                 "main": "if __name__ == '__main__':\n    ${1:pass}",
-                "init": "def __init__(self${1:, args}):\n    ${2:pass}"
+                "init": "def __init__(self${1:, args}):\n    ${2:pass}",
             },
             "javascript": {
                 "function": "function ${1:name}(${2:params}) {\n    ${3:// body}\n}",
@@ -113,19 +202,21 @@ class SnippetCompletionProvider(CompletionProvider):
                 "if": "if (${1:condition}) {\n    ${2:// body}\n}",
                 "for": "for (${1:let i = 0}; ${2:i < length}; ${3:i++}) {\n    ${4:// body}\n}",
                 "class": "class ${1:ClassName} {\n    constructor(${2:args}) {\n        ${3:// constructor}\n    }\n}",
-                "try": "try {\n    ${1:// try}\n} catch (${2:error}) {\n    ${3:// catch}\n}"
-            }
+                "try": "try {\n    ${1:// try}\n} catch (${2:error}) {\n    ${3:// catch}\n}",
+            },
         }
         return snippets_dict.get(language, {})
 
-    def get_completions(self, text: str, cursor_position: int, context: Dict[str, Any]) -> List[str]:
+    def get_completions(
+        self, text: str, cursor_position: int, context: Dict[str, Any]
+    ) -> List[str]:
         """Get snippet completions."""
         # Extract the current word being typed
-        lines = text[:cursor_position].split('\n')
+        lines = text[:cursor_position].split("\n")
         current_line = lines[-1] if lines else ""
 
         # Find the word at cursor
-        word_match = re.search(r'\b\w*$', current_line)
+        word_match = re.search(r"\b\w*$", current_line)
         if not word_match:
             return []
 
@@ -135,7 +226,8 @@ class SnippetCompletionProvider(CompletionProvider):
 
         # Filter snippets that start with the current word
         completions = [
-            f"{trigger} (snippet)" for trigger in self.snippets.keys()
+            f"{trigger} (snippet)"
+            for trigger in self.snippets.keys()
             if trigger.startswith(current_word) and trigger != current_word
         ]
 
@@ -159,26 +251,26 @@ class VariableCompletionProvider(CompletionProvider):
         if language == "python":
             # Match Python variable assignments and function definitions
             patterns = [
-                r'\b([a-zA-Z_]\w*)\s*=',  # Variable assignments
-                r'def\s+([a-zA-Z_]\w*)',  # Function definitions
-                r'class\s+([a-zA-Z_]\w*)',  # Class definitions
-                r'for\s+([a-zA-Z_]\w*)\s+in',  # For loop variables
-                r'import\s+([a-zA-Z_]\w*)',  # Import statements
-                r'from\s+\w+\s+import\s+([a-zA-Z_]\w*)',  # From import statements
+                r"\b([a-zA-Z_]\w*)\s*=",  # Variable assignments
+                r"def\s+([a-zA-Z_]\w*)",  # Function definitions
+                r"class\s+([a-zA-Z_]\w*)",  # Class definitions
+                r"for\s+([a-zA-Z_]\w*)\s+in",  # For loop variables
+                r"import\s+([a-zA-Z_]\w*)",  # Import statements
+                r"from\s+\w+\s+import\s+([a-zA-Z_]\w*)",  # From import statements
             ]
         elif language == "javascript":
             patterns = [
-                r'\b(?:var|let|const)\s+([a-zA-Z_$]\w*)',  # Variable declarations
-                r'function\s+([a-zA-Z_$]\w*)',  # Function declarations
-                r'class\s+([a-zA-Z_$]\w*)',  # Class declarations
-                r'([a-zA-Z_$]\w*)\s*=',  # Assignments
+                r"\b(?:var|let|const)\s+([a-zA-Z_$]\w*)",  # Variable declarations
+                r"function\s+([a-zA-Z_$]\w*)",  # Function declarations
+                r"class\s+([a-zA-Z_$]\w*)",  # Class declarations
+                r"([a-zA-Z_$]\w*)\s*=",  # Assignments
             ]
         else:
             # Generic patterns
             patterns = [
-                r'\b([a-zA-Z_]\w*)\s*=',  # Variable assignments
-                r'function\s+([a-zA-Z_]\w*)',  # Function definitions
-                r'def\s+([a-zA-Z_]\w*)',  # Function definitions
+                r"\b([a-zA-Z_]\w*)\s*=",  # Variable assignments
+                r"function\s+([a-zA-Z_]\w*)",  # Function definitions
+                r"def\s+([a-zA-Z_]\w*)",  # Function definitions
             ]
 
         for pattern in patterns:
@@ -188,26 +280,29 @@ class VariableCompletionProvider(CompletionProvider):
 
         # Filter out common keywords and very short names
         filtered = {
-            var for var in variables
-            if len(var) > 2 and var not in {'def', 'class', 'for', 'if', 'else', 'try', 'except'}
+            var
+            for var in variables
+            if len(var) > 2 and var not in {"def", "class", "for", "if", "else", "try", "except"}
         }
 
         return filtered
 
-    def get_completions(self, text: str, cursor_position: int, context: Dict[str, Any]) -> List[str]:
+    def get_completions(
+        self, text: str, cursor_position: int, context: Dict[str, Any]
+    ) -> List[str]:
         """Get variable completions."""
         # Update cache if text has changed significantly
         if self.last_text != text:
-            language = context.get('language', 'python')
+            language = context.get("language", "python")
             self.variable_cache = self._extract_variables(text, language)
             self.last_text = text
 
         # Extract the current word being typed
-        lines = text[:cursor_position].split('\n')
+        lines = text[:cursor_position].split("\n")
         current_line = lines[-1] if lines else ""
 
         # Find the word at cursor
-        word_match = re.search(r'\b\w*$', current_line)
+        word_match = re.search(r"\b\w*$", current_line)
         if not word_match:
             return []
 
@@ -217,7 +312,8 @@ class VariableCompletionProvider(CompletionProvider):
 
         # Filter variables that start with the current word
         completions = [
-            var for var in self.variable_cache
+            var
+            for var in self.variable_cache
             if var.startswith(current_word) and var != current_word
         ]
 
@@ -306,11 +402,11 @@ class AutoComplete:
 
         # Get text before cursor
         text_before = text[:cursor_position]
-        lines = text_before.split('\n')
+        lines = text_before.split("\n")
         current_line = lines[-1] if lines else ""
 
         # Check if we're in the middle of a word
-        word_match = re.search(r'\b\w*$', current_line)
+        word_match = re.search(r"\b\w*$", current_line)
         if not word_match:
             return False
 
@@ -336,8 +432,8 @@ class AutoComplete:
         """Get all completions from providers."""
         all_completions = []
         context = {
-            'language': 'python',  # Could be detected from file extension
-            'cursor_position': cursor_position
+            "language": "python",  # Could be detected from file extension
+            "cursor_position": cursor_position,
         }
 
         for provider in self.providers:
@@ -389,10 +485,10 @@ class AutoComplete:
 
         # Find the word to replace
         text_before = text[:cursor_position]
-        lines = text_before.split('\n')
+        lines = text_before.split("\n")
         current_line = lines[-1] if lines else ""
 
-        word_match = re.search(r'\b\w*$', current_line)
+        word_match = re.search(r"\b\w*$", current_line)
         if word_match:
             word_start = cursor_position - len(word_match.group())
             cursor.setPosition(word_start)
@@ -405,8 +501,12 @@ class AutoComplete:
                     if isinstance(provider, SnippetCompletionProvider):
                         snippet_text = provider.snippets.get(snippet_name, snippet_name)
                         # Simple snippet expansion (without placeholders for now)
-                        expanded = snippet_text.replace("${1:pass}", "pass").replace("${2:}", "").replace("${3:}", "")
-                        expanded = re.sub(r'\$\{\d+:[^}]*\}', '', expanded)
+                        expanded = (
+                            snippet_text.replace("${1:pass}", "pass")
+                            .replace("${2:}", "")
+                            .replace("${3:}", "")
+                        )
+                        expanded = re.sub(r"\$\{\d+:[^}]*\}", "", expanded)
                         cursor.insertText(expanded)
                         break
             else:
@@ -438,7 +538,8 @@ class CompletionPopup(QFrame):
         self.list_widget.itemClicked.connect(self.on_item_clicked)
         self.list_widget.itemActivated.connect(self.on_item_activated)
 
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             CompletionPopup {
                 background-color: #2d2d30;
                 border: 1px solid #3e3e42;
@@ -457,7 +558,8 @@ class CompletionPopup(QFrame):
             QListWidget::item:hover {
                 background-color: #3e3e42;
             }
-        """)
+        """
+        )
 
     def set_completions(self, completions: List[str]):
         """Set the completions to display."""

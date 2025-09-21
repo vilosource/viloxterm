@@ -147,7 +147,7 @@ class TerminalSettingsManager:
             "terminal.background": "background",
             "terminal.foreground": "foreground",
             "terminal.cursor": "cursor_color",
-            "terminal.selection": "selection_background"
+            "terminal.selection": "selection_background",
         }
 
         for theme_key, setting_key in color_mapping.items():

@@ -28,9 +28,7 @@ class FramelessWindow(MainWindow):
         # Set frameless flag before parent init
         super().__init__()
         self.setWindowFlags(
-            Qt.FramelessWindowHint
-            | Qt.WindowSystemMenuHint
-            | Qt.WindowMinMaxButtonsHint
+            Qt.FramelessWindowHint | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint
         )
 
         # Enable mouse tracking for resize detection
@@ -150,10 +148,7 @@ class FramelessWindow(MainWindow):
             return Qt.Edge.TopEdge | Qt.Edge.RightEdge
         elif x <= self.RESIZE_BORDER and y >= rect.height() - self.RESIZE_BORDER:
             return Qt.Edge.BottomEdge | Qt.Edge.LeftEdge
-        elif (
-            x >= rect.width() - self.RESIZE_BORDER
-            and y >= rect.height() - self.RESIZE_BORDER
-        ):
+        elif x >= rect.width() - self.RESIZE_BORDER and y >= rect.height() - self.RESIZE_BORDER:
             return Qt.Edge.BottomEdge | Qt.Edge.RightEdge
 
         # Check edges

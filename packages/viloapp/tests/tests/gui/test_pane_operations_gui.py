@@ -94,9 +94,7 @@ class TestPaneOperationsGUI:
 
         # Verify pane was closed
         final_count = self.get_current_pane_count()
-        assert (
-            final_count == initial_count - 1
-        ), "Pane should have been closed by Ctrl+Shift+W"
+        assert final_count == initial_count - 1, "Pane should have been closed by Ctrl+Shift+W"
 
     def test_close_pane_via_command(self):
         """Test closing a pane through the command system."""
@@ -152,9 +150,7 @@ class TestPaneOperationsGUI:
 
         # Verify pane was closed
         final_count = self.get_current_pane_count()
-        assert (
-            final_count == initial_count - 1
-        ), "Pane should have been closed after button click"
+        assert final_count == initial_count - 1, "Pane should have been closed after button click"
 
     def test_cannot_close_last_pane(self):
         """Test that the last pane cannot be closed."""
@@ -243,9 +239,7 @@ class TestPaneOperationsGUI:
 
         # Verify pane was closed
         final_count = self.get_current_pane_count()
-        assert (
-            final_count == initial_count - 1
-        ), "Pane should have been closed by Ctrl+K W chord"
+        assert final_count == initial_count - 1, "Pane should have been closed by Ctrl+K W chord"
 
 
 @pytest.mark.gui
@@ -272,12 +266,8 @@ class TestPaneServiceIntegration:
         workspace_service = self.service_locator.get(WorkspaceService)
 
         # Verify required methods exist
-        assert hasattr(
-            workspace_service, "get_workspace"
-        ), "Missing get_workspace method"
-        assert hasattr(
-            workspace_service, "set_workspace"
-        ), "Missing set_workspace method"
+        assert hasattr(workspace_service, "get_workspace"), "Missing get_workspace method"
+        assert hasattr(workspace_service, "set_workspace"), "Missing set_workspace method"
 
         # Verify getter returns workspace
         workspace = workspace_service.get_workspace()

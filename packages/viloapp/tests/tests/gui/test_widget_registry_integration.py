@@ -84,18 +84,14 @@ class TestWidgetRegistryIntegration:
                 # ServiceLocator should NOT be imported/used
                 mock_locator.get_instance.assert_not_called()
 
-    def test_singleton_widget_behavior_with_commands(
-        self, workspace_with_service, qtbot
-    ):
+    def test_singleton_widget_behavior_with_commands(self, workspace_with_service, qtbot):
         """Test that singleton widgets work correctly with command-based registry."""
         workspace, mock_service = workspace_with_service
 
         # Simulate opening Settings widget
         with patch("viloapp.core.commands.executor.execute_command") as mock_execute:
             # First check if widget exists
-            mock_execute.return_value = MagicMock(
-                success=True, value={"registered": False}
-            )
+            mock_execute.return_value = MagicMock(success=True, value={"registered": False})
 
             result = execute_command(
                 "workspace.isWidgetRegistered", widget_id="com.viloapp.settings"
@@ -116,18 +112,14 @@ class TestWidgetRegistryIntegration:
             assert result.success
 
             # Now check if widget exists
-            mock_execute.return_value = MagicMock(
-                success=True, value={"registered": True}
-            )
+            mock_execute.return_value = MagicMock(success=True, value={"registered": True})
 
             result = execute_command(
                 "workspace.isWidgetRegistered", widget_id="com.viloapp.settings"
             )
             assert result.value["registered"]
 
-    def test_registry_update_on_multiple_tab_closes(
-        self, workspace_with_service, qtbot
-    ):
+    def test_registry_update_on_multiple_tab_closes(self, workspace_with_service, qtbot):
         """Test registry updates correctly when multiple tabs are closed."""
         workspace, mock_service = workspace_with_service
 

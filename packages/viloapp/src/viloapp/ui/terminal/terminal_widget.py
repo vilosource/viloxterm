@@ -121,9 +121,7 @@ class TerminalWidget(QWidget):
 
             # Get terminal URL
             terminal_url = terminal_server.get_session_url(self.session_id)
-            logger.info(
-                f"Loading terminal session {self.session_id} from {terminal_url}"
-            )
+            logger.info(f"Loading terminal session {self.session_id} from {terminal_url}")
 
             # Load terminal in web view
             self.web_view.load(QUrl(terminal_url))
@@ -223,31 +221,23 @@ class TerminalWidget(QWidget):
         if self.web_view:
             self.web_view.setFocus()
             # Also focus the terminal element in JavaScript
-            self.web_view.page().runJavaScript(
-                "if (typeof term !== 'undefined') { term.focus(); }"
-            )
+            self.web_view.page().runJavaScript("if (typeof term !== 'undefined') { term.focus(); }")
 
     def clear_terminal(self):
         """Clear terminal buffer."""
         if self.is_ready and self.web_view:
-            self.web_view.page().runJavaScript(
-                "if (typeof term !== 'undefined') { term.clear(); }"
-            )
+            self.web_view.page().runJavaScript("if (typeof term !== 'undefined') { term.clear(); }")
 
     def reset_terminal(self):
         """Reset terminal (clear buffer and reset state)."""
         if self.is_ready and self.web_view:
-            self.web_view.page().runJavaScript(
-                "if (typeof term !== 'undefined') { term.reset(); }"
-            )
+            self.web_view.page().runJavaScript("if (typeof term !== 'undefined') { term.reset(); }")
 
     def write_to_terminal(self, text: str):
         """Write text to terminal (for programmatic input)."""
         if self.is_ready and self.web_view and text is not None:
             # Escape the text for JavaScript
-            escaped_text = (
-                text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
-            )
+            escaped_text = text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
             self.web_view.page().runJavaScript(
                 f"if (typeof term !== 'undefined') {{ term.write('{escaped_text}'); }}"
             )
@@ -309,7 +299,5 @@ class TerminalWidget(QWidget):
                 import logging
 
                 logger = logging.getLogger(__name__)
-                logger.debug(
-                    f"Failed to destroy terminal session {self.session_id}: {e}"
-                )
+                logger.debug(f"Failed to destroy terminal session {self.session_id}: {e}")
                 # Ignore errors during cleanup as destructor should not raise

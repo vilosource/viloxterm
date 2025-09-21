@@ -85,9 +85,7 @@ class TestThemeManagementCommands:
         """Test getting a specific theme by ID."""
         self.mock_theme_service.get_theme.return_value = self.sample_theme
 
-        result = get_theme_command._original_func(
-            self.mock_context, theme_id="test-theme"
-        )
+        result = get_theme_command._original_func(self.mock_context, theme_id="test-theme")
 
         assert result.success
         assert result.value["theme"] == self.sample_theme
@@ -97,18 +95,14 @@ class TestThemeManagementCommands:
         """Test getting a theme that doesn't exist."""
         self.mock_theme_service.get_theme.return_value = None
 
-        result = get_theme_command._original_func(
-            self.mock_context, theme_id="nonexistent"
-        )
+        result = get_theme_command._original_func(self.mock_context, theme_id="nonexistent")
 
         assert not result.success
         assert "not found" in result.error
 
     def test_apply_theme(self):
         """Test applying a theme."""
-        result = apply_theme_command._original_func(
-            self.mock_context, theme_id="test-theme"
-        )
+        result = apply_theme_command._original_func(self.mock_context, theme_id="test-theme")
 
         assert result.success
         assert result.value["theme_id"] == "test-theme"
@@ -119,9 +113,7 @@ class TestThemeManagementCommands:
         theme_data = self.sample_theme.to_dict()
         self.mock_theme_service.save_custom_theme.return_value = True
 
-        with patch(
-            "viloapp.core.commands.builtin.theme_management_commands.Theme"
-        ) as MockTheme:
+        with patch("viloapp.core.commands.builtin.theme_management_commands.Theme") as MockTheme:
             MockTheme.from_dict.return_value = self.sample_theme
 
             result = save_custom_theme_command._original_func(
@@ -131,18 +123,14 @@ class TestThemeManagementCommands:
             assert result.success
             assert result.value["theme_id"] == "test-theme"
             MockTheme.from_dict.assert_called_once_with(theme_data)
-            self.mock_theme_service.save_custom_theme.assert_called_once_with(
-                self.sample_theme
-            )
+            self.mock_theme_service.save_custom_theme.assert_called_once_with(self.sample_theme)
 
     def test_save_custom_theme_failure(self):
         """Test saving a custom theme when save fails."""
         theme_data = self.sample_theme.to_dict()
         self.mock_theme_service.save_custom_theme.return_value = False
 
-        with patch(
-            "viloapp.core.commands.builtin.theme_management_commands.Theme"
-        ) as MockTheme:
+        with patch("viloapp.core.commands.builtin.theme_management_commands.Theme") as MockTheme:
             MockTheme.from_dict.return_value = self.sample_theme
 
             result = save_custom_theme_command._original_func(
@@ -179,9 +167,7 @@ class TestThemeManagementCommands:
 
         assert result.success
         assert result.value["theme_id"] == "test-theme"
-        self.mock_theme_service.delete_custom_theme.assert_called_once_with(
-            "test-theme"
-        )
+        self.mock_theme_service.delete_custom_theme.assert_called_once_with("test-theme")
 
     def test_delete_custom_theme_failure(self):
         """Test deleting a theme that can't be deleted."""
@@ -204,9 +190,7 @@ class TestThemeManagementCommands:
 
         assert result.success
         assert result.value["theme_id"] == "imported-theme"
-        self.mock_theme_service.import_theme.assert_called_once_with(
-            Path("/path/to/theme.json")
-        )
+        self.mock_theme_service.import_theme.assert_called_once_with(Path("/path/to/theme.json"))
 
     def test_export_theme(self):
         """Test exporting a theme to file."""
@@ -225,21 +209,15 @@ class TestThemeManagementCommands:
 
     def test_apply_typography_preset(self):
         """Test applying a typography preset."""
-        result = apply_typography_preset_command._original_func(
-            self.mock_context, preset="compact"
-        )
+        result = apply_typography_preset_command._original_func(self.mock_context, preset="compact")
 
         assert result.success
         assert result.value["preset"] == "compact"
-        self.mock_theme_service.apply_typography_preset.assert_called_once_with(
-            "compact"
-        )
+        self.mock_theme_service.apply_typography_preset.assert_called_once_with("compact")
 
     def test_get_typography(self):
         """Test getting typography settings."""
-        typography = ThemeTypography(
-            font_family="monospace", font_size_base=14, line_height=1.5
-        )
+        typography = ThemeTypography(font_family="monospace", font_size_base=14, line_height=1.5)
         self.mock_theme_service.get_typography.return_value = typography
 
         result = get_typography_command._original_func(self.mock_context)
@@ -259,9 +237,7 @@ class TestThemeManagementCommands:
 
         assert result.success
         assert result.value["preview_applied"] is True
-        self.mock_theme_service.apply_theme_preview.assert_called_once_with(
-            colors, typography
-        )
+        self.mock_theme_service.apply_theme_preview.assert_called_once_with(colors, typography)
 
     def test_update_theme_colors(self):
         """Test updating theme colors."""
@@ -308,9 +284,7 @@ class TestThemeManagementCommands:
         """Test that commands handle exceptions gracefully."""
         self.mock_theme_service.apply_theme.side_effect = Exception("Test error")
 
-        result = apply_theme_command._original_func(
-            self.mock_context, theme_id="test-theme"
-        )
+        result = apply_theme_command._original_func(self.mock_context, theme_id="test-theme")
 
         assert not result.success
         assert "Test error" in result.error

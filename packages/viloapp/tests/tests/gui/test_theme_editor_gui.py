@@ -38,12 +38,8 @@ class TestThemeEditorGUI:
         # Mock theme service
         theme_service = MagicMock(spec=ThemeService)
         theme_service.get_available_themes.return_value = [
-            ThemeInfo(
-                id="theme1", name="Theme 1", description="", version="1.0", author=""
-            ),
-            ThemeInfo(
-                id="theme2", name="Theme 2", description="", version="1.0", author=""
-            ),
+            ThemeInfo(id="theme1", name="Theme 1", description="", version="1.0", author=""),
+            ThemeInfo(id="theme2", name="Theme 2", description="", version="1.0", author=""),
         ]
         theme_service.get_current_theme.return_value = theme
         theme_service.theme_changed = MagicMock()  # Mock the signal
@@ -95,17 +91,11 @@ class TestThemeEditorGUI:
         # Mock theme service
         theme_service = MagicMock(spec=ThemeService)
         theme_service.get_available_themes.return_value = [
-            ThemeInfo(
-                id="theme1", name="Theme 1", description="", version="1.0", author=""
-            ),
-            ThemeInfo(
-                id="theme2", name="Theme 2", description="", version="1.0", author=""
-            ),
+            ThemeInfo(id="theme1", name="Theme 1", description="", version="1.0", author=""),
+            ThemeInfo(id="theme2", name="Theme 2", description="", version="1.0", author=""),
         ]
         theme_service.get_current_theme.return_value = theme1
-        theme_service.get_theme.side_effect = lambda id: (
-            theme1 if id == "theme1" else theme2
-        )
+        theme_service.get_theme.side_effect = lambda id: (theme1 if id == "theme1" else theme2)
         theme_service.theme_changed = MagicMock()  # Mock the signal
 
         # Mock service locator
@@ -244,9 +234,7 @@ class TestThemeEditorGUI:
         widget._update_button_states()
 
         # Mock _get_current_colors to return valid colors
-        widget._get_current_colors = MagicMock(
-            return_value={"editor.background": "#1e1e1e"}
-        )
+        widget._get_current_colors = MagicMock(return_value={"editor.background": "#1e1e1e"})
 
         # Click apply button
         assert widget._apply_button.isEnabled()
@@ -328,9 +316,7 @@ class TestColorPickerGUI:
         qtbot.wait(100)
 
         # Check signal was emitted
-        assert (
-            len(signal_args) >= 1
-        ), f"Expected at least 1 signal emission, got {len(signal_args)}"
+        assert len(signal_args) >= 1, f"Expected at least 1 signal emission, got {len(signal_args)}"
         assert signal_args[-1][0] == "#FF0000"  # color value
         assert not signal_args[-1][1]  # not preview
 
@@ -363,9 +349,7 @@ class TestColorPickerGUI:
         qtbot.wait(100)
 
         # Check signal includes key
-        assert (
-            len(signal_args) >= 1
-        ), f"Expected at least 1 signal with key, got {len(signal_args)}"
+        assert len(signal_args) >= 1, f"Expected at least 1 signal with key, got {len(signal_args)}"
         assert signal_args[-1][0] == "editor.background"  # key
         assert signal_args[-1][1] == "#FF0000"  # value
         assert not signal_args[-1][2]  # not preview

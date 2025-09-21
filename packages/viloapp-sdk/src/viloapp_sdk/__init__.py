@@ -15,18 +15,14 @@ from .types import (
     CommandContribution,
     MenuContribution,
     KeybindingContribution,
-    ConfigurationContribution
+    ConfigurationContribution,
 )
-from .exceptions import (
-    PluginError,
-    PluginLoadError,
-    PluginActivationError,
-    PluginDependencyError
-)
+from .exceptions import PluginError, PluginLoadError, PluginActivationError, PluginDependencyError
 
 # Testing utilities (optional import - only available if testing module is used)
 try:
     from . import testing
+
     _testing_available = True
 except ImportError:
     _testing_available = False
@@ -34,6 +30,7 @@ except ImportError:
 # Utilities (optional import - decorators and validators)
 try:
     from . import utils
+
     _utils_available = True
 except ImportError:
     _utils_available = False
@@ -47,39 +44,32 @@ __all__ = [
     "IPluginWithMetadata",
     "PluginMetadata",
     "PluginCapability",
-
     # Widget interfaces
     "IWidget",
     "WidgetMetadata",
     "WidgetPosition",
     "LegacyWidgetAdapter",
-
     # Service interfaces
     "IService",
     "ServiceProxy",
     "ServiceNotAvailableError",
-
     # Event system
     "EventBus",
     "PluginEvent",
     "EventType",
     "EventPriority",
-
     # Lifecycle
     "ILifecycle",
     "LifecycleState",
     "LifecycleHook",
-
     # Context
     "PluginContext",
     "IPluginContext",
-
     # Types
     "CommandContribution",
     "MenuContribution",
     "KeybindingContribution",
     "ConfigurationContribution",
-
     # Exceptions
     "PluginError",
     "PluginLoadError",

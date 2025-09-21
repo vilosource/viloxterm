@@ -8,6 +8,7 @@ try:
     from PySide6.QtWidgets import QApplication
     from PySide6.QtTest import QTest
     from PySide6.QtCore import Qt
+
     QT_AVAILABLE = True
 except ImportError:
     QT_AVAILABLE = False
@@ -55,7 +56,7 @@ class TestCodeEditor:
         """Test file load/save operations."""
         test_content = "print('Hello, World!')\n"
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(test_content)
             temp_file = f.name
 
@@ -71,7 +72,7 @@ class TestCodeEditor:
             assert self.editor.save_file()
 
             # Verify saved content
-            with open(temp_file, 'r') as f:
+            with open(temp_file, "r") as f:
                 saved_content = f.read()
             assert saved_content == new_content
 
@@ -117,7 +118,7 @@ class TestCodeEditor:
         theme_data = {
             "editor.background": "#000000",
             "editor.foreground": "#ffffff",
-            "editor.selectionBackground": "#333333"
+            "editor.selectionBackground": "#333333",
         }
 
         # Should not raise exception
@@ -136,4 +137,5 @@ class TestCodeEditorWithoutQt:
         """Test that module can be imported without Qt."""
         # This test verifies the module handles missing Qt gracefully
         import viloedit.editor
-        assert hasattr(viloedit.editor, 'CodeEditor')
+
+        assert hasattr(viloedit.editor, "CodeEditor")

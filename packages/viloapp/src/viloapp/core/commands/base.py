@@ -86,9 +86,7 @@ class CommandContext:
 
                 self._service_locator = ServiceLocator.get_instance()
             except ImportError:
-                logger.debug(
-                    "ServiceLocator not available, falling back to legacy services"
-                )
+                logger.debug("ServiceLocator not available, falling back to legacy services")
                 self._service_locator = False  # Mark as tried but not available
 
         if self._service_locator:
@@ -248,9 +246,7 @@ class Command:
         return True
 
     def __repr__(self) -> str:
-        return (
-            f"Command(id={self.id!r}, title={self.title!r}, shortcut={self.shortcut!r})"
-        )
+        return f"Command(id={self.id!r}, title={self.title!r}, shortcut={self.shortcut!r})"
 
 
 class ICommandHandler(Protocol):

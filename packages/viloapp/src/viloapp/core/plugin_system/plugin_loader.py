@@ -1,20 +1,19 @@
 """Plugin loading system."""
 
-import logging
 import importlib
 import importlib.util
+import logging
 import sys
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from viloapp_sdk import (
-    IPlugin, PluginContext, EventBus, LifecycleState,
-    PluginLoadError
-)
+from viloapp_sdk import EventBus, IPlugin, LifecycleState, PluginContext, PluginLoadError
+
 from .plugin_registry import PluginInfo
 from .service_proxy_impl import ServiceProxyImpl
 
 logger = logging.getLogger(__name__)
+
 
 class PluginLoader:
     """Loads and instantiates plugins."""
@@ -110,10 +109,10 @@ class PluginLoader:
             plugin_info.instance.activate(context)
 
             # Register plugin widgets if it has any
-            if hasattr(plugin_info.instance, 'get_widgets'):
+            if hasattr(plugin_info.instance, "get_widgets"):
                 try:
-                    from viloapp.services.service_locator import ServiceLocator
                     from viloapp.services.plugin_service import PluginService
+                    from viloapp.services.service_locator import ServiceLocator
 
                     service_locator = ServiceLocator.get_instance()
                     plugin_service = service_locator.get(PluginService)
@@ -121,9 +120,13 @@ class PluginLoader:
                     if plugin_service:
                         for widget in plugin_info.instance.get_widgets():
                             plugin_service.register_widget(widget)
-                            logger.info(f"Registered widget from plugin {plugin_id}: {widget.get_widget_id()}")
+                            logger.info(
+                                f"Registered widget from plugin {plugin_id}: {widget.get_widget_id()}"
+                            )
                     else:
-                        logger.warning(f"PluginService not available for widget registration from {plugin_id}")
+                        logger.warning(
+                            f"PluginService not available for widget registration from {plugin_id}"
+                        )
 
                 except Exception as e:
                     logger.error(f"Failed to register widgets from plugin {plugin_id}: {e}")
@@ -132,12 +135,15 @@ class PluginLoader:
             self.registry.update_state(plugin_id, LifecycleState.ACTIVATED)
 
             # Emit activation event
-            from viloapp_sdk import PluginEvent, EventType
-            self.event_bus.emit(PluginEvent(
-                type=EventType.PLUGIN_ACTIVATED,
-                source="plugin_loader",
-                data={"plugin_id": plugin_id}
-            ))
+            from viloapp_sdk import EventType, PluginEvent
+
+            self.event_bus.emit(
+                PluginEvent(
+                    type=EventType.PLUGIN_ACTIVATED,
+                    source="plugin_loader",
+                    data={"plugin_id": plugin_id},
+                )
+            )
 
             logger.info(f"Activated plugin: {plugin_id}")
             return True
@@ -177,12 +183,15 @@ class PluginLoader:
             self.registry.update_state(plugin_id, LifecycleState.DEACTIVATED)
 
             # Emit deactivation event
-            from viloapp_sdk import PluginEvent, EventType
-            self.event_bus.emit(PluginEvent(
-                type=EventType.PLUGIN_DEACTIVATED,
-                source="plugin_loader",
-                data={"plugin_id": plugin_id}
-            ))
+            from viloapp_sdk import EventType, PluginEvent
+
+            self.event_bus.emit(
+                PluginEvent(
+                    type=EventType.PLUGIN_DEACTIVATED,
+                    source="plugin_loader",
+                    data={"plugin_id": plugin_id},
+                )
+            )
 
             logger.info(f"Deactivated plugin: {plugin_id}")
             return True
@@ -211,7 +220,11 @@ class PluginLoader:
             if not self.deactivate_plugin(plugin_id):
                 return False
 
-        if plugin_info.state not in [LifecycleState.DEACTIVATED, LifecycleState.LOADED, LifecycleState.FAILED]:
+        if plugin_info.state not in [
+            LifecycleState.DEACTIVATED,
+            LifecycleState.LOADED,
+            LifecycleState.FAILED,
+        ]:
             return False
 
         try:
@@ -230,12 +243,15 @@ class PluginLoader:
             self.registry.update_state(plugin_id, LifecycleState.UNLOADED)
 
             # Emit unload event
-            from viloapp_sdk import PluginEvent, EventType
-            self.event_bus.emit(PluginEvent(
-                type=EventType.PLUGIN_UNLOADED,
-                source="plugin_loader",
-                data={"plugin_id": plugin_id}
-            ))
+            from viloapp_sdk import EventType, PluginEvent
+
+            self.event_bus.emit(
+                PluginEvent(
+                    type=EventType.PLUGIN_UNLOADED,
+                    source="plugin_loader",
+                    data={"plugin_id": plugin_id},
+                )
+            )
 
             logger.info(f"Unloaded plugin: {plugin_id}")
             return True
@@ -278,7 +294,9 @@ class PluginLoader:
                     try:
                         # Get package name from the actual directory name (not plugin_id)
                         package_name = plugin_path.name
-                        logger.debug(f"Attempting to import {package_name}.plugin from path {package_src}")
+                        logger.debug(
+                            f"Attempting to import {package_name}.plugin from path {package_src}"
+                        )
                         module = importlib.import_module(f"{package_name}.plugin")
                         self.loaded_modules[plugin_id] = f"{package_name}.plugin"
                         logger.info(f"Successfully imported {package_name}.plugin")
@@ -305,7 +323,7 @@ class PluginLoader:
         # Map builtin plugin IDs to modules
         builtin_map = {
             "core-commands": "viloapp.core.plugins.commands",
-            "core-themes": "viloapp.core.plugins.themes"
+            "core-themes": "viloapp.core.plugins.themes",
         }
 
         module_name = builtin_map.get(plugin_id)
@@ -324,17 +342,17 @@ class PluginLoader:
             import importlib.metadata
 
             entry_points = importlib.metadata.entry_points()
-            if hasattr(entry_points, 'select'):
-                eps = entry_points.select(group='viloapp.plugins')
+            if hasattr(entry_points, "select"):
+                eps = entry_points.select(group="viloapp.plugins")
             else:
-                eps = entry_points.get('viloapp.plugins', [])
+                eps = entry_points.get("viloapp.plugins", [])
 
             for ep in eps:
                 if ep.name == plugin_id:
                     # Load the entry point
                     plugin_class = ep.load()
                     # Create a wrapper module
-                    module = type('module', (), {'Plugin': plugin_class})
+                    module = type("module", (), {"Plugin": plugin_class})
                     return module
 
         except Exception as e:
@@ -346,7 +364,7 @@ class PluginLoader:
         """Find plugin class in module."""
         # Look for class that implements IPlugin
         for attr_name in dir(module):
-            if attr_name.startswith('_'):
+            if attr_name.startswith("_"):
                 continue
 
             attr = getattr(module, attr_name)
@@ -354,12 +372,12 @@ class PluginLoader:
                 return attr
 
         # Fallback: look for specifically named class
-        if hasattr(module, 'Plugin'):
+        if hasattr(module, "Plugin"):
             return module.Plugin
 
         # Look for class ending with 'Plugin'
         for attr_name in dir(module):
-            if attr_name.endswith('Plugin'):
+            if attr_name.endswith("Plugin"):
                 attr = getattr(module, attr_name)
                 if isinstance(attr, type):
                     return attr
@@ -372,13 +390,14 @@ class PluginLoader:
 
         # Get data directory for plugin
         import platformdirs
+
         data_path = Path(platformdirs.user_data_dir("ViloxTerm")) / "plugins" / plugin_id
 
         # Create service proxy
         service_proxy = ServiceProxyImpl(self.services)
 
         # Get plugin configuration
-        config_service = self.services.get('configuration')
+        config_service = self.services.get("configuration")
         if config_service:
             config = config_service.get(f"plugins.{plugin_id}", {})
         else:
@@ -390,5 +409,5 @@ class PluginLoader:
             data_path=data_path,
             service_proxy=service_proxy,
             event_bus=self.event_bus,
-            configuration=config
+            configuration=config,
         )

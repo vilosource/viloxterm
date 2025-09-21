@@ -51,9 +51,7 @@ class SplitPaneStateModel(StateModel):
     @classmethod
     def deserialize(cls, data: dict[str, Any]) -> "SplitPaneStateModel":
         """Deserialize split pane state."""
-        return cls(
-            root_data=data.get("root", {}), active_pane_id=data.get("active_pane_id")
-        )
+        return cls(root_data=data.get("root", {}), active_pane_id=data.get("active_pane_id"))
 
 
 class WorkspaceStateModel(StateModel):
@@ -89,9 +87,7 @@ class StateController(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-    def save_split_pane_state(
-        self, split_widget: SplitPaneWidget
-    ) -> SplitPaneStateModel:
+    def save_split_pane_state(self, split_widget: SplitPaneWidget) -> SplitPaneStateModel:
         """
         Save split pane state using the controller.
 
@@ -141,9 +137,7 @@ class StateController(QObject):
             if success:
                 self.state_restored.emit("split_pane")
             else:
-                self.state_error.emit(
-                    "split_pane", "Failed to restore split pane state"
-                )
+                self.state_error.emit("split_pane", "Failed to restore split pane state")
 
             return success
 
@@ -221,9 +215,7 @@ class StateController(QObject):
             self.state_error.emit("json", f"Serialization failed: {str(e)}")
             raise
 
-    def deserialize_from_json(
-        self, json_str: str, state_type: str
-    ) -> Optional[StateModel]:
+    def deserialize_from_json(self, json_str: str, state_type: str) -> Optional[StateModel]:
         """
         Deserialize a state model from JSON string.
 
@@ -300,9 +292,7 @@ class ApplicationStateController(StateController):
         try:
             # Restore workspace state
             if "workspace" in app_state:
-                workspace_model = WorkspaceStateModel.deserialize(
-                    app_state["workspace"]
-                )
+                workspace_model = WorkspaceStateModel.deserialize(app_state["workspace"])
                 success = self.restore_workspace_state(workspace, workspace_model)
 
                 if success:

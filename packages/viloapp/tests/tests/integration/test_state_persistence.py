@@ -100,9 +100,7 @@ class TestStatePersistence:
         main_window.restore_state()
 
         # Verify splitter state was restored
-        main_window.main_splitter.restoreState.assert_called_once_with(
-            mock_splitter_state
-        )
+        main_window.main_splitter.restoreState.assert_called_once_with(mock_splitter_state)
 
     @patch("viloapp.ui.main_window.QSettings")
     def test_menu_bar_visibility_persistence(self, mock_settings_class, qtbot):

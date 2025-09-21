@@ -11,10 +11,10 @@ from viloapp_sdk import PluginContext, EventBus, ServiceProxy
 def mock_context():
     """Create mock plugin context."""
     services = {
-        'command': Mock(),
-        'workspace': Mock(),
-        'configuration': Mock(),
-        'notification': Mock()
+        "command": Mock(),
+        "workspace": Mock(),
+        "configuration": Mock(),
+        "notification": Mock(),
     }
 
     context = PluginContext(
@@ -23,7 +23,7 @@ def mock_context():
         data_path="/tmp/viloxterm-data",
         service_proxy=ServiceProxy(services),
         event_bus=EventBus(),
-        configuration={}
+        configuration={},
     )
 
     return context
@@ -45,7 +45,7 @@ def test_plugin_activation(mock_context):
     plugin = TerminalPlugin()
 
     # Mock terminal server
-    with patch('viloxterm.plugin.terminal_server') as mock_server:
+    with patch("viloxterm.plugin.terminal_server") as mock_server:
         plugin.activate(mock_context)
 
         assert plugin.context == mock_context
@@ -57,7 +57,7 @@ def test_plugin_deactivation(mock_context):
     plugin = TerminalPlugin()
     plugin.activate(mock_context)
 
-    with patch('viloxterm.plugin.terminal_server') as mock_server:
+    with patch("viloxterm.plugin.terminal_server") as mock_server:
         plugin.deactivate()
 
         assert mock_server.cleanup_all_sessions.called
@@ -87,10 +87,7 @@ def test_terminal_configuration(mock_context):
     plugin.activate(mock_context)
 
     # Test configuration change
-    config = {
-        "terminal.fontSize": 16,
-        "terminal.shell.linux": "/bin/zsh"
-    }
+    config = {"terminal.fontSize": 16, "terminal.shell.linux": "/bin/zsh"}
 
     plugin.on_configuration_changed(config)
     # Verify configuration was applied

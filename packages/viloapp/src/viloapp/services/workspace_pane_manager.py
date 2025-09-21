@@ -340,17 +340,13 @@ class WorkspacePaneManager:
             return False
 
         # Use the model's directional navigation
-        target_id = widget.model.find_pane_in_direction(
-            widget.active_pane_id, direction
-        )
+        target_id = widget.model.find_pane_in_direction(widget.active_pane_id, direction)
 
         if target_id:
             widget.focus_specific_pane(target_id)
             success = True  # focus_specific_pane doesn't return a value
             if success:
-                logger.info(
-                    f"Navigated {direction} from {widget.active_pane_id} to {target_id}"
-                )
+                logger.info(f"Navigated {direction} from {widget.active_pane_id} to {target_id}")
             return success
         else:
             logger.debug(f"No pane found in direction: {direction}")
@@ -432,7 +428,5 @@ class WorkspacePaneManager:
             "count": widget.get_pane_count(),
             "active": widget.active_pane_id,
             "available": True,
-            "all_panes": (
-                widget.get_all_pane_ids() if hasattr(widget, "get_all_pane_ids") else []
-            ),
+            "all_panes": (widget.get_all_pane_ids() if hasattr(widget, "get_all_pane_ids") else []),
         }

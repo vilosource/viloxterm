@@ -33,7 +33,7 @@ class TestCLIConfig:
                 },
                 "development": {
                     "default_port": 9000,
-                }
+                },
             }
 
             with open(config_path, "w") as f:

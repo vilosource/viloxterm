@@ -1,10 +1,7 @@
 """Terminal UI components."""
 
 from typing import Optional
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QToolBar,
-    QComboBox, QLineEdit, QTabWidget
-)
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QToolBar, QComboBox, QLineEdit, QTabWidget
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QKeySequence, QAction
 

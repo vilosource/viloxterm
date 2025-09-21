@@ -44,9 +44,7 @@ class TestNewTabCommand:
         return service
 
     @patch("viloapp.core.commands.builtin.workspace_commands.get_default_widget_type")
-    def test_new_tab_uses_default_widget_type(
-        self, mock_get_default, context, workspace_service
-    ):
+    def test_new_tab_uses_default_widget_type(self, mock_get_default, context, workspace_service):
         """Test that new_tab_command uses the default widget type from settings."""
         mock_get_default.return_value = "editor"
 
@@ -59,9 +57,7 @@ class TestNewTabCommand:
         mock_get_default.assert_called_once()
         workspace_service.add_editor_tab.assert_called_once_with(None)
 
-    def test_new_tab_with_explicit_widget_type(
-        self, context, workspace_service, terminal_service
-    ):
+    def test_new_tab_with_explicit_widget_type(self, context, workspace_service, terminal_service):
         """Test new_tab_command with explicit widget_type in args."""
         context.args["widget_type"] = "terminal"
 
@@ -78,9 +74,7 @@ class TestNewTabCommand:
         assert result.success is True
         workspace_service.add_terminal_tab.assert_called_once_with(None)
 
-    def test_new_tab_starts_terminal_server(
-        self, context, workspace_service, terminal_service
-    ):
+    def test_new_tab_starts_terminal_server(self, context, workspace_service, terminal_service):
         """Test that terminal server is started when creating terminal tab."""
         context.args["widget_type"] = "terminal"
         terminal_service.is_server_running.return_value = False
@@ -153,14 +147,10 @@ class TestNewTabWithTypeCommand:
         """Test programmatic use with widget_type in args."""
         context.args["widget_type"] = "editor"
 
-        with patch.object(
-            workspace_commands.new_tab_command, "_original_func"
-        ) as mock_new_tab:
+        with patch.object(workspace_commands.new_tab_command, "_original_func") as mock_new_tab:
             mock_new_tab.return_value = CommandResult(success=True)
 
-            result = workspace_commands.new_tab_with_type_command._original_func(
-                context
-            )
+            result = workspace_commands.new_tab_with_type_command._original_func(context)
 
         assert result.success is True
         mock_new_tab.assert_called_once_with(context)
@@ -171,14 +161,10 @@ class TestNewTabWithTypeCommand:
         """Test showing widget type selection dialog."""
         mock_dialog.return_value = ("Terminal", True)
 
-        with patch.object(
-            workspace_commands.new_tab_command, "_original_func"
-        ) as mock_new_tab:
+        with patch.object(workspace_commands.new_tab_command, "_original_func") as mock_new_tab:
             mock_new_tab.return_value = CommandResult(success=True)
 
-            result = workspace_commands.new_tab_with_type_command._original_func(
-                context
-            )
+            result = workspace_commands.new_tab_with_type_command._original_func(context)
 
         assert result.success is True
         mock_dialog.assert_called_once()
@@ -211,9 +197,7 @@ class TestNewTabWithTypeCommand:
         """Test that all widget types are available in dialog."""
         mock_dialog.return_value = ("Settings", True)
 
-        with patch.object(
-            workspace_commands.new_tab_command, "_original_func"
-        ) as mock_new_tab:
+        with patch.object(workspace_commands.new_tab_command, "_original_func") as mock_new_tab:
             mock_new_tab.return_value = CommandResult(success=True)
 
             workspace_commands.new_tab_with_type_command._original_func(context)
