@@ -5,7 +5,7 @@ Each tab has its own independent split layout.
 """
 
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QAction
@@ -174,11 +174,50 @@ class Workspace(QWidget):
         # The actual UI update logic would go here
         pass
 
+    def _on_model_event(self, event_name: str, event_data: Any):
+        """
+        Handle events from the workspace model.
+
+        This is the main observer callback that gets called when the model changes.
+        It delegates to specific handlers based on the event type.
+        """
+        logger.debug(f"Workspace received model event: {event_name} with data: {event_data}")
+
+        if event_name == "pane_split":
+            self._react_to_pane_split(event_data)
+        elif event_name == "pane_closed":
+            self._react_to_pane_closed(event_data)
+        elif event_name == "tab_added":
+            self._react_to_tab_added(event_data)
+        elif event_name == "tab_closed":
+            self._react_to_tab_closed(event_data)
+        elif event_name == "tab_switched":
+            self._react_to_tab_switched(event_data)
+        elif event_name == "pane_focused":
+            self._react_to_pane_focused(event_data)
+        else:
+            logger.debug(f"Unhandled model event: {event_name}")
+
     def _react_to_pane_split(self, data):
         """React to pane being split via model."""
         logger.info(f"UI reacting to pane split: {data}")
-        # The actual UI update logic would go here
-        pass
+
+        # Get the current tab's split widget
+        widget = self.get_current_split_widget()
+        if not widget:
+            logger.error("No current split widget to handle pane split")
+            return
+
+        # The model has already done the split, we need to sync the UI
+        # The data should contain the split information
+        if isinstance(data, dict):
+            parent_id = data.get('parent_id')
+            new_pane_id = data.get('new_pane_id')
+            orientation = data.get('orientation')
+
+            # Tell the split widget to sync with the model
+            widget.sync_with_model()
+            logger.info(f"UI synced after pane split: parent={parent_id}, new={new_pane_id}, orientation={orientation}")
 
     def _react_to_pane_closed(self, data):
         """React to pane being closed via model."""

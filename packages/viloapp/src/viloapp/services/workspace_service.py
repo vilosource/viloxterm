@@ -85,6 +85,11 @@ class WorkspaceService(Service):
 
         if not self._workspace:
             logger.warning("WorkspaceService initialized without workspace reference")
+        else:
+            # Connect the workspace UI as an observer of the model
+            if self._model and hasattr(self._workspace, '_on_model_event'):
+                self._model.add_observer(self._workspace._on_model_event)
+                logger.info("Connected Workspace UI as observer of WorkspaceModel")
 
     def cleanup(self) -> None:
         """Cleanup service resources."""

@@ -474,6 +474,16 @@ class SplitPaneWidget(QWidget):
         # React to model changes by updating the view
         self.refresh_view()
 
+    def sync_with_model(self):
+        """
+        Synchronize the UI with the current model state.
+
+        This method is called when the model changes from external sources
+        (e.g., commands executed through the command system).
+        """
+        logger.debug("Syncing UI with model state")
+        self.refresh_view()
+
     def refresh_view(self):
         """
         Rebuild the view from the model.

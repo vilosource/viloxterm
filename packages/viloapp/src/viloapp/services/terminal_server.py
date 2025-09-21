@@ -2,6 +2,22 @@
 """
 Terminal Server Manager - Singleton server handling multiple terminal sessions.
 Adapted from viloxtermjs but enhanced for multi-session support.
+
+ARCHITECTURAL NOTE: Bridge Component
+=====================================
+This component is a special architectural bridge between the service and UI layers.
+While it resides in the services directory, it has legitimate dependencies on UI
+components (terminal backends and assets) because:
+
+1. It needs to serve terminal UI assets (HTML/JS/CSS) to the web view
+2. It needs to interact with platform-specific terminal backends
+3. It provides a service (terminal sessions) that inherently requires UI resources
+
+This is an ACCEPTABLE EXCEPTION to the "services don't import from UI" rule.
+The circular dependency with terminal_app_widget is resolved through lazy imports
+in the UI layer.
+
+See: docs/architecture-BRIDGES.md for more details on bridge components.
 """
 
 import atexit

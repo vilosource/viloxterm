@@ -72,7 +72,29 @@ class TerminalAppWidget(AppWidget):
 
     @property
     def terminal_server(self):
-        """Lazy-load terminal_server to avoid circular import."""
+        """
+        Lazy-load terminal_server to avoid circular import.
+
+        ARCHITECTURAL NOTE: Lazy Import Pattern
+        ========================================
+        This property implements a lazy import pattern to resolve a circular
+        dependency between terminal_app_widget and terminal_server.
+
+        The circular dependency exists because:
+        1. terminal_server (services layer) imports terminal assets from UI layer
+           (this is acceptable as it's a bridge component)
+        2. terminal_app_widget (UI layer) needs to access terminal_server
+
+        By importing terminal_server only when first accessed (lazy loading),
+        we break the circular import chain at module initialization time.
+        The import happens at runtime when the property is first accessed,
+        at which point both modules are fully initialized.
+
+        This pattern is an APPROVED architectural solution for bridge components
+        that legitimately need bidirectional references between layers.
+
+        See: docs/architecture-BRIDGES.md for more details.
+        """
         if self._terminal_server_instance is None:
             from viloapp.services.terminal_server import terminal_server
             self._terminal_server_instance = terminal_server
