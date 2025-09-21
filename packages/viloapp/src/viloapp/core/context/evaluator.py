@@ -109,7 +109,7 @@ class WhenClauseLexer:
 
             if not matched:
                 raise ValueError(
-                    f"Invalid token at position {self.position}: {self.expression[self.position:]}"
+                    f"Invalid token at position {self.position}: {self.expression[self.position :]}"
                 )
 
         self.tokens.append(Token(TokenType.EOF, None, self.position))

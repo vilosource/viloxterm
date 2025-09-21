@@ -10,11 +10,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-try:
-    from .model import Pane, Tab, WidgetType, WorkspaceModel
-except ImportError:
-    # For direct script execution
-    from model import Pane, Tab, WidgetType, WorkspaceModel
+from viloapp.models.workspace_model import Pane, Tab, WidgetType, WorkspaceModel
 
 
 class CommandStatus(Enum):

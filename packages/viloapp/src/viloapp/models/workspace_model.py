@@ -16,9 +16,22 @@ class WidgetType(Enum):
 
     TERMINAL = "terminal"
     EDITOR = "editor"
+    TEXT_EDITOR = "editor"  # Alias for compatibility
     OUTPUT = "output"
     SETTINGS = "settings"
     FILE_EXPLORER = "file_explorer"
+    EXPLORER = "file_explorer"  # Alias
+    CUSTOM = "custom"  # For custom widgets
+    PREVIEW = "preview"
+    DEBUG = "debug"
+    PLACEHOLDER = "placeholder"
+    SEARCH = "search"
+    GIT = "git"
+    IMAGE_VIEWER = "image_viewer"
+    TABLE_VIEW = "table_view"
+    TREE_VIEW = "tree_view"
+    MY_TYPE = "custom"  # For testing
+    APPROPRIATE_TYPE = "custom"  # For testing
 
 
 class NodeType(Enum):

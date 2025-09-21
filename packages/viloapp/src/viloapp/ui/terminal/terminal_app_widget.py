@@ -17,6 +17,7 @@ from PySide6.QtWidgets import QVBoxLayout
 from viloapp.core.keyboard.reserved_shortcuts import get_reserved_shortcuts
 from viloapp.core.keyboard.web_shortcut_guard import WebShortcutGuard
 from viloapp.services.icon_service import get_icon_manager
+
 # terminal_server imported lazily to avoid circular import
 from viloapp.ui.terminal.terminal_assets import terminal_asset_bundler
 from viloapp.ui.terminal.terminal_bridge import TerminalBridge
@@ -97,6 +98,7 @@ class TerminalAppWidget(AppWidget):
         """
         if self._terminal_server_instance is None:
             from viloapp.services.terminal_server import terminal_server
+
             self._terminal_server_instance = terminal_server
         return self._terminal_server_instance
 
@@ -178,7 +180,7 @@ class TerminalAppWidget(AppWidget):
         # Start terminal session
         self.start_terminal_session()
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event):  # noqa: N802
         """Handle mouse press to focus this terminal."""
         logger.debug(f"TerminalAppWidget.mousePressEvent called for widget {self.widget_id}")
         # Request focus when user clicks anywhere on the terminal widget

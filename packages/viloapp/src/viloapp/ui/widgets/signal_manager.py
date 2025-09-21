@@ -111,7 +111,7 @@ class SignalManager:
             connection.signal.disconnect(connection.slot)
             self.connections.remove(connection)
             logger.debug(
-                f"Disconnected signal for {self.owner}: " f"{connection.description or 'unnamed'}"
+                f"Disconnected signal for {self.owner}: {connection.description or 'unnamed'}"
             )
             return True
 

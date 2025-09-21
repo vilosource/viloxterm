@@ -190,7 +190,6 @@ def restore_state_command(context: CommandContext) -> CommandResult:
 def replace_with_terminal_command(context: CommandContext) -> CommandResult:
     """Replace current pane with terminal."""
     try:
-
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")
@@ -232,7 +231,6 @@ def replace_with_terminal_command(context: CommandContext) -> CommandResult:
 def replace_with_editor_command(context: CommandContext) -> CommandResult:
     """Replace current pane with text editor."""
     try:
-
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
             return CommandResult(success=False, error="WorkspaceService not available")

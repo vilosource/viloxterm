@@ -168,9 +168,9 @@ class WidgetDebugger:
         """
         info = self.get_widget_info(widget)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Widget Debug Info: {info['widget_id']}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Type: {info['widget_type']}")
         print(f"Current State: {info['current_state']}")
         print(f"Has Focus: {info['has_focus']}")
@@ -193,7 +193,7 @@ class WidgetDebugger:
             for entry in info["state_history"][-5:]:
                 print(f"  {entry['timestamp']}: {entry['state']}")
 
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
     def get_all_widgets_summary(self) -> list[dict[str, Any]]:
         """
@@ -224,11 +224,11 @@ class WidgetDebugger:
             print("No widgets being tracked")
             return
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(
             f"{'Widget ID':<20} {'Type':<15} {'State':<15} {'Focus':<8} {'Errors':<8} {'Conns':<8}"
         )
-        print(f"{'-'*80}")
+        print(f"{'-' * 80}")
 
         for summary in summaries:
             print(
@@ -240,7 +240,7 @@ class WidgetDebugger:
                 f"{summary['connections']:<8}"
             )
 
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
     def watch_widget(self, widget: AppWidget, interval_ms: int = 1000):
         """

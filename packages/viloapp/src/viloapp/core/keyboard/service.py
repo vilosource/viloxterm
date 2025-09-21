@@ -255,7 +255,6 @@ class KeyboardService(Service):
                 and len(shortcut.sequence.chords) > 1
                 and shortcut.matches_context(context)
             ):
-
                 # Start chord sequence
                 self._start_chord_sequence(chord)
                 return True

@@ -7,7 +7,6 @@ This module provides the UI layer for the theme system:
 - StylesheetGenerator: Dynamic stylesheet generation
 """
 
-
 from viloapp.ui.themes.stylesheet_generator import StylesheetGenerator
 
 __all__ = [

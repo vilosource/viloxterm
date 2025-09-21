@@ -5,7 +5,6 @@ Theme property categorization.
 Organizes theme properties into logical categories for the theme editor.
 """
 
-
 from viloapp.core.themes.constants import ThemeColors
 
 

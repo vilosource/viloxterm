@@ -242,7 +242,7 @@ class NativeLinuxStrategy(EnvironmentStrategy):
         return f"""
 Native Linux Environment:
 - GPU acceleration: {gpu_status}
-- Display server: {self.env_info.display_server or 'unknown'}
+- Display server: {self.env_info.display_server or "unknown"}
 - Full terminal features available
 """
 

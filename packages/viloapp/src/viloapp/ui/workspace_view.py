@@ -19,13 +19,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-try:
-    from .commands import CommandContext, CommandRegistry
-    from .model import Pane, PaneNode, Tab, WidgetType, WorkspaceModel
-except ImportError:
-    # For direct script execution
-    from commands import CommandContext, CommandRegistry
-    from model import Pane, PaneNode, Tab, WidgetType, WorkspaceModel
+from viloapp.core.commands.workspace_commands import CommandContext, CommandRegistry
+from viloapp.models.workspace_model import Pane, PaneNode, Tab, WidgetType, WorkspaceModel
 
 
 class WidgetFactory:
@@ -36,47 +31,69 @@ class WidgetFactory:
         """
         Create a widget instance based on type.
 
-        In the real implementation, this would create actual
-        terminal widgets, editor widgets, etc.
-        For now, we create placeholder widgets.
+        This now creates real widgets instead of placeholders.
         """
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
+        try:
+            # Import real widget implementations
+            if widget_type == WidgetType.TERMINAL:
+                # Use the real terminal widget
+                from viloapp.ui.terminal.terminal_app_widget import TerminalAppWidget
 
-        # Add a label showing the widget type
-        label = QLabel(f"{widget_type.value.upper()} - {pane_id[:8]}")
-        label.setAlignment(Qt.AlignCenter)
-        label.setStyleSheet(
-            """
-            QLabel {
-                background-color: #2d2d30;
-                color: #cccccc;
-                padding: 20px;
-                font-size: 16px;
-                font-weight: bold;
-            }
-            """
-        )
-        layout.addWidget(label)
+                widget = TerminalAppWidget()
+                widget.setObjectName(f"terminal_{pane_id[:8]}")
+                return widget
 
-        # Add some placeholder content based on type
-        if widget_type == WidgetType.TERMINAL:
-            content = QLabel("$ Terminal placeholder")
-            content.setStyleSheet("QLabel { color: #00ff00; background: #000000; padding: 10px; }")
-        elif widget_type == WidgetType.EDITOR:
-            content = QLabel("// Editor placeholder")
-            content.setStyleSheet("QLabel { color: #ffffff; background: #1e1e1e; padding: 10px; }")
-        elif widget_type == WidgetType.OUTPUT:
-            content = QLabel("Output placeholder")
-            content.setStyleSheet("QLabel { color: #cccccc; background: #252526; padding: 10px; }")
-        else:
-            content = QLabel(f"Widget: {widget_type.value}")
-            content.setStyleSheet("QLabel { padding: 10px; }")
+            elif widget_type == WidgetType.EDITOR:
+                # Use the real editor widget
+                from viloapp.ui.widgets.editor_app_widget import EditorAppWidget
 
-        layout.addWidget(content)
-        layout.addStretch()
+                widget = EditorAppWidget()
+                widget.setObjectName(f"editor_{pane_id[:8]}")
+                return widget
 
-        return widget
+            elif widget_type == WidgetType.OUTPUT:
+                # For now, output can be a read-only text widget
+                from PySide6.QtWidgets import QTextEdit
+
+                widget = QTextEdit()
+                widget.setReadOnly(True)
+                widget.setObjectName(f"output_{pane_id[:8]}")
+                widget.setPlainText("Output panel\n")
+                widget.setStyleSheet(
+                    """
+                    QTextEdit {
+                        background-color: #1e1e1e;
+                        color: #cccccc;
+                        font-family: 'Consolas', 'Monaco', monospace;
+                        font-size: 12px;
+                        border: none;
+                    }
+                    """
+                )
+                return widget
+
+            else:
+                # Fallback to a simple widget
+                widget = QWidget()
+                layout = QVBoxLayout(widget)
+                label = QLabel(f"Widget: {widget_type.value}")
+                label.setAlignment(Qt.AlignCenter)
+                layout.addWidget(label)
+                return widget
+
+        except ImportError as e:
+            # If real widgets aren't available, create a placeholder
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Could not import real widget for {widget_type}: {e}")
+
+            widget = QWidget()
+            layout = QVBoxLayout(widget)
+            label = QLabel(f"{widget_type.value.upper()} - Loading...")
+            label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(label)
+            return widget
 
 
 class PaneView(QWidget):

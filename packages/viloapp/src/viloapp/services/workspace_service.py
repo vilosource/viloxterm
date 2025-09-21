@@ -87,7 +87,7 @@ class WorkspaceService(Service):
             logger.warning("WorkspaceService initialized without workspace reference")
         else:
             # Connect the workspace UI as an observer of the model
-            if self._model and hasattr(self._workspace, '_on_model_event'):
+            if self._model and hasattr(self._workspace, "_on_model_event"):
                 self._model.add_observer(self._workspace._on_model_event)
                 logger.info("Connected Workspace UI as observer of WorkspaceModel")
 
@@ -120,7 +120,7 @@ class WorkspaceService(Service):
             result = self._model.restore_state(state_dict)
 
             if result.success:
-                logger.info(f"Successfully restored workspace state")
+                logger.info("Successfully restored workspace state")
 
                 # Update context based on restored state
                 from viloapp.core.context.manager import context_manager

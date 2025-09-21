@@ -483,7 +483,6 @@ class PaneHeaderBar(QWidget):
         colors = theme_result.value if theme_result and theme_result.success else {}
 
         if colors:
-
             # Update background color
             self.background_color = QColor(colors.get("editor.background", "#252526"))
 

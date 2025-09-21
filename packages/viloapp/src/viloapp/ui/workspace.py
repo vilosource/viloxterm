@@ -1,66 +1,55 @@
 #!/usr/bin/env python3
 """
-New workspace implementation using tabs with SplitPaneWidget.
-Each tab has its own independent split layout.
+New workspace implementation using the Model-View-Command architecture.
+This replaces the old workspace.py with a clean integration.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QMenu, QTabWidget, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
 
-from viloapp.core.commands.executor import execute_command
-from viloapp.core.events.event_bus import event_bus
-from viloapp.core.events.requests import UIRequest, UIResponse
-from viloapp.ui.factories import WidgetFactory
-from viloapp.ui.widgets.rename_editor import RenameEditor
-from viloapp.ui.widgets.split_pane_widget import SplitPaneWidget
-
-
-# TODO: Broken import - will be fixed after Big Bang refactor
-# from viloapp.ui.widgets.widget_registry import WidgetType
-# Temporary stub
-class WidgetType:
-    TEXT_EDITOR = "text_editor"
-    TERMINAL = "terminal"
-    OUTPUT = "output"
-
+# Import our new architecture
+from viloapp.core.commands.workspace_commands import CommandContext, CommandRegistry
+from viloapp.models.workspace_model import WidgetType, WorkspaceModel
+from viloapp.ui.workspace_view import TabView
 
 logger = logging.getLogger(__name__)
 
 
-class WorkspaceTab:
-    """Container for tab data."""
-
-    def __init__(self, name: str, split_widget: SplitPaneWidget):
-        self.name = name
-        self.split_widget = split_widget
-        self.metadata = {}  # For storing additional tab data
-
-
 class Workspace(QWidget):
     """
-    Central workspace with tabs.
-    Each tab contains its own SplitPaneWidget for independent layouts.
+    New workspace using Model-View-Command architecture.
+
+    This is a thin integration layer that connects the new architecture
+    to the existing application structure.
     """
 
-    # Signals
-    tab_changed = Signal(int)  # tab index
-    tab_added = Signal(str)  # tab name
-    tab_removed = Signal(str)  # tab name
-    active_pane_changed = Signal(str, str)  # tab_name, pane_id
+    # Signals for compatibility with existing code
+    tab_changed = Signal(int)
+    tab_added = Signal(str)
+    tab_removed = Signal(str)
+    active_pane_changed = Signal(str, str)
     layout_changed = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.tabs: dict[int, WorkspaceTab] = {}  # index -> WorkspaceTab
+
+        # Initialize the new architecture
+        self.model = WorkspaceModel()
+        self.command_registry = CommandRegistry()
+
+        # Subscribe to model changes
+        self.model.add_observer(self._on_model_change)
+
+        # UI components
+        self.tab_widget = None
+        self.tab_views = {}  # tab_id -> TabView
+
         self.setup_ui()
         self.create_default_tab()
         self._setup_theme_observer()
-        self._setup_event_handlers()
-        self._setup_workspace_observer()
 
     def setup_ui(self):
         """Initialize the workspace UI."""
@@ -78,960 +67,246 @@ class Workspace(QWidget):
         self.tab_widget.setDocumentMode(True)
         self.tab_widget.setElideMode(Qt.ElideRight)
 
-        # Apply theme
-        self.apply_theme()
+        # Connect tab widget signals
+        self.tab_widget.currentChanged.connect(self._on_tab_changed)
+        self.tab_widget.tabCloseRequested.connect(self._on_tab_close_requested)
 
         layout.addWidget(self.tab_widget)
 
-        # Connect signals
-        self.tab_widget.tabCloseRequested.connect(self.close_tab)
-        self.tab_widget.currentChanged.connect(self.on_tab_changed)
-        self.tab_widget.tabBarDoubleClicked.connect(self.on_tab_double_clicked)
-
-        # Enable context menu on tab bar
-        self.tab_widget.tabBar().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tab_widget.tabBar().customContextMenuRequested.connect(self.show_tab_context_menu)
-
-    def _cleanup_split_widget(self, split_widget: SplitPaneWidget):
-        """Clean up a split widget and all its AppWidgets before removal."""
-        # The new architecture: just call cleanup on the widget
-        # It will use the model's tree traversal to clean up all AppWidgets
-        split_widget.cleanup()
-
-        # Delete the widget
-        split_widget.deleteLater()
-
     def create_default_tab(self):
-        """Create the initial default tab."""
-        self.add_editor_tab("Welcome")
-
-    def _setup_theme_observer(self):
-        """Set up observer for theme changes."""
-        # Theme changes should be handled through commands
-        # UI components should not directly subscribe to services
-        # The apply_theme() method will be called when needed
-        pass
-
-    def _setup_workspace_observer(self):
-        """Set up observer for workspace service events."""
-        from viloapp.services.service_locator import ServiceLocator
-        from viloapp.services.workspace_service import WorkspaceService
-
-        # Get workspace service and subscribe to its events
-        service_locator = ServiceLocator.get_instance()
-        workspace_service = service_locator.get(WorkspaceService)
-
-        if workspace_service:
-            # Subscribe to service events using Qt signal
-            workspace_service.service_event.connect(self._on_workspace_event)
-            logger.info("Workspace UI subscribed to WorkspaceService events")
-
-    def _setup_event_handlers(self):
-        """Set up event bus handlers for breaking circular dependencies."""
-        # Subscribe to UI requests that services need to send
-        event_bus.subscribe("ui.request", self._handle_ui_request)
-        logger.info("Workspace UI subscribed to event bus for request/response pattern")
-
-    def _on_theme_changed(self, data):
-        """Handle theme change notifications."""
-        self.update_close_button_styles()
-
-    def _on_workspace_event(self, event):
-        """Handle workspace service events - make UI reactive to model changes."""
-        try:
-            if event.name == "tab_added":
-                self._react_to_tab_added(event.data)
-            elif event.name == "tab_closed":
-                self._react_to_tab_closed(event.data)
-            elif event.name == "tab_switched":
-                self._react_to_tab_switched(event.data)
-            elif event.name == "tab_renamed":
-                self._react_to_tab_renamed(event.data)
-            elif event.name == "pane_split":
-                self._react_to_pane_split(event.data)
-            elif event.name == "pane_closed":
-                self._react_to_pane_closed(event.data)
-            elif event.name == "pane_focused":
-                self._react_to_pane_focused(event.data)
-            # Add more event handlers as needed
-        except Exception as e:
-            logger.error(f"Error handling workspace event {event.name}: {e}")
-
-    def _react_to_tab_added(self, data):
-        """React to tab being added via model - create the actual UI tab."""
-        logger.info(f"UI reacting to tab added: {data}")
-
-        tab_name = data.get("name", "Tab")
-        pane_count = data.get("pane_count", 1)
-
-        # Create a split widget for this tab
-        # For now, create with a default editor widget
-        split_widget = WidgetFactory.create_split_pane_widget(
-            initial_type=WidgetType.TEXT_EDITOR, parent=self
+        """Create the default tab on startup."""
+        context = CommandContext(model=self.model)
+        self.command_registry.execute(
+            "tab.create",
+            context,
+            name="Terminal",
+            widget_type=WidgetType.TERMINAL,
         )
 
-        # Connect split widget signals
-        split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(tab_name, pane_id))
-        split_widget.pane_removed.connect(lambda pane_id: self.on_pane_removed(tab_name, pane_id))
-        split_widget.active_pane_changed.connect(
-            lambda pane_id: self.active_pane_changed.emit(tab_name, pane_id)
-        )
-        split_widget.layout_changed.connect(self.layout_changed.emit)
+    def _on_model_change(self, event: str, data: Any):
+        """Handle model change events."""
+        if event == "tab_created":
+            self._add_tab_view(data["tab_id"])
+        elif event == "tab_closed":
+            self._remove_tab_view(data["tab_id"])
+        elif event == "tab_switched":
+            self._update_active_tab()
+        elif event == "pane_split":
+            self._refresh_current_tab()
+        elif event == "pane_closed":
+            self._refresh_current_tab()
+        elif event == "pane_focused":
+            tab = self.model.state.get_active_tab()
+            if tab:
+                self.active_pane_changed.emit(tab.name, data.get("pane_id", ""))
+
+        # Emit layout changed for any structural change
+        if event in ["tab_created", "tab_closed", "pane_split", "pane_closed"]:
+            self.layout_changed.emit()
+
+    def _add_tab_view(self, tab_id: str):
+        """Add a new tab view."""
+        tab = self.model._find_tab(tab_id)
+        if not tab:
+            return
+
+        # Create the view for this tab
+        tab_view = TabView(tab, self.command_registry, self.model)
+        self.tab_views[tab_id] = tab_view
 
         # Add to tab widget
-        index = self.tab_widget.addTab(split_widget, tab_name)
+        index = self.tab_widget.addTab(tab_view, tab.name)
 
-        # Set up custom close button
-        self._setup_tab_close_button(index)
-
-        # Store tab data
-        self.tabs[index] = WorkspaceTab(tab_name, split_widget)
+        # Switch to new tab
+        self.tab_widget.setCurrentIndex(index)
 
         # Emit signal
-        self.tab_added.emit(tab_name)
+        self.tab_added.emit(tab.name)
 
-        logger.info(f"Created UI tab '{tab_name}' at index {index} with {pane_count} panes")
-
-    def _react_to_tab_closed(self, data):
-        """React to tab being closed via model."""
-        logger.info(f"UI reacting to tab closed: {data}")
-        # The actual UI update logic would go here
-        pass
-
-    def _react_to_tab_switched(self, data):
-        """React to tab being switched via model."""
-        logger.info(f"UI reacting to tab switched: {data}")
-        # The actual UI update logic would go here
-        pass
-
-    def _react_to_tab_renamed(self, data):
-        """React to tab being renamed via model."""
-        logger.info(f"UI reacting to tab renamed: {data}")
-        # The actual UI update logic would go here
-        pass
-
-    def _on_model_event(self, event_name: str, event_data: Any):
-        """
-        Handle events from the workspace model.
-
-        This is the main observer callback that gets called when the model changes.
-        It delegates to specific handlers based on the event type.
-        """
-        logger.debug(f"Workspace received model event: {event_name} with data: {event_data}")
-
-        if event_name == "pane_split":
-            self._react_to_pane_split(event_data)
-        elif event_name == "pane_closed":
-            self._react_to_pane_closed(event_data)
-        elif event_name == "tab_added":
-            self._react_to_tab_added(event_data)
-        elif event_name == "tab_closed":
-            self._react_to_tab_closed(event_data)
-        elif event_name == "tab_switched":
-            self._react_to_tab_switched(event_data)
-        elif event_name == "pane_focused":
-            self._react_to_pane_focused(event_data)
-        elif event_name == "state_restored":
-            self._react_to_state_restored(event_data)
-        else:
-            logger.debug(f"Unhandled model event: {event_name}")
-
-    def _react_to_pane_split(self, data):
-        """React to pane being split via model."""
-        logger.info(f"UI reacting to pane split: {data}")
-
-        # Get the current tab's split widget
-        widget = self.get_current_split_widget()
-        if not widget:
-            logger.error("No current split widget to handle pane split")
+    def _remove_tab_view(self, tab_id: str):
+        """Remove a tab view."""
+        if tab_id not in self.tab_views:
             return
 
-        # The model has already done the split, we need to sync the UI
-        # The data should contain the split information
-        if isinstance(data, dict):
-            parent_id = data.get("parent_id")
-            new_pane_id = data.get("new_pane_id")
-            orientation = data.get("orientation")
+        tab_view = self.tab_views[tab_id]
 
-            # Tell the split widget to sync with the model
-            widget.sync_with_model()
-            logger.info(
-                f"UI synced after pane split: parent={parent_id}, new={new_pane_id}, orientation={orientation}"
-            )
-
-    def _react_to_pane_closed(self, data):
-        """React to pane being closed via model."""
-        logger.info(f"UI reacting to pane closed: {data}")
-        # The actual UI update logic would go here
-        pass
-
-    def _react_to_pane_focused(self, data):
-        """React to pane being focused via model."""
-        logger.info(f"UI reacting to pane focused: {data}")
-        # The actual UI update logic would go here
-        pass
-
-    def _react_to_state_restored(self, data):
-        """React to state being fully restored in model."""
-        logger.info(f"UI reacting to state restored: {data}")
-
-        # Set the active tab
-        active_tab = data.get("active_tab", 0)
-        if active_tab < self.tab_widget.count():
-            self.tab_widget.setCurrentIndex(active_tab)
-
-        # Ensure we have at least one tab
-        if self.tab_widget.count() == 0:
-            logger.warning("No tabs created after state restoration, creating default")
-            self.create_default_tab()
-
-    def _handle_ui_request(self, request: UIRequest):
-        """Handle UI requests from services to break circular dependencies."""
-        response = UIResponse(request_id=request.request_id, success=False)
-
-        try:
-            if request.request_type == "pane.close":
-                pane_id = request.data.get("pane_id")
-                if pane_id:
-                    success = self._handle_pane_close_request(pane_id)
-                    response.success = success
-                    response.data = {"pane_id": pane_id}
-                else:
-                    response.error = "No pane_id provided"
-
-            elif request.request_type == "pane.numbers.toggle":
-                visible = self._handle_pane_numbers_toggle_request()
-                response.success = True
-                response.data = {"visible": visible}
-
-            elif request.request_type == "pane.numbers.state":
-                visible = self._handle_pane_numbers_state_request()
-                response.success = True
-                response.data = {"visible": visible}
-
-            elif request.request_type == "pane.split":
-                pane_id = request.data.get("pane_id")
-                orientation = request.data.get("orientation")
-                if pane_id and orientation:
-                    new_pane_id = self._handle_pane_split_request(pane_id, orientation)
-                    if new_pane_id:
-                        response.success = True
-                        response.data = {"new_pane_id": new_pane_id}
-                    else:
-                        response.error = "Failed to split pane"
-                else:
-                    response.error = "Missing pane_id or orientation"
-
-            else:
-                response.error = f"Unknown request type: {request.request_type}"
-
-        except Exception as e:
-            response.error = str(e)
-            logger.error(f"Error handling UI request {request.request_type}: {e}")
-
-        # Send response back through event bus
-        event_bus.publish("ui.response", response)
-
-    def _handle_pane_close_request(self, pane_id: str) -> bool:
-        """Handle request to close a pane."""
-        widget = self.get_current_split_widget()
-        if widget:
-            return widget.close_pane(pane_id)
-        return False
-
-    def _handle_pane_numbers_toggle_request(self) -> bool:
-        """Handle request to toggle pane numbers."""
-        widget = self.get_current_split_widget()
-        if widget:
-            return widget.toggle_pane_numbers()
-        return False
-
-    def _handle_pane_numbers_state_request(self) -> Optional[bool]:
-        """Handle request to get pane numbers state."""
-        widget = self.get_current_split_widget()
-        if widget and hasattr(widget, "model"):
-            return getattr(widget.model, "show_pane_numbers", None)
-        return None
-
-    def _handle_pane_split_request(self, pane_id: str, orientation: str) -> Optional[str]:
-        """Handle request to split a pane."""
-        widget = self.get_current_split_widget()
-        if widget:
-            if orientation == "horizontal":
-                return widget.split_horizontal(pane_id)
-            elif orientation == "vertical":
-                return widget.split_vertical(pane_id)
-        return None
-
-    def _get_close_button_style(self):
-        """Get the style for close buttons based on current theme."""
-        from viloapp.services.icon_service import get_icon_manager
-
-        icon_manager = get_icon_manager()
-        is_dark = icon_manager.theme == "dark"
-
-        if is_dark:
-            # Dark theme colors
-            return """
-                QToolButton {
-                    background: transparent;
-                    border: none;
-                    color: #888888;
-                    font-size: 16px;
-                    font-weight: bold;
-                    padding: 0px;
-                    margin: 0px;
-                }
-                QToolButton:hover {
-                    background-color: rgba(90, 93, 94, 0.8);
-                    border-radius: 3px;
-                    color: #cccccc;
-                }
-                QToolButton:pressed {
-                    background-color: rgba(90, 93, 94, 1.0);
-                    color: #ffffff;
-                }
-            """
-        else:
-            # Light theme colors
-            return """
-                QToolButton {
-                    background: transparent;
-                    border: none;
-                    color: #666666;
-                    font-size: 16px;
-                    font-weight: bold;
-                    padding: 0px;
-                    margin: 0px;
-                }
-                QToolButton:hover {
-                    background-color: rgba(200, 200, 200, 0.8);
-                    border-radius: 3px;
-                    color: #333333;
-                }
-                QToolButton:pressed {
-                    background-color: rgba(180, 180, 180, 1.0);
-                    color: #000000;
-                }
-            """
-
-    def _setup_tab_close_button(self, index: int):
-        """Set up a custom close button for a tab with visible × icon."""
-        from PySide6.QtWidgets import QTabBar, QToolButton
-
-        # Create close button with × text
-        close_button = QToolButton()
-        close_button.setText("×")
-        close_button.setAutoRaise(True)
-        close_button.setFixedSize(16, 16)
-
-        # Apply theme-appropriate style
-        close_button.setStyleSheet(self._get_close_button_style())
-
-        # Connect to close action
-        close_button.clicked.connect(lambda: self.close_tab(index, show_message=True))
-
-        # Set as tab button
-        self.tab_widget.tabBar().setTabButton(index, QTabBar.RightSide, close_button)
-
-    def update_close_button_styles(self):
-        """Update all tab close button styles for current theme."""
-        from PySide6.QtWidgets import QTabBar, QToolButton
-
-        style = self._get_close_button_style()
-
-        # Update all existing close buttons
+        # Find and remove from tab widget
         for i in range(self.tab_widget.count()):
-            button = self.tab_widget.tabBar().tabButton(i, QTabBar.RightSide)
-            if button and isinstance(button, QToolButton):
-                button.setStyleSheet(style)
+            if self.tab_widget.widget(i) == tab_view:
+                self.tab_widget.removeTab(i)
+                break
 
-    def add_editor_tab(self, name: str = "Editor") -> int:
-        """TODO: Will create tab through model after refactor."""
-        # Direct UI creation removed - will go through model
-        logger.warning("add_editor_tab disabled - Big Bang refactor in progress")
-        return -1
+        # Clean up
+        tab_name = "Unknown"
+        tab = self.model._find_tab(tab_id)
+        if tab:
+            tab_name = tab.name
 
-    def add_terminal_tab(self, name: str = "Terminal") -> int:
-        """TODO: Will create tab through model after refactor."""
-        # Direct UI creation removed - will go through model
-        logger.warning("add_terminal_tab disabled - Big Bang refactor in progress")
-        return -1
+        del self.tab_views[tab_id]
+        self.tab_removed.emit(tab_name)
 
-    def add_output_tab(self, name: str = "Output") -> int:
-        """TODO: Will create tab through model after refactor."""
-        # Direct UI creation removed - will go through model
-        logger.warning("add_output_tab disabled - Big Bang refactor in progress")
-        return -1
+    def _refresh_current_tab(self):
+        """Refresh the current tab view."""
+        tab = self.model.state.get_active_tab()
+        if tab and tab.id in self.tab_views:
+            # Force a re-render by removing and re-adding
+            tab_view = self.tab_views[tab.id]
 
-    def add_app_widget_tab(self, widget_type, widget_id: str, name: str = None) -> int:
-        """Add a tab for a generic app widget.
-
-        Args:
-            widget_type: Type of widget to create
-            widget_id: Unique ID for the widget
-            name: Optional tab name
-
-        Returns:
-            Tab index if successful, -1 otherwise
-        """
-        try:
-            if not name:
-                name = f"{widget_type.value.title()} Widget"
-
-            # Create SplitPaneWidget with the specified widget type AND widget_id
-            split_widget = WidgetFactory.create_split_pane_widget(
-                initial_type=widget_type,
-                initial_widget_id=widget_id,  # Pass the widget_id
-                parent=self,
-            )
-
-            # Connect signals
-            split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(name, pane_id))
-            split_widget.pane_removed.connect(lambda pane_id: self.on_pane_removed(name, pane_id))
-            split_widget.active_pane_changed.connect(
-                lambda pane_id: self.active_pane_changed.emit(name, pane_id)
-            )
-
-            # Add to tab widget
-            index = self.tab_widget.addTab(split_widget, name)
-
-            # Set up custom close button
-            self._setup_tab_close_button(index)
-
-            # Store tab data with widget_id in metadata
-            tab_data = WorkspaceTab(name, split_widget)
-            tab_data.metadata["widget_id"] = widget_id  # Store the widget_id
-            self.tabs[index] = tab_data
-
-            # Switch to new tab
-            self.tab_widget.setCurrentIndex(index)
-
-            # Emit signal
-            self.tab_added.emit(name)
-
-            return index  # Return the tab index for registry tracking
-
-        except Exception as e:
-            logger.error(f"Failed to add app widget tab: {e}")
-            return -1  # Return -1 on failure
-
-    def close_tab(self, index: int, show_message=True):
-        """Close a tab using command pattern."""
-        from viloapp.core.commands.executor import execute_command
-
-        # Use command pattern for proper business logic validation
-        result = execute_command("file.closeTab", index=index)
-
-        if not result.success:
-            # UI only handles display of errors returned from business logic
-            if show_message and result.error:
-                from viloapp.ui.qt_compat import QMessageBox
-
-                QMessageBox.information(self, "Cannot Close Tab", result.error)
-            return
-
-        # Get tab data for cleanup - business logic already validated above
-        if index in self.tabs:
-            tab_data = self.tabs[index]
-
-            # Get widget_id if it exists in metadata
-            widget_id = None
-            if hasattr(tab_data, "metadata") and "widget_id" in tab_data.metadata:
-                widget_id = tab_data.metadata["widget_id"]
-
-            # Clean up the split widget's terminals before removing
-            if tab_data.split_widget:
-                self._cleanup_split_widget(tab_data.split_widget)
-
-            # Remove from tabs dict
-            del self.tabs[index]
-
-            # Remove from tab widget
-            self.tab_widget.removeTab(index)
-
-            # Notify WorkspaceService to clean up registry using commands
-            # This maintains proper architectural flow: UI → Command → Service
-            from viloapp.core.commands.executor import execute_command
-
-            try:
-                # Update registry after tab close using proper command
-                result = execute_command(
-                    "workspace.updateRegistryAfterClose",
-                    closed_index=index,
-                    widget_id=widget_id,
-                )
-                if not result.success:
-                    logger.warning(f"Failed to update widget registry: {result.error}")
-            except Exception as e:
-                logger.debug(f"Could not update widget registry: {e}")
-
-            # Update indices for remaining tabs
-            new_tabs = {}
+            # Find current index
+            current_index = -1
             for i in range(self.tab_widget.count()):
-                # Find the tab data that corresponds to this widget
-                widget = self.tab_widget.widget(i)
-                for _old_index, data in self.tabs.items():
-                    if data.split_widget == widget:
-                        new_tabs[i] = data
-                        break
-            self.tabs = new_tabs
+                if self.tab_widget.widget(i) == tab_view:
+                    current_index = i
+                    break
 
-            # Emit signal
-            self.tab_removed.emit(tab_data.name)
+            if current_index >= 0:
+                # Remove old view
+                self.tab_widget.removeTab(current_index)
 
-    def get_current_split_widget(self) -> Optional[SplitPaneWidget]:
-        """Get the current tab's split widget."""
-        index = self.tab_widget.currentIndex()
-        if index >= 0:
-            widget = self.tab_widget.widget(index)
-            if isinstance(widget, SplitPaneWidget):
-                return widget
-            # If stored in tabs dict, get from there
-            if index in self.tabs:
-                return self.tabs[index].split_widget
-        return None
+                # Create new view with updated tree
+                new_tab_view = TabView(tab, self.command_registry, self.model)
+                self.tab_views[tab.id] = new_tab_view
 
-    def get_current_widget(self):
-        """Get the current active widget in the active pane."""
-        split_widget = self.get_current_split_widget()
-        if split_widget and split_widget.active_pane_id:
-            # Get the widget from the active pane
-            return split_widget.get_pane_widget(split_widget.active_pane_id)
-        return None
+                # Insert at same position
+                self.tab_widget.insertTab(current_index, new_tab_view, tab.name)
+                self.tab_widget.setCurrentIndex(current_index)
 
-    def on_tab_changed(self, index: int):
-        """Handle tab change."""
-        self.tab_changed.emit(index)
+    def _update_active_tab(self):
+        """Update the active tab in the UI."""
+        active_tab_id = self.model.state.active_tab_id
+        if active_tab_id in self.tab_views:
+            tab_view = self.tab_views[active_tab_id]
+            for i in range(self.tab_widget.count()):
+                if self.tab_widget.widget(i) == tab_view:
+                    self.tab_widget.setCurrentIndex(i)
+                    break
 
-    def on_tab_double_clicked(self, index: int):
-        """Handle tab double-click (could be used for renaming)."""
-        # Use command for rename
-        execute_command("workbench.action.renameTab", tab_index=index)
-
-    def start_tab_rename(self, index: int, current_text: str):
-        """Start renaming a tab with inline editor."""
-        if index < 0 or index >= self.tab_widget.count():
-            return
-
-        # Create rename editor
-        self.rename_editor = RenameEditor(current_text, self)
-
-        # Connect signals
-        self.rename_editor.rename_completed.connect(
-            lambda name: self.complete_tab_rename(index, name)
-        )
-        self.rename_editor.rename_cancelled.connect(self.cancel_tab_rename)
-
-        # Position the editor over the tab
-        tab_bar = self.tab_widget.tabBar()
-        tab_rect = tab_bar.tabRect(index)
-        self.rename_editor.setGeometry(tab_rect)
-        self.rename_editor.show()
-        self.rename_editor.setFocus()
-
-    def complete_tab_rename(self, index: int, new_name: str):
-        """Complete tab rename with validation."""
-        if not hasattr(self, "rename_editor"):
-            return
-
-        # Clean up the rename editor
-        self.rename_editor.hide()
-        self.rename_editor.deleteLater()
-        delattr(self, "rename_editor")
-
-        # Validate and apply new name
-        new_name = new_name.strip()
-        if new_name and index in self.tabs:
-            self.tab_widget.setTabText(index, new_name)
-            self.tabs[index].name = new_name
-
-    def cancel_tab_rename(self):
-        """Cancel tab rename."""
-        if not hasattr(self, "rename_editor"):
-            return
-
-        # Clean up the rename editor
-        self.rename_editor.hide()
-        self.rename_editor.deleteLater()
-        delattr(self, "rename_editor")
-
-    def on_pane_added(self, tab_name: str, pane_id: str):
-        """Handle pane added in a tab."""
-        # Could update status or emit combined signal
-        pass
-
-    def on_pane_removed(self, tab_name: str, pane_id: str):
-        """Handle pane removed in a tab."""
-        # Could update status or emit combined signal
-        pass
-
-    def show_tab_context_menu(self, pos):
-        """Show context menu for tabs."""
-        # Get the tab index at position
-        index = self.tab_widget.tabBar().tabAt(pos)
+    def _on_tab_changed(self, index: int):
+        """Handle tab change in UI."""
         if index < 0:
             return
 
-        menu = QMenu(self)
-        menu.setStyleSheet(get_menu_stylesheet())
+        # Get the tab view at this index
+        tab_view = self.tab_widget.widget(index)
 
-        # Duplicate tab action
-        duplicate_action = QAction("Duplicate Tab", self)
-        duplicate_action.triggered.connect(
-            lambda: execute_command("workbench.action.duplicateTab", tab_index=index)
+        # Find which tab this is
+        for tab_id, view in self.tab_views.items():
+            if view == tab_view:
+                # Switch in model
+                context = CommandContext(model=self.model)
+                self.command_registry.execute("tab.switch", context, tab_id=tab_id)
+                break
+
+        self.tab_changed.emit(index)
+
+    def _on_tab_close_requested(self, index: int):
+        """Handle tab close request."""
+        if index < 0:
+            return
+
+        # Don't close last tab
+        if self.tab_widget.count() <= 1:
+            return
+
+        # Get the tab view at this index
+        tab_view = self.tab_widget.widget(index)
+
+        # Find which tab this is
+        for tab_id, view in self.tab_views.items():
+            if view == tab_view:
+                # Close in model
+                context = CommandContext(model=self.model)
+                self.command_registry.execute("tab.close", context, tab_id=tab_id)
+                break
+
+    def _setup_theme_observer(self):
+        """Setup theme observer for dynamic theme updates."""
+        try:
+            from viloapp.services import service_locator
+            from viloapp.services.theme_service import ThemeProvider
+
+            theme_service = service_locator.get(ThemeProvider)
+            if theme_service:
+                theme_service.theme_changed.connect(self.apply_theme)
+                # Apply initial theme
+                self.apply_theme()
+        except ImportError:
+            logger.warning("Theme service not available")
+        except Exception as e:
+            logger.error(f"Failed to setup theme observer: {e}")
+
+    def apply_theme(self):
+        """Apply the current theme to the workspace."""
+        try:
+            from viloapp.services import service_locator
+            from viloapp.services.theme_service import ThemeProvider
+
+            theme_service = service_locator.get(ThemeProvider)
+            if theme_service:
+                stylesheet = theme_service.get_component_style("workspace")
+                if stylesheet:
+                    self.setStyleSheet(stylesheet)
+        except Exception as e:
+            logger.error(f"Failed to apply theme: {e}")
+
+    # Compatibility methods for existing code
+    def create_new_tab(self, name: str = "New Tab", widget_type: str = "terminal"):
+        """Create a new tab (compatibility method)."""
+        # Map old widget types to new enum
+        type_map = {
+            "terminal": WidgetType.TERMINAL,
+            "editor": WidgetType.EDITOR,
+            "text_editor": WidgetType.EDITOR,
+            "output": WidgetType.OUTPUT,
+        }
+
+        wtype = type_map.get(widget_type.lower(), WidgetType.TERMINAL)
+
+        context = CommandContext(model=self.model)
+        self.command_registry.execute(
+            "tab.create",
+            context,
+            name=name,
+            widget_type=wtype,
         )
-        menu.addAction(duplicate_action)
 
-        # Close other tabs
-        if self.tab_widget.count() > 1:
-            close_others_action = QAction("Close Other Tabs", self)
-            close_others_action.triggered.connect(
-                lambda: execute_command("workbench.action.closeOtherTabs", tab_index=index)
-            )
-            menu.addAction(close_others_action)
+    def split_pane(self, orientation: str = "horizontal"):
+        """Split the current pane (compatibility method)."""
+        context = CommandContext(model=self.model)
 
-        # Close tabs to the right
-        if index < self.tab_widget.count() - 1:
-            close_right_action = QAction("Close Tabs to the Right", self)
-            close_right_action.triggered.connect(
-                lambda: execute_command("workbench.action.closeTabsToRight", tab_index=index)
-            )
-            menu.addAction(close_right_action)
+        # Update context with active items
+        tab = self.model.state.get_active_tab()
+        if tab:
+            context.active_tab_id = tab.id
+            pane = tab.get_active_pane()
+            if pane:
+                context.active_pane_id = pane.id
 
-        menu.addSeparator()
-
-        # Rename tab
-        rename_action = QAction("Rename Tab", self)
-        rename_action.triggered.connect(
-            lambda: execute_command("workbench.action.renameTab", tab_index=index)
+        self.command_registry.execute(
+            "pane.split",
+            context,
+            orientation=orientation,
         )
-        menu.addAction(rename_action)
 
-        menu.addSeparator()
+    def close_current_pane(self):
+        """Close the current pane (compatibility method)."""
+        context = CommandContext(model=self.model)
 
-        # Close tab
-        close_action = QAction("Close Tab", self)
-        close_action.triggered.connect(lambda: execute_command("file.closeTab", tab_index=index))
-        menu.addAction(close_action)
+        # Update context with active items
+        tab = self.model.state.get_active_tab()
+        if tab:
+            context.active_tab_id = tab.id
+            pane = tab.get_active_pane()
+            if pane:
+                context.active_pane_id = pane.id
 
-        menu.exec(self.tab_widget.tabBar().mapToGlobal(pos))
+        self.command_registry.execute("pane.close", context)
 
-    def duplicate_tab(self, index: int):
-        """Duplicate a tab."""
-        # Delegate to WorkspaceService for consistent code path
-        from viloapp.services.service_locator import ServiceLocator
-        from viloapp.services.workspace_service import WorkspaceService
-
-        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
-        if workspace_service:
-            return workspace_service.duplicate_tab(index)
-        else:
-            # Fallback to direct method if service not available
-            if index in self.tabs:
-                tab_data = self.tabs[index]
-                # Create new tab with same type
-                # TODO: Could also duplicate the split layout
-                return self.add_editor_tab(f"{tab_data.name} (Copy)")
-            return None
-
-    def close_other_tabs(self, keep_index: int):
-        """Close all tabs except the specified one."""
-        # Delegate to WorkspaceService for consistent code path
-        from viloapp.services.service_locator import ServiceLocator
-        from viloapp.services.workspace_service import WorkspaceService
-
-        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
-        if workspace_service:
-            return workspace_service.close_other_tabs(keep_index)
-        else:
-            # Fallback to direct method if service not available
-            closed_count = 0
-            # Close from right to left to maintain indices
-            for i in range(self.tab_widget.count() - 1, -1, -1):
-                if i != keep_index:
-                    self.close_tab(i)
-                    closed_count += 1
-            return closed_count
-
-    def close_tabs_to_right(self, index: int):
-        """Close all tabs to the right of the specified index."""
-        # Delegate to WorkspaceService for consistent code path
-        from viloapp.services.service_locator import ServiceLocator
-        from viloapp.services.workspace_service import WorkspaceService
-
-        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
-        if workspace_service:
-            return workspace_service.close_tabs_to_right(index)
-        else:
-            # Fallback to direct method if service not available
-            closed_count = 0
-            # Close from right to left to maintain indices
-            for i in range(self.tab_widget.count() - 1, index, -1):
-                self.close_tab(i)
-                closed_count += 1
-            return closed_count
-
-    # Public API for compatibility with existing code
-
-    def split_active_pane_horizontal(self):
-        """Split the active pane in the current tab horizontally."""
-        # Delegate to WorkspaceService for consistent code path
-        from viloapp.services.service_locator import ServiceLocator
-        from viloapp.services.workspace_service import WorkspaceService
-
-        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
-        if workspace_service:
-            workspace_service.split_active_pane("horizontal")
-        else:
-            # Fallback to direct method if service not available
-            widget = self.get_current_split_widget()
-            if widget and widget.active_pane_id:
-                widget.split_horizontal(widget.active_pane_id)
-
-    def split_active_pane_vertical(self):
-        """Split the active pane in the current tab vertically."""
-        # Delegate to WorkspaceService for consistent code path
-        from viloapp.services.service_locator import ServiceLocator
-        from viloapp.services.workspace_service import WorkspaceService
-
-        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
-        if workspace_service:
-            workspace_service.split_active_pane("vertical")
-        else:
-            # Fallback to direct method if service not available
-            widget = self.get_current_split_widget()
-            if widget and widget.active_pane_id:
-                widget.split_vertical(widget.active_pane_id)
-
-    def close_active_pane(self, show_message=True):
-        """Close the active pane using command pattern."""
-        from viloapp.core.commands.executor import execute_command
-
-        # Use command pattern for proper business logic validation
-        result = execute_command("workbench.action.closeActivePane")
-
-        if not result.success:
-            # UI only handles display of errors returned from business logic
-            if show_message and result.error:
-                from viloapp.ui.qt_compat import QMessageBox
-
-                QMessageBox.information(self, "Cannot Close Pane", result.error)
-            return False
-
-        return True
-
-    def get_current_tab_info(self) -> Optional[dict]:
-        """Get information about the current tab."""
-        index = self.tab_widget.currentIndex()
-        if index >= 0 and index in self.tabs:
-            tab_data = self.tabs[index]
-            widget = tab_data.split_widget
-            return {
-                "name": tab_data.name,
-                "index": index,
-                "pane_count": widget.get_pane_count(),
-                "active_pane": widget.active_pane_id,
-                "all_panes": widget.get_all_pane_ids(),
-            }
-        return None
+    def get_current_tab_name(self) -> str:
+        """Get the name of the current tab."""
+        tab = self.model.state.get_active_tab()
+        return tab.name if tab else ""
 
     def get_tab_count(self) -> int:
         """Get the number of tabs."""
-        return self.tab_widget.count()
-
-    # Save/restore state
-
-    def save_state(self) -> dict:
-        """Save workspace state."""
-        state = {"current_tab": self.tab_widget.currentIndex(), "tabs": []}
-
-        for i in range(self.tab_widget.count()):
-            if i in self.tabs:
-                tab_data = self.tabs[i]
-                tab_state = {
-                    "name": tab_data.name,
-                    "split_state": tab_data.split_widget.get_state(),
-                }
-                state["tabs"].append(tab_state)
-
-        return state
-
-    def restore_state(self, state: dict):
-        """
-        Restore workspace state using model-first approach.
-
-        Instead of creating UI directly, this delegates to WorkspaceService
-        which populates the model. The UI will be updated via observer callbacks.
-        """
-        from viloapp.services.service_locator import ServiceLocator
-        from viloapp.services.workspace_service import WorkspaceService
-
-        # Get workspace service
-        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
-        if not workspace_service:
-            logger.error("WorkspaceService not available for state restoration")
-            # Fall back to creating a default tab
-            self.create_default_tab()
-            return
-
-        # Clear existing tabs first
-        while self.tab_widget.count() > 0:
-            self.tab_widget.removeTab(0)
-        self.tabs.clear()
-
-        # Restore state through the model
-        success = workspace_service.restore_state(state)
-
-        if not success:
-            logger.warning("Failed to restore workspace state through model, creating default tab")
-            # Create default tab if restoration failed
-            self.create_default_tab()
-
-        # Note: The UI will be updated via _on_model_event callbacks
-        # as the model notifies about tab additions
-        if self.tab_widget.count() == 0:
-            self.create_default_tab()
-
-    def reset_to_default_layout(self):
-        """Reset workspace to default single pane layout."""
-        # Clean up all existing tabs properly
-        for tab_data in self.tabs.values():
-            if tab_data.split_widget:
-                self._cleanup_split_widget(tab_data.split_widget)
-
-        # Clear all tabs
-        while self.tab_widget.count() > 0:
-            self.tab_widget.removeTab(0)
-        self.tabs.clear()
-
-        # Create default tab
-        self.create_default_tab()
-
-    def apply_theme(self):
-        """Apply current theme to workspace."""
-        # Use command pattern to get theme stylesheet
-        result = execute_command("theme.getCurrentTheme")
-        if result.success:
-            # For now, use icon manager for theme detection (consistent with other methods in this file)
-            from viloapp.services.icon_service import get_icon_manager
-
-            icon_manager = get_icon_manager()
-            is_dark = icon_manager.theme == "dark"
-
-            # Apply theme-aware styling for tab widget using theme provider
-            result = execute_command("theme.getComponentStylesheet", component="tab_widget")
-            if result.success and result.value:
-                self.tab_widget.setStyleSheet(result.value)
-            else:
-                # Fallback to basic theme-aware styling
-                if is_dark:
-                    self.tab_widget.setStyleSheet(self._get_dark_tab_stylesheet())
-                else:
-                    self.tab_widget.setStyleSheet(self._get_light_tab_stylesheet())
-
-    def _get_dark_tab_stylesheet(self) -> str:
-        """Get dark theme stylesheet for tab widget."""
-        return """
-            QTabWidget::pane {
-                border: 1px solid #3c3c3c;
-                background-color: #252526;
-            }
-            QTabBar::tab {
-                background-color: #2d2d30;
-                color: #cccccc;
-                padding: 8px 12px;
-                margin-right: 2px;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-                font-size: 14px;
-            }
-            QTabBar::tab:selected {
-                background-color: #1e1e1e;
-                color: #ffffff;
-            }
-            QTabBar::tab:hover {
-                background-color: #3c3c3c;
-            }
-        """
-
-    def _get_light_tab_stylesheet(self) -> str:
-        """Get light theme stylesheet for tab widget."""
-        return """
-            QTabWidget::pane {
-                border: 1px solid #d0d0d0;
-                background-color: #ffffff;
-            }
-            QTabBar::tab {
-                background-color: #f3f3f3;
-                color: #333333;
-                padding: 8px 12px;
-                margin-right: 2px;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-                font-size: 14px;
-            }
-            QTabBar::tab:selected {
-                background-color: #ffffff;
-                color: #000000;
-            }
-            QTabBar::tab:hover {
-                background-color: #e0e0e0;
-            }
-        """
-
-
-def get_menu_stylesheet() -> str:
-    """Get menu stylesheet using command pattern."""
-    result = execute_command("theme.getComponentStylesheet", component="menu")
-    if result.success:
-        return result.value
-
-    # Fallback to basic menu styling
-    from viloapp.services.icon_service import get_icon_manager
-
-    icon_manager = get_icon_manager()
-    is_dark = icon_manager.theme == "dark"
-
-    if is_dark:
-        return """
-            QMenu {
-                background-color: #2d2d30;
-                color: #cccccc;
-                border: 1px solid #3c3c3c;
-                padding: 4px;
-            }
-            QMenu::item {
-                padding: 6px 20px;
-                border-radius: 3px;
-            }
-            QMenu::item:selected {
-                background-color: #094771;
-                color: #ffffff;
-            }
-            QMenu::separator {
-                height: 1px;
-                background-color: #3c3c3c;
-                margin: 4px 0;
-            }
-        """
-    else:
-        return """
-            QMenu {
-                background-color: #ffffff;
-                color: #333333;
-                border: 1px solid #d0d0d0;
-                padding: 4px;
-            }
-            QMenu::item {
-                padding: 6px 20px;
-                border-radius: 3px;
-            }
-            QMenu::item:selected {
-                background-color: #0078d4;
-                color: #ffffff;
-            }
-            QMenu::separator {
-                height: 1px;
-                background-color: #d0d0d0;
-                margin: 4px 0;
-            }
-        """
+        return len(self.model.state.tabs)
