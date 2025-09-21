@@ -95,7 +95,15 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
 
     settings_service = SettingsService()
 
-    workspace_service = WorkspaceService(workspace)
+    # Enable new architecture - create model implementation and pass to service
+    from viloapp.core.commands.router import CommandRouter
+    from viloapp.models.workspace_model_impl import WorkspaceModelImpl
+
+    workspace_model = WorkspaceModelImpl(workspace)
+    workspace_service = WorkspaceService(workspace=workspace, model=workspace_model)
+
+    # Make CommandRouter available globally (will be used by UI components)
+    _ = CommandRouter()  # Instance created for future use
     ui_service = UIService(main_window)
     terminal_service = TerminalService()
     editor_service = EditorService()
