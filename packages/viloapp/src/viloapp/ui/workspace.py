@@ -17,7 +17,16 @@ from viloapp.core.events.requests import UIRequest, UIResponse
 from viloapp.ui.factories import WidgetFactory
 from viloapp.ui.widgets.rename_editor import RenameEditor
 from viloapp.ui.widgets.split_pane_widget import SplitPaneWidget
-from viloapp.ui.widgets.widget_registry import WidgetType
+
+
+# TODO: Broken import - will be fixed after Big Bang refactor
+# from viloapp.ui.widgets.widget_registry import WidgetType
+# Temporary stub
+class WidgetType:
+    TEXT_EDITOR = "text_editor"
+    TERMINAL = "terminal"
+    OUTPUT = "output"
+
 
 logger = logging.getLogger(__name__)
 
@@ -240,13 +249,15 @@ class Workspace(QWidget):
         # The model has already done the split, we need to sync the UI
         # The data should contain the split information
         if isinstance(data, dict):
-            parent_id = data.get('parent_id')
-            new_pane_id = data.get('new_pane_id')
-            orientation = data.get('orientation')
+            parent_id = data.get("parent_id")
+            new_pane_id = data.get("new_pane_id")
+            orientation = data.get("orientation")
 
             # Tell the split widget to sync with the model
             widget.sync_with_model()
-            logger.info(f"UI synced after pane split: parent={parent_id}, new={new_pane_id}, orientation={orientation}")
+            logger.info(
+                f"UI synced after pane split: parent={parent_id}, new={new_pane_id}, orientation={orientation}"
+            )
 
     def _react_to_pane_closed(self, data):
         """React to pane being closed via model."""
@@ -436,106 +447,22 @@ class Workspace(QWidget):
                 button.setStyleSheet(style)
 
     def add_editor_tab(self, name: str = "Editor") -> int:
-        """Add a new editor tab with split pane widget."""
-        split_widget = WidgetFactory.create_split_pane_widget(
-            initial_type=WidgetType.TEXT_EDITOR, parent=self
-        )
-
-        # Connect split widget signals
-        split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(name, pane_id))
-        split_widget.pane_removed.connect(lambda pane_id: self.on_pane_removed(name, pane_id))
-        split_widget.active_pane_changed.connect(
-            lambda pane_id: self.active_pane_changed.emit(name, pane_id)
-        )
-        split_widget.layout_changed.connect(self.layout_changed.emit)
-
-        # Add to tab widget
-        index = self.tab_widget.addTab(split_widget, name)
-
-        # Set up custom close button
-        self._setup_tab_close_button(index)
-
-        # Store tab data
-        self.tabs[index] = WorkspaceTab(name, split_widget)
-
-        # Switch to new tab
-        self.tab_widget.setCurrentIndex(index)
-
-        # Emit signal
-        self.tab_added.emit(name)
-
-        return index
+        """TODO: Will create tab through model after refactor."""
+        # Direct UI creation removed - will go through model
+        logger.warning("add_editor_tab disabled - Big Bang refactor in progress")
+        return -1
 
     def add_terminal_tab(self, name: str = "Terminal") -> int:
-        """Add a new terminal tab."""
-        split_widget = WidgetFactory.create_split_pane_widget(
-            initial_type=WidgetType.TERMINAL, parent=self
-        )
-
-        # Connect signals
-        split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(name, pane_id))
-        split_widget.pane_removed.connect(lambda pane_id: self.on_pane_removed(name, pane_id))
-        split_widget.active_pane_changed.connect(
-            lambda pane_id: self.active_pane_changed.emit(name, pane_id)
-        )
-
-        # Add to tab widget
-        index = self.tab_widget.addTab(split_widget, name)
-
-        # Set up custom close button
-        self._setup_tab_close_button(index)
-
-        # Store tab data
-        self.tabs[index] = WorkspaceTab(name, split_widget)
-
-        # Switch to new tab
-        self.tab_widget.setCurrentIndex(index)
-
-        # Focus the terminal in the new tab (with a delay to ensure it's fully loaded)
-        from PySide6.QtCore import QTimer
-
-        def focus_terminal_in_tab():
-            """Focus the terminal widget in the newly created tab."""
-            # Use the split widget's existing focus restoration method
-            if split_widget:
-                split_widget.restore_active_pane_focus()
-
-        QTimer.singleShot(200, focus_terminal_in_tab)
-
-        # Emit signal
-        self.tab_added.emit(name)
-
-        return index
+        """TODO: Will create tab through model after refactor."""
+        # Direct UI creation removed - will go through model
+        logger.warning("add_terminal_tab disabled - Big Bang refactor in progress")
+        return -1
 
     def add_output_tab(self, name: str = "Output") -> int:
-        """Add a new output tab."""
-        split_widget = WidgetFactory.create_split_pane_widget(
-            initial_type=WidgetType.OUTPUT, parent=self
-        )
-
-        # Connect signals
-        split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(name, pane_id))
-        split_widget.pane_removed.connect(lambda pane_id: self.on_pane_removed(name, pane_id))
-        split_widget.active_pane_changed.connect(
-            lambda pane_id: self.active_pane_changed.emit(name, pane_id)
-        )
-
-        # Add to tab widget
-        index = self.tab_widget.addTab(split_widget, name)
-
-        # Set up custom close button
-        self._setup_tab_close_button(index)
-
-        # Store tab data
-        self.tabs[index] = WorkspaceTab(name, split_widget)
-
-        # Switch to new tab
-        self.tab_widget.setCurrentIndex(index)
-
-        # Emit signal
-        self.tab_added.emit(name)
-
-        return index
+        """TODO: Will create tab through model after refactor."""
+        # Direct UI creation removed - will go through model
+        logger.warning("add_output_tab disabled - Big Bang refactor in progress")
+        return -1
 
     def add_app_widget_tab(self, widget_type, widget_id: str, name: str = None) -> int:
         """Add a tab for a generic app widget.
