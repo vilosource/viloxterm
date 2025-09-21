@@ -99,7 +99,7 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
     from viloapp.core.commands.router import CommandRouter
     from viloapp.models.workspace_model_impl import WorkspaceModelImpl
 
-    workspace_model = WorkspaceModelImpl(workspace)
+    workspace_model = WorkspaceModelImpl()  # Model doesn't need workspace - it's pure data
     workspace_service = WorkspaceService(workspace=workspace, model=workspace_model)
 
     # Make CommandRouter available globally (will be used by UI components)

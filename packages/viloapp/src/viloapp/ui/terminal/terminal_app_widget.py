@@ -17,7 +17,7 @@ from PySide6.QtWidgets import QVBoxLayout
 from viloapp.core.keyboard.reserved_shortcuts import get_reserved_shortcuts
 from viloapp.core.keyboard.web_shortcut_guard import WebShortcutGuard
 from viloapp.services.icon_service import get_icon_manager
-from viloapp.services.terminal_server import terminal_server
+# terminal_server imported lazily to avoid circular import
 from viloapp.ui.terminal.terminal_assets import terminal_asset_bundler
 from viloapp.ui.terminal.terminal_bridge import TerminalBridge
 from viloapp.ui.terminal.terminal_config import TerminalConfig
@@ -46,6 +46,7 @@ class TerminalAppWidget(AppWidget):
         self.config = TerminalConfig()
         self.current_theme = "dark"
         self.bridge = None  # Will be created in setup_terminal
+        self._terminal_server_instance = None  # Lazy-loaded to avoid circular import
 
         # Connect to theme changes from IconManager
         icon_manager = get_icon_manager()
@@ -60,7 +61,7 @@ class TerminalAppWidget(AppWidget):
 
         # Connect to terminal server session ended signal
         self._signal_manager.connect(
-            terminal_server.session_ended,
+            self.terminal_server.session_ended,
             self.on_session_ended,
             description="Terminal server session ended",
         )
@@ -68,6 +69,14 @@ class TerminalAppWidget(AppWidget):
         # Start initialization
         self.initialize()
         self.setup_terminal()
+
+    @property
+    def terminal_server(self):
+        """Lazy-load terminal_server to avoid circular import."""
+        if self._terminal_server_instance is None:
+            from viloapp.services.terminal_server import terminal_server
+            self._terminal_server_instance = terminal_server
+        return self._terminal_server_instance
 
     def setup_terminal(self):
         """Set up the terminal UI and session."""
@@ -210,7 +219,7 @@ class TerminalAppWidget(AppWidget):
             initial_dir = self.config.get_initial_directory()
 
             # Create session
-            self.session_id = terminal_server.create_session(
+            self.session_id = self.terminal_server.create_session(
                 command=self.config.shell,
                 cmd_args=self.config.shell_args,
                 cwd=initial_dir,
@@ -218,11 +227,11 @@ class TerminalAppWidget(AppWidget):
 
             # Get bundled HTML instead of using URL
             bundled_html = terminal_asset_bundler.get_bundled_html(
-                self.session_id, terminal_server.port
+                self.session_id, self.terminal_server.port
             )
 
             # Set base URL for Socket.IO to work correctly
-            base_url = QUrl(f"http://127.0.0.1:{terminal_server.port}/")
+            base_url = QUrl(f"http://127.0.0.1:{self.terminal_server.port}/")
 
             logger.info(f"Loading bundled terminal HTML for session: {self.session_id}")
             self.web_view.setHtml(bundled_html, base_url)
@@ -247,7 +256,7 @@ class TerminalAppWidget(AppWidget):
         """Clean up terminal session when widget is destroyed."""
         if self.session_id:
             try:
-                terminal_server.destroy_session(self.session_id)
+                self.terminal_server.destroy_session(self.session_id)
                 logger.info(f"Terminal session cleaned up: {self.session_id}")
             except Exception as e:
                 logger.error(f"Error cleaning up terminal session: {e}")
@@ -298,10 +307,10 @@ class TerminalAppWidget(AppWidget):
         if self.session_id and self.web_view:
             # Get bundled HTML
             bundled_html = terminal_asset_bundler.get_bundled_html(
-                self.session_id, terminal_server.port
+                self.session_id, self.terminal_server.port
             )
             # Set base URL for Socket.IO
-            base_url = QUrl(f"http://127.0.0.1:{terminal_server.port}/")
+            base_url = QUrl(f"http://127.0.0.1:{self.terminal_server.port}/")
             self.web_view.setHtml(bundled_html, base_url)
 
     def execute_command(self, command: str):
