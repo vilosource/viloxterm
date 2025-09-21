@@ -199,6 +199,21 @@ class IWorkspaceModel(ABC):
         """
         pass
 
+    @abstractmethod
+    def restore_state(self, state_dict: dict) -> OperationResult:
+        """Restore workspace state from saved data.
+
+        This is the model-first approach to state restoration.
+        The UI should call this instead of creating widgets directly.
+
+        Args:
+            state_dict: Saved workspace state dictionary
+
+        Returns:
+            OperationResult indicating success or failure
+        """
+        pass
+
 
 class ITabModel(ABC):
     """Interface for individual tab model."""

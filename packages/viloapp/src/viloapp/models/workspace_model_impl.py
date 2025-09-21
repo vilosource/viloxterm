@@ -84,6 +84,150 @@ class WorkspaceModelImpl(IWorkspaceModel):
         """Generate a unique ID for tabs/panes."""
         return str(uuid.uuid4())
 
+    def restore_state(self, state_dict: dict) -> OperationResult:
+        """
+        Restore workspace state from saved data.
+
+        This is the model-first approach to state restoration.
+        The UI should call this instead of creating widgets directly.
+
+        Args:
+            state_dict: Saved workspace state dictionary
+
+        Returns:
+            OperationResult indicating success or failure
+        """
+        try:
+            # Clear existing state
+            self._state = WorkspaceState(tabs=[], active_tab_index=0)
+
+            # Restore tabs
+            tabs_data = state_dict.get("tabs", [])
+            for tab_data in tabs_data:
+                self._restore_tab_from_state(tab_data)
+
+            # Restore active tab index
+            if "current_tab" in state_dict:
+                self._state.active_tab_index = min(
+                    state_dict["current_tab"],
+                    len(self._state.tabs) - 1
+                )
+
+            # Notify observers that state has been restored
+            self._notify("state_restored", {
+                "tab_count": len(self._state.tabs),
+                "active_tab": self._state.active_tab_index
+            })
+
+            logger.info(f"Restored workspace state with {len(self._state.tabs)} tabs")
+            return OperationResult.success_result()
+
+        except Exception as e:
+            logger.error(f"Failed to restore workspace state: {e}")
+            return OperationResult.error_result(f"Failed to restore state: {e}")
+
+    def _restore_tab_from_state(self, tab_data: dict) -> None:
+        """
+        Restore a single tab from saved state.
+
+        Args:
+            tab_data: Dictionary containing tab state
+        """
+        tab_name = tab_data.get("name", "Untitled")
+        tab_id = self._generate_id()
+
+        # Parse split state to reconstruct panes
+        split_state = tab_data.get("split_state", {})
+        panes = {}
+        active_pane_id = split_state.get("active_pane_id")
+
+        # Parse the tree structure to extract panes
+        root_node = split_state.get("root", {})
+        self._extract_panes_from_tree(root_node, panes)
+
+        # If no panes found, create a default one
+        if not panes:
+            pane_id = self._generate_id()
+            panes[pane_id] = PaneState(
+                id=pane_id,
+                widget_type=WidgetType.EDITOR,
+                widget_state={},
+                is_active=True
+            )
+            active_pane_id = pane_id
+            pane_tree = {"root": pane_id}
+        else:
+            # Use the existing tree structure
+            pane_tree = {"root": root_node}
+
+        # Create the tab
+        tab = TabState(
+            id=tab_id,
+            name=tab_name,
+            pane_tree=pane_tree,
+            active_pane_id=active_pane_id or next(iter(panes.keys())),
+            panes=panes
+        )
+
+        self._state.tabs.append(tab)
+
+        # Notify about tab addition
+        self._notify("tab_added", {
+            "tab_id": tab_id,
+            "name": tab_name,
+            "index": len(self._state.tabs) - 1,
+            "pane_count": len(panes)
+        })
+
+    def _extract_panes_from_tree(self, node: dict, panes: dict) -> None:
+        """
+        Recursively extract panes from a tree structure.
+
+        Args:
+            node: Tree node (either split or leaf)
+            panes: Dictionary to populate with panes
+        """
+        node_type = node.get("type")
+
+        if node_type == "leaf":
+            # This is a pane
+            pane_id = node.get("id", self._generate_id())
+            widget_type_str = node.get("widget_type", "text_editor")
+
+            # Map old widget type names to new enum values
+            widget_type_map = {
+                "text_editor": WidgetType.EDITOR,
+                "editor": WidgetType.EDITOR,
+                "terminal": WidgetType.TERMINAL,
+                "browser": WidgetType.BROWSER,
+                "settings": WidgetType.SETTINGS,
+                "empty": WidgetType.EMPTY,
+            }
+
+            # Convert widget type string to enum
+            widget_type = widget_type_map.get(widget_type_str, WidgetType.EDITOR)
+
+            # Get widget state
+            widget_state = node.get("widget_state", {})
+
+            # Create pane
+            panes[pane_id] = PaneState(
+                id=pane_id,
+                widget_type=widget_type,
+                widget_state=widget_state,
+                is_active=False  # Will be set later
+            )
+
+        elif node_type == "split":
+            # This is a split node, recurse into children
+            first = node.get("first")
+            second = node.get("second")
+
+            if first:
+                self._extract_panes_from_tree(first, panes)
+            if second:
+                self._extract_panes_from_tree(second, panes)
+
     # Tab operations
     def add_tab(self, name: str, widget_type: str) -> OperationResult:
         """Add a new tab.

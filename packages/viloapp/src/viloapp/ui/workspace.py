@@ -149,12 +149,39 @@ class Workspace(QWidget):
             logger.error(f"Error handling workspace event {event.name}: {e}")
 
     def _react_to_tab_added(self, data):
-        """React to tab being added via model."""
-        # UI should reflect the model change
-        # This would typically refresh the tab display
+        """React to tab being added via model - create the actual UI tab."""
         logger.info(f"UI reacting to tab added: {data}")
-        # The actual UI update logic would go here
-        pass
+
+        tab_name = data.get("name", "Tab")
+        pane_count = data.get("pane_count", 1)
+
+        # Create a split widget for this tab
+        # For now, create with a default editor widget
+        split_widget = WidgetFactory.create_split_pane_widget(
+            initial_type=WidgetType.TEXT_EDITOR, parent=self
+        )
+
+        # Connect split widget signals
+        split_widget.pane_added.connect(lambda pane_id: self.on_pane_added(tab_name, pane_id))
+        split_widget.pane_removed.connect(lambda pane_id: self.on_pane_removed(tab_name, pane_id))
+        split_widget.active_pane_changed.connect(
+            lambda pane_id: self.active_pane_changed.emit(tab_name, pane_id)
+        )
+        split_widget.layout_changed.connect(self.layout_changed.emit)
+
+        # Add to tab widget
+        index = self.tab_widget.addTab(split_widget, tab_name)
+
+        # Set up custom close button
+        self._setup_tab_close_button(index)
+
+        # Store tab data
+        self.tabs[index] = WorkspaceTab(tab_name, split_widget)
+
+        # Emit signal
+        self.tab_added.emit(tab_name)
+
+        logger.info(f"Created UI tab '{tab_name}' at index {index} with {pane_count} panes")
 
     def _react_to_tab_closed(self, data):
         """React to tab being closed via model."""
@@ -195,6 +222,8 @@ class Workspace(QWidget):
             self._react_to_tab_switched(event_data)
         elif event_name == "pane_focused":
             self._react_to_pane_focused(event_data)
+        elif event_name == "state_restored":
+            self._react_to_state_restored(event_data)
         else:
             logger.debug(f"Unhandled model event: {event_name}")
 
@@ -230,6 +259,20 @@ class Workspace(QWidget):
         logger.info(f"UI reacting to pane focused: {data}")
         # The actual UI update logic would go here
         pass
+
+    def _react_to_state_restored(self, data):
+        """React to state being fully restored in model."""
+        logger.info(f"UI reacting to state restored: {data}")
+
+        # Set the active tab
+        active_tab = data.get("active_tab", 0)
+        if active_tab < self.tab_widget.count():
+            self.tab_widget.setCurrentIndex(active_tab)
+
+        # Ensure we have at least one tab
+        if self.tab_widget.count() == 0:
+            logger.warning("No tabs created after state restoration, creating default")
+            self.create_default_tab()
 
     def _handle_ui_request(self, request: UIRequest):
         """Handle UI requests from services to break circular dependencies."""
@@ -888,36 +931,38 @@ class Workspace(QWidget):
         return state
 
     def restore_state(self, state: dict):
-        """Restore workspace state."""
-        # Clear existing tabs
+        """
+        Restore workspace state using model-first approach.
+
+        Instead of creating UI directly, this delegates to WorkspaceService
+        which populates the model. The UI will be updated via observer callbacks.
+        """
+        from viloapp.services.service_locator import ServiceLocator
+        from viloapp.services.workspace_service import WorkspaceService
+
+        # Get workspace service
+        workspace_service = ServiceLocator.get_instance().get(WorkspaceService)
+        if not workspace_service:
+            logger.error("WorkspaceService not available for state restoration")
+            # Fall back to creating a default tab
+            self.create_default_tab()
+            return
+
+        # Clear existing tabs first
         while self.tab_widget.count() > 0:
             self.tab_widget.removeTab(0)
         self.tabs.clear()
 
-        # Restore tabs
-        if "tabs" in state:
-            for tab_state in state["tabs"]:
-                # Create tab (for now just create editor tabs)
-                index = self.add_editor_tab(tab_state.get("name", "Editor"))
+        # Restore state through the model
+        success = workspace_service.restore_state(state)
 
-                # Restore split state
-                if index in self.tabs and "split_state" in tab_state:
-                    try:
-                        success = self.tabs[index].split_widget.set_state(tab_state["split_state"])
-                        if not success:
-                            logger.warning(
-                                f"Failed to restore split state for tab: {tab_state.get('name', 'Unknown')}"
-                            )
-                    except Exception as e:
-                        logger.error(
-                            f"Error restoring split state for tab {tab_state.get('name', 'Unknown')}: {e}"
-                        )
+        if not success:
+            logger.warning("Failed to restore workspace state through model, creating default tab")
+            # Create default tab if restoration failed
+            self.create_default_tab()
 
-        # Restore current tab
-        if "current_tab" in state:
-            self.tab_widget.setCurrentIndex(state["current_tab"])
-
-        # Create default tab if none were restored
+        # Note: The UI will be updated via _on_model_event callbacks
+        # as the model notifies about tab additions
         if self.tab_widget.count() == 0:
             self.create_default_tab()
 

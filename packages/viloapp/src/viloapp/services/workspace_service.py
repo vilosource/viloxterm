@@ -98,6 +98,51 @@ class WorkspaceService(Service):
         self._widget_factories.clear()
         super().cleanup()
 
+    def restore_state(self, state_dict: dict) -> bool:
+        """
+        Restore workspace state through the model.
+
+        This is the model-first approach - the UI should call this
+        instead of creating widgets directly.
+
+        Args:
+            state_dict: Saved workspace state dictionary
+
+        Returns:
+            True if restoration successful, False otherwise
+        """
+        if not self._model:
+            logger.error("Cannot restore state: no model available")
+            return False
+
+        try:
+            # Restore state in the model
+            result = self._model.restore_state(state_dict)
+
+            if result.success:
+                logger.info(f"Successfully restored workspace state")
+
+                # Update context based on restored state
+                from viloapp.core.context.manager import context_manager
+
+                state = self._model.get_state()
+                context_manager.set("workbench.tabs.count", len(state.tabs))
+                context_manager.set("workbench.tabs.hasMultiple", len(state.tabs) > 1)
+
+                if state.tabs and state.active_tab_index < len(state.tabs):
+                    active_tab = state.tabs[state.active_tab_index]
+                    context_manager.set("workbench.pane.count", len(active_tab.panes))
+                    context_manager.set("workbench.pane.hasMultiple", len(active_tab.panes) > 1)
+
+                return True
+            else:
+                logger.error(f"Failed to restore state: {result.error}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Error restoring workspace state: {e}")
+            return False
+
     # ============= Widget Registry Operations (Delegated) =============
 
     def has_widget(self, widget_id: str) -> bool:
