@@ -108,10 +108,7 @@ class WorkspaceModelImpl(IWorkspaceModel):
 
             # Create initial pane
             initial_pane = PaneState(
-                id=pane_id,
-                widget_type=widget_type_enum,
-                widget_state={},
-                is_active=True
+                id=pane_id, widget_type=widget_type_enum, widget_state={}, is_active=True
             )
 
             # Create tab with initial pane
@@ -120,7 +117,7 @@ class WorkspaceModelImpl(IWorkspaceModel):
                 name=name,
                 pane_tree={"root": pane_id},  # Simple tree with single pane
                 active_pane_id=pane_id,
-                panes={pane_id: initial_pane}
+                panes={pane_id: initial_pane},
             )
 
             # Add to workspace
@@ -128,12 +125,15 @@ class WorkspaceModelImpl(IWorkspaceModel):
             self._state.active_tab_index = len(self._state.tabs) - 1
 
             # Notify observers
-            self._notify("tab_added", {
-                "tab_id": tab_id,
-                "name": name,
-                "widget_type": widget_type,
-                "index": len(self._state.tabs) - 1
-            })
+            self._notify(
+                "tab_added",
+                {
+                    "tab_id": tab_id,
+                    "name": name,
+                    "widget_type": widget_type,
+                    "index": len(self._state.tabs) - 1,
+                },
+            )
 
             logger.info(f"Added tab '{name}' with ID {tab_id}")
             return OperationResult.success_result({"tab_id": tab_id})
@@ -172,12 +172,15 @@ class WorkspaceModelImpl(IWorkspaceModel):
                 self._state.active_tab_index -= 1
 
             # Notify observers
-            self._notify("tab_closed", {
-                "tab_id": tab_id,
-                "name": tab_name,
-                "index": index,
-                "new_active_index": self._state.active_tab_index
-            })
+            self._notify(
+                "tab_closed",
+                {
+                    "tab_id": tab_id,
+                    "name": tab_name,
+                    "index": index,
+                    "new_active_index": self._state.active_tab_index,
+                },
+            )
 
             logger.info(f"Closed tab '{tab_name}' at index {index}")
             return OperationResult.success_result()
@@ -208,12 +211,10 @@ class WorkspaceModelImpl(IWorkspaceModel):
             tab.name = new_name.strip()
 
             # Notify observers
-            self._notify("tab_renamed", {
-                "tab_id": tab.id,
-                "index": index,
-                "old_name": old_name,
-                "new_name": new_name
-            })
+            self._notify(
+                "tab_renamed",
+                {"tab_id": tab.id, "index": index, "old_name": old_name, "new_name": new_name},
+            )
 
             logger.info(f"Renamed tab at index {index} from '{old_name}' to '{new_name}'")
             return OperationResult.success_result()
@@ -254,12 +255,14 @@ class WorkspaceModelImpl(IWorkspaceModel):
                     id=new_pane_id,
                     widget_type=pane.widget_type,
                     widget_state=pane.widget_state.copy(),
-                    is_active=pane.is_active
+                    is_active=pane.is_active,
                 )
 
             # Update pane tree structure with new IDs
             new_pane_tree = self._update_pane_tree_ids(original_tab.pane_tree, pane_id_mapping)
-            new_active_pane_id = pane_id_mapping.get(original_tab.active_pane_id, original_tab.active_pane_id)
+            new_active_pane_id = pane_id_mapping.get(
+                original_tab.active_pane_id, original_tab.active_pane_id
+            )
 
             # Create new tab
             new_tab = TabState(
@@ -267,7 +270,7 @@ class WorkspaceModelImpl(IWorkspaceModel):
                 name=new_name,
                 pane_tree=new_pane_tree,
                 active_pane_id=new_active_pane_id,
-                panes=new_panes
+                panes=new_panes,
             )
 
             # Insert after original tab
@@ -278,13 +281,16 @@ class WorkspaceModelImpl(IWorkspaceModel):
                 self._state.active_tab_index += 1
 
             # Notify observers
-            self._notify("tab_duplicated", {
-                "original_tab_id": original_tab.id,
-                "new_tab_id": new_tab_id,
-                "original_index": index,
-                "new_index": index + 1,
-                "new_name": new_name
-            })
+            self._notify(
+                "tab_duplicated",
+                {
+                    "original_tab_id": original_tab.id,
+                    "new_tab_id": new_tab_id,
+                    "original_index": index,
+                    "new_index": index + 1,
+                    "new_name": new_name,
+                },
+            )
 
             logger.info(f"Duplicated tab '{original_tab.name}' as '{new_name}'")
             return OperationResult.success_result({"new_tab_id": new_tab_id})
@@ -293,7 +299,9 @@ class WorkspaceModelImpl(IWorkspaceModel):
             logger.error(f"Failed to duplicate tab: {e}")
             return OperationResult.error_result(f"Failed to duplicate tab: {e}")
 
-    def _update_pane_tree_ids(self, tree: Dict[str, Any], id_mapping: Dict[str, str]) -> Dict[str, Any]:
+    def _update_pane_tree_ids(
+        self, tree: Dict[str, Any], id_mapping: Dict[str, str]
+    ) -> Dict[str, Any]:
         """Update pane IDs in the tree structure."""
         if isinstance(tree, dict):
             new_tree = {}
@@ -332,12 +340,10 @@ class WorkspaceModelImpl(IWorkspaceModel):
             tab = self._state.tabs[index]
 
             # Notify observers
-            self._notify("tab_activated", {
-                "tab_id": tab.id,
-                "index": index,
-                "old_index": old_index,
-                "name": tab.name
-            })
+            self._notify(
+                "tab_activated",
+                {"tab_id": tab.id, "index": index, "old_index": old_index, "name": tab.name},
+            )
 
             logger.debug(f"Activated tab '{tab.name}' at index {index}")
             return OperationResult.success_result()
@@ -377,7 +383,7 @@ class WorkspaceModelImpl(IWorkspaceModel):
                 id=new_pane_id,
                 widget_type=request.new_widget_type or pane_to_split.widget_type,
                 widget_state={},
-                is_active=False
+                is_active=False,
             )
 
             # Add new pane to tab
@@ -389,7 +395,7 @@ class WorkspaceModelImpl(IWorkspaceModel):
                 orientation=request.orientation,
                 ratio=request.ratio,
                 left_pane_id=request.pane_id,
-                right_pane_id=new_pane_id
+                right_pane_id=new_pane_id,
             )
 
             # Update tree structure (simplified)
@@ -400,7 +406,7 @@ class WorkspaceModelImpl(IWorkspaceModel):
                         "orientation": request.orientation,
                         "ratio": request.ratio,
                         "left": request.pane_id,
-                        "right": new_pane_id
+                        "right": new_pane_id,
                     }
                 }
             else:
@@ -408,21 +414,28 @@ class WorkspaceModelImpl(IWorkspaceModel):
                 pass
 
             # Notify observers
-            self._notify("pane_split", {
-                "parent_pane_id": request.pane_id,
-                "new_pane_id": new_pane_id,
-                "orientation": request.orientation,
-                "ratio": request.ratio,
-                "tab_id": active_tab.id
-            })
+            self._notify(
+                "pane_split",
+                {
+                    "parent_pane_id": request.pane_id,
+                    "new_pane_id": new_pane_id,
+                    "orientation": request.orientation,
+                    "ratio": request.ratio,
+                    "tab_id": active_tab.id,
+                },
+            )
 
-            logger.info(f"Split pane {request.pane_id} {request.orientation}, created {new_pane_id}")
-            return OperationResult.success_result({
-                "new_pane_id": new_pane_id,
-                "parent_pane_id": request.pane_id,
-                "orientation": request.orientation,
-                "ratio": request.ratio
-            })
+            logger.info(
+                f"Split pane {request.pane_id} {request.orientation}, created {new_pane_id}"
+            )
+            return OperationResult.success_result(
+                {
+                    "new_pane_id": new_pane_id,
+                    "parent_pane_id": request.pane_id,
+                    "orientation": request.orientation,
+                    "ratio": request.ratio,
+                }
+            )
 
         except Exception as e:
             logger.error(f"Failed to split pane: {e}")
@@ -463,11 +476,14 @@ class WorkspaceModelImpl(IWorkspaceModel):
             # More complex tree updates would go here
 
             # Notify observers
-            self._notify("pane_closed", {
-                "pane_id": request.pane_id,
-                "tab_id": active_tab.id,
-                "new_active_pane_id": active_tab.active_pane_id if active_tab.panes else None
-            })
+            self._notify(
+                "pane_closed",
+                {
+                    "pane_id": request.pane_id,
+                    "tab_id": active_tab.id,
+                    "new_active_pane_id": active_tab.active_pane_id if active_tab.panes else None,
+                },
+            )
 
             logger.info(f"Closed pane {request.pane_id}")
             return OperationResult.success_result()
@@ -508,11 +524,14 @@ class WorkspaceModelImpl(IWorkspaceModel):
             active_tab.panes[request.pane_id].is_active = True
 
             # Notify observers
-            self._notify("pane_focused", {
-                "pane_id": request.pane_id,
-                "old_pane_id": old_active_pane_id,
-                "tab_id": active_tab.id
-            })
+            self._notify(
+                "pane_focused",
+                {
+                    "pane_id": request.pane_id,
+                    "old_pane_id": old_active_pane_id,
+                    "tab_id": active_tab.id,
+                },
+            )
 
             logger.debug(f"Focused pane {request.pane_id}")
             return OperationResult.success_result()
@@ -543,11 +562,14 @@ class WorkspaceModelImpl(IWorkspaceModel):
                 pane.widget_state = request.state_updates.copy()
 
             # Notify observers
-            self._notify("widget_state_updated", {
-                "pane_id": request.pane_id,
-                "state_updates": request.state_updates,
-                "merge": request.merge
-            })
+            self._notify(
+                "widget_state_updated",
+                {
+                    "pane_id": request.pane_id,
+                    "state_updates": request.state_updates,
+                    "merge": request.merge,
+                },
+            )
 
             logger.debug(f"Updated widget state for pane {request.pane_id}")
             return OperationResult.success_result()

@@ -19,7 +19,7 @@ class WidgetFactory:
     def create_split_pane_widget(
         initial_type: WidgetType = WidgetType.TEXT_EDITOR,
         initial_widget_id: Optional[str] = None,
-        parent=None
+        parent=None,
     ) -> SplitPaneWidget:
         """
         Create a properly wired SplitPaneWidget following MVC pattern.
@@ -50,7 +50,7 @@ class WidgetFactory:
 
         # Connect model signals to view for observer pattern
         model.model_changed.connect(view.refresh_view)
-        if hasattr(view, '_on_model_changed'):
+        if hasattr(view, "_on_model_changed"):
             model.model_changed.connect(view._on_model_changed)
 
         return view
@@ -59,7 +59,7 @@ class WidgetFactory:
     def create_legacy_split_pane_widget(
         initial_widget_type: WidgetType = WidgetType.TEXT_EDITOR,
         initial_widget_id: Optional[str] = None,
-        parent=None
+        parent=None,
     ) -> SplitPaneWidget:
         """
         Create SplitPaneWidget using legacy pattern for backward compatibility.
@@ -78,5 +78,5 @@ class WidgetFactory:
         return SplitPaneWidget(
             initial_widget_type=initial_widget_type,
             initial_widget_id=initial_widget_id,
-            parent=parent
+            parent=parent,
         )

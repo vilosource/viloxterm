@@ -44,10 +44,10 @@ class WorkspaceService(Service):
         self._model = model
         self._workspace = workspace  # Keep for backward compatibility during transition
 
-        # Initialize specialized managers (legacy support)
+        # Initialize specialized managers
         self._widget_registry = WorkspaceWidgetRegistry()
-        self._tab_manager = WorkspaceTabManager(workspace, self._widget_registry, model) if workspace else None
-        self._pane_manager = WorkspacePaneManager(workspace, model) if workspace else None
+        self._tab_manager = WorkspaceTabManager(model, self._widget_registry) if model else None
+        self._pane_manager = WorkspacePaneManager(model) if model else None
 
         # Initialize widget factories for plugins
         self._widget_factories = {}
@@ -143,6 +143,7 @@ class WorkspaceService(Service):
 
                 # Update context
                 from viloapp.core.context.manager import context_manager
+
                 context_manager.set("workbench.tabs.count", len(state.tabs))
                 context_manager.set("workbench.tabs.hasMultiple", len(state.tabs) > 1)
 
@@ -166,6 +167,7 @@ class WorkspaceService(Service):
 
             # Update context
             from viloapp.core.context.manager import context_manager
+
             context_manager.set("workbench.tabs.count", self.get_tab_count())
             context_manager.set("workbench.tabs.hasMultiple", self.get_tab_count() > 1)
 
@@ -187,6 +189,7 @@ class WorkspaceService(Service):
 
                 # Update context
                 from viloapp.core.context.manager import context_manager
+
                 context_manager.set("workbench.tabs.count", len(state.tabs))
                 context_manager.set("workbench.tabs.hasMultiple", len(state.tabs) > 1)
 
@@ -210,6 +213,7 @@ class WorkspaceService(Service):
 
             # Update context
             from viloapp.core.context.manager import context_manager
+
             context_manager.set("workbench.tabs.count", self.get_tab_count())
             context_manager.set("workbench.tabs.hasMultiple", self.get_tab_count() > 1)
 
@@ -258,6 +262,7 @@ class WorkspaceService(Service):
             if result.success:
                 # Update context
                 from viloapp.core.context.manager import context_manager
+
                 new_state = self._model.get_state()
                 context_manager.set("workbench.tabs.count", len(new_state.tabs))
                 context_manager.set("workbench.tabs.hasMultiple", len(new_state.tabs) > 1)
@@ -272,13 +277,17 @@ class WorkspaceService(Service):
                 logger.error("No model or tab manager available")
                 return False
 
-            # Get tab name before closing (legacy UI access)
-            if index is None and self._workspace:
-                index = self._workspace.tab_widget.currentIndex()
+            # Get current index from model if not provided
+            if index is None and self._model:
+                state = self._model.get_state()
+                index = state.active_tab_index
 
+            # Get tab name from model
             tab_name = None
-            if self._workspace and index is not None and index >= 0:
-                tab_name = self._workspace.tab_widget.tabText(index)
+            if self._model and index is not None and index >= 0:
+                state = self._model.get_state()
+                if 0 <= index < len(state.tabs):
+                    tab_name = state.tabs[index].name
 
             # Delegate to tab manager
             success = self._tab_manager.close_tab(index)
@@ -289,6 +298,7 @@ class WorkspaceService(Service):
 
                 # Update context
                 from viloapp.core.context.manager import context_manager
+
                 context_manager.set("workbench.tabs.count", self.get_tab_count())
                 context_manager.set("workbench.tabs.hasMultiple", self.get_tab_count() > 1)
 
@@ -354,13 +364,17 @@ class WorkspaceService(Service):
 
             return new_index
         else:
-            # Fallback: create new editor tab with duplicate name
-            if tab_index < self._workspace.tab_widget.count():
-                original_name = self._workspace.tab_widget.tabText(tab_index)
-                new_name = f"{original_name} (Copy)"
-                return self.add_editor_tab(new_name)
+            # Use model interface to get tab name for duplication
+            if self._model:
+                state = self._model.get_state()
+                if 0 <= tab_index < len(state.tabs):
+                    original_name = state.tabs[tab_index].name
+                    new_name = f"{original_name} (Copy)"
+                    return self.add_editor_tab(new_name)
+                else:
+                    raise ValueError(f"Invalid tab index: {tab_index}")
             else:
-                raise ValueError(f"Invalid tab index: {tab_index}")
+                raise ValueError("No model interface available for tab duplication")
 
     def close_tabs_to_right(self, tab_index: int) -> int:
         """Close all tabs to the right of the specified index."""
@@ -449,7 +463,8 @@ class WorkspaceService(Service):
 
                     # Notify observers
                     self.notify(
-                        "tab_renamed", {"index": tab_index, "old_name": old_name, "new_name": new_name}
+                        "tab_renamed",
+                        {"index": tab_index, "old_name": old_name, "new_name": new_name},
                     )
 
                     return True
@@ -490,10 +505,9 @@ class WorkspaceService(Service):
             self._workspace.start_tab_rename(tab_index, current_name)
 
             # Notify observers
-            self.notify("tab_rename_started", {
-                "tab_index": tab_index,
-                "current_name": current_name
-            })
+            self.notify(
+                "tab_rename_started", {"tab_index": tab_index, "current_name": current_name}
+            )
             return True
         else:
             logger.warning("Interactive tab rename not supported")
@@ -543,11 +557,7 @@ class WorkspaceService(Service):
                 return None
 
             orientation = orientation or get_default_split_direction()
-            request = SplitPaneRequest(
-                pane_id=active_pane.id,
-                orientation=orientation,
-                ratio=0.5
-            )
+            request = SplitPaneRequest(pane_id=active_pane.id, orientation=orientation, ratio=0.5)
 
             result = self._model.split_pane(request)
             if result.success and result.data:
@@ -555,6 +565,7 @@ class WorkspaceService(Service):
 
                 # Update context
                 from viloapp.core.context.manager import context_manager
+
                 new_state = self._model.get_state()
                 active_tab = new_state.get_active_tab()
                 pane_count = len(active_tab.panes) if active_tab else 0
@@ -584,6 +595,7 @@ class WorkspaceService(Service):
 
                 # Update context
                 from viloapp.core.context.manager import context_manager
+
                 context_manager.set("workbench.pane.count", self.get_pane_count())
                 context_manager.set("workbench.pane.hasMultiple", self.get_pane_count() > 1)
 
@@ -735,14 +747,14 @@ class WorkspaceService(Service):
                                 "id": pane.id,
                                 "widget_type": pane.widget_type.value,
                                 "widget_state": pane.widget_state,
-                                "is_active": pane.is_active
+                                "is_active": pane.is_active,
                             }
                             for pane_id, pane in tab.panes.items()
-                        }
+                        },
                     }
                     for tab in state.tabs
                 ],
-                "active_tab_index": state.active_tab_index
+                "active_tab_index": state.active_tab_index,
             }
         elif self._workspace:
             # Fallback to legacy workspace method
@@ -808,18 +820,13 @@ class WorkspaceService(Service):
                 return False
 
             request = WidgetStateUpdateRequest(
-                pane_id=pane_id,
-                widget_type=widget_type_enum,
-                widget_state={}
+                pane_id=pane_id, widget_type=widget_type_enum, widget_state={}
             )
             result = self._model.update_widget_state(request)
 
             if result.success:
                 # Notify observers
-                self.notify("pane_widget_changed", {
-                    "pane_id": pane_id,
-                    "widget_type": widget_type
-                })
+                self.notify("pane_widget_changed", {"pane_id": pane_id, "widget_type": widget_type})
                 return True
             else:
                 logger.error(f"Failed to change pane widget type: {result.error}")

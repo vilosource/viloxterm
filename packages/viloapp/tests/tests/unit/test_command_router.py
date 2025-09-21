@@ -17,7 +17,7 @@ from viloapp.core.commands.router import CommandRouter
 class TestCommandRouter:
     """Test the Command Router functionality."""
 
-    @patch('viloapp.core.commands.router.execute_command')
+    @patch("viloapp.core.commands.router.execute_command")
     def test_split_pane_horizontal(self, mock_execute):
         """Test that split_pane routes to correct command."""
         # Configure mock
@@ -28,12 +28,11 @@ class TestCommandRouter:
 
         # Verify correct command was called
         mock_execute.assert_called_once_with(
-            "workbench.action.splitPaneHorizontal",
-            orientation="horizontal"
+            "workbench.action.splitPaneHorizontal", orientation="horizontal"
         )
         assert result.success
 
-    @patch('viloapp.core.commands.router.execute_command')
+    @patch("viloapp.core.commands.router.execute_command")
     def test_split_pane_vertical(self, mock_execute):
         """Test that split_pane routes to correct command."""
         # Configure mock
@@ -44,13 +43,11 @@ class TestCommandRouter:
 
         # Verify correct command was called
         mock_execute.assert_called_once_with(
-            "workbench.action.splitPaneVertical",
-            orientation="vertical",
-            pane_id="existing_pane"
+            "workbench.action.splitPaneVertical", orientation="vertical", pane_id="existing_pane"
         )
         assert result.success
 
-    @patch('viloapp.core.commands.router.execute_command')
+    @patch("viloapp.core.commands.router.execute_command")
     def test_close_pane(self, mock_execute):
         """Test that close_pane routes to correct command."""
         # Configure mock
@@ -60,13 +57,10 @@ class TestCommandRouter:
         result = CommandRouter.close_pane("pane_123")
 
         # Verify correct command was called
-        mock_execute.assert_called_once_with(
-            "workbench.action.closePane",
-            pane_id="pane_123"
-        )
+        mock_execute.assert_called_once_with("workbench.action.closePane", pane_id="pane_123")
         assert result.success
 
-    @patch('viloapp.core.commands.router.execute_command')
+    @patch("viloapp.core.commands.router.execute_command")
     def test_add_terminal_tab(self, mock_execute):
         """Test that add_tab routes to correct command for terminal."""
         # Configure mock
@@ -76,13 +70,10 @@ class TestCommandRouter:
         result = CommandRouter.add_tab("terminal", "My Terminal")
 
         # Verify correct command was called
-        mock_execute.assert_called_once_with(
-            "file.newTerminal",
-            name="My Terminal"
-        )
+        mock_execute.assert_called_once_with("file.newTerminal", name="My Terminal")
         assert result.success
 
-    @patch('viloapp.core.commands.router.execute_command')
+    @patch("viloapp.core.commands.router.execute_command")
     def test_add_editor_tab(self, mock_execute):
         """Test that add_tab routes to correct command for editor."""
         # Configure mock
@@ -92,13 +83,10 @@ class TestCommandRouter:
         result = CommandRouter.add_tab("editor")
 
         # Verify correct command was called
-        mock_execute.assert_called_once_with(
-            "file.newEditor",
-            name=None
-        )
+        mock_execute.assert_called_once_with("file.newEditor", name=None)
         assert result.success
 
-    @patch('viloapp.core.commands.router.execute_command')
+    @patch("viloapp.core.commands.router.execute_command")
     def test_rename_tab(self, mock_execute):
         """Test that rename_tab routes to correct command."""
         # Configure mock
@@ -109,13 +97,11 @@ class TestCommandRouter:
 
         # Verify correct command was called
         mock_execute.assert_called_once_with(
-            "workbench.action.renameTab",
-            tab_index=2,
-            new_name="New Name"
+            "workbench.action.renameTab", tab_index=2, new_name="New Name"
         )
         assert result.success
 
-    @patch('viloapp.core.commands.router.execute_command')
+    @patch("viloapp.core.commands.router.execute_command")
     def test_execute_workspace_operation(self, mock_execute):
         """Test the general operation executor."""
         # Configure mock
@@ -125,10 +111,7 @@ class TestCommandRouter:
         result = CommandRouter.execute_workspace_operation("split_horizontal", pane_id="test")
 
         # Verify correct command was called
-        mock_execute.assert_called_once_with(
-            "workbench.action.splitPaneHorizontal",
-            pane_id="test"
-        )
+        mock_execute.assert_called_once_with("workbench.action.splitPaneHorizontal", pane_id="test")
         assert result.success
 
     def test_execute_workspace_operation_unknown(self):
@@ -138,7 +121,7 @@ class TestCommandRouter:
         assert not result.success
         assert "Unknown operation: unknown_operation" in result.error
 
-    @patch('viloapp.core.commands.router.execute_command')
+    @patch("viloapp.core.commands.router.execute_command")
     def test_convenience_functions(self, mock_execute):
         """Test convenience functions work correctly."""
         from viloapp.core.commands.router import (
@@ -156,10 +139,14 @@ class TestCommandRouter:
 
         # Test convenience functions
         split_horizontal("pane1")
-        mock_execute.assert_called_with("workbench.action.splitPaneHorizontal", orientation="horizontal", pane_id="pane1")
+        mock_execute.assert_called_with(
+            "workbench.action.splitPaneHorizontal", orientation="horizontal", pane_id="pane1"
+        )
 
         split_vertical()
-        mock_execute.assert_called_with("workbench.action.splitPaneVertical", orientation="vertical")
+        mock_execute.assert_called_with(
+            "workbench.action.splitPaneVertical", orientation="vertical"
+        )
 
         close_pane("pane2")
         mock_execute.assert_called_with("workbench.action.closePane", pane_id="pane2")
@@ -196,10 +183,10 @@ class TestCommandRouterIntegration:
         # CommandRouter.split_pane("horizontal")       # Only correct way
 
         # The router ensures all operations go through commands
-        assert hasattr(CommandRouter, 'split_pane')
-        assert hasattr(CommandRouter, 'close_pane')
-        assert hasattr(CommandRouter, 'add_tab')
-        assert hasattr(CommandRouter, 'rename_tab')
+        assert hasattr(CommandRouter, "split_pane")
+        assert hasattr(CommandRouter, "close_pane")
+        assert hasattr(CommandRouter, "add_tab")
+        assert hasattr(CommandRouter, "rename_tab")
 
     def test_router_provides_consistent_interface(self):
         """Test that router provides consistent interface for all operations."""
@@ -207,14 +194,14 @@ class TestCommandRouterIntegration:
 
         # Check method signatures exist
         router_methods = [
-            'split_pane',
-            'close_pane',
-            'maximize_pane',
-            'change_pane_type',
-            'add_tab',
-            'close_tab',
-            'rename_tab',
-            'duplicate_tab'
+            "split_pane",
+            "close_pane",
+            "maximize_pane",
+            "change_pane_type",
+            "add_tab",
+            "close_tab",
+            "rename_tab",
+            "duplicate_tab",
         ]
 
         for method_name in router_methods:

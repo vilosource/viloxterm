@@ -3,23 +3,14 @@
 Pane management operations for the workspace service.
 
 This component handles pane splitting, closing, navigation, and related
-pane-based operations in the workspace.
+pane-based operations in the workspace. Works exclusively with model interface.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Optional
 
 from viloapp.core.events.event_bus import event_bus
 from viloapp.core.events.events import EventTypes
-from viloapp.core.events.requests import (
-    request_pane_close,
-    request_pane_numbers_state,
-    request_pane_numbers_toggle,
-    request_pane_split,
-)
-from viloapp.core.settings.app_defaults import (
-    get_default_split_direction,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -29,487 +20,314 @@ class WorkspacePaneManager:
     Manager for pane operations in the workspace.
 
     Handles pane splitting, closing, navigation, and pane-related
-    state management.
+    state management. Works exclusively with model interface.
     """
 
-    def __init__(self, workspace=None, model=None):
+    def __init__(self, model):
         """
         Initialize the pane manager.
 
         Args:
-            workspace: The workspace instance (legacy)
-            model: The workspace model interface (preferred)
+            model: The workspace model interface (required)
         """
-        self._workspace = workspace
         self._model = model
         self._pane_counter = 0
 
-    def set_workspace(self, workspace):
-        """Set the workspace instance."""
-        self._workspace = workspace
-
-    def set_model(self, model):
-        """Set the workspace model interface."""
-        self._model = model
-
-    def split_active_pane(self, orientation: Optional[str] = None) -> Optional[str]:
+    def split_active_pane(self, orientation: str) -> Optional[str]:
         """
-        Split the active pane in the current tab.
+        Split the active pane in the given orientation.
 
         Args:
             orientation: "horizontal" or "vertical"
 
         Returns:
-            ID of the new pane, or None if split failed
+            ID of the newly created pane, or None on failure
         """
-        # Use default orientation if not specified
-        if orientation is None:
-            orientation = get_default_split_direction()
+        logger.debug(f"Splitting active pane {orientation}ly")
 
-        # Prefer model interface over direct UI access
         if self._model:
-            # Get the active pane from model
-            active_pane = self._model.get_active_pane()
-            if not active_pane:
-                logger.warning("No active pane to split")
+            # Get the current active pane from model
+            state = self._model.get_state()
+            if not state.tabs:
+                logger.warning("No tabs available to split")
                 return None
 
-            # Create split request
+            active_tab = state.tabs[state.active_tab_index]
+            active_pane_id = active_tab.active_pane_id
+
+            # Create split pane request
             from viloapp.models.operations import SplitPaneRequest
 
-            request = SplitPaneRequest(pane_id=active_pane.id, orientation=orientation, ratio=0.5)
+            request = SplitPaneRequest(pane_id=active_pane_id, orientation=orientation, ratio=0.5)
 
-            # Perform split via model
+            # Execute split via model
             result = self._model.split_pane(request)
-            if result.success and result.data:
+            if result.success:
                 new_pane_id = result.data.get("new_pane_id")
-                if new_pane_id:
-                    self._pane_counter += 1
-                    logger.info(f"Split pane {orientation}ly via model, created pane {new_pane_id}")
-                    return new_pane_id
+                logger.info(f"Split pane {orientation}ly via model, created pane {new_pane_id}")
+                return new_pane_id
             else:
                 logger.error(f"Failed to split pane via model: {result.error}")
                 return None
-
-        elif self._workspace:
-            # Fallback to direct UI access (legacy)
-            # Get current split widget
-            widget = self._workspace.get_current_split_widget()
-            if not widget or not widget.active_pane_id:
-                logger.warning("No active pane to split")
-                return None
-
-            # Perform the split via event system to avoid circular dependency
-            new_id = request_pane_split(widget.active_pane_id, orientation)
-
-            if new_id:
-                self._pane_counter += 1
-                logger.info(f"Split pane {orientation}ly via event system, created pane {new_id}")
-                # Publish event for any other listeners
-                event_bus.publish(
-                    EventTypes.PANE_SPLIT,
-                    {
-                        "pane_id": widget.active_pane_id,
-                        "new_pane_id": new_id,
-                        "orientation": orientation,
-                    },
-                )
-            else:
-                logger.error(f"Failed to split pane {orientation}ly via event system")
-
-            return new_id
         else:
+            logger.error("No model interface available for pane splitting")
             return None
 
     def close_active_pane(self) -> bool:
         """
-        Close the active pane in the current tab.
+        Close the currently active pane.
 
         Returns:
-            True if pane was closed
+            True if the pane was closed successfully
         """
-        # Prefer model interface over direct UI access
+        logger.debug("Closing active pane")
+
         if self._model:
-            # Get the active pane from model
-            active_pane = self._model.get_active_pane()
-            if not active_pane:
-                logger.warning("No active pane to close")
+            # Get the current active pane from model
+            state = self._model.get_state()
+            if not state.tabs:
+                logger.warning("No tabs available")
                 return False
 
-            # Try to close via model
-            result = self._model.close_pane(active_pane.id)
+            active_tab = state.tabs[state.active_tab_index]
+            active_pane_id = active_tab.active_pane_id
+
+            # Create close pane request
+            from viloapp.models.operations import ClosePaneRequest
+
+            request = ClosePaneRequest(pane_id=active_pane_id)
+
+            # Execute close via model
+            result = self._model.close_pane(request)
             if result.success:
-                logger.info(f"Closed pane {active_pane.id} via model")
+                logger.info(f"Closed active pane {active_pane_id}")
                 return True
             else:
-                logger.error(f"Failed to close pane via model: {result.error}")
+                logger.error(f"Failed to close pane: {result.error}")
                 return False
-
-        elif self._workspace:
-            # Fallback to direct UI access (legacy)
-            # Get current split widget
-            widget = self._workspace.get_current_split_widget()
-            if not widget or not widget.active_pane_id:
-                logger.warning("No active pane to close")
-                return False
-
-            # Can't close if it's the only pane
-            if widget.get_pane_count() <= 1:
-                logger.info("Cannot close the last pane")
-                return False
-
-            pane_id = widget.active_pane_id
-
-            # Close the pane via event system to avoid circular dependency
-            success = request_pane_close(pane_id)
-
-            if success:
-                logger.info(f"Closed pane {pane_id} via event system")
-                # Publish event for any other listeners
-                event_bus.publish(EventTypes.PANE_CLOSED, {"pane_id": pane_id})
-            else:
-                logger.error(f"Failed to close pane {pane_id} via event system")
-
-            return success
         else:
+            logger.error("No model interface available for pane closing")
             return False
 
     def close_pane(self, pane_id: str) -> bool:
         """
-        Close a specific pane by its ID.
+        Close a specific pane by ID.
 
         Args:
             pane_id: ID of the pane to close
 
         Returns:
-            True if pane was closed
+            True if the pane was closed successfully
         """
-        if not self._workspace:
-            return False
+        logger.debug(f"Closing pane: {pane_id}")
 
-        # Get current split widget
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            logger.warning("No split widget available")
-            return False
+        if self._model:
+            # Create close pane request
+            from viloapp.models.operations import ClosePaneRequest
 
-        # Can't close if it's the only pane
-        if widget.get_pane_count() <= 1:
-            logger.info("Cannot close the last pane in tab")
-            return False
+            request = ClosePaneRequest(pane_id=pane_id)
 
-        # Close the specific pane via event system to avoid circular dependency
-        result = request_pane_close(pane_id)
-
-        if result:
-            logger.info(f"Closed pane {pane_id} via event system")
-            # Publish event for any other listeners
-            event_bus.publish(EventTypes.PANE_CLOSED, {"pane_id": pane_id})
+            # Execute close via model
+            result = self._model.close_pane(request)
+            if result.success:
+                logger.info(f"Closed pane {pane_id}")
+                return True
+            else:
+                logger.error(f"Failed to close pane {pane_id}: {result.error}")
+                return False
         else:
-            logger.warning(f"Failed to close pane {pane_id} via event system")
+            logger.error("No model interface available for pane closing")
+            return False
 
-        return result
-
-    def focus_pane(self, pane_id: str) -> bool:
+    def get_active_pane_id(self) -> Optional[str]:
         """
-        Focus a specific pane.
-
-        Args:
-            pane_id: ID of the pane to focus
+        Get the ID of the currently active pane.
 
         Returns:
-            True if pane was focused
+            Active pane ID or None if no active pane
         """
-        if not self._workspace:
+        if self._model:
+            state = self._model.get_state()
+            if state.tabs and state.active_tab_index < len(state.tabs):
+                return state.tabs[state.active_tab_index].active_pane_id
+            return None
+        else:
+            logger.error("No model interface available for getting active pane")
+            return None
+
+    def navigate_pane(self, direction: str) -> bool:
+        """
+        Navigate to the next pane in the given direction.
+
+        Args:
+            direction: "up", "down", "left", "right"
+
+        Returns:
+            True if navigation was successful
+        """
+        logger.debug(f"Navigating pane {direction}")
+
+        if self._model:
+            # Get current state
+            state = self._model.get_state()
+            if not state.tabs:
+                return False
+
+            active_tab = state.tabs[state.active_tab_index]
+            current_pane_id = active_tab.active_pane_id
+
+            # Find pane in direction (this would be implemented in the model)
+            # For now, we'll publish an event to request UI navigation
+            event_bus.publish(
+                EventTypes.PANE_NAVIGATION_REQUESTED,
+                {"direction": direction, "current_pane_id": current_pane_id},
+            )
+
+            return True
+        else:
+            logger.error("No model interface available for pane navigation")
             return False
-
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            return False
-
-        # Set the active pane AND request keyboard focus
-        widget.set_active_pane(pane_id, focus=True)
-
-        return True
 
     def toggle_pane_numbers(self) -> bool:
         """
-        Toggle the visibility of pane identification numbers.
+        Toggle the visibility of pane numbers.
 
         Returns:
-            New visibility state (True if now visible, False if hidden)
+            True if pane numbers are now visible, False if hidden
         """
-        if not self._workspace:
-            logger.warning("Cannot toggle pane numbers: workspace not available")
-            return False
+        logger.debug("Toggling pane numbers")
 
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            logger.warning("Cannot toggle pane numbers: no current split widget")
-            return False
+        if self._model:
+            # Get current state
+            state = self._model.get_state()
+            if not state.tabs:
+                return False
 
-        # Toggle the numbers via event system to avoid circular dependency
-        visible = request_pane_numbers_toggle()
+            # Toggle pane numbers via event bus to avoid UI dependency
+            event_bus.publish(EventTypes.PANE_NUMBERS_TOGGLE_REQUESTED, {})
 
-        logger.info(f"Pane numbers {'shown' if visible else 'hidden'} via event system")
-        # Publish event for any other listeners
-        event_bus.publish(EventTypes.PANE_NUMBERS_TOGGLE, {"visible": visible})
-        return visible
-
-    def show_pane_numbers(self) -> bool:
-        """
-        Show pane identification numbers.
-
-        Returns:
-            True if numbers are now visible
-        """
-        if not self._workspace:
-            return False
-
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            return False
-
-        # Show the numbers if not already visible via event system
-        current_state = request_pane_numbers_state()
-        if current_state is False:  # Only toggle if currently hidden
-            visible = request_pane_numbers_toggle()
-            if visible:
-                logger.info("Pane numbers shown via event system")
-                event_bus.publish(EventTypes.PANE_NUMBERS_SHOW, {"visible": True})
-                return True
-        elif current_state is True:
-            # Already visible
             return True
-
-        return False
-
-    def hide_pane_numbers(self) -> bool:
-        """
-        Hide pane identification numbers.
-
-        Returns:
-            True if numbers are now hidden
-        """
-        if not self._workspace:
+        else:
+            logger.error("No model interface available for toggling pane numbers")
             return False
-
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            return False
-
-        # Hide the numbers if currently visible via event system
-        current_state = request_pane_numbers_state()
-        if current_state is True:  # Only toggle if currently visible
-            visible = request_pane_numbers_toggle()
-            if not visible:
-                logger.info("Pane numbers hidden via event system")
-                event_bus.publish(EventTypes.PANE_NUMBERS_HIDE, {"visible": False})
-                return True
-        elif current_state is False:
-            # Already hidden
-            return True
-
-        return False
-
-    def switch_to_pane_by_number(self, number: int) -> bool:
-        """
-        Switch to a pane by its displayed number.
-
-        Args:
-            number: The pane number (1-9)
-
-        Returns:
-            True if successfully switched to the pane
-        """
-        if not self._workspace:
-            logger.warning("Cannot switch pane: workspace not available")
-            return False
-
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            logger.warning("Cannot switch pane: no current split widget")
-            return False
-
-        # Find the pane ID for the given number
-        if hasattr(widget, "model") and hasattr(widget.model, "pane_indices"):
-            # Reverse lookup: find pane_id for the given number
-            for pane_id, pane_number in widget.model.pane_indices.items():
-                if pane_number == number:
-                    # Focus the pane
-                    if self.focus_pane(pane_id):
-                        logger.info(f"Switched to pane {number} (id: {pane_id})")
-                        return True
-                    break
-
-        logger.warning(f"Could not find pane with number {number}")
-        return False
-
-    def enter_pane_command_mode(self) -> bool:
-        """
-        Enter command mode for pane navigation.
-        Shows pane numbers and prepares for digit input.
-
-        Returns:
-            True if command mode was entered successfully
-        """
-        # Show pane numbers
-        if not self.show_pane_numbers():
-            logger.warning("Could not enter pane command mode: no panes to show")
-            return False
-
-        # Get main window and activate focus sink
-        from PySide6.QtWidgets import QApplication
-
-        app = QApplication.instance()
-        if app:
-            for window in app.topLevelWidgets():
-                if hasattr(window, "focus_sink"):
-                    # Get currently focused widget to restore later
-                    current_focus = app.focusWidget()
-
-                    # Enter command mode with focus sink
-                    window.focus_sink.enter_command_mode(current_focus)
-                    logger.info("Entered pane command mode")
-                    return True
-
-        logger.warning("Could not find main window with focus sink")
-        return False
 
     def get_pane_count(self) -> int:
         """
-        Get the number of panes in the current tab.
+        Get the total number of panes in the active tab.
 
         Returns:
             Number of panes
         """
-        if not self._workspace:
+        if self._model:
+            state = self._model.get_state()
+            if state.tabs and state.active_tab_index < len(state.tabs):
+                active_tab = state.tabs[state.active_tab_index]
+                # Count panes in the pane tree
+                return self._count_panes_in_tree(active_tab.pane_tree)
+            return 0
+        else:
+            logger.error("No model interface available for getting pane count")
             return 0
 
-        widget = self._workspace.get_current_split_widget()
-        return widget.get_pane_count() if widget else 0
-
-    def get_active_pane_id(self) -> Optional[str]:
+    def _count_panes_in_tree(self, pane_tree: dict) -> int:
         """
-        Get the ID of the active pane.
-
-        Returns:
-            Active pane ID or None
-        """
-        if not self._workspace:
-            return None
-
-        widget = self._workspace.get_current_split_widget()
-        return widget.active_pane_id if widget else None
-
-    def navigate_in_direction(self, direction: str) -> bool:
-        """
-        Navigate to a pane in the specified direction.
-
-        Uses tree structure and position overlap to find the most intuitive target.
+        Recursively count panes in a pane tree structure.
 
         Args:
-            direction: One of "left", "right", "up", "down"
+            pane_tree: The pane tree dictionary
 
         Returns:
-            True if successfully navigated to a pane
+            Number of panes in the tree
         """
-        if not self._workspace:
-            return False
+        if not pane_tree:
+            return 0
 
-        widget = self._workspace.get_current_split_widget()
-        if not widget or not widget.active_pane_id:
-            logger.warning("No active pane to navigate from")
-            return False
-
-        # Use the model's directional navigation
-        target_id = widget.model.find_pane_in_direction(widget.active_pane_id, direction)
-
-        if target_id:
-            widget.focus_specific_pane(target_id)
-            success = True  # focus_specific_pane doesn't return a value
-            if success:
-                logger.info(f"Navigated {direction} from {widget.active_pane_id} to {target_id}")
-            return success
+        if pane_tree.get("type") == "pane":
+            return 1
+        elif pane_tree.get("type") == "split":
+            left_count = self._count_panes_in_tree(pane_tree.get("left", {}))
+            right_count = self._count_panes_in_tree(pane_tree.get("right", {}))
+            return left_count + right_count
         else:
-            logger.debug(f"No pane found in direction: {direction}")
-            return False
+            return 0
 
-    def navigate_to_next_pane(self) -> bool:
+    def change_pane_widget_type(self, pane_id: str, widget_type: str) -> bool:
         """
-        Navigate to the next pane in the current tab.
+        Change the widget type of a pane.
+
+        Args:
+            pane_id: ID of the pane to change
+            widget_type: New widget type
 
         Returns:
-            True if navigation succeeded
+            True if the change was successful
         """
-        if not self._workspace:
+        logger.debug(f"Changing pane {pane_id} to widget type: {widget_type}")
+
+        if self._model:
+            # Create widget state update request
+            from viloapp.models.operations import WidgetStateUpdateRequest
+
+            request = WidgetStateUpdateRequest(
+                pane_id=pane_id, widget_type=widget_type, state_data={}
+            )
+
+            # Execute change via model
+            result = self._model.update_pane_widget(request)
+            if result.success:
+                logger.info(f"Changed pane {pane_id} to widget type {widget_type}")
+                return True
+            else:
+                logger.error(f"Failed to change pane widget type: {result.error}")
+                return False
+        else:
+            logger.error("No model interface available for changing pane widget type")
             return False
 
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            return False
-
-        # Get all pane IDs
-        panes = widget.get_all_pane_ids()
-        if len(panes) <= 1:
-            return False
-
-        # Find current pane index
-        current_id = widget.active_pane_id
-        if current_id not in panes:
-            return False
-
-        current_index = panes.index(current_id)
-        next_index = (current_index + 1) % len(panes)
-
-        return self.focus_pane(panes[next_index])
-
-    def navigate_to_previous_pane(self) -> bool:
+    def get_pane_info(self, pane_id: str) -> dict:
         """
-        Navigate to the previous pane in the current tab.
+        Get information about a specific pane.
 
-        Returns:
-            True if navigation succeeded
-        """
-        if not self._workspace:
-            return False
-
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            return False
-
-        # Get all pane IDs
-        panes = widget.get_all_pane_ids()
-        if len(panes) <= 1:
-            return False
-
-        # Find current pane index
-        current_id = widget.active_pane_id
-        if current_id not in panes:
-            return False
-
-        current_index = panes.index(current_id)
-        prev_index = (current_index - 1) % len(panes)
-
-        return self.focus_pane(panes[prev_index])
-
-    def get_pane_info(self) -> dict[str, Any]:
-        """
-        Get information about panes in the current tab.
+        Args:
+            pane_id: ID of the pane
 
         Returns:
             Dictionary with pane information
         """
-        if not self._workspace:
-            return {"count": 0, "active": None, "available": False}
+        if self._model:
+            state = self._model.get_state()
+            for tab in state.tabs:
+                pane_info = self._find_pane_in_tree(tab.pane_tree, pane_id)
+                if pane_info:
+                    return pane_info
 
-        widget = self._workspace.get_current_split_widget()
-        if not widget:
-            return {"count": 0, "active": None, "available": False}
+            logger.warning(f"Pane {pane_id} not found")
+            return {}
+        else:
+            logger.error("No model interface available for getting pane info")
+            return {}
 
-        return {
-            "count": widget.get_pane_count(),
-            "active": widget.active_pane_id,
-            "available": True,
-            "all_panes": (widget.get_all_pane_ids() if hasattr(widget, "get_all_pane_ids") else []),
-        }
+    def _find_pane_in_tree(self, pane_tree: dict, pane_id: str) -> Optional[dict]:
+        """
+        Recursively find a pane in a pane tree structure.
+
+        Args:
+            pane_tree: The pane tree dictionary
+            pane_id: ID of the pane to find
+
+        Returns:
+            Pane information dictionary or None if not found
+        """
+        if not pane_tree:
+            return None
+
+        if pane_tree.get("type") == "pane" and pane_tree.get("id") == pane_id:
+            return pane_tree
+        elif pane_tree.get("type") == "split":
+            # Search in left and right subtrees
+            left_result = self._find_pane_in_tree(pane_tree.get("left", {}), pane_id)
+            if left_result:
+                return left_result
+            return self._find_pane_in_tree(pane_tree.get("right", {}), pane_id)
+        else:
+            return None

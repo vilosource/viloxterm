@@ -376,7 +376,6 @@ def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandR
         if not current_tab or not hasattr(current_tab, "model"):
             return CommandResult(success=False, error="No split widget available")
 
-
         # Try to get pane_id if not provided
         if not pane_id:
             if pane and hasattr(pane, "leaf_node") and hasattr(pane.leaf_node, "id"):

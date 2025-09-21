@@ -313,7 +313,6 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
         if not current_tab or not hasattr(current_tab, "model"):
             return CommandResult(success=False, error="No split widget available")
 
-
         # Try to get pane_id if not provided
         if not pane_id:
             if pane and hasattr(pane, "leaf_node") and hasattr(pane.leaf_node, "id"):

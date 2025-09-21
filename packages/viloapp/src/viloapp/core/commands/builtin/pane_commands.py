@@ -40,7 +40,9 @@ def split_pane_horizontal_command(context: CommandContext) -> CommandResult:
         result_pane_id = workspace_service.split_active_pane("horizontal")
 
         if result_pane_id:
-            return CommandResult(success=True, value={"action": "split_horizontal", "pane_id": result_pane_id})
+            return CommandResult(
+                success=True, value={"action": "split_horizontal", "pane_id": result_pane_id}
+            )
         else:
             return CommandResult(success=False, error="Could not split pane")
 
@@ -74,7 +76,9 @@ def split_pane_vertical_command(context: CommandContext) -> CommandResult:
         result_pane_id = workspace_service.split_active_pane("vertical")
 
         if result_pane_id:
-            return CommandResult(success=True, value={"action": "split_vertical", "pane_id": result_pane_id})
+            return CommandResult(
+                success=True, value={"action": "split_vertical", "pane_id": result_pane_id}
+            )
         else:
             return CommandResult(success=False, error="Could not split pane")
 
@@ -222,7 +226,9 @@ def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
             if metadata:
                 # Call service method ONLY - no direct model access
                 if hasattr(metadata, "widget_type"):
-                    success = workspace_service.change_pane_widget_type(pane_id, metadata.widget_type)
+                    success = workspace_service.change_pane_widget_type(
+                        pane_id, metadata.widget_type
+                    )
                     if success:
                         logger.info(f"Replaced pane {pane_id} with widget {widget_id}")
                         return CommandResult(success=True, value={"widget_id": widget_id})

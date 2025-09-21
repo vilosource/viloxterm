@@ -43,9 +43,10 @@ class TestCommandPatternCompliance:
         self.mock_service.split_active_pane.assert_called_once_with("horizontal")
 
         # Verify command did NOT call UI directly
-        assert not hasattr(self.mock_workspace, "split_active_pane_horizontal") or \
-               not self.mock_workspace.split_active_pane_horizontal.called, \
-               "Command should not call UI method directly"
+        assert (
+            not hasattr(self.mock_workspace, "split_active_pane_horizontal")
+            or not self.mock_workspace.split_active_pane_horizontal.called
+        ), "Command should not call UI method directly"
 
         assert result.success, f"Command should succeed: {result.error}"
 
@@ -62,9 +63,10 @@ class TestCommandPatternCompliance:
         self.mock_service.split_active_pane.assert_called_once_with("vertical")
 
         # Verify command did NOT call UI directly
-        assert not hasattr(self.mock_workspace, "split_active_pane_vertical") or \
-               not self.mock_workspace.split_active_pane_vertical.called, \
-               "Command should not call UI method directly"
+        assert (
+            not hasattr(self.mock_workspace, "split_active_pane_vertical")
+            or not self.mock_workspace.split_active_pane_vertical.called
+        ), "Command should not call UI method directly"
 
         assert result.success, f"Command should succeed: {result.error}"
 
@@ -80,9 +82,10 @@ class TestCommandPatternCompliance:
         self.mock_service.close_active_pane.assert_called_once()
 
         # Verify command did NOT call UI directly
-        assert not hasattr(self.mock_workspace, "close_active_pane") or \
-               not self.mock_workspace.close_active_pane.called, \
-               "Command should not call UI method directly"
+        assert (
+            not hasattr(self.mock_workspace, "close_active_pane")
+            or not self.mock_workspace.close_active_pane.called
+        ), "Command should not call UI method directly"
 
         assert result.success, f"Command should succeed: {result.error}"
 
@@ -110,7 +113,7 @@ class TestCommandPatternCompliance:
         assert isinstance(result, CommandResult), "Should return CommandResult"
         assert result.success, "Should indicate success"
 
-    @patch('viloapp.core.commands.builtin.pane_commands.logger')
+    @patch("viloapp.core.commands.builtin.pane_commands.logger")
     def test_commands_handle_service_errors_gracefully(self, mock_logger):
         """Test that commands handle service errors and return proper error results."""
         # Test service not available
@@ -139,18 +142,26 @@ class TestViolationDetection:
         violations = []
 
         # Check pane_commands.py for direct workspace calls
-        with open('/home/kuja/GitHub/viloapp/packages/viloapp/src/viloapp/core/commands/builtin/pane_commands.py') as f:
+        with open(
+            "/home/kuja/GitHub/viloapp/packages/viloapp/src/viloapp/core/commands/builtin/pane_commands.py"
+        ) as f:
             content = f.read()
 
             # These are the violations that need fixing:
-            if 'workspace.split_active_pane_horizontal()' in content:
-                violations.append("Line 46: workspace.split_active_pane_horizontal() - should call service")
+            if "workspace.split_active_pane_horizontal()" in content:
+                violations.append(
+                    "Line 46: workspace.split_active_pane_horizontal() - should call service"
+                )
 
-            if 'workspace.split_active_pane_vertical()' in content:
-                violations.append("Line 84: workspace.split_active_pane_vertical() - should call service")
+            if "workspace.split_active_pane_vertical()" in content:
+                violations.append(
+                    "Line 84: workspace.split_active_pane_vertical() - should call service"
+                )
 
-            if 'split_widget.model.change_pane_type(' in content:
-                violations.append("Line 247: split_widget.model.change_pane_type() - should call service")
+            if "split_widget.model.change_pane_type(" in content:
+                violations.append(
+                    "Line 247: split_widget.model.change_pane_type() - should call service"
+                )
 
         # Document violations for tracking
         if violations:

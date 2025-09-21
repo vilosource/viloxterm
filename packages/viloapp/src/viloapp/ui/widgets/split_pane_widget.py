@@ -157,14 +157,14 @@ class PaneContent(QWidget):
         if self.leaf_node.app_widget:
             self.leaf_node.app_widget.request_action("close", {"leaf_id": self.leaf_node.id})
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event):  # noqa: N802
         """Handle mouse press to focus this pane."""
         if event.button() == Qt.LeftButton:
             if self.leaf_node.app_widget:
                 self.leaf_node.app_widget.request_focus()
         super().mousePressEvent(event)
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, event):  # noqa: N802
         """Show context menu."""
         # Request focus first
         if self.leaf_node.app_widget:
@@ -323,7 +323,7 @@ class SplitPaneWidget(QWidget):
     def __init__(
         self,
         model: SplitPaneModel = None,
-        controller: 'SplitPaneController' = None,
+        controller: "SplitPaneController" = None,
         initial_widget_type: WidgetType = WidgetType.TEXT_EDITOR,
         initial_widget_id: Optional[str] = None,
         parent=None,
@@ -751,7 +751,7 @@ class SplitPaneWidget(QWidget):
             ratio = sizes[0] / total
             self.model.update_split_ratio(node, ratio)
 
-    def eventFilter(self, obj, event):
+    def eventFilter(self, obj, event):  # noqa: N802
         """Event filter to detect focus changes without polling."""
         if event.type() == QEvent.FocusIn:
             # Check if this widget belongs to one of our panes

@@ -88,8 +88,9 @@ class CommandRouter:
         Returns:
             CommandResult with operation outcome
         """
-        return execute_command("workbench.action.changePaneType",
-                             pane_id=pane_id, widget_type=widget_type)
+        return execute_command(
+            "workbench.action.changePaneType", pane_id=pane_id, widget_type=widget_type
+        )
 
     @staticmethod
     def replace_widget_in_pane(pane_id: str, widget_id: str) -> CommandResult:
@@ -103,8 +104,9 @@ class CommandRouter:
         Returns:
             CommandResult with operation outcome
         """
-        return execute_command("workbench.action.replaceWidgetInPane",
-                             pane_id=pane_id, widget_id=widget_id)
+        return execute_command(
+            "workbench.action.replaceWidgetInPane", pane_id=pane_id, widget_id=widget_id
+        )
 
     @staticmethod
     def add_tab(tab_type: str = "terminal", name: Optional[str] = None) -> CommandResult:
@@ -171,8 +173,7 @@ class CommandRouter:
         Returns:
             CommandResult with operation outcome
         """
-        return execute_command("workbench.action.renameTab",
-                             tab_index=tab_index, new_name=new_name)
+        return execute_command("workbench.action.renameTab", tab_index=tab_index, new_name=new_name)
 
     @staticmethod
     def start_interactive_tab_rename(tab_index: Optional[int] = None) -> CommandResult:
