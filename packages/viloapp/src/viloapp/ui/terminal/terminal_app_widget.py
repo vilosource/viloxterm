@@ -16,11 +16,11 @@ from PySide6.QtWidgets import QVBoxLayout
 
 from viloapp.core.keyboard.reserved_shortcuts import get_reserved_shortcuts
 from viloapp.core.keyboard.web_shortcut_guard import WebShortcutGuard
-from viloapp.ui.icon_manager import get_icon_manager
+from viloapp.services.icon_service import get_icon_manager
+from viloapp.services.terminal_server import terminal_server
 from viloapp.ui.terminal.terminal_assets import terminal_asset_bundler
 from viloapp.ui.terminal.terminal_bridge import TerminalBridge
 from viloapp.ui.terminal.terminal_config import TerminalConfig
-from viloapp.ui.terminal.terminal_server import terminal_server
 from viloapp.ui.terminal.terminal_themes import get_terminal_theme
 from viloapp.ui.widgets.app_widget import AppWidget
 from viloapp.ui.widgets.widget_registry import WidgetType

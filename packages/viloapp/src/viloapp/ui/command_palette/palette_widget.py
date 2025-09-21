@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 
 from viloapp.core.commands.base import Command
 from viloapp.core.commands.registry import command_registry
-from viloapp.ui.icon_manager import get_icon_manager
+from viloapp.services.icon_service import get_icon_manager
 
 logger = logging.getLogger(__name__)
 

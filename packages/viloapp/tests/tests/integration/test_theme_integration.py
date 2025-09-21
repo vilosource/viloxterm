@@ -108,7 +108,7 @@ class TestThemeIntegration:
     def test_theme_change_updates_icon_cache(self, qtbot):
         """Test theme change clears and updates icon cache."""
         # Use real icon manager for this test
-        from viloapp.ui.icon_manager import IconManager
+        from viloapp.services.icon_service import IconManager
 
         manager = IconManager()
         qtbot.addWidget(manager)  # For cleanup
@@ -189,7 +189,7 @@ class TestThemeIntegration:
     def test_multiple_theme_toggles(self, qtbot):
         """Test multiple theme toggles work correctly."""
         # Use real icon manager for this test
-        from viloapp.ui.icon_manager import IconManager
+        from viloapp.services.icon_service import IconManager
 
         manager = IconManager()
         qtbot.addWidget(manager)
@@ -204,7 +204,7 @@ class TestThemeIntegration:
 
     def test_theme_change_with_cached_icons(self, qtbot):
         """Test theme change works correctly with previously cached icons."""
-        from viloapp.ui.icon_manager import IconManager
+        from viloapp.services.icon_service import IconManager
 
         manager = IconManager()
         qtbot.addWidget(manager)

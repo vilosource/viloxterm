@@ -139,6 +139,8 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
         locator.register(PluginService, plugin_service)
 
     # Create theme provider after theme service is registered
+    # Note: ThemeProvider is a UI component that bridges services with UI
+    # This is an acceptable dependency during initialization only
     from viloapp.ui.themes.theme_provider import ThemeProvider
 
     theme_provider = ThemeProvider(theme_service)

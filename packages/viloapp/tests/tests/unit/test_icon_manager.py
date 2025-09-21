@@ -4,7 +4,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from viloapp.ui.icon_manager import IconManager, get_icon_manager
+import viloapp.services.icon_service
+from viloapp.services.icon_service import IconManager, get_icon_manager
 
 
 @pytest.mark.unit
@@ -267,9 +268,9 @@ class TestGetIconManager:
     def test_get_icon_manager_returns_singleton(self):
         """Test get_icon_manager returns singleton instance."""
         # Clear global instance for test
-        import viloapp.ui.icon_manager
+        import viloapp.services.icon_service
 
-        ui.icon_manager._icon_manager = None
+        viloapp.services.icon_service._icon_manager = None
 
         # Get instance
         manager1 = get_icon_manager()
@@ -282,24 +283,24 @@ class TestGetIconManager:
     def test_get_icon_manager_creates_instance(self):
         """Test get_icon_manager creates instance if none exists."""
         # Clear global instance
-        import viloapp.ui.icon_manager
+        import viloapp.services.icon_service
 
-        ui.icon_manager._icon_manager = None
+        viloapp.services.icon_service._icon_manager = None
 
         # Get instance
         manager = get_icon_manager()
 
         # Should create and return instance
         assert isinstance(manager, IconManager)
-        assert ui.icon_manager._icon_manager is manager
+        assert viloapp.services.icon_service._icon_manager is manager
 
     def test_get_icon_manager_preserves_existing_instance(self):
         """Test get_icon_manager preserves existing instance."""
         # Create instance directly
-        import viloapp.ui.icon_manager
+        import viloapp.services.icon_service
 
         original_manager = IconManager()
-        ui.icon_manager._icon_manager = original_manager
+        viloapp.services.icon_service._icon_manager = original_manager
 
         # Get instance through function
         manager = get_icon_manager()

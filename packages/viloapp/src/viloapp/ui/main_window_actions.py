@@ -4,7 +4,7 @@ from PySide6.QtCore import QSettings
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMessageBox
 
-from viloapp.ui.icon_manager import get_icon_manager
+from viloapp.services.icon_service import get_icon_manager
 
 
 class MainWindowActionManager:

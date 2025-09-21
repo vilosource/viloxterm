@@ -13,7 +13,7 @@ class TestCodeChangesExist:
 
     def test_terminal_server_has_session_ended_signal(self):
         """Test that TerminalServerManager class has session_ended signal."""
-        from viloapp.ui.terminal.terminal_server import TerminalServerManager
+        from viloapp.services.terminal_server import TerminalServerManager
 
         # Check signal exists on class
         assert hasattr(TerminalServerManager, "session_ended")
@@ -22,7 +22,7 @@ class TestCodeChangesExist:
         """Test that TerminalServerManager inherits from QObject."""
         from PySide6.QtCore import QObject
 
-        from viloapp.ui.terminal.terminal_server import TerminalServerManager
+        from viloapp.services.terminal_server import TerminalServerManager
 
         # Check inheritance
         assert issubclass(TerminalServerManager, QObject)
@@ -129,7 +129,7 @@ class TestDataStructures:
 
     def test_terminal_session_dataclass(self):
         """Test TerminalSession dataclass."""
-        from viloapp.ui.terminal.terminal_server import TerminalSession
+        from viloapp.services.terminal_server import TerminalSession
 
         session = TerminalSession(session_id="test_123", fd=1, child_pid=1234, active=True)
 

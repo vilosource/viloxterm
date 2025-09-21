@@ -7,7 +7,7 @@ from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QToolBar, QWidget
 
 from viloapp.core.commands.executor import execute_command
-from viloapp.ui.icon_manager import get_icon_manager
+from viloapp.services.icon_service import get_icon_manager
 
 logger = logging.getLogger(__name__)
 

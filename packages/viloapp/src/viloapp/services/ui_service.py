@@ -120,7 +120,7 @@ class UIService(Service):
         self.validate_initialized()
 
         # Import here to avoid circular dependency
-        from viloapp.ui.icon_manager import get_icon_manager
+        from viloapp.services.icon_service import get_icon_manager
 
         icon_manager = get_icon_manager()
         icon_manager.toggle_theme()
@@ -158,7 +158,7 @@ class UIService(Service):
             logger.error(f"Invalid theme: {theme}")
             return False
 
-        from viloapp.ui.icon_manager import get_icon_manager
+        from viloapp.services.icon_service import get_icon_manager
 
         icon_manager = get_icon_manager()
         icon_manager.theme = theme

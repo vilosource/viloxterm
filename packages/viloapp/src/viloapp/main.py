@@ -40,11 +40,10 @@ except Exception as e:
 from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import QApplication
 
+# Start terminal server early to ensure it's ready before any widgets are created
+from viloapp.services.terminal_server import terminal_server
 from viloapp.ui.frameless_window import FramelessWindow
 from viloapp.ui.main_window import MainWindow
-
-# Start terminal server early to ensure it's ready before any widgets are created
-from viloapp.ui.terminal.terminal_server import terminal_server
 
 logger.info("Starting terminal server...")
 terminal_server.start_server()

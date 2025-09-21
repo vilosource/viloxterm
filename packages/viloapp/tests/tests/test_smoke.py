@@ -26,13 +26,13 @@ def test_imports() -> tuple[bool, str]:
 
         # Service imports
         from viloapp.services.service_locator import ServiceLocator
+
+        # Terminal imports
+        from viloapp.services.terminal_server import terminal_server
         from viloapp.ui.command_palette.palette_widget import CommandPaletteWidget
 
         # UI imports
         from viloapp.ui.main_window import MainWindow
-
-        # Terminal imports
-        from viloapp.ui.terminal.terminal_server import terminal_server
 
         return True, "✅ All imports successful"
     except ImportError as e:

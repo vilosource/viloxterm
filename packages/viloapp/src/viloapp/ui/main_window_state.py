@@ -89,7 +89,7 @@ class MainWindowStateManager:
         self.save_state()
 
         # Clean up all terminal sessions before closing
-        from viloapp.ui.terminal.terminal_server import terminal_server
+        from viloapp.services.terminal_server import terminal_server
 
         terminal_server.cleanup_all_sessions()
 

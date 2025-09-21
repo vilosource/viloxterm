@@ -272,7 +272,7 @@ class Workspace(QWidget):
 
     def _get_close_button_style(self):
         """Get the style for close buttons based on current theme."""
-        from viloapp.ui.icon_manager import get_icon_manager
+        from viloapp.services.icon_service import get_icon_manager
 
         icon_manager = get_icon_manager()
         is_dark = icon_manager.theme == "dark"
@@ -903,7 +903,7 @@ class Workspace(QWidget):
         result = execute_command("theme.getCurrentTheme")
         if result.success:
             # For now, use icon manager for theme detection (consistent with other methods in this file)
-            from viloapp.ui.icon_manager import get_icon_manager
+            from viloapp.services.icon_service import get_icon_manager
 
             icon_manager = get_icon_manager()
             is_dark = icon_manager.theme == "dark"
@@ -975,7 +975,7 @@ def get_menu_stylesheet() -> str:
         return result.value
 
     # Fallback to basic menu styling
-    from viloapp.ui.icon_manager import get_icon_manager
+    from viloapp.services.icon_service import get_icon_manager
 
     icon_manager = get_icon_manager()
     is_dark = icon_manager.theme == "dark"

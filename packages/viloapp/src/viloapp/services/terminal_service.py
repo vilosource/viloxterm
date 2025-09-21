@@ -35,7 +35,7 @@ class TerminalService(Service):
 
         # Get terminal server instance
         try:
-            from viloapp.ui.terminal.terminal_server import terminal_server
+            from viloapp.services.terminal_server import terminal_server
 
             self._terminal_server = terminal_server
 
