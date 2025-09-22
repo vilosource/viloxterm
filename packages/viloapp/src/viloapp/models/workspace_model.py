@@ -54,7 +54,7 @@ class Pane:
     """Leaf node data - actual pane content."""
 
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    widget_type: WidgetType = WidgetType.EDITOR
+    widget_type: WidgetType = WidgetType.TERMINAL
     widget_state: Dict[str, Any] = field(default_factory=dict)
     focused: bool = False
     metadata: Dict[str, Any] = field(default_factory=dict)

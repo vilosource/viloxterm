@@ -131,17 +131,17 @@ class PaneView(QWidget):
         layout.addStretch()
 
         # Action buttons
-        # Split horizontal
-        split_h_btn = QPushButton("⊟")
+        # Split horizontal (creates left-right panes)
+        split_h_btn = QPushButton("│")
         split_h_btn.setFixedSize(20, 20)
-        split_h_btn.setToolTip("Split Horizontal")
+        split_h_btn.setToolTip("Split Right")
         split_h_btn.clicked.connect(lambda: self.request_split("horizontal"))
         layout.addWidget(split_h_btn)
 
-        # Split vertical
-        split_v_btn = QPushButton("⊞")
+        # Split vertical (creates top-bottom panes)
+        split_v_btn = QPushButton("─")
         split_v_btn.setFixedSize(20, 20)
-        split_v_btn.setToolTip("Split Vertical")
+        split_v_btn.setToolTip("Split Down")
         split_v_btn.clicked.connect(lambda: self.request_split("vertical"))
         layout.addWidget(split_v_btn)
 
