@@ -425,15 +425,22 @@ class CommandValidationSpec:
             for param in unexpected:
                 validated_args[param] = context.args[param]
 
-        # Create new context with validated args
+        # Create new context with validated args - using new model-based context
         new_context = CommandContext(
-            main_window=context.main_window,
-            workspace=context.workspace,
-            active_widget=context.active_widget,
-            services=context.services,
-            args=validated_args,
+            model=context.model if hasattr(context, "model") else None,
+            active_tab_id=context.active_tab_id if hasattr(context, "active_tab_id") else None,
+            active_pane_id=context.active_pane_id if hasattr(context, "active_pane_id") else None,
+            parameters=validated_args,
         )
-        new_context._service_locator = context._service_locator
+        # Copy legacy attributes if they exist
+        if hasattr(context, "main_window"):
+            new_context.main_window = context.main_window
+        if hasattr(context, "workspace"):
+            new_context.workspace = context.workspace
+        if hasattr(context, "active_widget"):
+            new_context.active_widget = context.active_widget
+        if hasattr(context, "_service_locator"):
+            new_context._service_locator = context._service_locator
 
         return new_context
 

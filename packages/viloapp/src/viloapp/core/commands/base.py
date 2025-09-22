@@ -7,71 +7,67 @@ the foundation of the command system architecture.
 """
 
 import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional, Protocol
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Protocol
 
 logger = logging.getLogger(__name__)
 
 
-class CommandResult:
-    """Result of a command execution."""
+class CommandStatus(Enum):
+    """Status of command execution."""
 
-    def __init__(self, success: bool, value: Any = None, error: Optional[str] = None):
-        """
-        Initialize a command result.
-
-        Args:
-            success: Whether the command executed successfully
-            value: Return value from the command (if any)
-            error: Error message if the command failed
-        """
-        self.success = success
-        self.value = value
-        self.error = error
-
-    def __bool__(self) -> bool:
-        """Allow using result in boolean context."""
-        return self.success
-
-    def __repr__(self) -> str:
-        if self.success:
-            return f"CommandResult(success=True, value={self.value!r})"
-        return f"CommandResult(success=False, error={self.error!r})"
+    SUCCESS = "success"
+    FAILURE = "failure"
+    CANCELLED = "cancelled"
+    NOT_APPLICABLE = "not_applicable"
 
 
+@dataclass
 class CommandContext:
-    """Context passed to command handlers during execution."""
+    """Context for command execution - Model-View-Command architecture."""
 
-    def __init__(
-        self,
-        main_window=None,
-        workspace=None,
-        active_widget=None,
-        services: Optional[dict[str, Any]] = None,
-        args: Optional[dict[str, Any]] = None,
-    ):
-        """
-        Initialize command context.
+    model: Optional[Any] = None  # Will be WorkspaceModel, using Any to avoid circular import
+    active_tab_id: Optional[str] = None
+    active_pane_id: Optional[str] = None
+    parameters: Dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
-        Args:
-            main_window: Main application window
-            workspace: Current workspace
-            active_widget: Currently focused widget
-            services: Available services (deprecated - use ServiceLocator)
-            args: Command arguments
-        """
-        self.main_window = main_window
-        self.workspace = workspace
-        self.active_widget = active_widget
-        self.services = services or {}  # Kept for backward compatibility
-        self.args = args or {}
-        self._service_locator = None
+    # Legacy fields for compatibility during migration
+    main_window: Optional[Any] = None
+    workspace: Optional[Any] = None
+    active_widget: Optional[Any] = None
+    args: Dict[str, Any] = field(default_factory=dict)
+
+    def get_active_tab(self) -> Optional[Any]:
+        """Get the active tab from context or model."""
+        if self.active_tab_id and hasattr(self.model, "tabs"):
+            for tab in self.model.tabs:
+                if tab.id == self.active_tab_id:
+                    return tab
+        if hasattr(self.model, "get_current_tab"):
+            return self.model.get_current_tab()
+        return None
+
+    def get_active_pane(self) -> Optional[Any]:
+        """Get the active pane from context or model."""
+        tab = self.get_active_tab()
+        if not tab:
+            return None
+
+        if self.active_pane_id and hasattr(tab, "root"):
+            return tab.root.find_pane(self.active_pane_id)
+        if hasattr(tab, "get_active_pane"):
+            return tab.get_active_pane()
+        return None
 
     def get_service(self, service_type: type) -> Any:
         """
-        Get a service by type.
+        DEPRECATED: Get a service by type.
 
-        This method now integrates with ServiceLocator for better service management.
+        This method is kept for backward compatibility during migration.
+        Commands should use the model directly instead of services.
 
         Args:
             service_type: Type of service to retrieve
@@ -79,37 +75,22 @@ class CommandContext:
         Returns:
             Service instance or None if not found
         """
-        # First try ServiceLocator if available
-        if self._service_locator is None:
-            try:
-                from viloapp.services.service_locator import ServiceLocator
+        logger.warning(
+            f"get_service() is deprecated. Use model directly instead of {service_type.__name__}"
+        )
 
-                self._service_locator = ServiceLocator.get_instance()
-            except ImportError:
-                logger.debug("ServiceLocator not available, falling back to legacy services")
-                self._service_locator = False  # Mark as tried but not available
+        try:
+            from viloapp.services.service_locator import ServiceLocator
 
-        if self._service_locator:
-            service = self._service_locator.get(service_type)
-            if service:
-                return service
-
-        # Fall back to legacy services dict
-        # Try by type name first
-        service_name = service_type.__name__
-        if service_name in self.services:
-            return self.services[service_name]
-
-        # Try by type
-        for service in self.services.values():
-            if isinstance(service, service_type):
-                return service
-
-        return None
+            locator = ServiceLocator.get_instance()
+            return locator.get(service_type)
+        except ImportError:
+            logger.error("ServiceLocator not available")
+            return None
 
     def get_required_service(self, service_type: type) -> Any:
         """
-        Get a required service by type.
+        DEPRECATED: Get a required service by type.
 
         Args:
             service_type: Type of service to retrieve
@@ -126,18 +107,127 @@ class CommandContext:
         return service
 
     def update_args(self, **kwargs):
-        """Update command arguments."""
+        """Update command arguments (legacy support)."""
         self.args.update(kwargs)
+        # Also update parameters for new system
+        self.parameters.update(kwargs)
 
 
 @dataclass
-class Command:
-    """
-    Represents an executable command in the system.
+class CommandResult:
+    """Result of command execution."""
 
-    Commands are the central abstraction for all user actions in the application.
-    They can be triggered by keyboard shortcuts, menu items, the command palette,
-    or programmatically.
+    status: CommandStatus = CommandStatus.SUCCESS
+    message: str = ""
+    data: Dict[str, Any] = field(default_factory=dict)
+    error: Optional[Exception] = None
+
+    # Legacy fields for compatibility
+    value: Any = None
+
+    @property
+    def success(self) -> bool:
+        """Check if command succeeded."""
+        return self.status == CommandStatus.SUCCESS
+
+    def __bool__(self) -> bool:
+        """Allow using result in boolean context."""
+        return self.success
+
+    def __repr__(self) -> str:
+        if self.success:
+            return f"CommandResult(status={self.status}, message={self.message!r})"
+        return f"CommandResult(status={self.status}, error={self.error!r})"
+
+    @classmethod
+    def from_legacy(cls, success: bool, value: Any = None, error: Optional[str] = None):
+        """Create from legacy format for backward compatibility."""
+        if success:
+            return cls(
+                status=CommandStatus.SUCCESS,
+                data={"value": value} if value is not None else {},
+                value=value,
+            )
+        else:
+            return cls(
+                status=CommandStatus.FAILURE,
+                message=error or "Command failed",
+                error=Exception(error) if error else None,
+            )
+
+
+class Command(ABC):
+    """Base class for all commands in Model-View-Command architecture."""
+
+    def __init__(self, name: Optional[str] = None):
+        """Initialize command with optional name."""
+        self.name = name or self.__class__.__name__
+
+    @abstractmethod
+    def execute(self, context: CommandContext) -> CommandResult:
+        """
+        Execute the command.
+
+        Args:
+            context: Command execution context
+
+        Returns:
+            CommandResult with execution status
+        """
+        pass
+
+    def can_execute(self, context: CommandContext) -> bool:
+        """
+        Check if command can be executed in current context.
+
+        Args:
+            context: Command execution context
+
+        Returns:
+            True if command can be executed
+        """
+        return True
+
+    def undo(self, context: CommandContext) -> CommandResult:
+        """
+        Undo the command.
+
+        Args:
+            context: Command execution context
+
+        Returns:
+            CommandResult with undo status
+        """
+        return CommandResult(
+            status=CommandStatus.NOT_APPLICABLE, message="Undo not supported for this command"
+        )
+
+    def redo(self, context: CommandContext) -> CommandResult:
+        """
+        Redo the command.
+
+        Args:
+            context: Command execution context
+
+        Returns:
+            CommandResult with redo status
+        """
+        return CommandResult(
+            status=CommandStatus.NOT_APPLICABLE, message="Redo not supported for this command"
+        )
+
+    def __str__(self) -> str:
+        """String representation of command."""
+        return self.name
+
+
+@dataclass
+class FunctionCommand:
+    """
+    Wrapper for function-based commands.
+
+    This wraps function handlers (from @command decorator or manual registration)
+    into a command structure that can be registered and executed.
     """
 
     # Identity
@@ -156,11 +246,6 @@ class Command:
     # Keyboard
     shortcut: Optional[str] = None  # Default keyboard shortcut
     when: Optional[str] = None  # Context expression for availability
-
-    # Undo/Redo Support
-    undo_handler: Optional[Callable[[CommandContext], CommandResult]] = None
-    redo_handler: Optional[Callable[[CommandContext], CommandResult]] = None
-    supports_undo: bool = False
 
     # Default Arguments
     args: Optional[dict[str, Any]] = None  # Default arguments
@@ -185,10 +270,6 @@ class Command:
         if not callable(self.handler):
             raise ValueError(f"Command {self.id} handler must be callable")
 
-        # Set undo support flag if handlers are provided
-        if self.undo_handler or self.redo_handler:
-            self.supports_undo = True
-
     def execute(self, context: CommandContext) -> CommandResult:
         """
         Execute the command with the given context.
@@ -209,15 +290,19 @@ class Command:
             # Execute the handler
             result = self.handler(context)
 
-            # Ensure we always return a CommandResult
+            # Convert old-style results to new format
             if not isinstance(result, CommandResult):
-                result = CommandResult(success=True, value=result)
+                # Assume success if we got a non-CommandResult
+                result = CommandResult(
+                    status=CommandStatus.SUCCESS,
+                    data={"value": result} if result is not None else {},
+                )
 
             return result
 
         except Exception as e:
             logger.error(f"Error executing command {self.id}: {e}", exc_info=True)
-            return CommandResult(success=False, error=str(e))
+            return CommandResult(status=CommandStatus.FAILURE, message=str(e), error=e)
 
     def __call__(self, context: CommandContext) -> CommandResult:
         """Execute the command - makes Command objects callable."""
@@ -238,15 +323,18 @@ class Command:
 
         if self.when:
             # This will be implemented by the context evaluator
-            # For now, just return True if there's no when clause
-            from viloapp.core.context.evaluator import WhenClauseEvaluator
+            try:
+                from viloapp.core.context.evaluator import WhenClauseEvaluator
 
-            return WhenClauseEvaluator.evaluate(self.when, context)
+                return WhenClauseEvaluator.evaluate(self.when, context)
+            except ImportError:
+                # If evaluator not available, allow execution
+                return True
 
         return True
 
     def __repr__(self) -> str:
-        return f"Command(id={self.id!r}, title={self.title!r}, shortcut={self.shortcut!r})"
+        return f"LegacyCommand(id={self.id!r}, title={self.title!r}, shortcut={self.shortcut!r})"
 
 
 class ICommandHandler(Protocol):
@@ -255,6 +343,10 @@ class ICommandHandler(Protocol):
     def __call__(self, context: CommandContext) -> CommandResult:
         """Execute the command."""
         ...
+
+
+# Alias for backward compatibility during migration
+LegacyCommand = FunctionCommand
 
 
 class CommandCategory:
@@ -272,3 +364,46 @@ class CommandCategory:
     # Special categories
     INTERNAL = "_Internal"  # Hidden from UI
     EXPERIMENTAL = "_Experimental"  # Experimental features
+
+
+# Command Patterns
+
+
+class CompositeCommand(Command):
+    """Command that executes multiple commands in sequence."""
+
+    def __init__(self, commands: List[Command], name: str = "Composite"):
+        """Initialize composite command."""
+        super().__init__(name)
+        self.commands = commands
+
+    def execute(self, context: CommandContext) -> CommandResult:
+        """Execute all commands in sequence."""
+        results = []
+
+        for command in self.commands:
+            result = command.execute(context)
+            results.append(result)
+
+            # Stop on failure
+            if result.status != CommandStatus.SUCCESS:
+                return CommandResult(
+                    status=CommandStatus.FAILURE,
+                    message=f"Composite command failed at: {command.name}",
+                    data={"results": results},
+                )
+
+        return CommandResult(
+            status=CommandStatus.SUCCESS,
+            message=f"Executed {len(self.commands)} commands",
+            data={"results": results},
+        )
+
+
+class UndoableCommand(Command):
+    """Base class for commands that support undo/redo."""
+
+    @abstractmethod
+    def undo(self, context: CommandContext) -> CommandResult:
+        """Undo the command."""
+        pass

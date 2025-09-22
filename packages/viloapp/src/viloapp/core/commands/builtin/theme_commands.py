@@ -5,10 +5,8 @@ Theme-related commands for ViloxTerm.
 
 import logging
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
-from viloapp.services.theme_service import ThemeService
-from viloapp.services.ui_service import UIService
 
 logger = logging.getLogger(__name__)
 
@@ -35,23 +33,29 @@ def select_theme_command(context: CommandContext, theme_id: str = None) -> Comma
         CommandResult indicating success or failure
     """
     try:
-        theme_service = context.get_service(ThemeService)
+        # ThemeService is an external service, get from ServiceLocator
+        from viloapp.services.service_locator import ServiceLocator
+        from viloapp.services.theme_service import ThemeService
+
+        theme_service = ServiceLocator.get_instance().get(ThemeService)
         if not theme_service:
-            return CommandResult(success=False, error="ThemeService not available")
+            return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
         if theme_id:
             # Direct theme selection
             success = theme_service.apply_theme(theme_id)
             if success:
                 logger.info(f"Applied theme: {theme_id}")
-                return CommandResult(success=True, value={"theme_id": theme_id})
+                return CommandResult(status=CommandStatus.SUCCESS, data={"theme_id": theme_id})
             else:
-                return CommandResult(success=False, error=f"Failed to apply theme: {theme_id}")
+                return CommandResult(
+                    status=CommandStatus.FAILURE, message=f"Failed to apply theme: {theme_id}"
+                )
         else:
             # Cycle through available themes (for now)
             themes = theme_service.get_available_themes()
             if not themes:
-                return CommandResult(success=False, error="No themes available")
+                return CommandResult(status=CommandStatus.FAILURE, message="No themes available")
 
             current_id = theme_service.get_current_theme_id()
             current_index = next((i for i, t in enumerate(themes) if t.id == current_id), 0)
@@ -61,18 +65,21 @@ def select_theme_command(context: CommandContext, theme_id: str = None) -> Comma
             success = theme_service.apply_theme(next_theme.id)
             if success:
                 # Show status message
-                ui_service = context.get_service(UIService)
-                if ui_service:
-                    ui_service.set_status_message(f"Theme changed to: {next_theme.name}", 2000)
+                # Show status message on main window
+                main_window = context.parameters.get("main_window") if context.parameters else None
+                if main_window and hasattr(main_window, "status_bar"):
+                    main_window.status_bar.set_message(f"Theme changed to: {next_theme.name}", 2000)
 
                 logger.info(f"Cycled to theme: {next_theme.id}")
-                return CommandResult(success=True, value={"theme_id": next_theme.id})
+                return CommandResult(status=CommandStatus.SUCCESS, data={"theme_id": next_theme.id})
             else:
-                return CommandResult(success=False, error=f"Failed to apply theme: {next_theme.id}")
+                return CommandResult(
+                    status=CommandStatus.FAILURE, message=f"Failed to apply theme: {next_theme.id}"
+                )
 
     except Exception as e:
         logger.error(f"Failed to select theme: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -120,7 +127,7 @@ def select_solarized_dark_command(context: CommandContext) -> CommandResult:
 
 
 @command(
-    id="theme.createCustomTheme",
+    id="theme.createCustom",
     title="Create Custom Theme...",
     category="Preferences",
     description="Create a new custom theme based on current theme",
@@ -133,14 +140,18 @@ def create_custom_theme_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        theme_service = context.get_service(ThemeService)
+        # ThemeService is an external service, get from ServiceLocator
+        from viloapp.services.service_locator import ServiceLocator
+        from viloapp.services.theme_service import ThemeService
+
+        theme_service = ServiceLocator.get_instance().get(ThemeService)
         if not theme_service:
-            return CommandResult(success=False, error="ThemeService not available")
+            return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
         # For now, create a copy of the current theme with a generic name
         current_theme = theme_service.get_current_theme()
         if not current_theme:
-            return CommandResult(success=False, error="No current theme")
+            return CommandResult(status=CommandStatus.FAILURE, message="No current theme")
 
         # Create custom theme
         custom_theme = theme_service.create_custom_theme(
@@ -156,23 +167,22 @@ def create_custom_theme_command(context: CommandContext) -> CommandResult:
             # Apply the new custom theme
             theme_service.apply_theme(custom_theme.id)
 
-            # Show status message
-            ui_service = context.get_service(UIService)
-            if ui_service:
-                ui_service.set_status_message(f"Created custom theme: {custom_theme.name}", 3000)
+            # Status message handled by UI observers
 
             logger.info(f"Created custom theme: {custom_theme.id}")
-            return CommandResult(success=True, value={"theme_id": custom_theme.id})
+            return CommandResult(status=CommandStatus.SUCCESS, data={"theme_id": custom_theme.id})
         else:
-            return CommandResult(success=False, error="Failed to create custom theme")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Failed to create custom theme"
+            )
 
     except Exception as e:
         logger.error(f"Failed to create custom theme: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
-    id="theme.exportTheme",
+    id="theme.export",
     title="Export Current Theme...",
     category="Preferences",
     description="Export the current theme to a file",
@@ -185,13 +195,17 @@ def export_theme_command(context: CommandContext) -> CommandResult:
         CommandResult indicating success or failure
     """
     try:
-        theme_service = context.get_service(ThemeService)
+        # ThemeService is an external service, get from ServiceLocator
+        from viloapp.services.service_locator import ServiceLocator
+        from viloapp.services.theme_service import ThemeService
+
+        theme_service = ServiceLocator.get_instance().get(ThemeService)
         if not theme_service:
-            return CommandResult(success=False, error="ThemeService not available")
+            return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
         current_theme = theme_service.get_current_theme()
         if not current_theme:
-            return CommandResult(success=False, error="No current theme")
+            return CommandResult(status=CommandStatus.FAILURE, message="No current theme")
 
         # For now, export to a default location
         from pathlib import Path
@@ -200,23 +214,18 @@ def export_theme_command(context: CommandContext) -> CommandResult:
 
         success = theme_service.export_theme(current_theme.id, export_path)
         if success:
-            # Show status message
-            ui_service = context.get_service(UIService)
-            if ui_service:
-                ui_service.set_status_message(f"Theme exported to: {export_path}", 3000)
-
             logger.info(f"Exported theme to: {export_path}")
-            return CommandResult(success=True, value={"path": str(export_path)})
+            return CommandResult(status=CommandStatus.SUCCESS, data={"path": str(export_path)})
         else:
-            return CommandResult(success=False, error="Failed to export theme")
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to export theme")
 
     except Exception as e:
         logger.error(f"Failed to export theme: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
-    id="theme.importTheme",
+    id="theme.import",
     title="Import Theme...",
     category="Preferences",
     description="Import a theme from a file",
@@ -233,38 +242,41 @@ def import_theme_command(context: CommandContext, file_path: str = None) -> Comm
         CommandResult indicating success or failure
     """
     try:
-        theme_service = context.get_service(ThemeService)
+        # ThemeService is an external service, get from ServiceLocator
+        from viloapp.services.service_locator import ServiceLocator
+        from viloapp.services.theme_service import ThemeService
+
+        theme_service = ServiceLocator.get_instance().get(ThemeService)
         if not theme_service:
-            return CommandResult(success=False, error="ThemeService not available")
+            return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
         if not file_path:
             # In a real implementation, this would open a file dialog
-            return CommandResult(success=False, error="No file path provided")
+            return CommandResult(status=CommandStatus.FAILURE, message="No file path provided")
 
         from pathlib import Path
 
         import_path = Path(file_path)
         if not import_path.exists():
-            return CommandResult(success=False, error=f"File not found: {file_path}")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"File not found: {file_path}"
+            )
 
         theme_id = theme_service.import_theme(import_path)
         if theme_id:
             # Apply the imported theme
             theme_service.apply_theme(theme_id)
 
-            # Show status message
-            ui_service = context.get_service(UIService)
-            if ui_service:
-                ui_service.set_status_message(f"Imported and applied theme: {theme_id}", 3000)
+            # Status message handled by UI observers
 
             logger.info(f"Imported theme: {theme_id}")
-            return CommandResult(success=True, value={"theme_id": theme_id})
+            return CommandResult(status=CommandStatus.SUCCESS, data={"theme_id": theme_id})
         else:
-            return CommandResult(success=False, error="Failed to import theme")
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to import theme")
 
     except Exception as e:
         logger.error(f"Failed to import theme: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -301,17 +313,19 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
         # Get workspace service
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="WorkspaceService not available"
+            )
 
         # Get workspace
         workspace = workspace_service.get_workspace()
         if not workspace:
-            return CommandResult(success=False, error="No workspace available")
+            return CommandResult(status=CommandStatus.FAILURE, message="No workspace available")
 
         # Get current tab's split widget
         current_tab = workspace.tab_widget.currentWidget()
         if not current_tab or not hasattr(current_tab, "model"):
-            return CommandResult(success=False, error="No split widget available")
+            return CommandResult(status=CommandStatus.FAILURE, message="No split widget available")
 
         # Try to get pane_id if not provided
         if not pane_id:
@@ -323,13 +337,15 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
             success = workspace_service.change_pane_widget_type(pane_id, "settings")
             if success:
                 logger.info(f"Replaced pane {pane_id} with theme editor")
-                return CommandResult(success=True)
+                return CommandResult(status=CommandStatus.SUCCESS)
 
-        return CommandResult(success=False, error="Could not identify pane for replacement")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message="Could not identify pane for replacement"
+        )
 
     except Exception as e:
         logger.error(f"Failed to replace pane with theme editor: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -347,7 +363,9 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
 
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
-            return CommandResult(success=False, error="Workspace service not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Workspace service not available"
+            )
 
         # 🚨 SINGLETON PATTERN: Use consistent widget_id for Theme Editor
         # This ensures only one Theme Editor instance exists at a time
@@ -375,11 +393,15 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
                 success=True, value={"widget_id": widget_id, "action": "created_new"}
             )
         else:
-            return CommandResult(success=False, error="Failed to add theme editor to workspace")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Failed to add theme editor to workspace"
+            )
 
     except Exception as e:
         logger.error(f"Failed to open theme editor: {e}")
-        return CommandResult(success=False, error=f"Failed to open theme editor: {e}")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message=f"Failed to open theme editor: {e}"
+        )
 
 
 @command(
@@ -397,13 +419,18 @@ def import_vscode_theme_command(context: CommandContext) -> CommandResult:
 
         from viloapp.core.themes.importers import VSCodeThemeImporter
 
-        theme_service = context.get_service(ThemeService)
+        # ThemeService is an external service, get from ServiceLocator
+        from viloapp.services.service_locator import ServiceLocator
+        from viloapp.services.theme_service import ThemeService
+
+        theme_service = ServiceLocator.get_instance().get(ThemeService)
         if not theme_service:
-            return CommandResult(success=False, error="Theme service not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Theme service not available"
+            )
 
         # Get main window for dialog parent
-        ui_service = context.get_service(UIService)
-        parent = ui_service.get_main_window() if ui_service else None
+        parent = context.main_window if hasattr(context, "main_window") else None
 
         # Show file dialog
         file_path, _ = QFileDialog.getOpenFileName(
@@ -411,7 +438,7 @@ def import_vscode_theme_command(context: CommandContext) -> CommandResult:
         )
 
         if not file_path:
-            return CommandResult(success=False, error="No file selected")
+            return CommandResult(status=CommandStatus.FAILURE, message="No file selected")
 
         # Import theme
         theme = VSCodeThemeImporter.import_from_file(Path(file_path))
@@ -422,7 +449,7 @@ def import_vscode_theme_command(context: CommandContext) -> CommandResult:
                     "Import Failed",
                     "Failed to import VSCode theme. Please check the file format.",
                 )
-            return CommandResult(success=False, error="Failed to import theme")
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to import theme")
 
         # Add to theme service
         theme_service._themes[theme.id] = theme
@@ -439,11 +466,11 @@ def import_vscode_theme_command(context: CommandContext) -> CommandResult:
             )
 
         logger.info(f"Imported VSCode theme: {theme.id}")
-        return CommandResult(success=True, value={"theme_id": theme.id})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"theme_id": theme.id})
 
     except Exception as e:
         logger.error(f"Failed to import VSCode theme: {e}")
-        return CommandResult(success=False, error=f"Failed to import theme: {e}")
+        return CommandResult(status=CommandStatus.FAILURE, message=f"Failed to import theme: {e}")
 
 
 # Register commands with the theme category

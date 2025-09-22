@@ -8,10 +8,13 @@ including their capabilities, requirements, and UI properties.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 from viloapp.core.widget_placement import WidgetPlacement
 from viloapp.ui.widgets.widget_registry import WidgetType
+
+if TYPE_CHECKING:
+    from viloapp.ui.widgets.app_widget import AppWidget
 
 
 class WidgetCategory(Enum):

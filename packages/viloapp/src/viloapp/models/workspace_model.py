@@ -7,6 +7,7 @@ All application state lives here. No state in UI. No dual models.
 
 import uuid
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
@@ -624,3 +625,399 @@ class WorkspaceModel:
             focused=data.get("focused", False),
             metadata=data.get("metadata", {}),
         )
+
+    # Navigation Methods
+    def focus_next_pane(self) -> bool:
+        """Focus the next pane in tab order."""
+        tab = self.state.get_active_tab()
+        if not tab:
+            return False
+
+        panes = tab.tree.root.get_all_panes()
+        if len(panes) <= 1:
+            return False
+
+        # Find current pane index
+        current_idx = -1
+        for i, pane in enumerate(panes):
+            if pane.id == tab.active_pane_id:
+                current_idx = i
+                break
+
+        if current_idx == -1:
+            # No active pane, focus first
+            tab.active_pane_id = panes[0].id
+        else:
+            # Focus next pane (wrap around)
+            next_idx = (current_idx + 1) % len(panes)
+            tab.active_pane_id = panes[next_idx].id
+
+        self._notify("pane_focused", {"tab_id": tab.id, "pane_id": tab.active_pane_id})
+        return True
+
+    def focus_previous_pane(self) -> bool:
+        """Focus the previous pane in tab order."""
+        tab = self.state.get_active_tab()
+        if not tab:
+            return False
+
+        panes = tab.tree.root.get_all_panes()
+        if len(panes) <= 1:
+            return False
+
+        # Find current pane index
+        current_idx = -1
+        for i, pane in enumerate(panes):
+            if pane.id == tab.active_pane_id:
+                current_idx = i
+                break
+
+        if current_idx == -1:
+            # No active pane, focus last
+            tab.active_pane_id = panes[-1].id
+        else:
+            # Focus previous pane (wrap around)
+            prev_idx = (current_idx - 1) % len(panes)
+            tab.active_pane_id = panes[prev_idx].id
+
+        self._notify("pane_focused", {"tab_id": tab.id, "pane_id": tab.active_pane_id})
+        return True
+
+    def focus_pane_up(self) -> bool:
+        """Focus the pane spatially above the current pane."""
+        tab = self.state.get_active_tab()
+        if not tab:
+            return False
+
+        # Get spatial pane above
+        target_pane_id = self._find_pane_in_direction(tab.tree.root, tab.active_pane_id, "up")
+        if target_pane_id and target_pane_id != tab.active_pane_id:
+            tab.active_pane_id = target_pane_id
+            self._notify("pane_focused", {"tab_id": tab.id, "pane_id": tab.active_pane_id})
+            return True
+        return False
+
+    def focus_pane_down(self) -> bool:
+        """Focus the pane spatially below the current pane."""
+        tab = self.state.get_active_tab()
+        if not tab:
+            return False
+
+        # Get spatial pane below
+        target_pane_id = self._find_pane_in_direction(tab.tree.root, tab.active_pane_id, "down")
+        if target_pane_id and target_pane_id != tab.active_pane_id:
+            tab.active_pane_id = target_pane_id
+            self._notify("pane_focused", {"tab_id": tab.id, "pane_id": tab.active_pane_id})
+            return True
+        return False
+
+    def focus_pane_left(self) -> bool:
+        """Focus the pane spatially to the left of the current pane."""
+        tab = self.state.get_active_tab()
+        if not tab:
+            return False
+
+        # Get spatial pane to the left
+        target_pane_id = self._find_pane_in_direction(tab.tree.root, tab.active_pane_id, "left")
+        if target_pane_id and target_pane_id != tab.active_pane_id:
+            tab.active_pane_id = target_pane_id
+            self._notify("pane_focused", {"tab_id": tab.id, "pane_id": tab.active_pane_id})
+            return True
+        return False
+
+    def focus_pane_right(self) -> bool:
+        """Focus the pane spatially to the right of the current pane."""
+        tab = self.state.get_active_tab()
+        if not tab:
+            return False
+
+        # Get spatial pane to the right
+        target_pane_id = self._find_pane_in_direction(tab.tree.root, tab.active_pane_id, "right")
+        if target_pane_id and target_pane_id != tab.active_pane_id:
+            tab.active_pane_id = target_pane_id
+            self._notify("pane_focused", {"tab_id": tab.id, "pane_id": tab.active_pane_id})
+            return True
+        return False
+
+    def _find_pane_in_direction(
+        self, node: PaneNode, from_pane_id: str, direction: str
+    ) -> Optional[str]:
+        """Find the pane in a given direction from the current pane.
+
+        This uses the tree structure to determine spatial relationships:
+        - For horizontal splits: first child is left, second is right
+        - For vertical splits: first child is top, second is bottom
+        """
+        # Find the path from root to the current pane
+        path = self._find_path_to_pane(node, from_pane_id, [])
+        if not path:
+            return None
+
+        # Walk back up the path to find a split in the right direction
+        for i in range(len(path) - 1, 0, -1):
+            parent_node = path[i - 1]
+            current_node = path[i]
+
+            if not parent_node.is_split():
+                continue
+
+            # Check if this split is in the direction we want
+            if parent_node.orientation == Orientation.HORIZONTAL:
+                if direction == "left" and parent_node.second == current_node:
+                    # Current is on the right, go left
+                    return (
+                        self._get_rightmost_pane(parent_node.first) if direction == "left" else None
+                    )
+                elif direction == "right" and parent_node.first == current_node:
+                    # Current is on the left, go right
+                    return (
+                        self._get_leftmost_pane(parent_node.second)
+                        if direction == "right"
+                        else None
+                    )
+            elif parent_node.orientation == Orientation.VERTICAL:
+                if direction == "up" and parent_node.second == current_node:
+                    # Current is on the bottom, go up
+                    return (
+                        self._get_bottommost_pane(parent_node.first) if direction == "up" else None
+                    )
+                elif direction == "down" and parent_node.first == current_node:
+                    # Current is on the top, go down
+                    return (
+                        self._get_topmost_pane(parent_node.second) if direction == "down" else None
+                    )
+
+        return None
+
+    def _find_path_to_pane(
+        self, node: PaneNode, pane_id: str, path: List[PaneNode]
+    ) -> Optional[List[PaneNode]]:
+        """Find the path from root to a pane."""
+        path = path + [node]
+
+        if node.is_leaf() and node.pane and node.pane.id == pane_id:
+            return path
+
+        if node.is_split() and node.first and node.second:
+            result = self._find_path_to_pane(node.first, pane_id, path)
+            if result:
+                return result
+            return self._find_path_to_pane(node.second, pane_id, path)
+
+        return None
+
+    def _get_leftmost_pane(self, node: PaneNode) -> Optional[str]:
+        """Get the leftmost pane in a subtree."""
+        if node.is_leaf() and node.pane:
+            return node.pane.id
+        if node.is_split() and node.first:
+            if node.orientation == Orientation.HORIZONTAL:
+                return self._get_leftmost_pane(node.first)
+            # For vertical split, go to either child
+            return self._get_leftmost_pane(node.first)
+        return None
+
+    def _get_rightmost_pane(self, node: PaneNode) -> Optional[str]:
+        """Get the rightmost pane in a subtree."""
+        if node.is_leaf() and node.pane:
+            return node.pane.id
+        if node.is_split() and node.second:
+            if node.orientation == Orientation.HORIZONTAL:
+                return self._get_rightmost_pane(node.second)
+            # For vertical split, go to either child
+            return self._get_rightmost_pane(node.second)
+        return None
+
+    def _get_topmost_pane(self, node: PaneNode) -> Optional[str]:
+        """Get the topmost pane in a subtree."""
+        if node.is_leaf() and node.pane:
+            return node.pane.id
+        if node.is_split() and node.first:
+            if node.orientation == Orientation.VERTICAL:
+                return self._get_topmost_pane(node.first)
+            # For horizontal split, go to either child
+            return self._get_topmost_pane(node.first)
+        return None
+
+    def _get_bottommost_pane(self, node: PaneNode) -> Optional[str]:
+        """Get the bottommost pane in a subtree."""
+        if node.is_leaf() and node.pane:
+            return node.pane.id
+        if node.is_split() and node.second:
+            if node.orientation == Orientation.VERTICAL:
+                return self._get_bottommost_pane(node.second)
+            # For horizontal split, go to either child
+            return self._get_bottommost_pane(node.second)
+        return None
+
+    # Pane Operation Methods
+    def maximize_pane(self, pane_id: Optional[str] = None) -> bool:
+        """Maximize or restore a pane.
+
+        If pane is already maximized, restore all panes.
+        If not maximized, hide all other panes.
+        """
+        tab = self.state.get_active_tab()
+        if not tab:
+            return False
+
+        # Use active pane if no pane_id provided
+        if not pane_id:
+            pane_id = tab.active_pane_id
+
+        if not pane_id:
+            return False
+
+        # Check if we have a maximized state in metadata
+        is_maximized = tab.metadata.get("maximized_pane_id") == pane_id
+
+        if is_maximized:
+            # Restore: remove maximized state
+            tab.metadata.pop("maximized_pane_id", None)
+            tab.metadata.pop("saved_tree_state", None)
+            self._notify("pane_restored", {"tab_id": tab.id, "pane_id": pane_id})
+        else:
+            # Maximize: save current state and mark pane as maximized
+            tab.metadata["maximized_pane_id"] = pane_id
+            # We would need to save the tree state for proper restoration
+            # For now, just mark as maximized
+            self._notify("pane_maximized", {"tab_id": tab.id, "pane_id": pane_id})
+
+        return True
+
+    def even_pane_sizes(self) -> bool:
+        """Make all panes in the active tab equal size."""
+        tab = self.state.get_active_tab()
+        if not tab:
+            return False
+
+        # Reset all split ratios to 0.5
+        self._reset_split_ratios(tab.tree.root)
+
+        self._notify("pane_sizes_evened", {"tab_id": tab.id})
+        return True
+
+    def _reset_split_ratios(self, node: PaneNode):
+        """Recursively reset all split ratios to 0.5."""
+        if node.is_split():
+            node.ratio = 0.5
+            if node.first:
+                self._reset_split_ratios(node.first)
+            if node.second:
+                self._reset_split_ratios(node.second)
+
+    def extract_pane_to_tab(self, pane_id: Optional[str] = None) -> Optional[str]:
+        """Extract a pane to a new tab.
+
+        Returns the ID of the new tab if successful.
+        """
+        source_tab = self.state.get_active_tab()
+        if not source_tab:
+            return None
+
+        # Use active pane if no pane_id provided
+        if not pane_id:
+            pane_id = source_tab.active_pane_id
+
+        if not pane_id:
+            return None
+
+        # Find the pane to extract
+        pane = source_tab.tree.root.find_pane(pane_id)
+        if not pane:
+            return None
+
+        # Check if it's the only pane
+        all_panes = source_tab.tree.root.get_all_panes()
+        if len(all_panes) <= 1:
+            # Can't extract the only pane
+            return None
+
+        # Create new tab with the pane's widget type
+        new_tab_id = self.create_tab(f"Extracted from {source_tab.name}", pane.widget_type)
+        if not new_tab_id:
+            return None
+
+        # Get the new tab
+        new_tab = self._find_tab(new_tab_id)
+        if not new_tab:
+            return None
+
+        # Copy pane state to new tab's root pane
+        root_pane = new_tab.tree.root.get_all_panes()[0]
+        if root_pane:
+            root_pane.widget_state = pane.widget_state.copy()
+            root_pane.metadata = pane.metadata.copy()
+
+        # Remove the pane from source tab
+        self.close_pane(pane_id)
+
+        # Focus the new tab
+        self.set_active_tab(new_tab_id)
+
+        self._notify(
+            "pane_extracted_to_tab",
+            {"source_tab_id": source_tab.id, "new_tab_id": new_tab_id, "pane_id": pane_id},
+        )
+
+        return new_tab_id
+
+    def toggle_pane_numbers(self) -> bool:
+        """Toggle display of pane numbers."""
+        # This is more of a UI concern, but we can track the state
+        show_numbers = not self.state.metadata.get("show_pane_numbers", False)
+        self.state.metadata["show_pane_numbers"] = show_numbers
+
+        self._notify("pane_numbers_toggled", {"show": show_numbers})
+        return True
+
+    # State Persistence Methods
+    def save_state(self) -> Dict[str, Any]:
+        """Save model state for persistence."""
+        return {
+            "version": "2.0",
+            "tabs": [self._serialize_tab(tab) for tab in self.state.tabs],
+            "active_tab_id": self.state.active_tab_id,
+            "metadata": self.state.metadata,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    def load_state(self, state: Dict[str, Any]) -> bool:
+        """Load model state from persistence."""
+        try:
+            # Clear current state
+            self.state = WorkspaceState()
+
+            # Load tabs
+            for tab_data in state.get("tabs", []):
+                tab = self._deserialize_tab(tab_data)
+                if tab:
+                    self.state.tabs.append(tab)
+
+            # Set active tab
+            self.state.active_tab_id = state.get("active_tab_id")
+
+            # Load metadata
+            self.state.metadata = state.get("metadata", {})
+
+            # Validate state
+            if not self.state.tabs:
+                # Create default tab if none exist
+                self.create_tab("Default", WidgetType.EDITOR)
+
+            if not self.state.active_tab_id and self.state.tabs:
+                self.state.active_tab_id = self.state.tabs[0].id
+
+            self._notify("state_loaded", {"tab_count": len(self.state.tabs)})
+            return True
+
+        except Exception as e:
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to load state: {e}")
+            return False
+
+    def notify_observers(self, event: str, data: Any = None):
+        """Public method to notify observers (alias for _notify)."""
+        self._notify(event, data)

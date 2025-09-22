@@ -7,7 +7,10 @@ based on context and user intent.
 """
 
 from enum import Enum
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from viloapp.core.app_widget_metadata import AppWidgetMetadata
 
 
 class WidgetPlacement(Enum):

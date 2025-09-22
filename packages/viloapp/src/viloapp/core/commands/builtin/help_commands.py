@@ -7,7 +7,7 @@ Provides commands for help, about, and documentation access.
 
 import logging
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
 
 logger = logging.getLogger(__name__)
@@ -22,26 +22,22 @@ logger = logging.getLogger(__name__)
 def show_about_command(context: CommandContext) -> CommandResult:
     """Show the About dialog."""
     try:
-        from viloapp.services.ui_service import UIService
         from viloapp.ui.dialogs.about_dialog import AboutDialog
 
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UI service not available")
-
-        main_window = ui_service.get_main_window()
+        # Get main window from context parameters
+        main_window = context.parameters.get("main_window") if context.parameters else None
         if not main_window:
-            return CommandResult(success=False, error="Main window not available")
+            return CommandResult(status=CommandStatus.FAILURE, message="Main window not available")
 
         # Create and show the About dialog
         dialog = AboutDialog(main_window)
         dialog.exec()
 
-        return CommandResult(success=True, value={"action": "about_shown"})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"action": "about_shown"})
 
     except Exception as e:
         logger.error(f"Failed to show About dialog: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -63,11 +59,11 @@ def open_documentation_command(context: CommandContext) -> CommandResult:
         docs_url = f"{APP_URL}/wiki"
         QDesktopServices.openUrl(QUrl(docs_url))
 
-        return CommandResult(success=True, value={"url": docs_url})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"url": docs_url})
 
     except Exception as e:
         logger.error(f"Failed to open documentation: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -87,11 +83,11 @@ def report_issue_command(context: CommandContext) -> CommandResult:
         issues_url = f"{APP_URL}/issues"
         QDesktopServices.openUrl(QUrl(issues_url))
 
-        return CommandResult(success=True, value={"url": issues_url})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"url": issues_url})
 
     except Exception as e:
         logger.error(f"Failed to open issue tracker: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -106,13 +102,9 @@ def check_for_updates_command(context: CommandContext) -> CommandResult:
         from PySide6.QtWidgets import QMessageBox
 
         from viloapp.core.version import APP_NAME, __version__
-        from viloapp.services.ui_service import UIService
 
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UI service not available")
-
-        main_window = ui_service.get_main_window()
+        # Get main window from context parameters
+        main_window = context.parameters.get("main_window") if context.parameters else None
 
         # For now, just show current version
         # In the future, this could check GitHub releases API
@@ -124,8 +116,8 @@ def check_for_updates_command(context: CommandContext) -> CommandResult:
             "Please check the GitHub repository for the latest releases.",
         )
 
-        return CommandResult(success=True, value={"current_version": __version__})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"current_version": __version__})
 
     except Exception as e:
         logger.error(f"Failed to check for updates: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))

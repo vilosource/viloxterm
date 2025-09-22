@@ -7,9 +7,8 @@ import logging
 
 from PySide6.QtWidgets import QInputDialog, QMessageBox
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
-from viloapp.core.settings.service import SettingsService
 
 logger = logging.getLogger(__name__)
 
@@ -28,39 +27,40 @@ logger = logging.getLogger(__name__)
 def open_settings_command(context: CommandContext) -> CommandResult:
     """Open the settings dialog."""
     try:
-        from viloapp.services.workspace_service import WorkspaceService
-        from viloapp.ui.widgets.widget_registry import WidgetType
-
-        workspace_service = context.get_service(WorkspaceService)
-
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
         # 🚨 SINGLETON PATTERN: Use consistent widget_id for Settings
         # This ensures only one Settings instance exists at a time
         widget_id = "com.viloapp.settings"  # Same as registered widget_id
 
-        # Check for existing Settings instance
-        if workspace_service.has_widget(widget_id):
-            workspace_service.focus_widget(widget_id)
-            return CommandResult(
-                success=True,
-                value={"widget_id": widget_id, "action": "focused_existing"},
-            )
+        # Check if settings tab already exists
+        for tab in context.model.state.tabs:
+            if tab.name == "Settings" or (hasattr(tab, "widget_id") and tab.widget_id == widget_id):
+                # Focus existing settings tab
+                context.model.state.active_tab_index = context.model.state.tabs.index(tab)
+                return CommandResult(
+                    status=CommandStatus.SUCCESS,
+                    data={"widget_id": widget_id, "action": "focused_existing"},
+                )
 
-        # Add a Settings tab using the proper WidgetType
-        success = workspace_service.add_app_widget(WidgetType.SETTINGS, widget_id, "Settings")
+        # Create new settings tab
+        from viloapp.models.workspace_model import WidgetType
 
-        if success:
+        tab_id = context.model.create_tab("Settings", WidgetType.SETTINGS)
+
+        if tab_id:
             return CommandResult(
-                success=True, value={"widget_id": widget_id, "action": "created_new"}
+                status=CommandStatus.SUCCESS, data={"widget_id": widget_id, "action": "created_new"}
             )
         else:
-            return CommandResult(success=False, error="Failed to add Settings to workspace")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Failed to add Settings to workspace"
+            )
 
     except Exception as e:
         logger.error(f"Failed to open settings: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -73,9 +73,15 @@ def open_settings_command(context: CommandContext) -> CommandResult:
 def reset_settings_command(context: CommandContext) -> CommandResult:
     """Reset all settings to defaults."""
     try:
-        settings_service = context.get_service(SettingsService)
+        # SettingsService is an external service, get from ServiceLocator
+        from viloapp.core.settings.service import SettingsService
+        from viloapp.services.service_locator import ServiceLocator
+
+        settings_service = ServiceLocator.get_instance().get(SettingsService)
         if not settings_service:
-            return CommandResult(success=False, error="SettingsService not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="SettingsService not available"
+            )
 
         # Show confirmation dialog
         if context.main_window:
@@ -89,7 +95,9 @@ def reset_settings_command(context: CommandContext) -> CommandResult:
             )
 
             if reply != QMessageBox.Yes:
-                return CommandResult(success=False, error="User cancelled reset")
+                return CommandResult(
+                    status=CommandStatus.NOT_APPLICABLE, message="User cancelled reset"
+                )
 
         # Reset settings
         success = settings_service.reset()
@@ -99,13 +107,13 @@ def reset_settings_command(context: CommandContext) -> CommandResult:
             if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message(message, 3000)
 
-            return CommandResult(success=True, message=message)
+            return CommandResult(status=CommandStatus.SUCCESS, message=message)
         else:
-            return CommandResult(success=False, error="Failed to reset settings")
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to reset settings")
 
     except Exception as e:
         logger.error(f"Failed to reset settings: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -118,9 +126,15 @@ def reset_settings_command(context: CommandContext) -> CommandResult:
 def show_settings_info_command(context: CommandContext) -> CommandResult:
     """Show information about current settings."""
     try:
-        settings_service = context.get_service(SettingsService)
+        # SettingsService is an external service, get from ServiceLocator
+        from viloapp.core.settings.service import SettingsService
+        from viloapp.services.service_locator import ServiceLocator
+
+        settings_service = ServiceLocator.get_instance().get(SettingsService)
         if not settings_service:
-            return CommandResult(success=False, error="SettingsService not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="SettingsService not available"
+            )
 
         # Get settings info
         service_info = settings_service.get_service_info()
@@ -142,11 +156,11 @@ def show_settings_info_command(context: CommandContext) -> CommandResult:
                 3000,
             )
 
-        return CommandResult(success=True, value=info)
+        return CommandResult(status=CommandStatus.SUCCESS, data=info)
 
     except Exception as e:
         logger.error(f"Failed to get settings info: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -160,9 +174,15 @@ def show_settings_info_command(context: CommandContext) -> CommandResult:
 def toggle_theme_command(context: CommandContext) -> CommandResult:
     """Toggle between light and dark themes."""
     try:
-        settings_service = context.get_service(SettingsService)
+        # SettingsService is an external service, get from ServiceLocator
+        from viloapp.core.settings.service import SettingsService
+        from viloapp.services.service_locator import ServiceLocator
+
+        settings_service = ServiceLocator.get_instance().get(SettingsService)
         if not settings_service:
-            return CommandResult(success=False, error="SettingsService not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="SettingsService not available"
+            )
 
         # Get current theme and toggle
         current_theme = settings_service.get_theme()
@@ -178,13 +198,13 @@ def toggle_theme_command(context: CommandContext) -> CommandResult:
             if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message(message, 2000)
 
-            return CommandResult(success=True, message=message, value={"theme": new_theme})
+            return CommandResult(success=True, message=message, data={"theme": new_theme})
         else:
-            return CommandResult(success=False, error="Failed to toggle theme")
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to toggle theme")
 
     except Exception as e:
         logger.error(f"Failed to toggle theme: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -197,9 +217,15 @@ def toggle_theme_command(context: CommandContext) -> CommandResult:
 def change_font_size_command(context: CommandContext) -> CommandResult:
     """Change the application font size."""
     try:
-        settings_service = context.get_service(SettingsService)
+        # SettingsService is an external service, get from ServiceLocator
+        from viloapp.core.settings.service import SettingsService
+        from viloapp.services.service_locator import ServiceLocator
+
+        settings_service = ServiceLocator.get_instance().get(SettingsService)
         if not settings_service:
-            return CommandResult(success=False, error="SettingsService not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="SettingsService not available"
+            )
 
         # Get current font size
         current_size = settings_service.get_font_size()
@@ -216,7 +242,7 @@ def change_font_size_command(context: CommandContext) -> CommandResult:
             )
 
             if not ok:
-                return CommandResult(success=False, error="User cancelled")
+                return CommandResult(status=CommandStatus.NOT_APPLICABLE, message="User cancelled")
         else:
             # If no main window, use provided size or increment
             new_size = context.args.get("size", current_size + 1)
@@ -231,13 +257,13 @@ def change_font_size_command(context: CommandContext) -> CommandResult:
             if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message(message, 2000)
 
-            return CommandResult(success=True, message=message, value={"font_size": new_size})
+            return CommandResult(success=True, message=message, data={"font_size": new_size})
         else:
-            return CommandResult(success=False, error="Failed to change font size")
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to change font size")
 
     except Exception as e:
         logger.error(f"Failed to change font size: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -250,9 +276,15 @@ def change_font_size_command(context: CommandContext) -> CommandResult:
 def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     """Reset keyboard shortcuts to defaults."""
     try:
-        settings_service = context.get_service(SettingsService)
+        # SettingsService is an external service, get from ServiceLocator
+        from viloapp.core.settings.service import SettingsService
+        from viloapp.services.service_locator import ServiceLocator
+
+        settings_service = ServiceLocator.get_instance().get(SettingsService)
         if not settings_service:
-            return CommandResult(success=False, error="SettingsService not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="SettingsService not available"
+            )
 
         # Show confirmation dialog
         if context.main_window:
@@ -266,7 +298,9 @@ def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
             )
 
             if reply != QMessageBox.Yes:
-                return CommandResult(success=False, error="User cancelled reset")
+                return CommandResult(
+                    status=CommandStatus.NOT_APPLICABLE, message="User cancelled reset"
+                )
 
         # Reset shortcuts
         success = settings_service.reset_keyboard_shortcuts()
@@ -278,13 +312,15 @@ def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
             if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message(message, 3000)
 
-            return CommandResult(success=True, message=message)
+            return CommandResult(status=CommandStatus.SUCCESS, message=message)
         else:
-            return CommandResult(success=False, error="Failed to reset keyboard shortcuts")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Failed to reset keyboard shortcuts"
+            )
 
     except Exception as e:
         logger.error(f"Failed to reset keyboard shortcuts: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -303,7 +339,9 @@ def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
 
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="WorkspaceService not available"
+            )
 
         # 🚨 SINGLETON PATTERN: Use consistent widget_id for Shortcuts
         # This ensures only one Shortcuts configuration instance exists at a time
@@ -343,7 +381,7 @@ def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
 
     except Exception as e:
         logger.error(f"Failed to open keyboard shortcuts configuration: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -364,17 +402,19 @@ def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandR
         # Get workspace service
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="WorkspaceService not available"
+            )
 
         # Get workspace
         workspace = workspace_service.get_workspace()
         if not workspace:
-            return CommandResult(success=False, error="No workspace available")
+            return CommandResult(status=CommandStatus.FAILURE, message="No workspace available")
 
         # Get current tab's split widget
         current_tab = workspace.tab_widget.currentWidget()
         if not current_tab or not hasattr(current_tab, "model"):
-            return CommandResult(success=False, error="No split widget available")
+            return CommandResult(status=CommandStatus.FAILURE, message="No split widget available")
 
         # Try to get pane_id if not provided
         if not pane_id:
@@ -392,7 +432,7 @@ def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandR
 
     except Exception as e:
         logger.error(f"Failed to replace pane with keyboard shortcuts editor: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -405,9 +445,15 @@ def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandR
 def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     """Show all keyboard shortcuts."""
     try:
-        settings_service = context.get_service(SettingsService)
+        # SettingsService is an external service, get from ServiceLocator
+        from viloapp.core.settings.service import SettingsService
+        from viloapp.services.service_locator import ServiceLocator
+
+        settings_service = ServiceLocator.get_instance().get(SettingsService)
         if not settings_service:
-            return CommandResult(success=False, error="SettingsService not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="SettingsService not available"
+            )
 
         # Get keyboard shortcuts
         shortcuts = settings_service.get_keyboard_shortcuts()
@@ -437,7 +483,7 @@ def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
 
     except Exception as e:
         logger.error(f"Failed to show keyboard shortcuts: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -453,20 +499,28 @@ def set_keyboard_shortcut_command(context: CommandContext) -> CommandResult:
         shortcut = context.args.get("shortcut")
 
         if not command_id:
-            return CommandResult(success=False, error="command_id is required")
+            return CommandResult(status=CommandStatus.FAILURE, message="command_id is required")
 
-        settings_service = context.get_service(SettingsService)
+        # SettingsService is an external service, get from ServiceLocator
+        from viloapp.core.settings.service import SettingsService
+        from viloapp.services.service_locator import ServiceLocator
+
+        settings_service = ServiceLocator.get_instance().get(SettingsService)
         if not settings_service:
-            return CommandResult(success=False, error="SettingsService not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="SettingsService not available"
+            )
 
         # Set the shortcut
         settings_service.set_keyboard_shortcut(command_id, shortcut or "")
 
-        return CommandResult(success=True, value={"command_id": command_id, "shortcut": shortcut})
+        return CommandResult(
+            status=CommandStatus.SUCCESS, data={"command_id": command_id, "shortcut": shortcut}
+        )
 
     except Exception as e:
         logger.error(f"Failed to set keyboard shortcut: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -485,11 +539,13 @@ def register_keyboard_shortcut_command(context: CommandContext) -> CommandResult
         shortcut = context.args.get("shortcut")
 
         if not command_id:
-            return CommandResult(success=False, error="command_id is required")
+            return CommandResult(status=CommandStatus.FAILURE, message="command_id is required")
 
         keyboard_service = context.get_service(KeyboardService)
         if not keyboard_service:
-            return CommandResult(success=False, error="KeyboardService not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="KeyboardService not available"
+            )
 
         # Unregister old shortcut first
         keyboard_service.unregister_shortcut(f"command.{command_id}")
@@ -507,11 +563,13 @@ def register_keyboard_shortcut_command(context: CommandContext) -> CommandResult
                     priority=100,  # User shortcuts have higher priority
                 )
 
-        return CommandResult(success=True, value={"command_id": command_id, "shortcut": shortcut})
+        return CommandResult(
+            status=CommandStatus.SUCCESS, data={"command_id": command_id, "shortcut": shortcut}
+        )
 
     except Exception as e:
         logger.error(f"Failed to register keyboard shortcut: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 def register_settings_commands():

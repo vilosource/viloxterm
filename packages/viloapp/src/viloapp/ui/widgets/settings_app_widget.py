@@ -38,8 +38,6 @@ from viloapp.core.settings.app_defaults import (
     get_app_defaults,
     set_app_default,
 )
-from viloapp.services.service_locator import ServiceLocator
-from viloapp.services.theme_service import ThemeService
 from viloapp.ui.widgets.app_widget import AppWidget
 from viloapp.ui.widgets.shortcut_config_app_widget import ShortcutConfigAppWidget
 from viloapp.ui.widgets.theme_editor_widget import ThemeEditorAppWidget
@@ -87,33 +85,15 @@ class SettingsAppWidget(AppWidget):
 
     def _connect_to_theme_service(self):
         """Connect to theme service for theme updates."""
-        try:
-            # Get service locator
-            locator = ServiceLocator.get_instance()
-            if locator:
-                # Get theme service from locator
-                self._theme_service = locator.get(ThemeService)
-                if self._theme_service:
-                    # Get theme provider
-                    self._theme_provider = self._theme_service.get_theme_provider()
-                    if self._theme_provider:
-                        # Connect to theme change signal
-                        self._theme_provider.style_changed.connect(self._apply_theme)
-        except Exception as e:
-            logger.warning(f"Could not connect to theme service: {e}")
+        # Theme updates will be handled through commands
+        # No direct service access needed
+        pass
 
     def _apply_theme(self):
         """Apply theme to the widget."""
-        if self._theme_provider:
-            try:
-                # Apply settings widget stylesheet
-                stylesheet = self._theme_provider.get_stylesheet("settings_widget")
-                if stylesheet:
-                    # Apply to main widget only
-                    # Don't force styles on children - let them handle their own theming
-                    self.setStyleSheet(stylesheet)
-            except Exception as e:
-                logger.error(f"Failed to apply theme: {e}")
+        # Theme will be applied through the application's theming system
+        # No need for direct style application here
+        pass
 
     def get_title(self) -> str:
         """Get widget title."""

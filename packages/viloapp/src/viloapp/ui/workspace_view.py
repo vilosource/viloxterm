@@ -19,7 +19,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from viloapp.core.commands.workspace_commands import CommandContext, CommandRegistry
+from viloapp.core.commands.base import CommandContext
+from viloapp.core.commands.registry import CommandRegistry
 from viloapp.models.workspace_model import Pane, PaneNode, Tab, WidgetType, WorkspaceModel
 
 

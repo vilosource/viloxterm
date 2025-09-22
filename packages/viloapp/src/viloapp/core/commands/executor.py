@@ -11,7 +11,7 @@ from collections import deque
 from datetime import datetime
 from typing import Optional
 
-from viloapp.core.commands.base import Command, CommandContext, CommandResult
+from viloapp.core.commands.base import Command, CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.registry import command_registry
 
 logger = logging.getLogger(__name__)
@@ -95,13 +95,17 @@ class CommandExecutor:
         # Prevent recursive execution
         if self._executing:
             logger.warning(f"Recursive execution prevented for command: {command_id}")
-            return CommandResult(success=False, error="Command execution already in progress")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Command execution already in progress"
+            )
 
         # Get the command
         command = command_registry.get_command(command_id)
         if not command:
             logger.error(f"Command not found: {command_id}")
-            return CommandResult(success=False, error=f"Command not found: {command_id}")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Command not found: {command_id}"
+            )
 
         # Create context if not provided
         if context is None:
@@ -113,11 +117,18 @@ class CommandExecutor:
         # Check if command can execute in current context
         if not command.enabled:
             logger.warning(f"Command is disabled: {command_id}")
-            return CommandResult(success=False, error=f"Command is disabled: {command_id}")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Command is disabled: {command_id}"
+            )
 
-        # TODO: Check when clause once context system is implemented
-        # if command.when and not command.can_execute(context_dict):
-        #     return CommandResult(success=False, error="Command not available in current context")
+        # Check when clause
+        from viloapp.core.commands.when_context import can_execute_command
+
+        if command.when and not can_execute_command(context, command.when):
+            logger.debug(f"Command {command_id} blocked by when-clause: {command.when}")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Command not available in current context"
+            )
 
         try:
             self._executing = True
@@ -139,8 +150,8 @@ class CommandExecutor:
                     f"Parameter validation failed for command {command_id}: {validation_error}"
                 )
                 return CommandResult(
-                    success=False,
-                    error=f"Parameter validation failed: {str(validation_error)}",
+                    status=CommandStatus.FAILURE,
+                    message=f"Parameter validation failed: {str(validation_error)}",
                 )
 
             # Execute the command
@@ -160,20 +171,22 @@ class CommandExecutor:
                 self._history.append(entry)
 
                 # Add to undo stack if command supports undo
-                if command.supports_undo:
+                if hasattr(command, "supports_undo") and command.supports_undo:
                     self._undo_stack.append(entry)
                     # Clear redo stack on new command
                     self._redo_stack.clear()
 
                 logger.info(f"Command executed successfully: {command_id}")
             else:
-                logger.warning(f"Command failed: {command_id} - {result.error}")
+                logger.warning(f"Command failed: {command_id} - {result.message}")
 
             return result
 
         except Exception as e:
             logger.error(f"Exception executing command {command_id}: {e}", exc_info=True)
-            return CommandResult(success=False, error=f"Exception during execution: {str(e)}")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Exception during execution: {str(e)}"
+            )
         finally:
             self._executing = False
 
@@ -206,7 +219,7 @@ class CommandExecutor:
         """
         if not self._undo_stack:
             logger.info("Nothing to undo")
-            return CommandResult(success=False, error="Nothing to undo")
+            return CommandResult(status=CommandStatus.FAILURE, message="Nothing to undo")
 
         entry = self._undo_stack.pop()
         command = command_registry.get_command(entry.command_id)
@@ -215,8 +228,8 @@ class CommandExecutor:
             logger.error(f"Cannot undo command: {entry.command_id}")
             self._undo_stack.append(entry)  # Put it back
             return CommandResult(
-                success=False,
-                error=f"Command does not support undo: {entry.command_id}",
+                status=CommandStatus.NOT_APPLICABLE,
+                message=f"Command does not support undo: {entry.command_id}",
             )
 
         try:
@@ -238,7 +251,9 @@ class CommandExecutor:
         except Exception as e:
             logger.error(f"Exception during undo: {e}", exc_info=True)
             self._undo_stack.append(entry)  # Put it back
-            return CommandResult(success=False, error=f"Exception during undo: {str(e)}")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Exception during undo: {str(e)}"
+            )
 
     def redo(self) -> CommandResult:
         """
@@ -249,7 +264,7 @@ class CommandExecutor:
         """
         if not self._redo_stack:
             logger.info("Nothing to redo")
-            return CommandResult(success=False, error="Nothing to redo")
+            return CommandResult(status=CommandStatus.FAILURE, message="Nothing to redo")
 
         entry = self._redo_stack.pop()
         command = command_registry.get_command(entry.command_id)
@@ -257,7 +272,9 @@ class CommandExecutor:
         if not command:
             logger.error(f"Cannot redo command: {entry.command_id}")
             self._redo_stack.append(entry)  # Put it back
-            return CommandResult(success=False, error=f"Command not found: {entry.command_id}")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Command not found: {entry.command_id}"
+            )
 
         try:
             logger.info(f"Redoing command: {entry.command_id}")
@@ -281,7 +298,9 @@ class CommandExecutor:
         except Exception as e:
             logger.error(f"Exception during redo: {e}", exc_info=True)
             self._redo_stack.append(entry)  # Put it back
-            return CommandResult(success=False, error=f"Exception during redo: {str(e)}")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Exception during redo: {str(e)}"
+            )
 
     def get_history(self, limit: int = 50) -> list[CommandHistoryEntry]:
         """

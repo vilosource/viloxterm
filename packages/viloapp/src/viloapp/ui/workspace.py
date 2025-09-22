@@ -11,7 +11,8 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
 
 # Import our new architecture
-from viloapp.core.commands.workspace_commands import CommandContext, CommandRegistry
+from viloapp.core.commands.base import CommandContext
+from viloapp.core.commands.registry import CommandRegistry
 from viloapp.models.workspace_model import WidgetType, WorkspaceModel
 from viloapp.ui.workspace_view import TabView
 
@@ -67,6 +68,9 @@ class Workspace(QWidget):
         self.tab_widget.setDocumentMode(True)
         self.tab_widget.setElideMode(Qt.ElideRight)
 
+        # Ensure tab bar is visible
+        self.tab_widget.tabBar().setVisible(True)
+
         # Connect tab widget signals
         self.tab_widget.currentChanged.connect(self._on_tab_changed)
         self.tab_widget.tabCloseRequested.connect(self._on_tab_close_requested)
@@ -75,16 +79,19 @@ class Workspace(QWidget):
 
     def create_default_tab(self):
         """Create the default tab on startup."""
+        logger.info("Creating default tab...")
         context = CommandContext(model=self.model)
-        self.command_registry.execute(
+        result = self.command_registry.execute(
             "tab.create",
             context,
             name="Terminal",
             widget_type=WidgetType.TERMINAL,
         )
+        logger.info(f"Default tab creation result: {result}")
 
     def _on_model_change(self, event: str, data: Any):
         """Handle model change events."""
+        logger.info(f"Model change event: {event}, data: {data}")
         if event == "tab_created":
             self._add_tab_view(data["tab_id"])
         elif event == "tab_closed":
@@ -106,9 +113,13 @@ class Workspace(QWidget):
 
     def _add_tab_view(self, tab_id: str):
         """Add a new tab view."""
+        logger.info(f"Adding tab view for tab_id: {tab_id}")
         tab = self.model._find_tab(tab_id)
         if not tab:
+            logger.error(f"Tab not found: {tab_id}")
             return
+
+        logger.info(f"Creating TabView for tab: {tab.name}")
 
         # Create the view for this tab
         tab_view = TabView(tab, self.command_registry, self.model)
@@ -116,6 +127,7 @@ class Workspace(QWidget):
 
         # Add to tab widget
         index = self.tab_widget.addTab(tab_view, tab.name)
+        logger.info(f"Added tab to widget at index {index}, tab count: {self.tab_widget.count()}")
 
         # Switch to new tab
         self.tab_widget.setCurrentIndex(index)

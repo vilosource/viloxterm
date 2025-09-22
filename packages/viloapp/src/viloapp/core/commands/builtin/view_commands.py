@@ -5,9 +5,8 @@ View-related commands using the service layer.
 
 import logging
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
-from viloapp.services.ui_service import UIService
 
 logger = logging.getLogger(__name__)
 
@@ -17,22 +16,31 @@ logger = logging.getLogger(__name__)
     title="Toggle Theme",
     category="View",
     description="Switch between light and dark theme",
-    shortcut="ctrl+t",
+    shortcut="ctrl+shift+t",
     icon="sun",
 )
 def toggle_theme_command(context: CommandContext) -> CommandResult:
-    """Toggle between light and dark theme using UIService."""
+    """Toggle between light and dark theme."""
     try:
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UIService not available")
+        # Toggle theme directly via QSettings and main window
+        from PySide6.QtCore import QSettings
 
-        new_theme = ui_service.toggle_theme()
+        settings = QSettings("ViloxTerm", "ViloxTerm")
 
-        return CommandResult(success=True, value={"theme": new_theme})
+        current_theme = settings.value("theme", "dark")
+        new_theme = "light" if current_theme == "dark" else "dark"
+        settings.setValue("theme", new_theme)
+        settings.sync()
+
+        # Apply theme if main window available
+        main_window = context.parameters.get("main_window") if context.parameters else None
+        if main_window and hasattr(main_window, "apply_theme"):
+            main_window.apply_theme(new_theme)
+
+        return CommandResult(status=CommandStatus.SUCCESS, data={"theme": new_theme})
     except Exception as e:
         logger.error(f"Failed to toggle theme: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -44,18 +52,27 @@ def toggle_theme_command(context: CommandContext) -> CommandResult:
     icon="sidebar",
 )
 def toggle_sidebar_command(context: CommandContext) -> CommandResult:
-    """Toggle sidebar visibility using UIService."""
+    """Toggle sidebar visibility."""
     try:
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UIService not available")
+        main_window = context.parameters.get("main_window") if context.parameters else None
+        if not main_window:
+            return CommandResult(status=CommandStatus.FAILURE, message="Main window not available")
 
-        visible = ui_service.toggle_sidebar()
+        # Toggle sidebar directly on main window
+        if hasattr(main_window, "toggle_sidebar"):
+            visible = main_window.toggle_sidebar()
+        elif hasattr(main_window, "sidebar"):
+            visible = not main_window.sidebar.isVisible()
+            main_window.sidebar.setVisible(visible)
+        else:
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Sidebar not available"
+            )
 
-        return CommandResult(success=True, value={"visible": visible})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"visible": visible})
     except Exception as e:
         logger.error(f"Failed to toggle sidebar: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -69,16 +86,25 @@ def toggle_sidebar_command(context: CommandContext) -> CommandResult:
 def toggle_activity_bar_command(context: CommandContext) -> CommandResult:
     """Toggle activity bar visibility."""
     try:
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UIService not available")
+        main_window = context.parameters.get("main_window") if context.parameters else None
+        if not main_window:
+            return CommandResult(status=CommandStatus.FAILURE, message="Main window not available")
 
-        visible = ui_service.toggle_activity_bar()
+        # Toggle activity bar directly on main window
+        if hasattr(main_window, "toggle_activity_bar"):
+            visible = main_window.toggle_activity_bar()
+        elif hasattr(main_window, "activity_bar"):
+            visible = not main_window.activity_bar.isVisible()
+            main_window.activity_bar.setVisible(visible)
+        else:
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Activity bar not available"
+            )
 
-        return CommandResult(success=True, value={"visible": visible})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"visible": visible})
     except Exception as e:
         logger.error(f"Failed to toggle activity bar: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -90,18 +116,28 @@ def toggle_activity_bar_command(context: CommandContext) -> CommandResult:
     icon="menu",
 )
 def toggle_menu_bar_command(context: CommandContext) -> CommandResult:
-    """Toggle menu bar visibility using UIService."""
+    """Toggle menu bar visibility."""
     try:
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UIService not available")
+        main_window = context.parameters.get("main_window") if context.parameters else None
+        if not main_window:
+            return CommandResult(status=CommandStatus.FAILURE, message="Main window not available")
 
-        visible = ui_service.toggle_menu_bar()
+        # Toggle menu bar directly on main window
+        if hasattr(main_window, "toggle_menu_bar"):
+            visible = main_window.toggle_menu_bar()
+        elif hasattr(main_window, "menuBar"):
+            menu_bar = main_window.menuBar()
+            visible = not menu_bar.isVisible()
+            menu_bar.setVisible(visible)
+        else:
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Menu bar not available"
+            )
 
-        return CommandResult(success=True, value={"visible": visible})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"visible": visible})
     except Exception as e:
         logger.error(f"Failed to toggle menu bar: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -113,18 +149,26 @@ def toggle_menu_bar_command(context: CommandContext) -> CommandResult:
     icon="folder",
 )
 def show_explorer_command(context: CommandContext) -> CommandResult:
-    """Show Explorer view in sidebar using UIService."""
+    """Show Explorer view in sidebar."""
     try:
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UIService not available")
+        main_window = context.parameters.get("main_window") if context.parameters else None
+        if not main_window:
+            return CommandResult(status=CommandStatus.FAILURE, message="Main window not available")
 
-        ui_service.set_sidebar_view("explorer")
+        # Set sidebar view directly on main window
+        if hasattr(main_window, "set_sidebar_view"):
+            main_window.set_sidebar_view("explorer")
+        elif hasattr(main_window, "sidebar") and hasattr(main_window.sidebar, "set_view"):
+            main_window.sidebar.set_view("explorer")
+        else:
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Sidebar view switching not available"
+            )
 
-        return CommandResult(success=True)
+        return CommandResult(status=CommandStatus.SUCCESS)
     except Exception as e:
         logger.error(f"Failed to show explorer: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -136,18 +180,26 @@ def show_explorer_command(context: CommandContext) -> CommandResult:
     icon="search",
 )
 def show_search_command(context: CommandContext) -> CommandResult:
-    """Show Search view in sidebar using UIService."""
+    """Show Search view in sidebar."""
     try:
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UIService not available")
+        main_window = context.parameters.get("main_window") if context.parameters else None
+        if not main_window:
+            return CommandResult(status=CommandStatus.FAILURE, message="Main window not available")
 
-        ui_service.set_sidebar_view("search")
+        # Set sidebar view directly on main window
+        if hasattr(main_window, "set_sidebar_view"):
+            main_window.set_sidebar_view("search")
+        elif hasattr(main_window, "sidebar") and hasattr(main_window.sidebar, "set_view"):
+            main_window.sidebar.set_view("search")
+        else:
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Sidebar view switching not available"
+            )
 
-        return CommandResult(success=True)
+        return CommandResult(status=CommandStatus.SUCCESS)
     except Exception as e:
         logger.error(f"Failed to show search: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -159,18 +211,26 @@ def show_search_command(context: CommandContext) -> CommandResult:
     icon="git-branch",
 )
 def show_git_command(context: CommandContext) -> CommandResult:
-    """Show Git view in sidebar using UIService."""
+    """Show Git view in sidebar."""
     try:
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UIService not available")
+        main_window = context.parameters.get("main_window") if context.parameters else None
+        if not main_window:
+            return CommandResult(status=CommandStatus.FAILURE, message="Main window not available")
 
-        ui_service.set_sidebar_view("git")
+        # Set sidebar view directly on main window
+        if hasattr(main_window, "set_sidebar_view"):
+            main_window.set_sidebar_view("git")
+        elif hasattr(main_window, "sidebar") and hasattr(main_window.sidebar, "set_view"):
+            main_window.sidebar.set_view("git")
+        else:
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Sidebar view switching not available"
+            )
 
-        return CommandResult(success=True)
+        return CommandResult(status=CommandStatus.SUCCESS)
     except Exception as e:
         logger.error(f"Failed to show git: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -181,41 +241,55 @@ def show_git_command(context: CommandContext) -> CommandResult:
     icon="settings",
 )
 def show_settings_command(context: CommandContext) -> CommandResult:
-    """Show Settings view in sidebar using UIService."""
+    """Show Settings view in sidebar."""
     try:
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UIService not available")
+        main_window = context.parameters.get("main_window") if context.parameters else None
+        if not main_window:
+            return CommandResult(status=CommandStatus.FAILURE, message="Main window not available")
 
-        ui_service.set_sidebar_view("settings")
+        # Set sidebar view directly on main window
+        if hasattr(main_window, "set_sidebar_view"):
+            main_window.set_sidebar_view("settings")
+        elif hasattr(main_window, "sidebar") and hasattr(main_window.sidebar, "set_view"):
+            main_window.sidebar.set_view("settings")
+        else:
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Sidebar view switching not available"
+            )
 
-        return CommandResult(success=True)
+        return CommandResult(status=CommandStatus.SUCCESS)
     except Exception as e:
         logger.error(f"Failed to show settings: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
-    id="view.toggleFullScreen",
-    title="Toggle Full Screen",
+    id="view.toggleFullScreenView",
+    title="Toggle Full Screen View",
     category="View",
     description="Enter or exit full screen mode",
-    shortcut="f11",
+    # Shortcut f11 is already used by window.toggleFullScreen
     icon="maximize",
 )
 def toggle_fullscreen_command(context: CommandContext) -> CommandResult:
-    """Toggle fullscreen mode using UIService."""
+    """Toggle fullscreen mode."""
     try:
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UIService not available")
+        main_window = context.parameters.get("main_window") if context.parameters else None
+        if not main_window:
+            return CommandResult(status=CommandStatus.FAILURE, message="Main window not available")
 
-        is_fullscreen = ui_service.toggle_fullscreen()
+        # Toggle fullscreen directly on main window
+        if main_window.isFullScreen():
+            main_window.showNormal()
+            is_fullscreen = False
+        else:
+            main_window.showFullScreen()
+            is_fullscreen = True
 
-        return CommandResult(success=True, value={"fullscreen": is_fullscreen})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"fullscreen": is_fullscreen})
     except Exception as e:
         logger.error(f"Failed to toggle fullscreen: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -226,22 +300,32 @@ def toggle_fullscreen_command(context: CommandContext) -> CommandResult:
     icon="layout",
 )
 def reset_layout_command(context: CommandContext) -> CommandResult:
-    """Reset UI layout to defaults using UIService."""
+    """Reset UI layout to defaults."""
     try:
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UIService not available")
+        main_window = context.parameters.get("main_window") if context.parameters else None
+        if not main_window:
+            return CommandResult(status=CommandStatus.FAILURE, message="Main window not available")
 
-        ui_service.reset_layout()
+        # Reset layout on main window
+        if hasattr(main_window, "reset_layout"):
+            main_window.reset_layout()
+        else:
+            # Basic reset - show all UI elements
+            if hasattr(main_window, "sidebar"):
+                main_window.sidebar.setVisible(True)
+            if hasattr(main_window, "activity_bar"):
+                main_window.activity_bar.setVisible(True)
+            if hasattr(main_window, "menuBar"):
+                main_window.menuBar().setVisible(True)
 
         # Show status message
         if context.main_window and hasattr(context.main_window, "status_bar"):
             context.main_window.status_bar.set_message("Layout reset to defaults", 2000)
 
-        return CommandResult(success=True)
+        return CommandResult(status=CommandStatus.SUCCESS)
     except Exception as e:
         logger.error(f"Failed to reset layout: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 def register_view_commands():

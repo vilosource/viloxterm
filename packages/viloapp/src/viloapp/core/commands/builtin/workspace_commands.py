@@ -4,9 +4,8 @@ Workspace-related commands using the service layer.
 """
 
 import logging
-import uuid
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
 from viloapp.core.commands.validation import (
     OneOf,
@@ -18,8 +17,6 @@ from viloapp.core.commands.validation import (
 )
 from viloapp.core.settings.app_defaults import get_default_widget_type
 from viloapp.services.terminal_service import TerminalService
-from viloapp.services.workspace_service import WorkspaceService
-from viloapp.ui.widgets.widget_registry import WidgetType
 
 logger = logging.getLogger(__name__)
 
@@ -34,71 +31,69 @@ logger = logging.getLogger(__name__)
 def new_tab_command(context: CommandContext) -> CommandResult:
     """Create a new tab using the default widget type from settings."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Access model directly from context
+        model = context.model
+        if not model or not hasattr(model, "create_tab"):
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Workspace model not available"
+            )
 
         # Get widget type from args or settings
-        widget_type = context.args.get("widget_type")
+        widget_type = context.parameters.get("widget_type") if context.parameters else None
         if not widget_type:
             widget_type = get_default_widget_type()
 
         # Special handling for terminal
         if widget_type == "terminal":
-            terminal_service = context.get_service(TerminalService)
+            # Keep terminal service for now as it's external
+            terminal_service = (
+                context.parameters.get("terminal_service") if context.parameters else None
+            )
+            if not terminal_service:
+                try:
+                    from viloapp.services.service_locator import ServiceLocator
+
+                    terminal_service = ServiceLocator.get_instance().get(TerminalService)
+                except:
+                    pass
             if terminal_service and not terminal_service.is_server_running():
                 terminal_service.start_server()
 
         # Create the tab
-        name = context.args.get("name")
+        name = context.parameters.get("name") if context.parameters else None
+        if not name:
+            name = f"New {widget_type.title()}"
 
-        # Map string widget type to WidgetType enum and widget ID
-        # Note: shortcuts uses WidgetType.SETTINGS, theme_editor uses CUSTOM
+        # Map string widget type to WidgetType enum
+        from viloapp.models.workspace_model import WidgetType as ModelWidgetType
+
         widget_type_map = {
-            "terminal": (WidgetType.TERMINAL, None),
-            "editor": (WidgetType.TEXT_EDITOR, None),
-            "theme_editor": (WidgetType.CUSTOM, "com.viloapp.theme_editor"),
-            "explorer": (WidgetType.EXPLORER, None),
-            "output": (WidgetType.OUTPUT, None),
-            "settings": (WidgetType.SETTINGS, "com.viloapp.settings"),
-            "shortcuts": (WidgetType.SETTINGS, "com.viloapp.shortcuts"),
-            "placeholder": (WidgetType.PLACEHOLDER, None),
+            "terminal": ModelWidgetType.TERMINAL,
+            "editor": ModelWidgetType.EDITOR,
+            "theme_editor": ModelWidgetType.EDITOR,
+            "explorer": ModelWidgetType.EXPLORER,
+            "output": ModelWidgetType.OUTPUT,
+            "settings": ModelWidgetType.SETTINGS,
+            "shortcuts": ModelWidgetType.SETTINGS,
+            "placeholder": ModelWidgetType.EDITOR,
         }
 
-        # Use appropriate method based on widget type
-        if widget_type == "terminal":
-            index = workspace_service.add_terminal_tab(name)
-        elif widget_type == "editor":
-            index = workspace_service.add_editor_tab(name)
-        elif widget_type in widget_type_map:
-            # Use the generic app widget method for other types
-            widget_enum, specific_widget_id = widget_type_map[widget_type]
+        widget_enum = widget_type_map.get(widget_type, ModelWidgetType.TERMINAL)
 
-            # Use specific widget ID if provided, otherwise generate one
-            if specific_widget_id:
-                widget_id = specific_widget_id
-            else:
-                widget_id = str(uuid.uuid4())[:8]  # Generate unique widget ID
+        # Create tab using model
+        tab_id = model.create_tab(name, widget_enum)
 
-            success = workspace_service.add_app_widget(widget_enum, widget_id, name)
-            if success:
-                # Get the index of the newly added tab
-                index = workspace_service.get_tab_count() - 1
-            else:
-                return CommandResult(success=False, error=f"Failed to create {widget_type} tab")
-        else:
-            # Unknown widget type, fall back to terminal
-            logger.warning(f"Unknown widget type '{widget_type}', using terminal")
-            index = workspace_service.add_terminal_tab(name)
+        # Get the index of the newly added tab
+        index = len(model.state.tabs) - 1
 
         return CommandResult(
-            success=True,
-            value={"index": index, "widget_type": widget_type, "name": name},
+            status=CommandStatus.SUCCESS,
+            data={"index": index, "widget_type": widget_type, "name": name, "tab_id": tab_id},
         )
 
     except Exception as e:
         logger.error(f"Failed to create new tab: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -135,8 +130,8 @@ def new_tab_with_type_command(context: CommandContext) -> CommandResult:
     """Create a new tab, prompting for widget type."""
     from PySide6.QtWidgets import QInputDialog
 
-    # Check if widget_type provided in args (for testing/programmatic use)
-    widget_type = context.args.get("widget_type") if context.args else None
+    # Check if widget_type provided in parameters (for testing/programmatic use)
+    widget_type = context.parameters.get("widget_type") if context.parameters else None
 
     if not widget_type and context.main_window:
         # Show selection dialog
@@ -159,7 +154,7 @@ def new_tab_with_type_command(context: CommandContext) -> CommandResult:
         )
 
         if not ok or not selected:
-            return CommandResult(success=False, error="User cancelled")
+            return CommandResult(status=CommandStatus.FAILURE, message="User cancelled")
 
         widget_type = widget_type_map[selected]
 
@@ -179,10 +174,10 @@ def new_tab_with_type_command(context: CommandContext) -> CommandResult:
         )
 
     # Delegate to new_tab_command with the specified type
-    if not context.args:
-        context.args = {}
-    context.args["widget_type"] = widget_type
-    return new_tab_command._original_func(context)
+    if not context.parameters:
+        context.parameters = {}
+    context.parameters["widget_type"] = widget_type
+    return new_tab_command(context)
 
 
 @command(
@@ -203,23 +198,32 @@ def new_tab_with_type_command(context: CommandContext) -> CommandResult:
     )
 )
 def split_pane_right_command(context: CommandContext) -> CommandResult:
-    """Split active pane horizontally using WorkspaceService."""
+    """Split active pane horizontally using model directly."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "split_pane"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        orientation = context.args.get("orientation", "horizontal")
-        new_pane_id = workspace_service.split_active_pane(orientation)
+        # Get active pane to split
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane to split")
+
+        orientation = (
+            context.parameters.get("orientation", "horizontal")
+            if context.parameters
+            else "horizontal"
+        )
+        new_pane_id = context.model.split_pane(active_tab.active_pane_id, orientation)
 
         if new_pane_id:
-            return CommandResult(success=True, value={"new_pane_id": new_pane_id})
+            return CommandResult(status=CommandStatus.SUCCESS, data={"new_pane_id": new_pane_id})
         else:
-            return CommandResult(success=False, error="Failed to split pane")
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to split pane")
 
     except Exception as e:
         logger.error(f"Failed to split pane right: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -232,22 +236,27 @@ def split_pane_right_command(context: CommandContext) -> CommandResult:
     when="workbench.pane.canSplit",
 )
 def split_pane_down_command(context: CommandContext) -> CommandResult:
-    """Split active pane vertically using WorkspaceService."""
+    """Split active pane vertically using model directly."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "split_pane"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        new_pane_id = workspace_service.split_active_pane("vertical")
+        # Get active pane to split
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane to split")
+
+        new_pane_id = context.model.split_pane(active_tab.active_pane_id, "vertical")
 
         if new_pane_id:
-            return CommandResult(success=True, value={"new_pane_id": new_pane_id})
+            return CommandResult(status=CommandStatus.SUCCESS, data={"new_pane_id": new_pane_id})
         else:
-            return CommandResult(success=False, error="Failed to split pane")
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to split pane")
 
     except Exception as e:
         logger.error(f"Failed to split pane down: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -260,22 +269,34 @@ def split_pane_down_command(context: CommandContext) -> CommandResult:
     when="workbench.pane.count > 1",
 )
 def close_active_pane_command(context: CommandContext) -> CommandResult:
-    """Close active pane using WorkspaceService."""
+    """Close active pane using model directly."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "close_pane"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = workspace_service.close_active_pane()
+        # Get active pane to close
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane to close")
+
+        # Check if it's the last pane in the tab
+        panes = active_tab.tree.root.get_all_panes()
+        if len(panes) <= 1:
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Cannot close the last pane"
+            )
+
+        success = context.model.close_pane(active_tab.active_pane_id)
 
         if success:
-            return CommandResult(success=True)
+            return CommandResult(status=CommandStatus.SUCCESS)
         else:
-            return CommandResult(success=False, error="Cannot close the last pane")
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to close pane")
 
     except Exception as e:
         logger.error(f"Failed to close active pane: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -289,26 +310,33 @@ def close_active_pane_command(context: CommandContext) -> CommandResult:
     when=None,  # Always available
 )
 def toggle_pane_numbers_command(context: CommandContext) -> CommandResult:
-    """Enter command mode for pane navigation with visible numbers."""
+    """Toggle pane numbers visibility."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "toggle_pane_numbers"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        # Enter command mode which shows pane numbers and activates focus sink
-        success = workspace_service.enter_pane_command_mode()
+        # Toggle pane numbers display
+        success = context.model.toggle_pane_numbers()
 
         if success:
-            return CommandResult(success=True, value={"command_mode": True})
+            # Get current state for feedback
+            show_numbers = context.model.state.metadata.get("show_pane_numbers", False)
+            status_msg = "Pane numbers shown" if show_numbers else "Pane numbers hidden"
+
+            # Show status message
+            if context.main_window and hasattr(context.main_window, "status_bar"):
+                context.main_window.status_bar.set_message(status_msg, 2000)
+
+            return CommandResult(status=CommandStatus.SUCCESS, data={"show_numbers": show_numbers})
         else:
             return CommandResult(
-                success=False,
-                error="Could not enter pane command mode (no panes available)",
+                status=CommandStatus.FAILURE, message="Failed to toggle pane numbers"
             )
 
     except Exception as e:
-        logger.error(f"Failed to enter pane command mode: {e}")
-        return CommandResult(success=False, error=str(e))
+        logger.error(f"Failed to toggle pane numbers: {e}")
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -320,22 +348,22 @@ def toggle_pane_numbers_command(context: CommandContext) -> CommandResult:
     when="workbench.pane.count > 1",
 )
 def focus_next_pane_command(context: CommandContext) -> CommandResult:
-    """Focus next pane using WorkspaceService."""
+    """Focus next pane using model directly."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "focus_next_pane"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = workspace_service.navigate_to_next_pane()
+        success = context.model.focus_next_pane()
 
         if success:
-            return CommandResult(success=True)
+            return CommandResult(status=CommandStatus.SUCCESS)
         else:
-            return CommandResult(success=False, error="Failed to navigate to next pane")
+            return CommandResult(status=CommandStatus.FAILURE, message="No other panes available")
 
     except Exception as e:
         logger.error(f"Failed to focus next pane: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -347,22 +375,22 @@ def focus_next_pane_command(context: CommandContext) -> CommandResult:
     when="workbench.pane.count > 1",
 )
 def focus_previous_pane_command(context: CommandContext) -> CommandResult:
-    """Focus previous pane using WorkspaceService."""
+    """Focus previous pane using model directly."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "focus_previous_pane"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = workspace_service.navigate_to_previous_pane()
+        success = context.model.focus_previous_pane()
 
         if success:
-            return CommandResult(success=True)
+            return CommandResult(status=CommandStatus.SUCCESS)
         else:
-            return CommandResult(success=False, error="Failed to navigate to previous pane")
+            return CommandResult(status=CommandStatus.FAILURE, message="No other panes available")
 
     except Exception as e:
         logger.error(f"Failed to focus previous pane: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -374,27 +402,34 @@ def focus_previous_pane_command(context: CommandContext) -> CommandResult:
     when="workbench.tabs.count > 1",
 )
 def next_tab_command(context: CommandContext) -> CommandResult:
-    """Switch to next tab using WorkspaceService."""
+    """Switch to next tab using model directly."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "state"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        current = workspace_service.get_current_tab_index()
-        count = workspace_service.get_tab_count()
+        tabs = context.model.state.tabs
+        if len(tabs) <= 1:
+            return CommandResult(status=CommandStatus.FAILURE, message="No other tabs to switch to")
 
-        if count > 1:
-            next_index = (current + 1) % count
-            success = workspace_service.switch_to_tab(next_index)
+        current_tab = context.model.state.get_active_tab()
+        if not current_tab:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active tab")
 
-            if success:
-                return CommandResult(success=True, value={"tab_index": next_index})
+        current = tabs.index(current_tab)
+        next_index = (current + 1) % len(tabs)
+        next_tab = tabs[next_index]
 
-        return CommandResult(success=False, error="No other tabs to switch to")
+        success = context.model.set_active_tab(next_tab.id)
+
+        if success:
+            return CommandResult(status=CommandStatus.SUCCESS, data={"tab_index": next_index})
+        else:
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to switch tab")
 
     except Exception as e:
         logger.error(f"Failed to switch to next tab: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -414,26 +449,31 @@ def next_tab_command(context: CommandContext) -> CommandResult:
 def select_tab_command(context: CommandContext) -> CommandResult:
     """Switch to a specific tab by index."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "state"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        tab_index = context.args.get("tab_index")
+        tab_index = context.parameters.get("tab_index") if context.parameters else None
         if tab_index is None:
-            return CommandResult(success=False, error="No tab index provided")
+            return CommandResult(status=CommandStatus.FAILURE, message="No tab index provided")
 
-        count = workspace_service.get_tab_count()
-        if 0 <= tab_index < count:
-            success = workspace_service.switch_to_tab(tab_index)
+        tabs = context.model.state.tabs
+        if 0 <= tab_index < len(tabs):
+            target_tab = tabs[tab_index]
+            success = context.model.set_active_tab(target_tab.id)
 
             if success:
-                return CommandResult(success=True, value={"tab_index": tab_index})
+                return CommandResult(status=CommandStatus.SUCCESS, data={"tab_index": tab_index})
+            else:
+                return CommandResult(status=CommandStatus.FAILURE, message="Failed to switch tab")
 
-        return CommandResult(success=False, error=f"Invalid tab index: {tab_index}")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message=f"Invalid tab index: {tab_index}"
+        )
 
     except Exception as e:
         logger.error(f"Failed to select tab: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -445,27 +485,34 @@ def select_tab_command(context: CommandContext) -> CommandResult:
     when="workbench.tabs.count > 1",
 )
 def previous_tab_command(context: CommandContext) -> CommandResult:
-    """Switch to previous tab using WorkspaceService."""
+    """Switch to previous tab using model directly."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "state"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        current = workspace_service.get_current_tab_index()
-        count = workspace_service.get_tab_count()
+        tabs = context.model.state.tabs
+        if len(tabs) <= 1:
+            return CommandResult(status=CommandStatus.FAILURE, message="No other tabs to switch to")
 
-        if count > 1:
-            prev_index = (current - 1) % count
-            success = workspace_service.switch_to_tab(prev_index)
+        current_tab = context.model.state.get_active_tab()
+        if not current_tab:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active tab")
 
-            if success:
-                return CommandResult(success=True, value={"tab_index": prev_index})
+        current = tabs.index(current_tab)
+        prev_index = (current - 1) % len(tabs)
+        prev_tab = tabs[prev_index]
 
-        return CommandResult(success=False, error="No other tabs to switch to")
+        success = context.model.set_active_tab(prev_tab.id)
+
+        if success:
+            return CommandResult(status=CommandStatus.SUCCESS, data={"tab_index": prev_index})
+        else:
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to switch tab")
 
     except Exception as e:
         logger.error(f"Failed to switch to previous tab: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -476,23 +523,23 @@ def previous_tab_command(context: CommandContext) -> CommandResult:
     icon="save",
 )
 def save_layout_command(context: CommandContext) -> CommandResult:
-    """Save workspace layout using WorkspaceService."""
+    """Save workspace layout using model directly."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "save_state"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        layout = workspace_service.save_layout()
+        layout = context.model.save_state()
 
         # Show status message
         if context.main_window and hasattr(context.main_window, "status_bar"):
             context.main_window.status_bar.set_message("Layout saved", 2000)
 
-        return CommandResult(success=True, value={"layout": layout})
+        return CommandResult(status=CommandStatus.SUCCESS, value={"layout": layout})
 
     except Exception as e:
         logger.error(f"Failed to save layout: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -503,29 +550,33 @@ def save_layout_command(context: CommandContext) -> CommandResult:
     icon="refresh",
 )
 def restore_layout_command(context: CommandContext) -> CommandResult:
-    """Restore workspace layout using WorkspaceService."""
+    """Restore workspace layout using model directly."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "load_state"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        # Get layout from context args or use saved one
-        layout = context.args.get("layout")
+        # Get layout from context parameters
+        layout = context.parameters.get("layout") if context.parameters else None
         if layout:
-            success = workspace_service.restore_layout(layout)
+            try:
+                context.model.load_state(layout)
+                success = True
+            except Exception:
+                success = False
 
             if success:
                 # Show status message
                 if context.main_window and hasattr(context.main_window, "status_bar"):
                     context.main_window.status_bar.set_message("Layout restored", 2000)
 
-                return CommandResult(success=True)
+                return CommandResult(status=CommandStatus.SUCCESS)
 
-        return CommandResult(success=False, error="No layout to restore")
+        return CommandResult(status=CommandStatus.FAILURE, error="No layout to restore")
 
     except Exception as e:
         logger.error(f"Failed to restore layout: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(

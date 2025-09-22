@@ -5,9 +5,8 @@ Edit-related commands using the service layer.
 
 import logging
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
-from viloapp.services.editor_service import EditorService
 
 logger = logging.getLogger(__name__)
 
@@ -22,22 +21,33 @@ logger = logging.getLogger(__name__)
     when="editorFocus && editorHasSelection",
 )
 def cut_command(context: CommandContext) -> CommandResult:
-    """Cut selected text using EditorService."""
+    """Cut selected text from active editor."""
     try:
-        editor_service = context.get_service(EditorService)
-        if not editor_service:
-            return CommandResult(success=False, error="EditorService not available")
+        # Get active editor widget from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = editor_service.cut()
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        if success:
-            return CommandResult(success=True)
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane or not active_pane.widget:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active widget")
+
+        # Check if it's an editor widget and has cut method
+        widget = active_pane.widget
+        if hasattr(widget, "cut"):
+            widget.cut()
+            return CommandResult(status=CommandStatus.SUCCESS)
         else:
-            return CommandResult(success=False, error="Failed to cut text")
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Active widget is not an editor"
+            )
 
     except Exception as e:
         logger.error(f"Failed to cut: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -50,22 +60,33 @@ def cut_command(context: CommandContext) -> CommandResult:
     when="editorFocus && editorHasSelection",
 )
 def copy_command(context: CommandContext) -> CommandResult:
-    """Copy selected text using EditorService."""
+    """Copy selected text from active editor."""
     try:
-        editor_service = context.get_service(EditorService)
-        if not editor_service:
-            return CommandResult(success=False, error="EditorService not available")
+        # Get active editor widget from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = editor_service.copy()
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        if success:
-            return CommandResult(success=True)
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane or not active_pane.widget:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active widget")
+
+        # Check if it's an editor widget and has copy method
+        widget = active_pane.widget
+        if hasattr(widget, "copy"):
+            widget.copy()
+            return CommandResult(status=CommandStatus.SUCCESS)
         else:
-            return CommandResult(success=False, error="Failed to copy text")
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Active widget is not an editor"
+            )
 
     except Exception as e:
         logger.error(f"Failed to copy: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -78,22 +99,33 @@ def copy_command(context: CommandContext) -> CommandResult:
     when="editorFocus",
 )
 def paste_command(context: CommandContext) -> CommandResult:
-    """Paste text using EditorService."""
+    """Paste text to active editor."""
     try:
-        editor_service = context.get_service(EditorService)
-        if not editor_service:
-            return CommandResult(success=False, error="EditorService not available")
+        # Get active editor widget from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = editor_service.paste()
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        if success:
-            return CommandResult(success=True)
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane or not active_pane.widget:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active widget")
+
+        # Check if it's an editor widget and has paste method
+        widget = active_pane.widget
+        if hasattr(widget, "paste"):
+            widget.paste()
+            return CommandResult(status=CommandStatus.SUCCESS)
         else:
-            return CommandResult(success=False, error="Failed to paste text")
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Active widget is not an editor"
+            )
 
     except Exception as e:
         logger.error(f"Failed to paste: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -106,22 +138,33 @@ def paste_command(context: CommandContext) -> CommandResult:
     when="editorFocus",
 )
 def select_all_command(context: CommandContext) -> CommandResult:
-    """Select all text using EditorService."""
+    """Select all text in active editor."""
     try:
-        editor_service = context.get_service(EditorService)
-        if not editor_service:
-            return CommandResult(success=False, error="EditorService not available")
+        # Get active editor widget from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = editor_service.select_all()
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        if success:
-            return CommandResult(success=True)
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane or not active_pane.widget:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active widget")
+
+        # Check if it's an editor widget and has selectAll method
+        widget = active_pane.widget
+        if hasattr(widget, "selectAll"):
+            widget.selectAll()
+            return CommandResult(status=CommandStatus.SUCCESS)
         else:
-            return CommandResult(success=False, error="Failed to select all")
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Active widget is not an editor"
+            )
 
     except Exception as e:
         logger.error(f"Failed to select all: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -134,22 +177,33 @@ def select_all_command(context: CommandContext) -> CommandResult:
     when="editorFocus",
 )
 def undo_command(context: CommandContext) -> CommandResult:
-    """Undo last operation using EditorService."""
+    """Undo last operation in active editor."""
     try:
-        editor_service = context.get_service(EditorService)
-        if not editor_service:
-            return CommandResult(success=False, error="EditorService not available")
+        # Get active editor widget from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = editor_service.undo()
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        if success:
-            return CommandResult(success=True)
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane or not active_pane.widget:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active widget")
+
+        # Check if it's an editor widget and has undo method
+        widget = active_pane.widget
+        if hasattr(widget, "undo"):
+            widget.undo()
+            return CommandResult(status=CommandStatus.SUCCESS)
         else:
-            return CommandResult(success=False, error="Failed to undo")
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Active widget is not an editor"
+            )
 
     except Exception as e:
         logger.error(f"Failed to undo: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -162,22 +216,33 @@ def undo_command(context: CommandContext) -> CommandResult:
     when="editorFocus",
 )
 def redo_command(context: CommandContext) -> CommandResult:
-    """Redo last undone operation using EditorService."""
+    """Redo last undone operation in active editor."""
     try:
-        editor_service = context.get_service(EditorService)
-        if not editor_service:
-            return CommandResult(success=False, error="EditorService not available")
+        # Get active editor widget from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = editor_service.redo()
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        if success:
-            return CommandResult(success=True)
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane or not active_pane.widget:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active widget")
+
+        # Check if it's an editor widget and has redo method
+        widget = active_pane.widget
+        if hasattr(widget, "redo"):
+            widget.redo()
+            return CommandResult(status=CommandStatus.SUCCESS)
         else:
-            return CommandResult(success=False, error="Failed to redo")
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Active widget is not an editor"
+            )
 
     except Exception as e:
         logger.error(f"Failed to redo: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -190,39 +255,47 @@ def redo_command(context: CommandContext) -> CommandResult:
     when="editorFocus",
 )
 def find_command(context: CommandContext) -> CommandResult:
-    """Find text in editor using EditorService."""
+    """Find text in active editor."""
     try:
-        editor_service = context.get_service(EditorService)
-        if not editor_service:
-            return CommandResult(success=False, error="EditorService not available")
+        # Get active editor widget from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        search_term = context.args.get("search_term", "")
-        case_sensitive = context.args.get("case_sensitive", False)
-        whole_word = context.args.get("whole_word", False)
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        if not search_term:
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane or not active_pane.widget:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active widget")
+
+        widget = active_pane.widget
+
+        search_term = context.parameters.get("search_term", "") if context.parameters else ""
+        # TODO: Add support for case_sensitive and whole_word search options
+
+        if not search_term and hasattr(widget, "textCursor"):
             # Get selected text as default search term
-            search_term = editor_service.get_selected_text() or ""
+            search_term = widget.textCursor().selectedText() or ""
 
-        if search_term:
-            matches = editor_service.find_text(
-                search_term, case_sensitive=case_sensitive, whole_word=whole_word
-            )
-
+        if search_term and hasattr(widget, "find"):
+            # Simple find - most editors support this
+            found = widget.find(search_term)
             return CommandResult(
-                success=True,
-                value={
+                status=CommandStatus.SUCCESS,
+                data={
                     "search_term": search_term,
-                    "matches": matches,
-                    "count": len(matches),
+                    "found": found,
                 },
             )
         else:
-            return CommandResult(success=False, error="No search term provided")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="No search term or find not supported"
+            )
 
     except Exception as e:
         logger.error(f"Failed to find text: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -235,20 +308,39 @@ def find_command(context: CommandContext) -> CommandResult:
     when="editorFocus",
 )
 def replace_command(context: CommandContext) -> CommandResult:
-    """Replace text in editor using EditorService."""
+    """Replace text in active editor."""
     try:
-        editor_service = context.get_service(EditorService)
-        if not editor_service:
-            return CommandResult(success=False, error="EditorService not available")
+        # Get active editor widget from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        search_term = context.args.get("search_term", "")
-        replace_term = context.args.get("replace_term", "")
-        all_occurrences = context.args.get("all", False)
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        if search_term:
-            count = editor_service.replace_text(
-                search_term, replace_term, all_occurrences=all_occurrences
-            )
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane or not active_pane.widget:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active widget")
+
+        widget = active_pane.widget
+
+        search_term = context.parameters.get("search_term", "") if context.parameters else ""
+        replace_term = context.parameters.get("replace_term", "") if context.parameters else ""
+        all_occurrences = context.parameters.get("all", False) if context.parameters else False
+
+        if search_term and hasattr(widget, "toPlainText"):
+            # Simple replace implementation
+            text = widget.toPlainText()
+            if all_occurrences:
+                new_text = text.replace(search_term, replace_term)
+                count = text.count(search_term)
+            else:
+                # Replace first occurrence
+                new_text = text.replace(search_term, replace_term, 1)
+                count = 1 if search_term in text else 0
+
+            if count > 0:
+                widget.setPlainText(new_text)
 
             # Show status message
             if context.main_window and hasattr(context.main_window, "status_bar"):
@@ -259,19 +351,19 @@ def replace_command(context: CommandContext) -> CommandResult:
                 context.main_window.status_bar.set_message(msg, 2000)
 
             return CommandResult(
-                success=True,
-                value={
+                status=CommandStatus.SUCCESS,
+                data={
                     "search_term": search_term,
                     "replace_term": replace_term,
                     "count": count,
                 },
             )
         else:
-            return CommandResult(success=False, error="No search term provided")
+            return CommandResult(status=CommandStatus.FAILURE, message="No search term provided")
 
     except Exception as e:
         logger.error(f"Failed to replace text: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 def register_edit_commands():

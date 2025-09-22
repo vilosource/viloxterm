@@ -7,11 +7,8 @@ import logging
 
 from PySide6.QtWidgets import QMessageBox
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
-from viloapp.services.state_service import StateService
-from viloapp.services.ui_service import UIService
-from viloapp.services.workspace_service import WorkspaceService
 
 logger = logging.getLogger(__name__)
 
@@ -39,29 +36,34 @@ def reset_app_state_command(context: CommandContext) -> CommandResult:
             )
 
             if reply != QMessageBox.Yes:
-                return CommandResult(success=False, error="User cancelled reset")
+                return CommandResult(
+                    status=CommandStatus.NOT_APPLICABLE, message="User cancelled reset"
+                )
 
-        state_service = context.get_service(StateService)
-        if not state_service:
-            return CommandResult(success=False, error="StateService not available")
+        # Reset saved state directly via QSettings
+        from PySide6.QtCore import QSettings
 
-        # Reset all saved state
-        state_service.reset_all_state()
+        settings = QSettings("ViloxTerm", "ViloxTerm")
+        settings.clear()
+        settings.sync()
 
-        # Reset UI to defaults
-        ui_service = context.get_service(UIService)
-        if ui_service:
-            ui_service.reset_layout()
+        # Reset model state if available
+        if context.model:
+            # Reset to default state
+            from viloapp.models.workspace_model import WidgetType
+
+            context.model.state.tabs.clear()
+            context.model.create_tab("Terminal 1", WidgetType.TERMINAL)
 
         # Show confirmation message
         if context.main_window and hasattr(context.main_window, "status_bar"):
             context.main_window.status_bar.set_message("Application state reset to defaults", 3000)
 
-        return CommandResult(success=True)
+        return CommandResult(status=CommandStatus.SUCCESS)
 
     except Exception as e:
         logger.error(f"Failed to reset app state: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -107,11 +109,11 @@ def show_service_info_command(context: CommandContext) -> CommandResult:
                 f"Services: {len(services)} registered", 3000
             )
 
-        return CommandResult(success=True, value=info)
+        return CommandResult(status=CommandStatus.SUCCESS, data=info)
 
     except Exception as e:
         logger.error(f"Failed to get service info: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -158,11 +160,11 @@ def show_command_info_command(context: CommandContext) -> CommandResult:
                 3000,
             )
 
-        return CommandResult(success=True, value=info)
+        return CommandResult(status=CommandStatus.SUCCESS, data=info)
 
     except Exception as e:
         logger.error(f"Failed to get command info: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -175,11 +177,22 @@ def show_command_info_command(context: CommandContext) -> CommandResult:
 def show_workspace_info_command(context: CommandContext) -> CommandResult:
     """Show workspace information."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Get workspace info directly from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        info = workspace_service.get_workspace_info()
+        info = {
+            "available": True,
+            "tab_count": len(context.model.state.tabs),
+            "active_tab_id": context.model.state.active_tab_id,
+            "pane_count": sum(
+                len(tab.tree.root.get_all_panes()) for tab in context.model.state.tabs
+            ),
+            "tabs": [
+                {"name": tab.name, "id": tab.id, "pane_count": len(tab.tree.root.get_all_panes())}
+                for tab in context.model.state.tabs
+            ],
+        }
 
         # Show summary in status bar
         if context.main_window and hasattr(context.main_window, "status_bar"):
@@ -189,11 +202,11 @@ def show_workspace_info_command(context: CommandContext) -> CommandResult:
                 msg = "Workspace: not available"
             context.main_window.status_bar.set_message(msg, 3000)
 
-        return CommandResult(success=True, value=info)
+        return CommandResult(status=CommandStatus.SUCCESS, data=info)
 
     except Exception as e:
         logger.error(f"Failed to get workspace info: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -206,7 +219,11 @@ def show_workspace_info_command(context: CommandContext) -> CommandResult:
 def test_command(context: CommandContext) -> CommandResult:
     """Simple test command for debugging."""
     try:
-        test_message = context.args.get("message", "Test command executed successfully!")
+        test_message = (
+            context.parameters.get("message", "Test command executed successfully!")
+            if context.parameters
+            else "Test command executed successfully!"
+        )
 
         # Show in status bar
         if context.main_window and hasattr(context.main_window, "status_bar"):
@@ -214,11 +231,11 @@ def test_command(context: CommandContext) -> CommandResult:
 
         logger.info(f"Test command executed: {test_message}")
 
-        return CommandResult(success=True, value={"message": test_message})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"message": test_message})
 
     except Exception as e:
         logger.error(f"Test command failed: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -242,11 +259,11 @@ def reload_window_command(context: CommandContext) -> CommandResult:
 
         logger.info("Window reload command executed")
 
-        return CommandResult(success=True)
+        return CommandResult(status=CommandStatus.SUCCESS)
 
     except Exception as e:
         logger.error(f"Failed to reload window: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -262,15 +279,15 @@ def toggle_dev_mode_command(context: CommandContext) -> CommandResult:
         # This would toggle development features like extra logging,
         # debug panels, etc. For now, just a placeholder
 
-        state_service = context.get_service(StateService)
-        current_dev_mode = False
+        # Toggle development features directly via QSettings
+        from PySide6.QtCore import QSettings
 
-        if state_service:
-            current_dev_mode = state_service.get_preference("dev_mode", False)
-            new_dev_mode = not current_dev_mode
-            state_service.save_preference("dev_mode", new_dev_mode)
-        else:
-            new_dev_mode = not current_dev_mode
+        settings = QSettings("ViloxTerm", "ViloxTerm")
+
+        current_dev_mode = settings.value("dev_mode", False, type=bool)
+        new_dev_mode = not current_dev_mode
+        settings.setValue("dev_mode", new_dev_mode)
+        settings.sync()
 
         # Show status
         if context.main_window and hasattr(context.main_window, "status_bar"):
@@ -279,11 +296,11 @@ def toggle_dev_mode_command(context: CommandContext) -> CommandResult:
 
         logger.info(f"Developer mode {'enabled' if new_dev_mode else 'disabled'}")
 
-        return CommandResult(success=True, value={"dev_mode": new_dev_mode})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"dev_mode": new_dev_mode})
 
     except Exception as e:
         logger.error(f"Failed to toggle dev mode: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 def register_debug_commands():

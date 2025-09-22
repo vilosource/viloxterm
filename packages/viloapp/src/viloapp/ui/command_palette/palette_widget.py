@@ -573,6 +573,10 @@ class CommandPaletteWidget(QDialog):
         """Apply current theme to command palette."""
         colors = self._get_theme_colors()
 
+        # Ensure colors is a dictionary (fallback to defaults if None)
+        if not colors:
+            colors = {"editor.background": "#252526", "widget.border": "#3e3e42"}
+
         # Update main container style
         if hasattr(self, "main_frame"):
             self.main_frame.setStyleSheet(

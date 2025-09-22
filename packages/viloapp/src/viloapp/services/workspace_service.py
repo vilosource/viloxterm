@@ -10,15 +10,9 @@ import logging
 from typing import Any, Optional
 
 from viloapp.core.settings.app_defaults import get_default_split_direction
-from viloapp.interfaces.model_interfaces import IWorkspaceModel
-from viloapp.models import (
-    SplitPaneRequest,
-    WidgetStateUpdateRequest,
-    WidgetType,
-)
+from viloapp.models.compatibility import SplitPaneRequest, WidgetStateUpdateRequest
+from viloapp.models.workspace_model import WidgetType, WorkspaceModel
 from viloapp.services.base import Service
-from viloapp.services.workspace_pane_manager import WorkspacePaneManager
-from viloapp.services.workspace_tab_manager import WorkspaceTabManager
 from viloapp.services.workspace_widget_registry import WorkspaceWidgetRegistry
 
 logger = logging.getLogger(__name__)
@@ -32,7 +26,7 @@ class WorkspaceService(Service):
     backward compatibility with existing managers.
     """
 
-    def __init__(self, model: Optional[IWorkspaceModel] = None, workspace=None):
+    def __init__(self, model: Optional[WorkspaceModel] = None, workspace=None):
         """
         Initialize the workspace service.
 
@@ -44,36 +38,25 @@ class WorkspaceService(Service):
         self._model = model
         self._workspace = workspace  # Keep for backward compatibility during transition
 
-        # Initialize specialized managers
+        # Initialize widget registry and factories for plugins
         self._widget_registry = WorkspaceWidgetRegistry()
-        self._tab_manager = WorkspaceTabManager(model, self._widget_registry) if model else None
-        self._pane_manager = WorkspacePaneManager(model) if model else None
-
-        # Initialize widget factories for plugins
         self._widget_factories = {}
 
     def get_workspace(self):
         """Get the workspace instance."""
         return self._workspace
 
-    def set_model(self, model: IWorkspaceModel):
+    def set_model(self, model: WorkspaceModel):
         """Set the workspace model."""
         self._model = model
 
-    def get_model(self) -> Optional[IWorkspaceModel]:
+    def get_model(self) -> Optional[WorkspaceModel]:
         """Get the workspace model."""
         return self._model
 
     def set_workspace(self, workspace):
         """Set the workspace instance."""
         self._workspace = workspace
-        # Update all managers with new workspace
-        if self._tab_manager:
-            self._tab_manager.set_workspace(workspace)
-            self._tab_manager.set_model(self._model)
-        if self._pane_manager:
-            self._pane_manager.set_workspace(workspace)
-            self._pane_manager.set_model(self._model)
 
     def initialize(self, context: dict[str, Any]) -> None:
         """Initialize the service with application context."""

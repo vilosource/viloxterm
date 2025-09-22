@@ -274,9 +274,24 @@ class SignalManager:
 
     def __del__(self):
         """Cleanup on deletion."""
-        if self.has_connections():
-            logger.warning(
-                f"SignalManager for {self.owner} being deleted with "
-                f"{self.get_connection_count()} active connections"
-            )
-            self.disconnect_all()
+        try:
+            # Check if owner still exists before accessing it
+            if hasattr(self, "owner") and self.owner is not None:
+                # Try to access owner, but catch RuntimeError if C++ object is deleted
+                try:
+                    owner_repr = repr(self.owner)
+                except RuntimeError:
+                    # C++ object already deleted, just clean up silently
+                    if hasattr(self, "_connections"):
+                        self._connections.clear()
+                    return
+
+                if self.has_connections():
+                    logger.warning(
+                        f"SignalManager for {owner_repr} being deleted with "
+                        f"{self.get_connection_count()} active connections"
+                    )
+                    self.disconnect_all()
+        except Exception:
+            # Any other error during cleanup, just ignore
+            pass

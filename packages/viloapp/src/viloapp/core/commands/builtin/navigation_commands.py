@@ -5,12 +5,10 @@ Navigation-related commands using the service layer.
 
 import logging
 
-from viloapp.core.commands.base import Command, CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus, FunctionCommand
 from viloapp.core.commands.decorators import command
 from viloapp.core.commands.registry import command_registry
 from viloapp.services.service_locator import ServiceLocator
-from viloapp.services.ui_service import UIService
-from viloapp.services.workspace_service import WorkspaceService
 
 logger = logging.getLogger(__name__)
 
@@ -29,20 +27,29 @@ logger = logging.getLogger(__name__)
 def first_tab_command(context: CommandContext) -> CommandResult:
     """Switch to the first tab."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly instead of service
+        if not context.model or not hasattr(context.model, "state"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = workspace_service.switch_to_tab(0)
+        if not context.model.state.tabs:
+            return CommandResult(status=CommandStatus.FAILURE, message="No tabs available")
+
+        # Get first tab and switch to it
+        first_tab = context.model.state.tabs[0]
+        success = context.model.set_active_tab(first_tab.id)
 
         if success:
-            return CommandResult(success=True, value={"tab_index": 0})
+            return CommandResult(
+                status=CommandStatus.SUCCESS, data={"tab_index": 0, "tab_id": first_tab.id}
+            )
         else:
-            return CommandResult(success=False, error="No tabs available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Failed to switch to first tab"
+            )
 
     except Exception as e:
         logger.error(f"Failed to switch to first tab: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -56,27 +63,35 @@ def first_tab_command(context: CommandContext) -> CommandResult:
 def last_tab_command(context: CommandContext) -> CommandResult:
     """Switch to the last tab."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly instead of service
+        if not context.model or not hasattr(context.model, "state"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        count = workspace_service.get_tab_count()
-        if count > 0:
-            success = workspace_service.switch_to_tab(count - 1)
+        if not context.model.state.tabs:
+            return CommandResult(status=CommandStatus.FAILURE, message="No tabs available")
 
-            if success:
-                return CommandResult(success=True, value={"tab_index": count - 1})
+        # Get last tab and switch to it
+        last_tab = context.model.state.tabs[-1]
+        last_index = len(context.model.state.tabs) - 1
+        success = context.model.set_active_tab(last_tab.id)
 
-        return CommandResult(success=False, error="No tabs available")
+        if success:
+            return CommandResult(
+                status=CommandStatus.SUCCESS, data={"tab_index": last_index, "tab_id": last_tab.id}
+            )
+        else:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Failed to switch to last tab"
+            )
 
     except Exception as e:
         logger.error(f"Failed to switch to last tab: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
-    id="workbench.action.closeOtherTabs",
-    title="Close Other Tabs",
+    id="navigation.closeOtherTabs",
+    title="Close Other Tabs (Navigation)",
     category="Navigation",
     description="Close all tabs except the current one",
     when="workbench.tabs.count > 1",
@@ -84,33 +99,34 @@ def last_tab_command(context: CommandContext) -> CommandResult:
 def close_other_tabs_command(context: CommandContext) -> CommandResult:
     """Close all tabs except the current one."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly instead of service
+        if not context.model or not hasattr(context.model, "state"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        # Get current tab info
-        current_index = workspace_service.get_current_tab_index()
-        total_tabs = workspace_service.get_tab_count()
+        if len(context.model.state.tabs) <= 1:
+            return CommandResult(status=CommandStatus.FAILURE, message="Only one tab open")
 
-        if total_tabs <= 1:
-            return CommandResult(success=False, error="Only one tab open")
+        # Get current tab
+        current_tab_id = context.model.state.active_tab_id
+        if not current_tab_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active tab")
 
-        # Close tabs from right to left to maintain indices
+        # Close all tabs except the current one
         closed_count = 0
-        for i in range(total_tabs - 1, -1, -1):
-            if i != current_index:
-                if workspace_service.close_tab(i):
-                    closed_count += 1
+        tabs_to_close = [tab for tab in context.model.state.tabs if tab.id != current_tab_id]
 
-        # Show status message
-        if context.main_window and hasattr(context.main_window, "status_bar"):
-            context.main_window.status_bar.set_message(f"Closed {closed_count} other tabs", 2000)
+        for tab in tabs_to_close:
+            if context.model.close_tab(tab.id):
+                closed_count += 1
 
-        return CommandResult(success=True, value={"closed_count": closed_count})
+        return CommandResult(
+            status=CommandStatus.SUCCESS,
+            data={"closed_count": closed_count, "message": f"Closed {closed_count} other tabs"},
+        )
 
     except Exception as e:
         logger.error(f"Failed to close other tabs: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -124,27 +140,35 @@ def close_other_tabs_command(context: CommandContext) -> CommandResult:
 def close_all_tabs_command(context: CommandContext) -> CommandResult:
     """Close all tabs."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "state"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        total_tabs = workspace_service.get_tab_count()
+        if not context.model.state.tabs:
+            return CommandResult(status=CommandStatus.FAILURE, message="No tabs to close")
 
-        # Close all tabs from right to left
+        # Close all tabs except the last one (can't close all)
         closed_count = 0
-        for i in range(total_tabs - 1, -1, -1):
-            if workspace_service.close_tab(i):
+        tabs_to_close = list(context.model.state.tabs[:-1])  # Keep last tab
+
+        for tab in tabs_to_close:
+            if context.model.close_tab(tab.id):
                 closed_count += 1
 
-        # Show status message
-        if context.main_window and hasattr(context.main_window, "status_bar"):
-            context.main_window.status_bar.set_message(f"Closed {closed_count} tabs", 2000)
+        # Create a new default tab if we closed everything
+        if len(context.model.state.tabs) == 0:
+            from viloapp.models.workspace_model import WidgetType
 
-        return CommandResult(success=True, value={"closed_count": closed_count})
+            context.model.create_tab("Default", WidgetType.TERMINAL)
+
+        return CommandResult(
+            status=CommandStatus.SUCCESS,
+            data={"closed_count": closed_count, "message": f"Closed {closed_count} tabs"},
+        )
 
     except Exception as e:
         logger.error(f"Failed to close all tabs: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 # ============= Directional Pane Navigation =============
@@ -161,20 +185,19 @@ def close_all_tabs_command(context: CommandContext) -> CommandResult:
 def focus_left_pane_command(context: CommandContext) -> CommandResult:
     """Focus the pane to the left."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        if not context.model or not hasattr(context.model, "focus_pane_left"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = workspace_service.navigate_in_direction("left")
+        success = context.model.focus_pane_left()
 
         if success:
-            return CommandResult(success=True)
+            return CommandResult(status=CommandStatus.SUCCESS, message="Focused left pane")
         else:
-            return CommandResult(success=False, error="No pane to the left")
+            return CommandResult(status=CommandStatus.NOT_APPLICABLE, message="No pane to the left")
 
     except Exception as e:
         logger.error(f"Failed to focus left pane: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -188,20 +211,21 @@ def focus_left_pane_command(context: CommandContext) -> CommandResult:
 def focus_right_pane_command(context: CommandContext) -> CommandResult:
     """Focus the pane to the right."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        if not context.model or not hasattr(context.model, "focus_pane_right"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = workspace_service.navigate_in_direction("right")
+        success = context.model.focus_pane_right()
 
         if success:
-            return CommandResult(success=True)
+            return CommandResult(status=CommandStatus.SUCCESS, message="Focused right pane")
         else:
-            return CommandResult(success=False, error="No pane to the right")
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="No pane to the right"
+            )
 
     except Exception as e:
         logger.error(f"Failed to focus right pane: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -215,20 +239,19 @@ def focus_right_pane_command(context: CommandContext) -> CommandResult:
 def focus_above_pane_command(context: CommandContext) -> CommandResult:
     """Focus the pane above."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        if not context.model or not hasattr(context.model, "focus_pane_up"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = workspace_service.navigate_in_direction("up")
+        success = context.model.focus_pane_up()
 
         if success:
-            return CommandResult(success=True)
+            return CommandResult(status=CommandStatus.SUCCESS, message="Focused pane above")
         else:
-            return CommandResult(success=False, error="No pane above")
+            return CommandResult(status=CommandStatus.NOT_APPLICABLE, message="No pane above")
 
     except Exception as e:
         logger.error(f"Failed to focus above pane: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -242,20 +265,19 @@ def focus_above_pane_command(context: CommandContext) -> CommandResult:
 def focus_below_pane_command(context: CommandContext) -> CommandResult:
     """Focus the pane below."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        if not context.model or not hasattr(context.model, "focus_pane_down"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = workspace_service.navigate_in_direction("down")
+        success = context.model.focus_pane_down()
 
         if success:
-            return CommandResult(success=True)
+            return CommandResult(status=CommandStatus.SUCCESS, message="Focused pane below")
         else:
-            return CommandResult(success=False, error="No pane below")
+            return CommandResult(status=CommandStatus.NOT_APPLICABLE, message="No pane below")
 
     except Exception as e:
         logger.error(f"Failed to focus below pane: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 # ============= UI Navigation =============
@@ -272,26 +294,32 @@ def focus_below_pane_command(context: CommandContext) -> CommandResult:
 def focus_sidebar_command(context: CommandContext) -> CommandResult:
     """Focus the sidebar."""
     try:
-        # This would focus the sidebar widget
-        # For now, just ensure it's visible and show a status message
+        # Use main window directly to manage sidebar
+        # This is a UI-specific operation that doesn't belong in the model
+        main_window = context.parameters.get("main_window")
+        if not main_window:
+            # Try to get main window from service locator as fallback
+            main_window = ServiceLocator.get_instance().get("main_window")
+            if not main_window:
+                return CommandResult(
+                    status=CommandStatus.FAILURE, message="Main window not available"
+                )
 
-        ui_service = context.get_service(UIService)
-        if not ui_service:
-            return CommandResult(success=False, error="UIService not available")
-
-        # Ensure sidebar is visible
-        if not ui_service.is_sidebar_visible():
-            ui_service.show_sidebar()
+        # Ensure sidebar is visible and focus it
+        if hasattr(main_window, "sidebar"):
+            if not main_window.sidebar.isVisible():
+                main_window.sidebar.setVisible(True)
+            main_window.sidebar.setFocus()
 
         # Show status message
-        if context.main_window and hasattr(context.main_window, "status_bar"):
-            context.main_window.status_bar.set_message("Sidebar focused", 1000)
+        if hasattr(main_window, "status_bar"):
+            main_window.status_bar.set_message("Sidebar focused", 1000)
 
-        return CommandResult(success=True)
+        return CommandResult(status=CommandStatus.SUCCESS)
 
     except Exception as e:
         logger.error(f"Failed to focus sidebar: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -305,22 +333,30 @@ def focus_sidebar_command(context: CommandContext) -> CommandResult:
 def focus_active_pane_command(context: CommandContext) -> CommandResult:
     """Focus the active pane."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "state"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        active_pane_id = workspace_service.get_active_pane_id()
-        if active_pane_id:
-            success = workspace_service.focus_pane(active_pane_id)
+        # Get active pane from model
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-            if success:
-                return CommandResult(success=True, value={"pane_id": active_pane_id})
+        active_pane_id = active_tab.active_pane_id
 
-        return CommandResult(success=False, error="No active pane")
+        # Set focus on the active pane (already active, but ensures focus)
+        success = context.model.set_active_pane(active_tab.id, active_pane_id)
+
+        if success:
+            return CommandResult(status=CommandStatus.SUCCESS, data={"pane_id": active_pane_id})
+        else:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Failed to focus active pane"
+            )
 
     except Exception as e:
         logger.error(f"Failed to focus active pane: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 # ============= Pane Management =============
@@ -337,29 +373,24 @@ def focus_active_pane_command(context: CommandContext) -> CommandResult:
 def maximize_pane_command(context: CommandContext) -> CommandResult:
     """Maximize the active pane."""
     try:
-        # This is a placeholder for pane maximization
-        # In a full implementation, this would temporarily hide other panes
-        # or adjust splitter ratios to give maximum space to the active pane
+        # Use model directly
+        if not context.model or not hasattr(context.model, "maximize_pane"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Maximize or restore the active pane
+        success = context.model.maximize_pane()
 
-        active_pane_id = workspace_service.get_active_pane_id()
-        if not active_pane_id:
-            return CommandResult(success=False, error="No active pane")
-
-        # Show status message (placeholder functionality)
-        if context.main_window and hasattr(context.main_window, "status_bar"):
-            context.main_window.status_bar.set_message(
-                f"Pane {active_pane_id} maximized (placeholder)", 2000
-            )
-
-        return CommandResult(success=True, value={"pane_id": active_pane_id})
+        if success:
+            # Show status message
+            if context.main_window and hasattr(context.main_window, "status_bar"):
+                context.main_window.status_bar.set_message("Pane maximized/restored", 2000)
+            return CommandResult(status=CommandStatus.SUCCESS)
+        else:
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to maximize pane")
 
     except Exception as e:
         logger.error(f"Failed to maximize pane: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -372,29 +403,24 @@ def maximize_pane_command(context: CommandContext) -> CommandResult:
 def even_pane_sizes_command(context: CommandContext) -> CommandResult:
     """Make all panes the same size."""
     try:
-        # This is a placeholder for evening pane sizes
-        # In a full implementation, this would adjust splitter ratios
-        # to make all panes equal size
+        # Use model directly
+        if not context.model or not hasattr(context.model, "even_pane_sizes"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Even all pane sizes
+        success = context.model.even_pane_sizes()
 
-        pane_count = workspace_service.get_pane_count()
-        if pane_count <= 1:
-            return CommandResult(success=False, error="Only one pane")
-
-        # Show status message (placeholder functionality)
-        if context.main_window and hasattr(context.main_window, "status_bar"):
-            context.main_window.status_bar.set_message(
-                f"Evened {pane_count} pane sizes (placeholder)", 2000
-            )
-
-        return CommandResult(success=True, value={"pane_count": pane_count})
+        if success:
+            # Show status message
+            if context.main_window and hasattr(context.main_window, "status_bar"):
+                context.main_window.status_bar.set_message("Pane sizes evened", 2000)
+            return CommandResult(status=CommandStatus.SUCCESS)
+        else:
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to even pane sizes")
 
     except Exception as e:
         logger.error(f"Failed to even pane sizes: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -407,35 +433,39 @@ def even_pane_sizes_command(context: CommandContext) -> CommandResult:
 def move_pane_to_new_tab_command(context: CommandContext) -> CommandResult:
     """Move the active pane to a new tab."""
     try:
-        # This is a placeholder for moving panes between tabs
-        # In a full implementation, this would extract the pane content
-        # and create a new tab with it
+        # Use model directly
+        if not context.model or not hasattr(context.model, "extract_pane_to_tab"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Extract active pane to new tab
+        new_tab_id = context.model.extract_pane_to_tab()
 
-        active_pane_id = workspace_service.get_active_pane_id()
-        if not active_pane_id:
-            return CommandResult(success=False, error="No active pane")
+        if new_tab_id:
+            # Get tab index for display
+            new_tab_index = -1
+            for i, tab in enumerate(context.model.state.tabs):
+                if tab.id == new_tab_id:
+                    new_tab_index = i
+                    break
 
-        # For now, just create a new editor tab as placeholder
-        new_tab_index = workspace_service.add_editor_tab("Moved Pane")
+            # Show status message
+            if context.main_window and hasattr(context.main_window, "status_bar"):
+                context.main_window.status_bar.set_message(
+                    f"Pane moved to new tab {new_tab_index}", 2000
+                )
 
-        # Show status message
-        if context.main_window and hasattr(context.main_window, "status_bar"):
-            context.main_window.status_bar.set_message(
-                f"Pane moved to new tab {new_tab_index} (placeholder)", 2000
+            return CommandResult(
+                status=CommandStatus.SUCCESS,
+                data={"new_tab_id": new_tab_id, "new_tab_index": new_tab_index},
             )
-
-        return CommandResult(
-            success=True,
-            value={"source_pane_id": active_pane_id, "new_tab_index": new_tab_index},
-        )
+        else:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Cannot extract the only pane"
+            )
 
     except Exception as e:
         logger.error(f"Failed to move pane to new tab: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 def focus_next_group_handler(context: CommandContext) -> CommandResult:
@@ -443,7 +473,7 @@ def focus_next_group_handler(context: CommandContext) -> CommandResult:
     try:
         main_window = ServiceLocator.get_instance().get("main_window")
         if not main_window:
-            return CommandResult(success=False, error="Main window not available")
+            return CommandResult(status=CommandStatus.FAILURE, message="Main window not available")
 
         # Focus cycle: Activity Bar -> Sidebar -> Editor -> Terminal -> Activity Bar
         from PySide6.QtWidgets import QApplication
@@ -458,11 +488,11 @@ def focus_next_group_handler(context: CommandContext) -> CommandResult:
             else:
                 main_window.activity_bar.setFocus()
 
-        return CommandResult(success=True)
+        return CommandResult(status=CommandStatus.SUCCESS)
 
     except Exception as e:
         logger.error(f"Failed to focus next group: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 def focus_previous_group_handler(context: CommandContext) -> CommandResult:
@@ -470,7 +500,7 @@ def focus_previous_group_handler(context: CommandContext) -> CommandResult:
     try:
         main_window = ServiceLocator.get_instance().get("main_window")
         if not main_window:
-            return CommandResult(success=False, error="Main window not available")
+            return CommandResult(status=CommandStatus.FAILURE, message="Main window not available")
 
         # Reverse focus cycle
         from PySide6.QtWidgets import QApplication
@@ -485,17 +515,17 @@ def focus_previous_group_handler(context: CommandContext) -> CommandResult:
             else:
                 main_window.activity_bar.setFocus()
 
-        return CommandResult(success=True)
+        return CommandResult(status=CommandStatus.SUCCESS)
 
     except Exception as e:
         logger.error(f"Failed to focus previous group: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 def get_focus_navigation_commands():
     """Get focus navigation commands."""
     return [
-        Command(
+        FunctionCommand(
             id="workbench.action.focusNextGroup",
             title="Focus Next Group",
             category="Navigation",
@@ -504,7 +534,7 @@ def get_focus_navigation_commands():
             shortcut="f6",
             keywords=["focus", "next", "group", "navigation"],
         ),
-        Command(
+        FunctionCommand(
             id="workbench.action.focusPreviousGroup",
             title="Focus Previous Group",
             category="Navigation",
@@ -521,8 +551,8 @@ def register_navigation_commands():
     # Register F6/Shift+F6 commands
     commands = get_focus_navigation_commands()
 
-    for command in commands:
-        command_registry.register(command)
+    for cmd in commands:
+        command_registry.register(cmd)
 
     # The @command decorator automatically registers other commands
     # This function ensures the module is imported

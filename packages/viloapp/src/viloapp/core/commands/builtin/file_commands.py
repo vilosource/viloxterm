@@ -5,11 +5,8 @@ File-related commands using the service layer.
 
 import logging
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
-from viloapp.services.state_service import StateService
-from viloapp.services.terminal_service import TerminalService
-from viloapp.services.workspace_service import WorkspaceService
 
 logger = logging.getLogger(__name__)
 
@@ -23,21 +20,30 @@ logger = logging.getLogger(__name__)
     icon="file-plus",
 )
 def new_editor_tab_command(context: CommandContext) -> CommandResult:
-    """Create a new editor tab using WorkspaceService."""
+    """Create a new editor tab using model directly."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "create_tab"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        name = context.args.get("name")
-        index = workspace_service.add_editor_tab(name)
+        name = context.parameters.get("name") if context.parameters else None
+        if not name:
+            # Count existing editor tabs for naming
+            editor_count = sum(1 for tab in context.model.state.tabs if "Editor" in tab.name)
+            name = f"Editor {editor_count + 1}"
+
+        # Create tab with editor widget type
+        from viloapp.models.workspace_model import WidgetType
+
+        tab_id = context.model.create_tab(name, WidgetType.EDITOR)
+        index = len(context.model.state.tabs) - 1
 
         return CommandResult(
-            success=True, value={"index": index, "name": name or f"Editor {index + 1}"}
+            status=CommandStatus.SUCCESS, data={"index": index, "name": name, "tab_id": tab_id}
         )
     except Exception as e:
         logger.error(f"Failed to create editor tab: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -49,33 +55,46 @@ def new_editor_tab_command(context: CommandContext) -> CommandResult:
     icon="terminal",
 )
 def new_terminal_tab_command(context: CommandContext) -> CommandResult:
-    """Create a new terminal tab using WorkspaceService and TerminalService."""
+    """Create a new terminal tab using model directly."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        terminal_service = context.get_service(TerminalService)
+        # Use model directly
+        if not context.model or not hasattr(context.model, "create_tab"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Terminal service is external, so we keep it for server management
+        # But we get it from ServiceLocator instead of context
+        try:
+            from viloapp.services.service_locator import ServiceLocator
+            from viloapp.services.terminal_service import TerminalService
 
-        # Ensure terminal server is running
-        if terminal_service and not terminal_service.is_server_running():
-            terminal_service.start_server()
+            terminal_service = ServiceLocator.get_instance().get(TerminalService)
 
-        name = context.args.get("name")
-        index = workspace_service.add_terminal_tab(name)
+            # Ensure terminal server is running
+            if terminal_service and not terminal_service.is_server_running():
+                terminal_service.start_server()
+        except Exception:
+            # Terminal service is optional
+            pass
 
-        # Create a terminal session for this tab
-        if terminal_service:
-            session_id = terminal_service.create_session()
-            logger.debug(f"Created terminal session {session_id} for tab {index}")
+        name = context.parameters.get("name") if context.parameters else None
+        if not name:
+            # Count existing terminal tabs for naming
+            terminal_count = sum(1 for tab in context.model.state.tabs if "Terminal" in tab.name)
+            name = f"Terminal {terminal_count + 1}"
+
+        # Create tab with terminal widget type
+        from viloapp.models.workspace_model import WidgetType
+
+        tab_id = context.model.create_tab(name, WidgetType.TERMINAL)
+        index = len(context.model.state.tabs) - 1
 
         return CommandResult(
-            success=True,
-            value={"index": index, "name": name or f"Terminal {index + 1}"},
+            status=CommandStatus.SUCCESS,
+            data={"index": index, "name": name, "tab_id": tab_id},
         )
     except Exception as e:
         logger.error(f"Failed to create terminal tab: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -100,23 +119,46 @@ def new_terminal_command(context: CommandContext) -> CommandResult:
     when="workbench.tabs.count > 0",
 )
 def close_tab_command(context: CommandContext) -> CommandResult:
-    """Close the current tab using WorkspaceService."""
+    """Close the current tab using model directly."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "close_tab"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        index = context.args.get("index")  # Optional specific tab index
-        success = workspace_service.close_tab(index)
+        index = context.parameters.get("index") if context.parameters else None
+
+        # If index provided, get tab by index
+        if index is not None:
+            tabs = context.model.state.tabs
+            if 0 <= index < len(tabs):
+                tab_id = tabs[index].id
+            else:
+                return CommandResult(
+                    status=CommandStatus.FAILURE, message=f"Invalid tab index: {index}"
+                )
+        else:
+            # Use active tab
+            active_tab = context.model.state.get_active_tab()
+            if not active_tab:
+                return CommandResult(status=CommandStatus.FAILURE, message="No active tab")
+            tab_id = active_tab.id
+
+        # Don't close last tab
+        if len(context.model.state.tabs) == 1:
+            return CommandResult(
+                status=CommandStatus.NOT_APPLICABLE, message="Cannot close last tab"
+            )
+
+        success = context.model.close_tab(tab_id)
 
         if success:
-            return CommandResult(success=True)
+            return CommandResult(status=CommandStatus.SUCCESS)
         else:
-            return CommandResult(success=False, error="Failed to close tab")
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to close tab")
 
     except Exception as e:
         logger.error(f"Failed to close tab: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -127,26 +169,37 @@ def close_tab_command(context: CommandContext) -> CommandResult:
     shortcut="ctrl+s",
 )
 def save_state_command(context: CommandContext) -> CommandResult:
-    """Save application state using StateService."""
+    """Save application state using model directly."""
     try:
-        state_service = context.get_service(StateService)
-        if not state_service:
-            return CommandResult(success=False, error="StateService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "save_state"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        state_service.save_all_state()
+        state_dict = context.model.save_state()
 
-        # Show status message using UIService
-        from viloapp.services.ui_service import UIService
+        # Save to persistent storage (QSettings)
+        try:
+            from PySide6.QtCore import QSettings
 
-        ui_service = context.get_service(UIService)
-        if ui_service:
-            ui_service.set_status_message("State saved", 2000)
+            settings = QSettings()
+            import json
 
-        return CommandResult(success=True)
+            settings.setValue("Workspace/state", json.dumps(state_dict))
+            settings.sync()
+        except Exception as e:
+            logger.warning(f"Failed to persist state: {e}")
+
+        # Show status message
+        if context.parameters and context.parameters.get("main_window"):
+            main_window = context.parameters.get("main_window")
+            if hasattr(main_window, "status_bar"):
+                main_window.status_bar.set_message("State saved", 2000)
+
+        return CommandResult(status=CommandStatus.SUCCESS)
 
     except Exception as e:
         logger.error(f"Failed to save state: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -156,29 +209,41 @@ def save_state_command(context: CommandContext) -> CommandResult:
     description="Restore the saved application state",
 )
 def restore_state_command(context: CommandContext) -> CommandResult:
-    """Restore application state using StateService."""
+    """Restore application state using model directly."""
     try:
-        state_service = context.get_service(StateService)
-        if not state_service:
-            return CommandResult(success=False, error="StateService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "load_state"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        success = state_service.restore_all_state()
+        # Load from persistent storage (QSettings)
+        try:
+            from PySide6.QtCore import QSettings
 
-        if success:
-            # Show status message using UIService
-            from viloapp.services.ui_service import UIService
+            settings = QSettings()
+            import json
 
-            ui_service = context.get_service(UIService)
-            if ui_service:
-                ui_service.set_status_message("State restored", 2000)
+            state_json = settings.value("Workspace/state")
+            if state_json:
+                state_dict = json.loads(state_json)
+                context.model.load_state(state_dict)
 
-            return CommandResult(success=True)
-        else:
-            return CommandResult(success=False, error="No saved state found")
+                # Show status message
+                if context.parameters and context.parameters.get("main_window"):
+                    main_window = context.parameters.get("main_window")
+                    if hasattr(main_window, "status_bar"):
+                        main_window.status_bar.set_message("State restored", 2000)
+
+                return CommandResult(status=CommandStatus.SUCCESS)
+            else:
+                return CommandResult(status=CommandStatus.FAILURE, message="No saved state found")
+        except Exception as e:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Failed to load state: {str(e)}"
+            )
 
     except Exception as e:
         logger.error(f"Failed to restore state: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -190,36 +255,44 @@ def restore_state_command(context: CommandContext) -> CommandResult:
 def replace_with_terminal_command(context: CommandContext) -> CommandResult:
     """Replace current pane with terminal."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "change_pane_widget_type"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
         # Get the pane and pane_id from context
-        pane = context.args.get("pane")
-        pane_id = context.args.get("pane_id")
-
-        # Get current split widget through WorkspaceService
-        split_widget = workspace_service.get_current_split_widget()
-        if not split_widget or not hasattr(split_widget, "model"):
-            return CommandResult(success=False, error="No split widget available")
+        pane = context.parameters.get("pane") if context.parameters else None
+        pane_id = context.parameters.get("pane_id") if context.parameters else None
 
         # Try to get pane_id if not provided
         if not pane_id:
             if pane and hasattr(pane, "leaf_node") and hasattr(pane.leaf_node, "id"):
                 pane_id = pane.leaf_node.id
+            else:
+                # Use active pane
+                active_tab = context.model.state.get_active_tab()
+                if active_tab and active_tab.active_pane_id:
+                    pane_id = active_tab.active_pane_id
 
         if pane_id:
-            # Change the pane type through service
-            success = workspace_service.change_pane_widget_type(pane_id, "terminal")
+            # Change the pane type through model
+            from viloapp.models.workspace_model import WidgetType
+
+            success = context.model.change_pane_widget_type(pane_id, WidgetType.TERMINAL)
             if success:
                 logger.info(f"Replaced pane {pane_id} with terminal")
-                return CommandResult(success=True)
+                return CommandResult(status=CommandStatus.SUCCESS)
+            else:
+                return CommandResult(
+                    status=CommandStatus.FAILURE, message="Failed to change pane type"
+                )
 
-        return CommandResult(success=False, error="Could not identify pane for replacement")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message="Could not identify pane for replacement"
+        )
 
     except Exception as e:
         logger.error(f"Failed to replace pane with terminal: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -231,36 +304,44 @@ def replace_with_terminal_command(context: CommandContext) -> CommandResult:
 def replace_with_editor_command(context: CommandContext) -> CommandResult:
     """Replace current pane with text editor."""
     try:
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Use model directly
+        if not context.model or not hasattr(context.model, "change_pane_widget_type"):
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
         # Get the pane and pane_id from context
-        pane = context.args.get("pane")
-        pane_id = context.args.get("pane_id")
-
-        # Get current split widget through WorkspaceService
-        split_widget = workspace_service.get_current_split_widget()
-        if not split_widget or not hasattr(split_widget, "model"):
-            return CommandResult(success=False, error="No split widget available")
+        pane = context.parameters.get("pane") if context.parameters else None
+        pane_id = context.parameters.get("pane_id") if context.parameters else None
 
         # Try to get pane_id if not provided
         if not pane_id:
             if pane and hasattr(pane, "leaf_node") and hasattr(pane.leaf_node, "id"):
                 pane_id = pane.leaf_node.id
+            else:
+                # Use active pane
+                active_tab = context.model.state.get_active_tab()
+                if active_tab and active_tab.active_pane_id:
+                    pane_id = active_tab.active_pane_id
 
         if pane_id:
-            # Change the pane type through service
-            success = workspace_service.change_pane_widget_type(pane_id, "editor")
+            # Change the pane type through model
+            from viloapp.models.workspace_model import WidgetType
+
+            success = context.model.change_pane_widget_type(pane_id, WidgetType.EDITOR)
             if success:
                 logger.info(f"Replaced pane {pane_id} with text editor")
-                return CommandResult(success=True)
+                return CommandResult(status=CommandStatus.SUCCESS)
+            else:
+                return CommandResult(
+                    status=CommandStatus.FAILURE, message="Failed to change pane type"
+                )
 
-        return CommandResult(success=False, error="Could not identify pane for replacement")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message="Could not identify pane for replacement"
+        )
 
     except Exception as e:
         logger.error(f"Failed to replace pane with editor: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 def register_file_commands():

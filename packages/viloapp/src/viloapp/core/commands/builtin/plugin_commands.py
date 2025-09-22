@@ -1,6 +1,6 @@
 """Plugin-related commands."""
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
 
 
@@ -12,12 +12,20 @@ from viloapp.core.commands.decorators import command
 )
 def list_plugins_command(context: CommandContext) -> CommandResult:
     """List all plugins."""
-    plugin_manager = context.get_service("plugin_manager")
-    if not plugin_manager:
-        return CommandResult(success=False, error="Plugin manager not available")
+    # Plugin manager is an external service, get from ServiceLocator
+    try:
+        from viloapp.services.service_locator import ServiceLocator
 
-    plugins = plugin_manager.list_plugins()
-    return CommandResult(success=True, value=plugins)
+        plugin_manager = ServiceLocator.get_instance().get("plugin_manager")
+        if not plugin_manager:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Plugin manager not available"
+            )
+
+        plugins = plugin_manager.list_plugins()
+        return CommandResult(status=CommandStatus.SUCCESS, data=plugins)
+    except Exception as e:
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -28,14 +36,24 @@ def list_plugins_command(context: CommandContext) -> CommandResult:
 )
 def enable_plugin_command(context: CommandContext, plugin_id: str) -> CommandResult:
     """Enable a plugin."""
-    plugin_manager = context.get_service("plugin_manager")
-    if not plugin_manager:
-        return CommandResult(success=False, error="Plugin manager not available")
+    # Plugin manager is an external service, get from ServiceLocator
+    try:
+        from viloapp.services.service_locator import ServiceLocator
 
-    if plugin_manager.enable_plugin(plugin_id):
-        return CommandResult(success=True, value=f"Plugin {plugin_id} enabled")
-    else:
-        return CommandResult(success=False, error=f"Failed to enable plugin {plugin_id}")
+        plugin_manager = ServiceLocator.get_instance().get("plugin_manager")
+        if not plugin_manager:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Plugin manager not available"
+            )
+
+        if plugin_manager.enable_plugin(plugin_id):
+            return CommandResult(status=CommandStatus.SUCCESS, data=f"Plugin {plugin_id} enabled")
+        else:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Failed to enable plugin {plugin_id}"
+            )
+    except Exception as e:
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -46,14 +64,24 @@ def enable_plugin_command(context: CommandContext, plugin_id: str) -> CommandRes
 )
 def disable_plugin_command(context: CommandContext, plugin_id: str) -> CommandResult:
     """Disable a plugin."""
-    plugin_manager = context.get_service("plugin_manager")
-    if not plugin_manager:
-        return CommandResult(success=False, error="Plugin manager not available")
+    # Plugin manager is an external service, get from ServiceLocator
+    try:
+        from viloapp.services.service_locator import ServiceLocator
 
-    if plugin_manager.disable_plugin(plugin_id):
-        return CommandResult(success=True, value=f"Plugin {plugin_id} disabled")
-    else:
-        return CommandResult(success=False, error=f"Failed to disable plugin {plugin_id}")
+        plugin_manager = ServiceLocator.get_instance().get("plugin_manager")
+        if not plugin_manager:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Plugin manager not available"
+            )
+
+        if plugin_manager.disable_plugin(plugin_id):
+            return CommandResult(status=CommandStatus.SUCCESS, data=f"Plugin {plugin_id} disabled")
+        else:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Failed to disable plugin {plugin_id}"
+            )
+    except Exception as e:
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -61,14 +89,24 @@ def disable_plugin_command(context: CommandContext, plugin_id: str) -> CommandRe
 )
 def reload_plugin_command(context: CommandContext, plugin_id: str) -> CommandResult:
     """Reload a plugin."""
-    plugin_manager = context.get_service("plugin_manager")
-    if not plugin_manager:
-        return CommandResult(success=False, error="Plugin manager not available")
+    # Plugin manager is an external service, get from ServiceLocator
+    try:
+        from viloapp.services.service_locator import ServiceLocator
 
-    if plugin_manager.reload_plugin(plugin_id):
-        return CommandResult(success=True, value=f"Plugin {plugin_id} reloaded")
-    else:
-        return CommandResult(success=False, error=f"Failed to reload plugin {plugin_id}")
+        plugin_manager = ServiceLocator.get_instance().get("plugin_manager")
+        if not plugin_manager:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Plugin manager not available"
+            )
+
+        if plugin_manager.reload_plugin(plugin_id):
+            return CommandResult(status=CommandStatus.SUCCESS, data=f"Plugin {plugin_id} reloaded")
+        else:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Failed to reload plugin {plugin_id}"
+            )
+    except Exception as e:
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -79,15 +117,25 @@ def reload_plugin_command(context: CommandContext, plugin_id: str) -> CommandRes
 )
 def plugin_info_command(context: CommandContext, plugin_id: str) -> CommandResult:
     """Get plugin information."""
-    plugin_manager = context.get_service("plugin_manager")
-    if not plugin_manager:
-        return CommandResult(success=False, error="Plugin manager not available")
+    # Plugin manager is an external service, get from ServiceLocator
+    try:
+        from viloapp.services.service_locator import ServiceLocator
 
-    info = plugin_manager.get_plugin_metadata(plugin_id)
-    if info:
-        return CommandResult(success=True, value=info)
-    else:
-        return CommandResult(success=False, error=f"Plugin {plugin_id} not found")
+        plugin_manager = ServiceLocator.get_instance().get("plugin_manager")
+        if not plugin_manager:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Plugin manager not available"
+            )
+
+        info = plugin_manager.get_plugin_metadata(plugin_id)
+        if info:
+            return CommandResult(status=CommandStatus.SUCCESS, data=info)
+        else:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Plugin {plugin_id} not found"
+            )
+    except Exception as e:
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -98,11 +146,20 @@ def plugin_info_command(context: CommandContext, plugin_id: str) -> CommandResul
 )
 def discover_plugins_command(context: CommandContext) -> CommandResult:
     """Discover new plugins."""
-    plugin_manager = context.get_service("plugin_manager")
-    if not plugin_manager:
-        return CommandResult(success=False, error="Plugin manager not available")
+    # Plugin manager is an external service, get from ServiceLocator
+    try:
+        from viloapp.services.service_locator import ServiceLocator
 
-    plugin_ids = plugin_manager.discover_plugins()
-    return CommandResult(
-        success=True, value=f"Discovered {len(plugin_ids)} plugins: {', '.join(plugin_ids)}"
-    )
+        plugin_manager = ServiceLocator.get_instance().get("plugin_manager")
+        if not plugin_manager:
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Plugin manager not available"
+            )
+
+        plugin_ids = plugin_manager.discover_plugins()
+        return CommandResult(
+            status=CommandStatus.SUCCESS,
+            data=f"Discovered {len(plugin_ids)} plugins: {', '.join(plugin_ids)}",
+        )
+    except Exception as e:
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))

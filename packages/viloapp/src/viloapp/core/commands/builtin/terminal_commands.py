@@ -8,7 +8,7 @@ copying/pasting, and managing terminal sessions.
 
 import logging
 
-from viloapp.core.commands.base import Command, CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus, FunctionCommand
 from viloapp.core.commands.registry import command_registry
 
 logger = logging.getLogger(__name__)
@@ -17,69 +17,93 @@ logger = logging.getLogger(__name__)
 def clear_terminal_handler(context: CommandContext) -> CommandResult:
     """Clear the active terminal."""
     try:
-        # Get the active terminal widget using WorkspaceService
-        from viloapp.services.workspace_service import WorkspaceService
+        # Get active pane widget directly from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        current_widget = workspace_service.get_current_widget()
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane:
+            return CommandResult(status=CommandStatus.FAILURE, message="Active pane not found")
+
+        # Get widget from pane
+        current_widget = active_pane.widget
 
         # Check if it's a terminal widget
         if current_widget and hasattr(current_widget, "clear_terminal"):
             current_widget.clear_terminal()
-            return CommandResult(success=True, value="Terminal cleared")
+            return CommandResult(status=CommandStatus.SUCCESS, data="Terminal cleared")
 
-        return CommandResult(success=False, error="No active terminal to clear")
+        return CommandResult(status=CommandStatus.FAILURE, message="No active terminal to clear")
 
     except Exception as e:
         logger.error(f"Failed to clear terminal: {e}")
-        return CommandResult(success=False, error=f"Failed to clear terminal: {str(e)}")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message=f"Failed to clear terminal: {str(e)}"
+        )
 
 
 def new_terminal_handler(context: CommandContext) -> CommandResult:
     """Create a new terminal tab."""
     try:
-        from viloapp.services.workspace_service import WorkspaceService
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        # Count existing terminal tabs for naming
+        terminal_count = sum(1 for tab in context.model.state.tabs if "Terminal" in tab.name)
+        name = f"Terminal {terminal_count + 1}"
 
-        # Create new terminal tab using workspace service
-        index = workspace_service.add_terminal_tab()
+        # Create new terminal tab using model directly
+        from viloapp.models.workspace_model import WidgetType
+
+        tab_id = context.model.create_tab(name, WidgetType.TERMINAL)
+        index = len(context.model.state.tabs) - 1
+
         return CommandResult(
-            success=True, value={"message": "New terminal created", "index": index}
+            status=CommandStatus.SUCCESS,
+            data={"message": "New terminal created", "index": index, "tab_id": tab_id},
         )
 
     except Exception as e:
         logger.error(f"Failed to create new terminal: {e}")
-        return CommandResult(success=False, error=f"Failed to create terminal: {str(e)}")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message=f"Failed to create terminal: {str(e)}"
+        )
 
 
 def copy_terminal_handler(context: CommandContext) -> CommandResult:
     """Copy from terminal."""
     try:
-        # Get the active terminal widget using WorkspaceService
-        from viloapp.services.workspace_service import WorkspaceService
+        # Get active pane widget directly from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        current_widget = workspace_service.get_current_widget()
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane:
+            return CommandResult(status=CommandStatus.FAILURE, message="Active pane not found")
+
+        # Get widget from pane
+        current_widget = active_pane.widget
 
         # Check if it's a terminal widget and has copy method
         if current_widget and hasattr(current_widget, "copy_selection"):
             current_widget.copy_selection()
-            return CommandResult(success=True, value="Copied to clipboard")
+            return CommandResult(status=CommandStatus.SUCCESS, data="Copied to clipboard")
 
-        return CommandResult(success=False, error="No active terminal to copy from")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message="No active terminal to copy from"
+        )
 
     except Exception as e:
         logger.error(f"Failed to copy from terminal: {e}")
-        return CommandResult(success=False, error=f"Failed to copy: {str(e)}")
+        return CommandResult(status=CommandStatus.FAILURE, message=f"Failed to copy: {str(e)}")
 
 
 def paste_terminal_handler(context: CommandContext) -> CommandResult:
@@ -87,14 +111,20 @@ def paste_terminal_handler(context: CommandContext) -> CommandResult:
     try:
         from PySide6.QtWidgets import QApplication
 
-        # Get the active terminal widget using WorkspaceService
-        from viloapp.services.workspace_service import WorkspaceService
+        # Get active pane widget directly from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        current_widget = workspace_service.get_current_widget()
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane:
+            return CommandResult(status=CommandStatus.FAILURE, message="Active pane not found")
+
+        # Get widget from pane
+        current_widget = active_pane.widget
 
         # Check if it's a terminal widget
         if current_widget and hasattr(current_widget, "paste_to_terminal"):
@@ -102,71 +132,87 @@ def paste_terminal_handler(context: CommandContext) -> CommandResult:
             text = clipboard.text()
             if text:
                 current_widget.paste_to_terminal(text)
-                return CommandResult(success=True, value="Pasted to terminal")
+                return CommandResult(status=CommandStatus.SUCCESS, data="Pasted to terminal")
             else:
-                return CommandResult(success=False, error="Clipboard is empty")
+                return CommandResult(status=CommandStatus.FAILURE, message="Clipboard is empty")
 
-        return CommandResult(success=False, error="No active terminal to paste to")
+        return CommandResult(status=CommandStatus.FAILURE, message="No active terminal to paste to")
 
     except Exception as e:
         logger.error(f"Failed to paste to terminal: {e}")
-        return CommandResult(success=False, error=f"Failed to paste: {str(e)}")
+        return CommandResult(status=CommandStatus.FAILURE, message=f"Failed to paste: {str(e)}")
 
 
 def kill_terminal_handler(context: CommandContext) -> CommandResult:
     """Kill the current terminal."""
     try:
-        # Get the active terminal widget using WorkspaceService
-        from viloapp.services.workspace_service import WorkspaceService
+        # Get active pane widget directly from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        current_widget = workspace_service.get_current_widget()
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane:
+            return CommandResult(status=CommandStatus.FAILURE, message="Active pane not found")
+
+        # Get widget from pane
+        current_widget = active_pane.widget
 
         # Check if current widget is a terminal
         if current_widget and hasattr(current_widget, "close_terminal"):
-            # Close current tab using workspace service
-            success = workspace_service.close_tab()
+            # Close current tab using model
+            success = context.model.close_tab(active_tab.id)
             if success:
-                return CommandResult(success=True, value="Terminal closed")
+                return CommandResult(status=CommandStatus.SUCCESS, data="Terminal closed")
 
-        return CommandResult(success=False, error="No active terminal to close")
+        return CommandResult(status=CommandStatus.FAILURE, message="No active terminal to close")
 
     except Exception as e:
         logger.error(f"Failed to kill terminal: {e}")
-        return CommandResult(success=False, error=f"Failed to kill terminal: {str(e)}")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message=f"Failed to kill terminal: {str(e)}"
+        )
 
 
 def restart_terminal_handler(context: CommandContext) -> CommandResult:
     """Restart the current terminal."""
     try:
-        # Get the active terminal widget using WorkspaceService
-        from viloapp.services.workspace_service import WorkspaceService
+        # Get active pane widget directly from model
+        if not context.model:
+            return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
-        workspace_service = context.get_service(WorkspaceService)
-        if not workspace_service:
-            return CommandResult(success=False, error="WorkspaceService not available")
+        active_tab = context.model.state.get_active_tab()
+        if not active_tab or not active_tab.active_pane_id:
+            return CommandResult(status=CommandStatus.FAILURE, message="No active pane")
 
-        current_widget = workspace_service.get_current_widget()
+        active_pane = active_tab.tree.root.find_pane(active_tab.active_pane_id)
+        if not active_pane:
+            return CommandResult(status=CommandStatus.FAILURE, message="Active pane not found")
+
+        # Get widget from pane
+        current_widget = active_pane.widget
 
         # Check if it's a terminal widget
         if current_widget and hasattr(current_widget, "restart_terminal"):
             current_widget.restart_terminal()
-            return CommandResult(success=True, value="Terminal restarted")
+            return CommandResult(status=CommandStatus.SUCCESS, data="Terminal restarted")
 
-        return CommandResult(success=False, error="No active terminal to restart")
+        return CommandResult(status=CommandStatus.FAILURE, message="No active terminal to restart")
 
     except Exception as e:
         logger.error(f"Failed to restart terminal: {e}")
-        return CommandResult(success=False, error=f"Failed to restart terminal: {str(e)}")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message=f"Failed to restart terminal: {str(e)}"
+        )
 
 
 def register_terminal_commands():
     """Register all terminal commands."""
     commands = [
-        Command(
+        FunctionCommand(
             id="terminal.clear",
             title="Clear Terminal",
             category="Terminal",
@@ -175,7 +221,7 @@ def register_terminal_commands():
             shortcut="ctrl+l",
             keywords=["clear", "cls", "reset"],
         ),
-        Command(
+        FunctionCommand(
             id="terminal.new",
             title="New Terminal",
             category="Terminal",
@@ -184,7 +230,7 @@ def register_terminal_commands():
             shortcut="ctrl+shift+`",
             keywords=["new", "terminal", "console", "shell"],
         ),
-        Command(
+        FunctionCommand(
             id="terminal.copy",
             title="Copy from Terminal",
             category="Terminal",
@@ -193,7 +239,7 @@ def register_terminal_commands():
             shortcut="ctrl+shift+c",
             keywords=["copy", "clipboard"],
         ),
-        Command(
+        FunctionCommand(
             id="terminal.paste",
             title="Paste to Terminal",
             category="Terminal",
@@ -202,7 +248,7 @@ def register_terminal_commands():
             shortcut="ctrl+shift+v",
             keywords=["paste", "clipboard"],
         ),
-        Command(
+        FunctionCommand(
             id="terminal.kill",
             title="Kill Terminal",
             category="Terminal",
@@ -210,7 +256,7 @@ def register_terminal_commands():
             description="Terminate the current terminal session",
             keywords=["kill", "terminate", "close", "exit"],
         ),
-        Command(
+        FunctionCommand(
             id="terminal.restart",
             title="Restart Terminal",
             category="Terminal",

@@ -10,7 +10,12 @@ import logging
 from functools import wraps
 from typing import Any, Callable, Optional
 
-from viloapp.core.commands.base import Command, CommandContext, CommandResult
+from viloapp.core.commands.base import (
+    CommandContext,
+    CommandResult,
+    CommandStatus,
+    FunctionCommand,
+)
 from viloapp.core.commands.registry import command_registry
 
 logger = logging.getLogger(__name__)
@@ -66,7 +71,7 @@ def command(
             return CommandResult(success=True)
     """
 
-    def decorator(func: Callable) -> Command:
+    def decorator(func: Callable) -> FunctionCommand:
         # Ensure the function has the right signature
         @wraps(func)
         def handler(context: CommandContext) -> CommandResult:
@@ -100,18 +105,23 @@ def command(
                 # Ensure we return a CommandResult
                 if not isinstance(result, CommandResult):
                     if isinstance(result, bool):
-                        return CommandResult(success=result)
+                        return CommandResult(
+                            status=CommandStatus.SUCCESS if result else CommandStatus.FAILURE
+                        )
                     else:
-                        return CommandResult(success=True, value=result)
+                        return CommandResult(
+                            status=CommandStatus.SUCCESS,
+                            data={"value": result} if result is not None else {},
+                        )
 
                 return result
 
             except Exception as e:
                 logger.error(f"Error in command {id}: {e}", exc_info=True)
-                return CommandResult(success=False, error=str(e))
+                return CommandResult(status=CommandStatus.FAILURE, message=str(e), error=e)
 
         # Create the command
-        cmd = Command(
+        cmd = FunctionCommand(
             id=id,
             title=title,
             category=category,
@@ -146,7 +156,7 @@ def command(
 
                     if isinstance(e, ValidationError):
                         logger.warning(f"Validation failed for command {id}: {e}")
-                        return CommandResult(success=False, error=str(e))
+                        return CommandResult(status=CommandStatus.FAILURE, message=str(e), error=e)
                     else:
                         raise e
 
@@ -279,7 +289,7 @@ def command_handler(
     return decorator
 
 
-def batch_register(*commands: Command) -> None:
+def batch_register(*commands: FunctionCommand) -> None:
     """
     Register multiple commands at once.
 
@@ -294,7 +304,7 @@ def batch_register(*commands: Command) -> None:
         )
     """
     for cmd in commands:
-        if isinstance(cmd, Command):
+        if isinstance(cmd, FunctionCommand):
             command_registry.register(cmd)
         else:
             logger.warning(f"Skipping non-command object: {cmd}")
@@ -302,7 +312,7 @@ def batch_register(*commands: Command) -> None:
 
 def create_command_group(
     category: str, group: str, commands: list[dict[str, Any]]
-) -> list[Command]:
+) -> list[FunctionCommand]:
     """
     Create a group of related commands.
 
@@ -349,7 +359,7 @@ def create_command_group(
             continue
 
         # Create command
-        cmd = Command(handler=handler, **cmd_def)
+        cmd = FunctionCommand(handler=handler, **cmd_def)
         created_commands.append(cmd)
 
         # Register

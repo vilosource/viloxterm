@@ -7,7 +7,13 @@ all application actions, enabling keyboard shortcuts, command palette,
 and programmatic execution.
 """
 
-from viloapp.core.commands.base import Command, CommandCategory, CommandContext, CommandResult
+from viloapp.core.commands.base import (
+    CommandCategory,
+    CommandContext,
+    CommandResult,
+    CommandStatus,
+    LegacyCommand,
+)
 from viloapp.core.commands.decorators import (
     batch_register,
     command,
@@ -18,9 +24,10 @@ from viloapp.core.commands.executor import command_executor
 from viloapp.core.commands.registry import command_registry
 
 __all__ = [
-    "Command",
+    "LegacyCommand",
     "CommandContext",
     "CommandResult",
+    "CommandStatus",
     "CommandCategory",
     "command_registry",
     "command_executor",

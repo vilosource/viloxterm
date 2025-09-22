@@ -10,9 +10,8 @@ import logging
 from pathlib import Path
 from typing import Any, Optional
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
-from viloapp.services.theme_service import ThemeService
 
 logger = logging.getLogger(__name__)
 
@@ -25,16 +24,20 @@ logger = logging.getLogger(__name__)
 )
 def get_available_themes_command(context: CommandContext) -> CommandResult:
     """Get all available themes."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         themes = theme_service.get_available_themes()
-        return CommandResult(success=True, value={"themes": themes})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"themes": themes})
     except Exception as e:
         logger.error(f"Failed to get available themes: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -45,16 +48,20 @@ def get_available_themes_command(context: CommandContext) -> CommandResult:
 )
 def get_current_theme_command(context: CommandContext) -> CommandResult:
     """Get the current theme."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         theme = theme_service.get_current_theme()
-        return CommandResult(success=True, value={"theme": theme})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"theme": theme})
     except Exception as e:
         logger.error(f"Failed to get current theme: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -66,19 +73,25 @@ def get_current_theme_command(context: CommandContext) -> CommandResult:
 )
 def get_theme_command(context: CommandContext, theme_id: str) -> CommandResult:
     """Get a specific theme."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         theme = theme_service.get_theme(theme_id)
         if theme:
-            return CommandResult(success=True, value={"theme": theme})
+            return CommandResult(status=CommandStatus.SUCCESS, data={"theme": theme})
         else:
-            return CommandResult(success=False, error=f"Theme {theme_id} not found")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Theme {theme_id} not found"
+            )
     except Exception as e:
         logger.error(f"Failed to get theme {theme_id}: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -90,16 +103,20 @@ def get_theme_command(context: CommandContext, theme_id: str) -> CommandResult:
 )
 def apply_theme_command(context: CommandContext, theme_id: str) -> CommandResult:
     """Apply a theme."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         theme_service.apply_theme(theme_id)
-        return CommandResult(success=True, value={"theme_id": theme_id})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"theme_id": theme_id})
     except Exception as e:
         logger.error(f"Failed to apply theme {theme_id}: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -111,9 +128,13 @@ def apply_theme_command(context: CommandContext, theme_id: str) -> CommandResult
 )
 def save_custom_theme_command(context: CommandContext, theme_data: dict[str, Any]) -> CommandResult:
     """Save a custom theme."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         # Create theme object from data
@@ -123,12 +144,14 @@ def save_custom_theme_command(context: CommandContext, theme_data: dict[str, Any
 
         success = theme_service.save_custom_theme(theme)
         if success:
-            return CommandResult(success=True, value={"theme_id": theme.id})
+            return CommandResult(status=CommandStatus.SUCCESS, data={"theme_id": theme.id})
         else:
-            return CommandResult(success=False, error="Failed to save custom theme")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Failed to save custom theme"
+            )
     except Exception as e:
         logger.error(f"Failed to save custom theme: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -145,19 +168,25 @@ def create_custom_theme_command(
     description: Optional[str] = None,
 ) -> CommandResult:
     """Create a new custom theme."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         new_theme = theme_service.create_custom_theme(base_theme_id, name, description)
         if new_theme:
-            return CommandResult(success=True, value={"theme": new_theme})
+            return CommandResult(status=CommandStatus.SUCCESS, data={"theme": new_theme})
         else:
-            return CommandResult(success=False, error="Failed to create custom theme")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Failed to create custom theme"
+            )
     except Exception as e:
         logger.error(f"Failed to create custom theme: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -169,19 +198,25 @@ def create_custom_theme_command(
 )
 def delete_custom_theme_command(context: CommandContext, theme_id: str) -> CommandResult:
     """Delete a custom theme."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         success = theme_service.delete_custom_theme(theme_id)
         if success:
-            return CommandResult(success=True, value={"theme_id": theme_id})
+            return CommandResult(status=CommandStatus.SUCCESS, data={"theme_id": theme_id})
         else:
-            return CommandResult(success=False, error=f"Failed to delete theme {theme_id}")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Failed to delete theme {theme_id}"
+            )
     except Exception as e:
         logger.error(f"Failed to delete custom theme {theme_id}: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -193,19 +228,23 @@ def delete_custom_theme_command(context: CommandContext, theme_id: str) -> Comma
 )
 def import_theme_command(context: CommandContext, file_path: str) -> CommandResult:
     """Import a theme from a file."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         theme_id = theme_service.import_theme(Path(file_path))
         if theme_id:
-            return CommandResult(success=True, value={"theme_id": theme_id})
+            return CommandResult(status=CommandStatus.SUCCESS, data={"theme_id": theme_id})
         else:
-            return CommandResult(success=False, error="Failed to import theme")
+            return CommandResult(status=CommandStatus.FAILURE, message="Failed to import theme")
     except Exception as e:
         logger.error(f"Failed to import theme from {file_path}: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -217,19 +256,27 @@ def import_theme_command(context: CommandContext, file_path: str) -> CommandResu
 )
 def export_theme_command(context: CommandContext, theme_id: str, file_path: str) -> CommandResult:
     """Export a theme to a file."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         success = theme_service.export_theme(theme_id, Path(file_path))
         if success:
-            return CommandResult(success=True, value={"theme_id": theme_id, "file_path": file_path})
+            return CommandResult(
+                status=CommandStatus.SUCCESS, data={"theme_id": theme_id, "file_path": file_path}
+            )
         else:
-            return CommandResult(success=False, error=f"Failed to export theme {theme_id}")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Failed to export theme {theme_id}"
+            )
     except Exception as e:
         logger.error(f"Failed to export theme {theme_id} to {file_path}: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -241,16 +288,20 @@ def export_theme_command(context: CommandContext, theme_id: str, file_path: str)
 )
 def apply_typography_preset_command(context: CommandContext, preset: str) -> CommandResult:
     """Apply a typography preset."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         theme_service.apply_typography_preset(preset)
-        return CommandResult(success=True, value={"preset": preset})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"preset": preset})
     except Exception as e:
         logger.error(f"Failed to apply typography preset {preset}: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -261,16 +312,20 @@ def apply_typography_preset_command(context: CommandContext, preset: str) -> Com
 )
 def get_typography_command(context: CommandContext) -> CommandResult:
     """Get typography settings."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         typography = theme_service.get_typography()
-        return CommandResult(success=True, value={"typography": typography})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"typography": typography})
     except Exception as e:
         logger.error(f"Failed to get typography: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -286,16 +341,20 @@ def apply_theme_preview_command(
     typography: Optional[dict[str, Any]] = None,
 ) -> CommandResult:
     """Apply a theme preview."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         theme_service.apply_theme_preview(colors, typography)
-        return CommandResult(success=True, value={"preview_applied": True})
+        return CommandResult(status=CommandStatus.SUCCESS, data={"preview_applied": True})
     except Exception as e:
         logger.error(f"Failed to apply theme preview: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -306,9 +365,13 @@ def apply_theme_preview_command(
 )
 def get_current_colors_command(context: CommandContext) -> CommandResult:
     """Get current theme colors."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         theme = theme_service.get_current_theme()
@@ -328,7 +391,7 @@ def get_current_colors_command(context: CommandContext) -> CommandResult:
                 "tab.inactiveForeground": "#969696",
             }
 
-        return CommandResult(success=True, value=colors)
+        return CommandResult(status=CommandStatus.SUCCESS, data=colors)
     except Exception as e:
         logger.error(f"Failed to get current colors: {e}")
         # Return fallback colors
@@ -343,7 +406,7 @@ def get_current_colors_command(context: CommandContext) -> CommandResult:
             "widget.border": "#3e3e42",
             "tab.inactiveForeground": "#969696",
         }
-        return CommandResult(success=True, value=fallback_colors)
+        return CommandResult(status=CommandStatus.SUCCESS, data=fallback_colors)
 
 
 @command(
@@ -357,14 +420,20 @@ def update_theme_colors_command(
     context: CommandContext, theme_id: str, colors: dict[str, str]
 ) -> CommandResult:
     """Update theme colors."""
-    theme_service = context.get_service(ThemeService)
+    # ThemeService is an external service, get from ServiceLocator
+    from viloapp.services.service_locator import ServiceLocator
+    from viloapp.services.theme_service import ThemeService
+
+    theme_service = ServiceLocator.get_instance().get(ThemeService)
     if not theme_service:
-        return CommandResult(success=False, error="ThemeService not available")
+        return CommandResult(status=CommandStatus.FAILURE, message="ThemeService not available")
 
     try:
         theme = theme_service.get_theme(theme_id)
         if not theme:
-            return CommandResult(success=False, error=f"Theme {theme_id} not found")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Theme {theme_id} not found"
+            )
 
         # Update theme colors
         theme.colors.update(colors)
@@ -373,11 +442,13 @@ def update_theme_colors_command(
         if theme.is_custom:
             success = theme_service.save_custom_theme(theme)
             if not success:
-                return CommandResult(success=False, error="Failed to save theme changes")
+                return CommandResult(
+                    status=CommandStatus.FAILURE, message="Failed to save theme changes"
+                )
 
         return CommandResult(
             success=True, value={"theme_id": theme_id, "updated_colors": len(colors)}
         )
     except Exception as e:
         logger.error(f"Failed to update theme colors: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))

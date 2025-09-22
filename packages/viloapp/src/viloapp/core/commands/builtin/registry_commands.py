@@ -8,9 +8,8 @@ User Action → Command → Service → UI Update
 
 import logging
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
-from viloapp.services.workspace_service import WorkspaceService
 
 logger = logging.getLogger(__name__)
 
@@ -30,28 +29,31 @@ def register_widget_command(context: CommandContext) -> CommandResult:
         tab_index: The tab index where the widget is located
     """
     # Get arguments from context
-    widget_id = context.args.get("widget_id")
-    tab_index = context.args.get("tab_index")
+    widget_id = context.parameters.get("widget_id") if context.parameters else None
+    tab_index = context.parameters.get("tab_index") if context.parameters else None
 
     if widget_id is None or tab_index is None:
-        return CommandResult(success=False, error="widget_id and tab_index are required")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message="widget_id and tab_index are required"
+        )
 
-    workspace_service = context.get_service(WorkspaceService)
-    if not workspace_service:
-        return CommandResult(success=False, error="WorkspaceService not available")
+    if not context.model:
+        return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
     try:
-        # Register the widget using service method
-        result = workspace_service.register_widget(widget_id, tab_index)
-        if result:
-            return CommandResult(
-                success=True, value={"widget_id": widget_id, "tab_index": tab_index}
-            )
-        else:
-            return CommandResult(success=False, error="Failed to register widget")
+        # Register widget in model's registry
+        # The model tracks widgets internally
+        if not hasattr(context.model, "_widget_registry"):
+            context.model._widget_registry = {}
+
+        context.model._widget_registry[widget_id] = tab_index
+
+        return CommandResult(
+            status=CommandStatus.SUCCESS, data={"widget_id": widget_id, "tab_index": tab_index}
+        )
     except Exception as e:
         logger.error(f"Failed to register widget: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -68,22 +70,29 @@ def unregister_widget_command(context: CommandContext) -> CommandResult:
         widget_id: The widget identifier to remove
     """
     # Get arguments from context
-    widget_id = context.args.get("widget_id")
+    widget_id = context.parameters.get("widget_id") if context.parameters else None
 
     if widget_id is None:
-        return CommandResult(success=False, error="widget_id is required")
+        return CommandResult(status=CommandStatus.FAILURE, message="widget_id is required")
 
-    workspace_service = context.get_service(WorkspaceService)
-    if not workspace_service:
-        return CommandResult(success=False, error="WorkspaceService not available")
+    if not context.model:
+        return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
     try:
-        # Unregister the widget using service method
-        result = workspace_service.unregister_widget(widget_id)
-        return CommandResult(success=True, value={"widget_id": widget_id, "unregistered": result})
+        # Unregister widget from model's registry
+        if hasattr(context.model, "_widget_registry"):
+            result = widget_id in context.model._widget_registry
+            if result:
+                del context.model._widget_registry[widget_id]
+        else:
+            result = False
+
+        return CommandResult(
+            status=CommandStatus.SUCCESS, data={"widget_id": widget_id, "unregistered": result}
+        )
     except Exception as e:
         logger.error(f"Failed to unregister widget: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -105,27 +114,36 @@ def update_registry_after_close_command(context: CommandContext) -> CommandResul
         widget_id: Optional widget ID that was closed
     """
     # Get arguments from context
-    closed_index = context.args.get("closed_index")
-    widget_id = context.args.get("widget_id")
+    closed_index = context.parameters.get("closed_index") if context.parameters else None
+    widget_id = context.parameters.get("widget_id") if context.parameters else None
 
     if closed_index is None:
-        return CommandResult(success=False, error="closed_index is required")
+        return CommandResult(status=CommandStatus.FAILURE, message="closed_index is required")
 
-    workspace_service = context.get_service(WorkspaceService)
-    if not workspace_service:
-        return CommandResult(success=False, error="WorkspaceService not available")
+    if not context.model:
+        return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
     try:
-        # Update registry using service method
-        updated_count = workspace_service.update_registry_after_tab_close(closed_index, widget_id)
+        # Update registry indices after tab close
+        updated_count = 0
+        if hasattr(context.model, "_widget_registry"):
+            # Remove widget if provided
+            if widget_id and widget_id in context.model._widget_registry:
+                del context.model._widget_registry[widget_id]
+
+            # Update indices for widgets after closed index
+            for wid, idx in list(context.model._widget_registry.items()):
+                if idx > closed_index:
+                    context.model._widget_registry[wid] = idx - 1
+                    updated_count += 1
 
         return CommandResult(
-            success=True,
-            value={"closed_index": closed_index, "updated_count": updated_count},
+            status=CommandStatus.SUCCESS,
+            data={"closed_index": closed_index, "updated_count": updated_count},
         )
     except Exception as e:
         logger.error(f"Failed to update registry after close: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -142,27 +160,30 @@ def get_widget_tab_index_command(context: CommandContext) -> CommandResult:
         widget_id: The widget identifier
     """
     # Get arguments from context
-    widget_id = context.args.get("widget_id")
+    widget_id = context.parameters.get("widget_id") if context.parameters else None
 
     if widget_id is None:
         return CommandResult(success=False, error="widget_id is required")
 
-    workspace_service = context.get_service(WorkspaceService)
-    if not workspace_service:
-        return CommandResult(success=False, error="WorkspaceService not available")
+    if not context.model:
+        return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
     try:
-        # Get tab index using service method
-        tab_index = workspace_service.get_widget_tab_index(widget_id)
+        # Get tab index from model's registry
+        tab_index = None
+        if hasattr(context.model, "_widget_registry"):
+            tab_index = context.model._widget_registry.get(widget_id)
         if tab_index is not None:
             return CommandResult(
-                success=True, value={"widget_id": widget_id, "tab_index": tab_index}
+                status=CommandStatus.SUCCESS, data={"widget_id": widget_id, "tab_index": tab_index}
             )
         else:
-            return CommandResult(success=False, error=f"Widget {widget_id} not found in registry")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Widget {widget_id} not found in registry"
+            )
     except Exception as e:
         logger.error(f"Failed to get widget tab index: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -179,22 +200,23 @@ def is_widget_registered_command(context: CommandContext) -> CommandResult:
         widget_id: The widget identifier
     """
     # Get arguments from context
-    widget_id = context.args.get("widget_id")
+    widget_id = context.parameters.get("widget_id") if context.parameters else None
 
     if widget_id is None:
         return CommandResult(success=False, error="widget_id is required")
 
-    workspace_service = context.get_service(WorkspaceService)
-    if not workspace_service:
-        return CommandResult(success=False, error="WorkspaceService not available")
+    if not context.model:
+        return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
     try:
-        # Check registration using service method
-        is_registered = workspace_service.is_widget_registered(widget_id)
+        # Check registration in model's registry
+        is_registered = False
+        if hasattr(context.model, "_widget_registry"):
+            is_registered = widget_id in context.model._widget_registry
 
         return CommandResult(
-            success=True, value={"widget_id": widget_id, "registered": is_registered}
+            status=CommandStatus.SUCCESS, data={"widget_id": widget_id, "registered": is_registered}
         )
     except Exception as e:
         logger.error(f"Failed to check widget registration: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))

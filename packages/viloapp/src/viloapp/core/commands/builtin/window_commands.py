@@ -9,7 +9,7 @@ from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QMessageBox
 
 from viloapp.core.app_config import should_show_confirmations
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
 
 logger = logging.getLogger(__name__)
@@ -24,20 +24,12 @@ logger = logging.getLogger(__name__)
 def toggle_frameless_mode(context: CommandContext) -> CommandResult:
     """Toggle frameless window mode."""
     try:
-        # Use UIService to toggle frameless mode for consistency
-        from viloapp.services.ui_service import UIService
-
-        ui_service = context.get_service(UIService)
-
-        if ui_service:
-            new_mode = ui_service.toggle_frameless_mode()
-        else:
-            # Fallback to direct settings if service not available
-            settings = QSettings("ViloxTerm", "ViloxTerm")
-            current_mode = settings.value("UI/FramelessMode", False, type=bool)
-            new_mode = not current_mode
-            settings.setValue("UI/FramelessMode", new_mode)
-            settings.sync()
+        # Handle frameless mode directly via QSettings
+        settings = QSettings("ViloxTerm", "ViloxTerm")
+        current_mode = settings.value("UI/FramelessMode", False, type=bool)
+        new_mode = not current_mode
+        settings.setValue("UI/FramelessMode", new_mode)
+        settings.sync()
 
         # Show message to user (unless in test mode)
         mode_name = "Frameless" if new_mode else "Normal"
@@ -78,13 +70,13 @@ def toggle_frameless_mode(context: CommandContext) -> CommandResult:
             logger.info(f"Window mode changed to {mode_name} (test mode - no restart)")
 
         return CommandResult(
-            success=True,
-            value=f"Frameless mode {'enabled' if new_mode else 'disabled'}. Restart required.",
+            status=CommandStatus.SUCCESS,
+            data=f"Frameless mode {'enabled' if new_mode else 'disabled'}. Restart required.",
         )
 
     except Exception as e:
         logger.error(f"Failed to toggle frameless mode: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -98,11 +90,11 @@ def minimize_window(context: CommandContext) -> CommandResult:
     try:
         if context.main_window:
             context.main_window.showMinimized()
-            return CommandResult(success=True)
-        return CommandResult(success=False, error="No window available")
+            return CommandResult(status=CommandStatus.SUCCESS)
+        return CommandResult(status=CommandStatus.FAILURE, message="No window available")
     except Exception as e:
         logger.error(f"Failed to minimize window: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -117,14 +109,14 @@ def maximize_window(context: CommandContext) -> CommandResult:
         if context.main_window:
             if context.main_window.isMaximized():
                 context.main_window.showNormal()
-                return CommandResult(success=True, value="restored")
+                return CommandResult(status=CommandStatus.SUCCESS, data="restored")
             else:
                 context.main_window.showMaximized()
-                return CommandResult(success=True, value="maximized")
-        return CommandResult(success=False, error="No window available")
+                return CommandResult(status=CommandStatus.SUCCESS, data="maximized")
+        return CommandResult(status=CommandStatus.FAILURE, message="No window available")
     except Exception as e:
         logger.error(f"Failed to maximize window: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -138,11 +130,11 @@ def restore_window(context: CommandContext) -> CommandResult:
     try:
         if context.main_window:
             context.main_window.showNormal()
-            return CommandResult(success=True)
-        return CommandResult(success=False, error="No window available")
+            return CommandResult(status=CommandStatus.SUCCESS)
+        return CommandResult(status=CommandStatus.FAILURE, message="No window available")
     except Exception as e:
         logger.error(f"Failed to restore window: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -157,11 +149,11 @@ def close_window(context: CommandContext) -> CommandResult:
     try:
         if context.main_window:
             context.main_window.close()
-            return CommandResult(success=True)
-        return CommandResult(success=False, error="No window available")
+            return CommandResult(status=CommandStatus.SUCCESS)
+        return CommandResult(status=CommandStatus.FAILURE, message="No window available")
     except Exception as e:
         logger.error(f"Failed to close window: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -177,11 +169,11 @@ def toggle_fullscreen(context: CommandContext) -> CommandResult:
         if context.main_window:
             if context.main_window.isFullScreen():
                 context.main_window.showNormal()
-                return CommandResult(success=True, value="normal")
+                return CommandResult(status=CommandStatus.SUCCESS, data="normal")
             else:
                 context.main_window.showFullScreen()
-                return CommandResult(success=True, value="fullscreen")
-        return CommandResult(success=False, error="No window available")
+                return CommandResult(status=CommandStatus.SUCCESS, data="fullscreen")
+        return CommandResult(status=CommandStatus.FAILURE, message="No window available")
     except Exception as e:
         logger.error(f"Failed to toggle fullscreen: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))

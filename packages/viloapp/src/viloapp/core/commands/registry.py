@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Command registry for managing all application commands.
+FunctionCommand registry for managing all application commands.
 
-The CommandRegistry is a singleton that maintains all registered commands,
+The FunctionCommandRegistry is a singleton that maintains all registered commands,
 handles command indexing, and provides search capabilities.
 """
 
@@ -10,7 +10,7 @@ import logging
 from threading import Lock
 from typing import Any, Callable, Optional
 
-from viloapp.core.commands.base import Command
+from viloapp.core.commands.base import FunctionCommand
 
 logger = logging.getLogger(__name__)
 
@@ -41,21 +41,21 @@ class CommandRegistry:
         if self._initialized:
             return
 
-        self._commands: dict[str, Command] = {}
-        self._categories: dict[str, list[Command]] = {}
+        self._commands: dict[str, FunctionCommand] = {}
+        self._categories: dict[str, list[FunctionCommand]] = {}
         self._shortcuts: dict[str, list[str]] = {}  # shortcut -> [command_ids]
         self._keywords_index: dict[str, set[str]] = {}  # keyword -> {command_ids}
-        self._observers: list[Callable[[str, Command], None]] = []
+        self._observers: list[Callable[[str, FunctionCommand], None]] = []
         self._initialized = True
 
         logger.info("CommandRegistry initialized")
 
-    def register(self, command: Command) -> None:
+    def register(self, command: FunctionCommand) -> None:
         """
         Register a command.
 
         Args:
-            command: Command to register
+            command: FunctionCommand to register
 
         Raises:
             ValueError: If a command with the same ID already exists
@@ -133,19 +133,19 @@ class CommandRegistry:
         logger.debug(f"Unregistered command: {command_id}")
         return True
 
-    def get_command(self, command_id: str) -> Optional[Command]:
+    def get_command(self, command_id: str) -> Optional[FunctionCommand]:
         """
         Get a command by ID.
 
         Args:
-            command_id: Command ID to look up
+            command_id: FunctionCommand ID to look up
 
         Returns:
-            Command if found, None otherwise
+            FunctionCommand if found, None otherwise
         """
         return self._commands.get(command_id)
 
-    def get_all_commands(self) -> list[Command]:
+    def get_all_commands(self) -> list[FunctionCommand]:
         """
         Get all registered commands.
 
@@ -154,7 +154,7 @@ class CommandRegistry:
         """
         return list(self._commands.values())
 
-    def get_commands_for_category(self, category: str) -> list[Command]:
+    def get_commands_for_category(self, category: str) -> list[FunctionCommand]:
         """
         Get all commands in a category.
 
@@ -166,7 +166,7 @@ class CommandRegistry:
         """
         return self._categories.get(category, []).copy()
 
-    def get_commands_by_category(self, category: str) -> list[Command]:
+    def get_commands_by_category(self, category: str) -> list[FunctionCommand]:
         """
         DEPRECATED: Use get_commands_for_category instead.
 
@@ -190,7 +190,7 @@ class CommandRegistry:
         """
         return list(self._categories.keys())
 
-    def get_commands_by_shortcut(self, shortcut: str) -> list[Command]:
+    def get_commands_by_shortcut(self, shortcut: str) -> list[FunctionCommand]:
         """
         Get commands bound to a shortcut.
 
@@ -204,7 +204,7 @@ class CommandRegistry:
         command_ids = self._shortcuts.get(shortcut, [])
         return [self._commands[cmd_id] for cmd_id in command_ids if cmd_id in self._commands]
 
-    def search_commands(self, query: str, use_fuzzy: bool = True) -> list[Command]:
+    def search_commands(self, query: str, use_fuzzy: bool = True) -> list[FunctionCommand]:
         """
         Search for commands by title, description, or keywords.
 
@@ -235,7 +235,7 @@ class CommandRegistry:
 
         return [cmd for _, cmd in results]
 
-    def _substring_score(self, query: str, command: Command) -> float:
+    def _substring_score(self, query: str, command: FunctionCommand) -> float:
         """Calculate score using substring matching (original implementation)."""
         score = 0
 
@@ -266,7 +266,7 @@ class CommandRegistry:
 
         return score
 
-    def _fuzzy_score(self, query: str, command: Command) -> float:
+    def _fuzzy_score(self, query: str, command: FunctionCommand) -> float:
         """
         Calculate fuzzy matching score for a command.
 
@@ -367,7 +367,7 @@ class CommandRegistry:
 
         return min(score, 1.0)
 
-    def get_executable_commands(self, context: dict[str, Any]) -> list[Command]:
+    def get_executable_commands(self, context: dict[str, Any]) -> list[FunctionCommand]:
         """
         Get all commands that can execute in the current context.
 
@@ -385,7 +385,7 @@ class CommandRegistry:
 
         return executable
 
-    def add_observer(self, observer: Callable[[str, Command], None]) -> None:
+    def add_observer(self, observer: Callable[[str, FunctionCommand], None]) -> None:
         """
         Add an observer for registry changes.
 
@@ -395,7 +395,7 @@ class CommandRegistry:
         if observer not in self._observers:
             self._observers.append(observer)
 
-    def remove_observer(self, observer: Callable[[str, Command], None]) -> None:
+    def remove_observer(self, observer: Callable[[str, FunctionCommand], None]) -> None:
         """
         Remove an observer.
 
@@ -444,7 +444,7 @@ class CommandRegistry:
             return "+".join(modifiers) + "+" + key
         return key
 
-    def _index_keywords(self, command: Command) -> None:
+    def _index_keywords(self, command: FunctionCommand) -> None:
         """Index a command's keywords for search."""
         for keyword in command.keywords:
             keyword_lower = keyword.lower()
@@ -452,7 +452,7 @@ class CommandRegistry:
                 self._keywords_index[keyword_lower] = set()
             self._keywords_index[keyword_lower].add(command.id)
 
-    def _unindex_keywords(self, command: Command) -> None:
+    def _unindex_keywords(self, command: FunctionCommand) -> None:
         """Remove a command's keywords from the index."""
         for keyword in command.keywords:
             keyword_lower = keyword.lower()
@@ -461,13 +461,108 @@ class CommandRegistry:
                 if not self._keywords_index[keyword_lower]:
                     del self._keywords_index[keyword_lower]
 
-    def _notify_observers(self, event_type: str, command: Command) -> None:
+    def _notify_observers(self, event_type: str, command: FunctionCommand) -> None:
         """Notify all observers of a registry change."""
         for observer in self._observers:
             try:
                 observer(event_type, command)
             except Exception as e:
                 logger.error(f"Error notifying observer: {e}", exc_info=True)
+
+    def execute(self, command_id: str, context, **kwargs):
+        """
+        Execute a command by ID, handling both FunctionCommand and Command classes.
+
+        Args:
+            command_id: ID of the command to execute
+            context: CommandContext with model reference
+            **kwargs: Additional arguments for the command
+
+        Returns:
+            CommandResult from the execution
+        """
+        # Import here to avoid circular dependency
+        from viloapp.core.commands.base import CommandResult, CommandStatus
+
+        # First, check if it's a registered FunctionCommand
+        legacy_cmd = self.get_command(command_id)
+        if legacy_cmd:
+            # Update context with kwargs for legacy commands
+            if hasattr(context, "args"):
+                context.args.update(kwargs)
+            elif hasattr(context, "parameters"):
+                context.parameters.update(kwargs)
+            return legacy_cmd.execute(context)
+
+        # Second, check if it's a Command class
+        command_class = self.get_command_class(command_id)
+        if command_class:
+            try:
+                # Instantiate the command with kwargs
+                cmd = command_class(**kwargs)
+                return cmd.execute(context)
+            except Exception as e:
+                logger.error(f"Error executing command {command_id}: {e}")
+                return CommandResult(
+                    status=CommandStatus.FAILURE,
+                    message=f"Error executing command: {str(e)}",
+                    error=e,
+                )
+
+        # Command not found
+        logger.warning(f"Command not found: {command_id}")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message=f"Command not found: {command_id}"
+        )
+
+    def get_command_class(self, command_id: str):
+        """
+        Get a Command class by ID.
+
+        Args:
+            command_id: The command ID to look up
+
+        Returns:
+            Command class if found, None otherwise
+        """
+        # Import Command classes here to avoid circular dependency
+        from viloapp.core.commands.builtin.pane_commands import (
+            ChangeWidgetTypeCommand,
+            ClosePaneCommand,
+            FocusPaneCommand,
+            NavigatePaneCommand,
+            SplitPaneCommand,
+        )
+        from viloapp.core.commands.builtin.tab_commands import (
+            CloseTabCommand,
+            CreateTabCommand,
+            RenameTabCommand,
+            SwitchTabCommand,
+        )
+
+        # Map command IDs to Command classes
+        # Handle special cases for split and navigation that need parameters
+        if command_id == "pane.splitHorizontal":
+            return lambda **kw: SplitPaneCommand(orientation="horizontal", **kw)
+        elif command_id == "pane.splitVertical":
+            return lambda **kw: SplitPaneCommand(orientation="vertical", **kw)
+        elif command_id.startswith("navigate."):
+            direction = command_id.split(".")[-1]
+            return lambda **kw: NavigatePaneCommand(direction=direction, **kw)
+
+        # Direct Command class mappings
+        COMMAND_CLASSES = {
+            "tab.create": CreateTabCommand,
+            "tab.close": CloseTabCommand,
+            "tab.rename": RenameTabCommand,
+            "tab.switch": SwitchTabCommand,
+            "pane.split": SplitPaneCommand,
+            "pane.close": ClosePaneCommand,
+            "pane.focus": FocusPaneCommand,
+            "pane.changeWidget": ChangeWidgetTypeCommand,
+        }
+
+        return COMMAND_CLASSES.get(command_id)
 
 
 # Global singleton instance
