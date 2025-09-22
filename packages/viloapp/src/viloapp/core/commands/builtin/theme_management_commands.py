@@ -391,7 +391,7 @@ def get_current_colors_command(context: CommandContext) -> CommandResult:
                 "tab.inactiveForeground": "#969696",
             }
 
-        return CommandResult(status=CommandStatus.SUCCESS, data=colors)
+        return CommandResult(status=CommandStatus.SUCCESS, data=colors, value=colors)
     except Exception as e:
         logger.error(f"Failed to get current colors: {e}")
         # Return fallback colors
@@ -406,7 +406,9 @@ def get_current_colors_command(context: CommandContext) -> CommandResult:
             "widget.border": "#3e3e42",
             "tab.inactiveForeground": "#969696",
         }
-        return CommandResult(status=CommandStatus.SUCCESS, data=fallback_colors)
+        return CommandResult(
+            status=CommandStatus.SUCCESS, data=fallback_colors, value=fallback_colors
+        )
 
 
 @command(
