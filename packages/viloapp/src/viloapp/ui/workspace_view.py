@@ -487,17 +487,29 @@ def create_test_app():
     # Create model
     model = WorkspaceModel()
 
-    # Create some test data
-    tab1 = model.create_tab("Editor", WidgetType.EDITOR)
-    model.create_tab("Terminal", WidgetType.TERMINAL)
+    # Create command registry for test
+    from viloapp.core.commands.registry import CommandRegistry
 
-    # Switch to first tab and split some panes
-    model.set_active_tab(tab1)
-    pane = model.get_active_pane()
-    if pane:
-        new_pane_id = model.split_pane(pane.id, "horizontal")
-        if new_pane_id:
-            model.split_pane(new_pane_id, "vertical")
+    registry = CommandRegistry()
+
+    # Create some test data using commands
+    context = CommandContext(model=model)
+
+    # Create tabs through commands
+    registry.execute("tab.create", context, name="Editor", widget_type=WidgetType.EDITOR)
+    registry.execute("tab.create", context, name="Terminal", widget_type=WidgetType.TERMINAL)
+
+    # Switch to first tab and split panes through commands
+    if model.state.tabs:
+        tab1 = model.state.tabs[0]
+        registry.execute("tab.switch", context, tab_id=tab1.id)
+
+        # Split panes through commands
+        registry.execute("pane.split", context, orientation="horizontal")
+        if tab1.tree.root.first and tab1.tree.root.first.pane:
+            registry.execute(
+                "pane.split", context, pane_id=tab1.tree.root.first.pane.id, orientation="vertical"
+            )
 
     # Create view
     view = WorkspaceView(model)
