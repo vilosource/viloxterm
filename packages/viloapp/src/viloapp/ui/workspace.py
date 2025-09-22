@@ -86,6 +86,16 @@ class Workspace(QWidget):
         """
         )
 
+        # Remove the frame/border from tab widget pane
+        self.tab_widget.setStyleSheet(
+            """
+            QTabWidget::pane {
+                border: none;
+                background: transparent;
+            }
+            """
+        )
+
         # Connect tab widget signals
         self.tab_widget.currentChanged.connect(self._on_tab_changed)
         self.tab_widget.tabCloseRequested.connect(self._on_tab_close_requested)

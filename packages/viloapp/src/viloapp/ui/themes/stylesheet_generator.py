@@ -247,7 +247,6 @@ class StylesheetGenerator:
             QTabWidget::pane {{
                 background-color: {self._get_color("editor.background")};
                 border: none;
-                border-top: 1px solid {self._get_color("tab.border")};
             }}
             QTabWidget::tab-bar {{
                 background-color: {self._get_color("tab.border")};
