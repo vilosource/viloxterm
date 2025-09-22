@@ -246,14 +246,14 @@ class StylesheetGenerator:
         return f"""
             QTabWidget::pane {{
                 background-color: {self._get_color("editor.background")};
-                border: 1px solid {self._get_color("editor.background")};
+                border: 1px solid {self._get_color("tab.activeBackground")};
                 border-top: none;
             }}
             QTabWidget::tab-bar {{
-                background-color: {self._get_color("editorGroupHeader.tabsBackground")};
+                background-color: {self._get_color("editorGroupHeader.tabsBackground", self._get_color("tab.border"))};
             }}
             QTabBar {{
-                background-color: {self._get_color("editorGroupHeader.tabsBackground")};
+                background-color: {self._get_color("editorGroupHeader.tabsBackground", self._get_color("tab.border"))};
             }}
             QTabBar::tab {{
                 background-color: {self._get_color("tab.inactiveBackground")};
@@ -274,8 +274,8 @@ class StylesheetGenerator:
                 padding-top: 2px;
             }}
             QTabBar::tab:hover:!selected {{
-                background-color: {self._get_color("list.hoverBackground")};
-                color: {self._get_color("list.hoverForeground")};
+                background-color: {self._get_color("tab.hoverBackground", self._get_color("list.hoverBackground"))};
+                color: {self._get_color("tab.hoverForeground", self._get_color("list.hoverForeground"))};
             }}
             QTabBar::close-button {{
                 width: 14px;

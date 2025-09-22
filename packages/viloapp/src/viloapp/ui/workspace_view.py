@@ -343,33 +343,13 @@ class WorkspaceView(QWidget):
 
     def setup_ui(self):
         """Set up the UI structure."""
+        # Only set structural styles here, let theme system handle colors
         self.setStyleSheet(
             """
-            WorkspaceView {
-                background-color: #1e1e1e;
-            }
-            QTabWidget::pane {
-                border: 1px solid #1e1e1e;
-                background-color: #1e1e1e;
-            }
-            QTabBar {
-                background-color: #252526;
-            }
             QTabBar::tab {
-                background-color: #2d2d30;
-                color: #969696;
                 padding: 2px 8px;
                 margin-right: 1px;
                 font-size: 13px;
-                border: none;
-            }
-            QTabBar::tab:selected {
-                background-color: #1e1e1e;
-                color: #ffffff;
-            }
-            QTabBar::tab:hover:!selected {
-                background-color: #353536;
-                color: #cccccc;
             }
             """
         )

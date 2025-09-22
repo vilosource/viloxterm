@@ -72,38 +72,19 @@ class Workspace(QWidget):
         tab_bar = self.tab_widget.tabBar()
         tab_bar.setVisible(True)
 
-        # Apply a compact stylesheet directly to the tab bar
+        # Apply compact sizing to the tab bar without hardcoding colors
+        # Colors will come from the theme system via stylesheet_generator.py
         tab_bar.setStyleSheet(
             """
             QTabBar {
                 max-height: 24px;
-                background-color: #252526;
             }
             QTabBar::tab {
                 height: 22px;
                 padding: 1px 8px;
                 margin: 0;
-                background-color: #2d2d30;  /* Inactive tab - darker */
-                color: #969696;
-            }
-            QTabBar::tab:selected {
-                background-color: #1e1e1e;  /* Active tab - matches editor */
-                color: #ffffff;
-            }
-            QTabBar::tab:hover:!selected {
-                background-color: #353536;
             }
         """
-        )
-
-        # Style the tab widget pane with border matching active tab
-        self.tab_widget.setStyleSheet(
-            """
-            QTabWidget::pane {
-                border: 1px solid #1e1e1e;  /* Same as active tab background */
-                background-color: #1e1e1e;
-            }
-            """
         )
 
         # Connect tab widget signals
