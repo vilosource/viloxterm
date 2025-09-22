@@ -65,11 +65,26 @@ class Workspace(QWidget):
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.setMovable(True)
-        self.tab_widget.setDocumentMode(True)
+        self.tab_widget.setDocumentMode(False)  # Disabled to allow custom tab height
         self.tab_widget.setElideMode(Qt.ElideRight)
 
-        # Ensure tab bar is visible
-        self.tab_widget.tabBar().setVisible(True)
+        # Ensure tab bar is visible and apply compact style
+        tab_bar = self.tab_widget.tabBar()
+        tab_bar.setVisible(True)
+
+        # Apply a compact stylesheet directly to the tab bar
+        tab_bar.setStyleSheet(
+            """
+            QTabBar {
+                max-height: 24px;
+            }
+            QTabBar::tab {
+                height: 22px;
+                padding: 1px 8px;
+                margin: 0;
+            }
+        """
+        )
 
         # Connect tab widget signals
         self.tab_widget.currentChanged.connect(self._on_tab_changed)

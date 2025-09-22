@@ -355,7 +355,7 @@ class WorkspaceView(QWidget):
             QTabBar::tab {
                 background-color: #2d2d30;
                 color: #cccccc;
-                padding: 6px 10px;
+                padding: 2px 8px;
                 margin-right: 2px;
                 font-size: 13px;
             }
