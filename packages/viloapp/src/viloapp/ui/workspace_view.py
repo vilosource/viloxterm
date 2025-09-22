@@ -119,13 +119,14 @@ class PaneView(QWidget):
     def create_header(self) -> QWidget:
         """Create pane header with controls."""
         header = QWidget()
-        header.setFixedHeight(30)
+        header.setFixedHeight(24)
         layout = QHBoxLayout(header)
-        layout.setContentsMargins(5, 2, 5, 2)
+        layout.setContentsMargins(5, 1, 5, 1)
+        layout.setSpacing(2)
 
         # Widget type label
         type_label = QLabel(self.pane.widget_type.value.title())
-        type_label.setStyleSheet("color: #cccccc; font-weight: bold;")
+        type_label.setStyleSheet("color: #cccccc; font-weight: bold; font-size: 12px;")
         layout.addWidget(type_label)
 
         layout.addStretch()
