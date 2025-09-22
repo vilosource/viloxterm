@@ -116,7 +116,7 @@ class StylesheetGenerator:
                 border: none;
             }}
             QMenuBar::item {{
-                padding: 5px 10px;
+                padding: 4px 8px;
                 background-color: transparent;
             }}
             QMenuBar::item:selected {{
@@ -258,11 +258,11 @@ class StylesheetGenerator:
             QTabBar::tab {{
                 background-color: {self._get_color("tab.inactiveBackground")};
                 color: {self._get_color("tab.inactiveForeground")};
-                padding: 6px 14px;
+                padding: 2px 8px;
                 border: none;
                 border-right: 1px solid {self._get_color("tab.border")};
-                min-width: 100px;
-                margin-top: 2px;
+                min-width: 80px;
+                margin: 0;
                 font-family: {font_family};
                 font-size: {font_size}px;
             }}
@@ -271,19 +271,20 @@ class StylesheetGenerator:
                 color: {self._get_color("tab.activeForeground")};
                 border-top: 1px solid {self._get_color("tab.activeBorderTop")};
                 margin-top: 0;
-                padding-top: 7px;
+                padding-top: 2px;
             }}
             QTabBar::tab:hover:!selected {{
                 background-color: {self._get_color("list.hoverBackground")};
                 color: {self._get_color("list.hoverForeground")};
             }}
             QTabBar::close-button {{
-                width: 16px;
-                height: 16px;
+                width: 14px;
+                height: 14px;
                 background-color: transparent;
                 border: none;
-                border-radius: 3px;
-                margin: 2px;
+                border-radius: 2px;
+                margin: 0px;
+                padding: 0px;
             }}
             QTabBar::close-button:hover {{
                 background-color: rgba(90, 93, 94, 0.8);
