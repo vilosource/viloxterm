@@ -249,10 +249,10 @@ class TreeView(QWidget):
 
         elif node.is_split() and node.first and node.second:
             # Render split as QSplitter
+            from viloapp.models.workspace_model import Orientation
+
             splitter = QSplitter(
-                Qt.Horizontal
-                if node.orientation and str(node.orientation).endswith("horizontal")
-                else Qt.Vertical
+                Qt.Horizontal if node.orientation == Orientation.HORIZONTAL else Qt.Vertical
             )
 
             # Recursively render children
