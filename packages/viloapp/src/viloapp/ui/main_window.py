@@ -257,11 +257,24 @@ class MainWindow(QMainWindow):
         """Create command context for execution."""
         from viloapp.core.commands.base import CommandContext
 
-        return CommandContext(
+        # Get the model from workspace if available
+        model = self.workspace.model if self.workspace else None
+
+        # Create context with model as primary
+        context = CommandContext(
+            model=model,
             main_window=self,
             workspace=self.workspace,
-            active_widget=(self.workspace.get_current_split_widget() if self.workspace else None),
         )
+
+        # Set active tab and pane IDs if available
+        if model and model.state:
+            context.active_tab_id = model.state.active_tab_id
+            active_tab = model.state.get_active_tab()
+            if active_tab:
+                context.active_pane_id = active_tab.active_pane_id
+
+        return context
 
     def execute_command(self, command_id: str, **kwargs):
         """
