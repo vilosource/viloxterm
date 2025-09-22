@@ -119,7 +119,7 @@ class PaneView(QWidget):
     def create_header(self) -> QWidget:
         """Create pane header with controls."""
         header = QWidget()
-        header.setFixedHeight(24)
+        header.setFixedHeight(22)
         layout = QHBoxLayout(header)
         layout.setContentsMargins(5, 1, 5, 1)
         layout.setSpacing(2)
@@ -134,21 +134,21 @@ class PaneView(QWidget):
         # Action buttons
         # Split horizontal (creates left-right panes)
         split_h_btn = QPushButton("│")
-        split_h_btn.setFixedSize(20, 20)
+        split_h_btn.setFixedSize(18, 18)
         split_h_btn.setToolTip("Split Right")
         split_h_btn.clicked.connect(lambda: self.request_split("horizontal"))
         layout.addWidget(split_h_btn)
 
         # Split vertical (creates top-bottom panes)
         split_v_btn = QPushButton("─")
-        split_v_btn.setFixedSize(20, 20)
+        split_v_btn.setFixedSize(18, 18)
         split_v_btn.setToolTip("Split Down")
         split_v_btn.clicked.connect(lambda: self.request_split("vertical"))
         layout.addWidget(split_v_btn)
 
         # Close
         close_btn = QPushButton("✕")
-        close_btn.setFixedSize(20, 20)
+        close_btn.setFixedSize(18, 18)
         close_btn.setToolTip("Close Pane")
         close_btn.clicked.connect(lambda: self.request_close())
         layout.addWidget(close_btn)
