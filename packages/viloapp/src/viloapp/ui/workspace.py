@@ -77,21 +77,31 @@ class Workspace(QWidget):
             """
             QTabBar {
                 max-height: 24px;
+                background-color: #252526;
             }
             QTabBar::tab {
                 height: 22px;
                 padding: 1px 8px;
                 margin: 0;
+                background-color: #2d2d30;  /* Inactive tab - darker */
+                color: #969696;
+            }
+            QTabBar::tab:selected {
+                background-color: #1e1e1e;  /* Active tab - matches editor */
+                color: #ffffff;
+            }
+            QTabBar::tab:hover:!selected {
+                background-color: #353536;
             }
         """
         )
 
-        # Remove the frame/border from tab widget pane
+        # Style the tab widget pane with border matching active tab
         self.tab_widget.setStyleSheet(
             """
             QTabWidget::pane {
-                border: none;
-                background: transparent;
+                border: 1px solid #1e1e1e;  /* Same as active tab background */
+                background-color: #1e1e1e;
             }
             """
         )

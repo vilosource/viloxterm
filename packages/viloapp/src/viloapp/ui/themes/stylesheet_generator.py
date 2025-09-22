@@ -246,13 +246,14 @@ class StylesheetGenerator:
         return f"""
             QTabWidget::pane {{
                 background-color: {self._get_color("editor.background")};
-                border: none;
+                border: 1px solid {self._get_color("editor.background")};
+                border-top: none;
             }}
             QTabWidget::tab-bar {{
-                background-color: {self._get_color("tab.border")};
+                background-color: {self._get_color("editorGroupHeader.tabsBackground")};
             }}
             QTabBar {{
-                background-color: {self._get_color("tab.border")};
+                background-color: {self._get_color("editorGroupHeader.tabsBackground")};
             }}
             QTabBar::tab {{
                 background-color: {self._get_color("tab.inactiveBackground")};

@@ -349,22 +349,27 @@ class WorkspaceView(QWidget):
                 background-color: #1e1e1e;
             }
             QTabWidget::pane {
-                border: 1px solid #3c3c3c;
+                border: 1px solid #1e1e1e;
                 background-color: #1e1e1e;
+            }
+            QTabBar {
+                background-color: #252526;
             }
             QTabBar::tab {
                 background-color: #2d2d30;
-                color: #cccccc;
+                color: #969696;
                 padding: 2px 8px;
-                margin-right: 2px;
+                margin-right: 1px;
                 font-size: 13px;
+                border: none;
             }
             QTabBar::tab:selected {
                 background-color: #1e1e1e;
                 color: #ffffff;
             }
-            QTabBar::tab:hover {
-                background-color: #3c3c3c;
+            QTabBar::tab:hover:!selected {
+                background-color: #353536;
+                color: #cccccc;
             }
             """
         )
