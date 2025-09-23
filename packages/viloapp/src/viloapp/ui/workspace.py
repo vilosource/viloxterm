@@ -47,9 +47,10 @@ class Workspace(QWidget):
         # UI components
         self.tab_widget = None
         self.tab_views = {}  # tab_id -> TabView
+        self._state_restored = False  # Track if state has been restored
 
         self.setup_ui()
-        self.create_default_tab()
+        # Don't create default tab here - wait for restore_state or explicit call
         self._setup_theme_observer()
 
     def setup_ui(self):
@@ -92,6 +93,25 @@ class Workspace(QWidget):
         self.tab_widget.tabCloseRequested.connect(self._on_tab_close_requested)
 
         layout.addWidget(self.tab_widget)
+
+    def ensure_has_tab(self):
+        """Ensure workspace has at least one tab."""
+        if not self.model.state.tabs:
+            self.create_default_tab()
+
+    def ensure_initialized(self):
+        """Ensure workspace is initialized with at least one tab.
+
+        This should be called after restore_state has had a chance to run.
+        """
+        if not self._state_restored:
+            # restore_state was never called, create default tab
+            logger.info("No state restoration attempted, creating default tab")
+            self.ensure_has_tab()
+        elif not self.model.state.tabs:
+            # State was restored but no tabs exist
+            logger.info("State restored but no tabs, creating default tab")
+            self.ensure_has_tab()
 
     def create_default_tab(self):
         """Create the default tab on startup."""
@@ -407,13 +427,15 @@ class Workspace(QWidget):
         Args:
             state: Dictionary containing workspace state
         """
+        self._state_restored = True  # Mark that restore was attempted
+
         if not state or "tabs" not in state:
             # No valid state, create default tab
-            self.create_default_tab()
+            self.ensure_has_tab()
             return
 
         try:
-            # Clear existing tabs
+            # Clear any existing tabs (shouldn't be any if we didn't create default)
             for tab in list(self.model.state.tabs):
                 self.model.close_tab(tab.id)  # Use 'id', not 'tab_id'
 
@@ -421,25 +443,32 @@ class Workspace(QWidget):
             restored_any = False
             for tab_state in state.get("tabs", []):
                 widget_id = tab_state.get("widget_id")
+                logger.info(f"Attempting to restore tab with widget_id: {widget_id}")
                 if widget_id:
                     # Check if widget is available
                     from viloapp.core.app_widget_manager import app_widget_manager
 
-                    if app_widget_manager.is_widget_available(widget_id):
+                    available = app_widget_manager.is_widget_available(widget_id)
+                    logger.info(f"Widget {widget_id} available: {available}")
+                    if available:
                         tab_id = self.model.create_tab(
                             name=tab_state.get("name", "Restored Tab"), widget_id=widget_id
                         )
                         restored_any = True
+                        logger.info(f"Restored tab: {tab_state.get('name')} with widget {widget_id}")
 
                         # Set active if it was active
                         if tab_state.get("active"):
                             self.model.set_active_tab(tab_id)
+                    else:
+                        logger.warning(f"Widget {widget_id} is not available, skipping tab restoration")
 
             # If no tabs were restored, create default
             if not restored_any:
-                self.create_default_tab()
+                logger.info("No tabs restored from state, creating default tab")
+                self.ensure_has_tab()
 
         except Exception as e:
             logger.error(f"Failed to restore workspace state: {e}")
             # Create default tab on error
-            self.create_default_tab()
+            self.ensure_has_tab()

@@ -82,7 +82,13 @@ class MainWindowStateManager:
             except (json.JSONDecodeError, Exception) as e:
                 # If restoration fails, workspace will create default tab
                 print(f"Failed to restore workspace state: {e}")
+        else:
+            # No saved state, workspace needs to be initialized
+            self.main_window.workspace.restore_state({})
         settings.endGroup()
+
+        # Ensure workspace has at least one tab after restoration
+        self.main_window.workspace.ensure_initialized()
 
     def close_event_handler(self, event):
         """Handle close event by saving state."""
