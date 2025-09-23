@@ -395,6 +395,32 @@ class Workspace(QWidget):
         """Get the number of tabs."""
         return len(self.model.state.tabs)
 
+    def _serialize_pane_node(self, node) -> dict:
+        """Serialize a PaneNode to dictionary for persistence."""
+
+        result = {
+            "id": node.id,
+            "node_type": node.node_type.value,
+        }
+
+        if node.is_split():
+            result["orientation"] = node.orientation.value if node.orientation else None
+            result["ratio"] = node.ratio
+            if node.first:
+                result["first"] = self._serialize_pane_node(node.first)
+            if node.second:
+                result["second"] = self._serialize_pane_node(node.second)
+        elif node.is_leaf() and node.pane:
+            result["pane"] = {
+                "id": node.pane.id,
+                "widget_id": node.pane.widget_id,
+                "widget_state": node.pane.widget_state,
+                "focused": node.pane.focused,
+                "metadata": node.pane.metadata,
+            }
+
+        return result
+
     def save_state(self) -> dict:
         """Save workspace state for persistence.
 
@@ -404,16 +430,13 @@ class Workspace(QWidget):
         # Get state from the model
         tabs_state = []
         for tab in self.model.state.tabs:
-            # Get widget_id from the root pane
-            widget_id = None
-            if tab.tree.root.pane:
-                widget_id = tab.tree.root.pane.widget_id
-
+            # Serialize the entire pane tree
             tab_state = {
-                "id": tab.id,  # Use 'id', not 'tab_id'
+                "id": tab.id,
                 "name": tab.name,
-                "widget_id": widget_id,
                 "active": tab.id == self.model.state.active_tab_id,
+                "tree": self._serialize_pane_node(tab.tree.root),
+                "active_pane_id": tab.active_pane_id,
             }
             tabs_state.append(tab_state)
 
@@ -421,6 +444,101 @@ class Workspace(QWidget):
             "tabs": tabs_state,
             "active_tab_id": self.model.state.active_tab_id,
         }
+
+    def _deserialize_pane_node(self, data: dict):
+        """Deserialize a PaneNode from dictionary."""
+        from viloapp.models.workspace_model import NodeType, Orientation, Pane, PaneNode
+
+        node = PaneNode(
+            id=data.get("id"),
+            node_type=NodeType(data.get("node_type", "leaf")),
+        )
+
+        if node.is_split():
+            if data.get("orientation"):
+                node.orientation = Orientation(data["orientation"])
+            node.ratio = data.get("ratio", 0.5)
+            if "first" in data:
+                node.first = self._deserialize_pane_node(data["first"])
+            if "second" in data:
+                node.second = self._deserialize_pane_node(data["second"])
+        elif node.is_leaf() and "pane" in data:
+            pane_data = data["pane"]
+            node.pane = Pane(
+                id=pane_data.get("id"),
+                widget_id=pane_data.get("widget_id"),
+                widget_state=pane_data.get("widget_state", {}),
+                focused=pane_data.get("focused", False),
+                metadata=pane_data.get("metadata", {}),
+            )
+
+        return node
+
+    def _restore_tab_with_tree(self, tab_state: dict) -> bool:
+        """Restore a single tab with its pane tree structure."""
+        from viloapp.core.app_widget_manager import app_widget_manager
+        from viloapp.models.workspace_model import PaneTree, Tab
+
+        # Check if all widgets in the tree are available
+        def check_widgets_available(node_data: dict) -> bool:
+            if "pane" in node_data:
+                widget_id = node_data["pane"].get("widget_id")
+                if widget_id:
+                    is_available = app_widget_manager.is_widget_available(widget_id)
+                    logger.debug(f"Checking widget availability: {widget_id} = {is_available}")
+                    if not is_available:
+                        logger.warning(f"Widget {widget_id} not available for tab restoration")
+                        # Show what widgets ARE available
+                        available = app_widget_manager.get_available_widget_ids()
+                        logger.debug(f"Available widgets: {available}")
+                        return False
+            if "first" in node_data and not check_widgets_available(node_data["first"]):
+                return False
+            if "second" in node_data and not check_widgets_available(node_data["second"]):
+                return False
+            return True
+
+        tree_data = tab_state.get("tree")
+        if not tree_data:
+            # Old format - try to restore with just widget_id
+            widget_id = tab_state.get("widget_id")
+            if widget_id and app_widget_manager.is_widget_available(widget_id):
+                tab_id = self.model.create_tab(
+                    name=tab_state.get("name", "Restored Tab"), widget_id=widget_id
+                )
+                if tab_state.get("active"):
+                    self.model.set_active_tab(tab_id)
+                return True
+            return False
+
+        # Check all widgets are available
+        if not check_widgets_available(tree_data):
+            logger.warning(f"Not all widgets available for tab {tab_state.get('name')}")
+            return False
+
+        # Create the tab with a placeholder initially
+        tab = Tab(
+            id=tab_state.get("id"),
+            name=tab_state.get("name", "Restored Tab"),
+            active_pane_id=tab_state.get("active_pane_id"),
+        )
+
+        # Restore the tree structure
+        root_node = self._deserialize_pane_node(tree_data)
+        tab.tree = PaneTree(root=root_node)
+
+        # Add tab to model
+        self.model.state.tabs.append(tab)
+
+        # Set active if needed
+        if tab_state.get("active"):
+            self.model.state.active_tab_id = tab.id
+
+        # Notify observers
+        self.model._notify("tab_created", {"tab_id": tab.id})
+
+        logger.info(f"Restored tab {tab.name} with full tree structure")
+        return True
 
     def restore_state(self, state: dict) -> None:
         """Restore workspace state from persistence.
@@ -438,35 +556,14 @@ class Workspace(QWidget):
         try:
             # Clear any existing tabs (shouldn't be any if we didn't create default)
             for tab in list(self.model.state.tabs):
-                self.model.close_tab(tab.id)  # Use 'id', not 'tab_id'
+                self.model.close_tab(tab.id)
 
             # Restore tabs
             restored_any = False
             for tab_state in state.get("tabs", []):
-                widget_id = tab_state.get("widget_id")
-                logger.info(f"Attempting to restore tab with widget_id: {widget_id}")
-                if widget_id:
-                    # Check if widget is available
-                    from viloapp.core.app_widget_manager import app_widget_manager
-
-                    available = app_widget_manager.is_widget_available(widget_id)
-                    logger.info(f"Widget {widget_id} available: {available}")
-                    if available:
-                        tab_id = self.model.create_tab(
-                            name=tab_state.get("name", "Restored Tab"), widget_id=widget_id
-                        )
-                        restored_any = True
-                        logger.info(
-                            f"Restored tab: {tab_state.get('name')} with widget {widget_id}"
-                        )
-
-                        # Set active if it was active
-                        if tab_state.get("active"):
-                            self.model.set_active_tab(tab_id)
-                    else:
-                        logger.warning(
-                            f"Widget {widget_id} is not available, skipping tab restoration"
-                        )
+                logger.info(f"Attempting to restore tab: {tab_state.get('name')}")
+                if self._restore_tab_with_tree(tab_state):
+                    restored_any = True
 
             # If no tabs were restored, create default
             if not restored_any:
@@ -475,5 +572,8 @@ class Workspace(QWidget):
 
         except Exception as e:
             logger.error(f"Failed to restore workspace state: {e}")
+            import traceback
+
+            traceback.print_exc()
             # Create default tab on error
             self.ensure_has_tab()
