@@ -9,7 +9,6 @@ from PySide6.QtCore import QUrl, Signal
 from viloapp_sdk import IWidget
 
 from .server import terminal_server
-from .ui_components import TerminalToolBar
 from .features import TerminalSearch
 
 logger = logging.getLogger(__name__)
@@ -27,7 +26,6 @@ class TerminalWidget(QWidget):
         super().__init__(parent)
         self.session_id = None
         self.web_view = None
-        self.toolbar = None
         self.search = TerminalSearch()
         self.setup_ui()
 
@@ -35,14 +33,9 @@ class TerminalWidget(QWidget):
         """Setup the UI."""
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        # Create toolbar
-        self.toolbar = TerminalToolBar()
-        self.toolbar.clear_terminal.connect(self.clear_terminal)
-        self.toolbar.search_requested.connect(self._on_search_requested)
-        layout.addWidget(self.toolbar)
-
-        # Create web view for terminal
+        # Create web view for terminal (no toolbar)
         self.web_view = QWebEngineView()
         layout.addWidget(self.web_view)
 
@@ -114,7 +107,7 @@ class TerminalWidget(QWidget):
             self.web_view.page().runJavaScript(f"term.write('{escaped}')")
 
     def _on_search_requested(self, pattern: str):
-        """Handle search request from toolbar."""
+        """Handle search request."""
         self.search.search_in_terminal(self, pattern)
 
     def closeEvent(self, event):
