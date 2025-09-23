@@ -52,16 +52,16 @@ class WhenContext:
                 active_pane = active_tab.get_active_pane()
                 if active_pane:
                     # Widget type checks
-                    from viloapp.models.workspace_model import WidgetType
+                    from viloapp.core.widget_ids import EDITOR, FILE_EXPLORER, TERMINAL
 
-                    variables["editorFocus"] = active_pane.widget_type in [
-                        WidgetType.EDITOR,
-                        WidgetType.TEXT_EDITOR,
+                    variables["editorFocus"] = active_pane.widget_id in [
+                        EDITOR,
+                        EDITOR,
                     ]
-                    variables["terminalFocus"] = active_pane.widget_type == WidgetType.TERMINAL
-                    variables["explorerFocus"] = active_pane.widget_type in [
-                        WidgetType.FILE_EXPLORER,
-                        WidgetType.EXPLORER,
+                    variables["terminalFocus"] = active_pane.widget_id == TERMINAL
+                    variables["explorerFocus"] = active_pane.widget_id in [
+                        FILE_EXPLORER,
+                        FILE_EXPLORER,
                     ]
 
                     # Widget state checks

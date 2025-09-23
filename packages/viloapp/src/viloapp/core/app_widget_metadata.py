@@ -11,7 +11,8 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
 from viloapp.core.widget_placement import WidgetPlacement
-from viloapp.ui.widgets.widget_registry import WidgetType
+
+# Widget IDs are now defined in the widget classes themselves
 
 if TYPE_CHECKING:
     from viloapp.ui.widgets.app_widget import AppWidget
@@ -40,7 +41,6 @@ class AppWidgetMetadata:
 
     # === Identity ===
     widget_id: str  # Unique identifier (e.g., "com.viloapp.terminal")
-    widget_type: WidgetType  # Enum value for backward compatibility
 
     # === Display ===
     display_name: str  # Human-readable name
@@ -70,6 +70,11 @@ class AppWidgetMetadata:
     can_suspend: bool = (
         True  # Can be suspended when hidden (False for widgets with background processes)
     )
+
+    # === Default Widget Support ===
+    can_be_default: bool = False  # Can this widget be used as a default widget
+    default_priority: int = 100  # Priority for default selection (lower = higher priority)
+    default_for_contexts: list[str] = field(default_factory=list)  # Contexts where this can be default
 
     # === Placement Intent ===
     default_placement: WidgetPlacement = WidgetPlacement.SMART
@@ -123,7 +128,6 @@ class AppWidgetMetadata:
         """Convert metadata to dictionary for serialization."""
         return {
             "widget_id": self.widget_id,
-            "widget_type": self.widget_type.value,
             "display_name": self.display_name,
             "description": self.description,
             "icon": self.icon,

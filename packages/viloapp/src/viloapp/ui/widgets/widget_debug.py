@@ -132,7 +132,7 @@ class WidgetDebugger:
 
         info = {
             "widget_id": widget_id,
-            "widget_type": widget.widget_type.value,
+            "widget_id": widget.widget_id.value,
             "current_state": widget.widget_state.value,
             "has_focus": widget.has_focus,
             "pending_focus": widget._pending_focus,
@@ -171,7 +171,7 @@ class WidgetDebugger:
         print(f"\n{'=' * 60}")
         print(f"Widget Debug Info: {info['widget_id']}")
         print(f"{'=' * 60}")
-        print(f"Type: {info['widget_type']}")
+        print(f"Type: {info['widget_id']}")
         print(f"Current State: {info['current_state']}")
         print(f"Has Focus: {info['has_focus']}")
         print(f"Pending Focus: {info['pending_focus']}")
@@ -207,7 +207,7 @@ class WidgetDebugger:
             summaries.append(
                 {
                     "widget_id": widget_id,
-                    "type": widget.widget_type.value,
+                    "type": widget.widget_id.value,
                     "state": widget.widget_state.value,
                     "has_focus": widget.has_focus,
                     "errors": widget._error_count,
@@ -295,7 +295,7 @@ class WidgetInspector:
         """
         return {
             "id": widget.widget_id,
-            "type": widget.widget_type.value,
+            "type": widget.widget_id.value,
             "state": widget.widget_state.value,
             "ready": widget.widget_state == WidgetState.READY,
             "has_focus": widget.has_focus,
@@ -358,7 +358,7 @@ class WidgetInspector:
         return {
             "widget1_id": widget1.widget_id,
             "widget2_id": widget2.widget_id,
-            "same_type": widget1.widget_type == widget2.widget_type,
+            "same_type": widget1.widget_id == widget2.widget_id,
             "same_state": widget1.widget_state == widget2.widget_state,
             "focus_diff": {"widget1": widget1.has_focus, "widget2": widget2.has_focus},
             "error_diff": {

@@ -133,6 +133,144 @@ widget_type_map = {
 ⚠️ Model-first restoration (PARTIAL - needs full SplitPaneModel migration)
 ❌ Complete model unification (NOT STARTED)
 
+## ⚠️ CRITICAL: Refactoring Process Requirements
+
+### When Refactoring (Removing/Renaming Symbols)
+
+**MANDATORY STEPS** - Do not skip any of these:
+
+1. **Find ALL Usages First**
+```bash
+# Use multiple tools to ensure completeness
+grep -r "WidgetType" packages/viloapp/src --include="*.py"
+rg "widget_type|widget_id|widgetType" --type py
+find packages/viloapp -name "*.py" -exec grep -l "WidgetType" {} \;
+```
+
+2. **Create Verification Script**
+```python
+# verify_refactoring.py - Run this continuously
+import subprocess
+import sys
+
+def check_undefined_vars():
+    """Check for undefined variables."""
+    result = subprocess.run(
+        ['python', '-m', 'py_compile'] + glob.glob('packages/viloapp/src/**/*.py', recursive=True),
+        capture_output=True, text=True
+    )
+
+    if 'NameError' in result.stderr or 'undefined' in result.stderr:
+        print("❌ UNDEFINED VARIABLES FOUND!")
+        print(result.stderr)
+        return False
+    return True
+
+def check_variable_consistency():
+    """Ensure consistent variable naming."""
+    # Count occurrences of different patterns
+    patterns = ['widget_type', 'widget_id', 'widgetType']
+    for pattern in patterns:
+        count = subprocess.run(
+            ['grep', '-r', pattern, 'packages/viloapp/src', '--include=*.py'],
+            capture_output=True
+        ).stdout.count(b'\n')
+        print(f"{pattern}: {count} occurrences")
+
+if __name__ == "__main__":
+    if not check_undefined_vars():
+        sys.exit(1)
+    check_variable_consistency()
+```
+
+3. **Run Continuous Validation**
+```bash
+# Keep this running in a terminal during ALL refactoring
+while true; do
+    clear
+    echo "=== Checking for undefined variables ==="
+    python verify_refactoring.py
+
+    echo "\n=== Running quick test ==="
+    python test_workspace_command_fix.py
+
+    sleep 2
+done
+```
+
+4. **Test EVERY Command After Changes**
+```python
+# test_all_commands.py - Must pass before considering refactoring complete
+from viloapp.core.commands.registry import command_registry
+
+for cmd_id in command_registry.get_all_commands():
+    try:
+        # Create minimal context and execute
+        context = create_minimal_context()
+        result = execute_command(cmd_id, context)
+        print(f"✅ {cmd_id}")
+    except NameError as e:
+        print(f"❌ {cmd_id}: {e}")
+        sys.exit(1)
+```
+
+### Red Flags That MUST Stop You
+
+🚨 **STOP if you see any of these:**
+
+1. **Any undefined variable error**
+```python
+NameError: name 'widget_type' is not defined  # STOP!
+```
+
+2. **Mixed variable names for same concept**
+```python
+widget_id = get_default_widget_type()  # Inconsistent!
+if widget_type == "terminal":  # Different variable!
+```
+
+3. **Tests that only mock, don't execute**
+```python
+@patch("WorkspaceService")  # Mocking hides real errors!
+def test_command(mock):
+    pass  # This test won't catch NameError!
+```
+
+4. **Can't find all usages with grep/ast**
+```bash
+# If grep doesn't find it, you're not looking hard enough
+grep -r "pattern" .  # Too few results? Check aliases!
+```
+
+5. **Changing multiple files without testing between**
+```bash
+# WRONG: Change 10 files then test
+# RIGHT: Change 1 file, test, commit, repeat
+```
+
+### Refactoring Checklist
+
+**Before starting:**
+- [ ] All tests pass
+- [ ] No undefined variables (pyflakes/mypy clean)
+- [ ] Created list of ALL symbols being changed
+- [ ] Found ALL usages with automated tools
+- [ ] Have verification script ready
+
+**During refactoring:**
+- [ ] Running continuous validation loop
+- [ ] Testing after EVERY file change
+- [ ] Using consistent variable names
+- [ ] Committing incrementally
+- [ ] Checking for undefined variables continuously
+
+**After refactoring:**
+- [ ] All tests pass
+- [ ] All commands execute without NameError
+- [ ] No undefined variables in entire codebase
+- [ ] Variable names are consistent
+- [ ] Application starts and runs normally
+
 ## When Making Changes
 
 ### Before Any Modification
@@ -162,6 +300,10 @@ When testing changes, verify:
 - [ ] Model and UI stay synchronized
 - [ ] No circular import errors
 - [ ] Performance remains <10ms for operations
+- [ ] **No undefined variables** (run pyflakes)
+- [ ] **All commands execute** (run test_all_commands.py)
+- [ ] **Tests use real code, not just mocks**
+- [ ] **Variable naming is consistent**
 
 ## Common Commands for Testing
 
@@ -169,11 +311,22 @@ When testing changes, verify:
 # Run the application
 python packages/viloapp/src/viloapp/main.py
 
+# Check for undefined variables (CRITICAL!)
+python -m pyflakes packages/viloapp/src
+python -m py_compile packages/viloapp/src/**/*.py
+
+# Test all commands work
+python test_all_commands.py
+
 # Check logs for state issues
 grep -E "No active pane|Failed to restore|model event" ~/.local/share/ViloxTerm/logs/viloxterm.log
 
 # Monitor split operations
 tail -f ~/.local/share/ViloxTerm/logs/viloxterm.log | grep -E "split|Split|active pane"
+
+# Check variable naming consistency
+grep -r "widget_type" packages/viloapp/src --include="*.py" | wc -l
+grep -r "widget_id" packages/viloapp/src --include="*.py" | wc -l
 ```
 
 ## Future Direction
@@ -189,6 +342,25 @@ Complete migration to single model by:
 - Pure reactive UI
 - Complete plugin system integration
 - 100% command-driven operations
+
+## Plugin Architecture Principles
+
+### Core Must Not Know Implementations
+- Core defines interfaces and patterns
+- No specific widget IDs in core
+- No hardcoded plugin names
+- Use runtime discovery
+
+### Widget ID Conventions
+- Built-in: `com.viloapp.<name>`
+- Plugins: `plugin.<plugin_id>.<widget_name>`
+- These are CONVENTIONS not constants
+
+### Extensibility Rules
+- Adding new widgets must NEVER require modifying core files
+- Widget IDs are owned by the widgets themselves
+- Use registries for runtime discovery
+- Core modules define patterns, not instances
 
 ## Remember
 

@@ -40,7 +40,6 @@ from typing import Optional
 
 from viloapp.core.app_widget_manager import AppWidgetManager
 from viloapp.core.app_widget_metadata import AppWidgetMetadata, WidgetCategory
-from viloapp.ui.widgets.widget_registry import WidgetType
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +70,6 @@ def register_builtin_widgets():
 
         metadata = AppWidgetMetadata(
             widget_id="com.viloapp.terminal",
-            widget_type=WidgetType.TERMINAL,
             display_name="Terminal",
             description="Integrated terminal emulator with shell access",
             icon="terminal",
@@ -94,6 +92,10 @@ def register_builtin_widgets():
             default_placement=WidgetPlacement.SMART,
             supports_replacement=True,
             supports_new_tab=True,
+            # Default widget support
+            can_be_default=True,
+            default_priority=10,  # High priority - common default choice
+            default_for_contexts=["terminal", "shell", "command"],
         )
 
         # Add context-specific commands
@@ -122,7 +124,6 @@ def register_builtin_widgets():
 
         metadata = AppWidgetMetadata(
             widget_id="com.viloapp.editor",
-            widget_type=WidgetType.TEXT_EDITOR,
             display_name="Text Editor",
             description="Simple text editor for code and documents",
             icon="file-text",
@@ -139,6 +140,10 @@ def register_builtin_widgets():
             default_placement=WidgetPlacement.SMART,
             supports_replacement=True,
             supports_new_tab=True,
+            # Default widget support
+            can_be_default=True,
+            default_priority=20,  # Medium priority - common for editor contexts
+            default_for_contexts=["editor", "text", "code"],
         )
 
         # Add context-specific commands
@@ -173,7 +178,6 @@ def register_builtin_widgets():
 
         metadata = AppWidgetMetadata(
             widget_id="com.viloapp.theme_editor",
-            widget_type=WidgetType.CUSTOM,  # Use CUSTOM to avoid factory conflict with SETTINGS
             display_name="Theme Editor",
             description="Visual theme customization tool with live preview",
             icon="palette",
@@ -228,7 +232,6 @@ def register_builtin_widgets():
 
         metadata = AppWidgetMetadata(
             widget_id="com.viloapp.shortcuts",
-            widget_type=WidgetType.SETTINGS,  # Note: multiple widgets can share a type
             display_name="Keyboard Shortcuts",
             description="Configure and customize keyboard shortcuts",
             icon="keyboard",
@@ -275,7 +278,6 @@ def register_builtin_widgets():
         manager.register_widget(
             AppWidgetMetadata(
                 widget_id="com.viloapp.placeholder",
-                widget_type=WidgetType.PLACEHOLDER,
                 display_name="Empty Pane",
                 description="Empty pane - right-click to change type",
                 icon="layout",
@@ -298,7 +300,6 @@ def register_builtin_widgets():
         manager.register_widget(
             AppWidgetMetadata(
                 widget_id="com.viloapp.output",
-                widget_type=WidgetType.OUTPUT,
                 display_name="Output Panel",
                 description="Output and console messages",
                 icon="message-square",
@@ -321,7 +322,6 @@ def register_builtin_widgets():
         manager.register_widget(
             AppWidgetMetadata(
                 widget_id="com.viloapp.explorer",
-                widget_type=WidgetType.EXPLORER,
                 display_name="File Explorer",
                 description="Browse and manage files",
                 icon="folder",
@@ -356,7 +356,6 @@ def register_builtin_widgets():
         manager.register_widget(
             AppWidgetMetadata(
                 widget_id="com.viloapp.settings",
-                widget_type=WidgetType.SETTINGS,
                 display_name="Settings",
                 description="Configure application settings and preferences",
                 icon="settings",
@@ -407,7 +406,7 @@ When adding a new widget, follow these exact patterns:
 
    manager.register_widget(AppWidgetMetadata(
        widget_id="com.viloapp.mywidget",        # Unique reverse-domain ID
-       widget_type=WidgetType.APPROPRIATE_TYPE, # Choose existing or create new
+       # widget_id is the unique identifier
        display_name="My Widget",                # User-visible name
        description="What this widget does",     # Tooltip/help text
        icon="icon-name",                        # Icon identifier
@@ -429,7 +428,7 @@ When adding a new widget, follow these exact patterns:
 
        workspace_service = context.get_service(WorkspaceService)
        success = workspace_service.add_app_widget(
-           widget_type=WidgetType.MY_TYPE,
+           widget_id="com.viloapp.mywidget",
            widget_id=instance_id,  # ← Unique each time
            name="My Widget"
        )
@@ -450,7 +449,7 @@ When adding a new widget, follow these exact patterns:
 
        # Create singleton instance
        success = workspace_service.add_app_widget(
-           widget_type=WidgetType.MY_TYPE,
+           widget_id="com.viloapp.mywidget",
            widget_id=widget_id,  # ← Always same for singleton
            name="My Widget"
        )
@@ -472,7 +471,7 @@ When adding a new widget, follow these exact patterns:
        instance_id = f"mywidget_{session_id}"
        workspace_service = context.get_service(WorkspaceService)
        success = workspace_service.add_app_widget(
-           widget_type=WidgetType.MY_TYPE,
+           widget_id="com.viloapp.mywidget",
            widget_id=instance_id,
            name="My Widget"
        )
@@ -489,11 +488,11 @@ When adding a new widget, follow these exact patterns:
       instance_id = "com.viloapp.settings"
 
    ❌ WidgetType mismatch between registration and command:
-      # Registration: WidgetType.SETTINGS
-      # Command: WidgetType.CUSTOM  ← Different type!
+      # Registration: SETTINGS
+      # Command: "plugin.unknown"  ← Different type!
 
    ✅ Use same WidgetType everywhere:
-      # Both registration and command use WidgetType.SETTINGS
+      # Both registration and command use SETTINGS
 
    ❌ Forgetting singleton flag:
       # Settings registered with singleton=False

@@ -33,9 +33,13 @@ def new_editor_tab_command(context: CommandContext) -> CommandResult:
             name = f"Editor {editor_count + 1}"
 
         # Create tab with editor widget type
-        from viloapp.models.workspace_model import WidgetType
+        from viloapp.core.app_widget_manager import app_widget_manager
 
-        tab_id = context.model.create_tab(name, WidgetType.EDITOR)
+        widget_id = app_widget_manager.get_default_editor_id()
+        if not widget_id:
+            widget_id = "com.viloapp.placeholder"
+
+        tab_id = context.model.create_tab(name, widget_id)
         index = len(context.model.state.tabs) - 1
 
         return CommandResult(
@@ -83,9 +87,13 @@ def new_terminal_tab_command(context: CommandContext) -> CommandResult:
             name = f"Terminal {terminal_count + 1}"
 
         # Create tab with terminal widget type
-        from viloapp.models.workspace_model import WidgetType
+        from viloapp.core.app_widget_manager import app_widget_manager
 
-        tab_id = context.model.create_tab(name, WidgetType.TERMINAL)
+        widget_id = app_widget_manager.get_default_terminal_id()
+        if not widget_id:
+            widget_id = "com.viloapp.placeholder"
+
+        tab_id = context.model.create_tab(name, widget_id)
         index = len(context.model.state.tabs) - 1
 
         return CommandResult(
@@ -275,9 +283,13 @@ def replace_with_terminal_command(context: CommandContext) -> CommandResult:
 
         if pane_id:
             # Change the pane type through model
-            from viloapp.models.workspace_model import WidgetType
+            from viloapp.core.app_widget_manager import app_widget_manager
 
-            success = context.model.change_pane_widget_type(pane_id, WidgetType.TERMINAL)
+            widget_id = app_widget_manager.get_default_terminal_id()
+            if not widget_id:
+                widget_id = "com.viloapp.placeholder"
+
+            success = context.model.change_pane_widget_type(pane_id, widget_id)
             if success:
                 logger.info(f"Replaced pane {pane_id} with terminal")
                 return CommandResult(status=CommandStatus.SUCCESS)
@@ -324,9 +336,13 @@ def replace_with_editor_command(context: CommandContext) -> CommandResult:
 
         if pane_id:
             # Change the pane type through model
-            from viloapp.models.workspace_model import WidgetType
+            from viloapp.core.app_widget_manager import app_widget_manager
 
-            success = context.model.change_pane_widget_type(pane_id, WidgetType.EDITOR)
+            widget_id = app_widget_manager.get_default_editor_id()
+            if not widget_id:
+                widget_id = "com.viloapp.placeholder"
+
+            success = context.model.change_pane_widget_type(pane_id, widget_id)
             if success:
                 logger.info(f"Replaced pane {pane_id} with text editor")
                 return CommandResult(status=CommandStatus.SUCCESS)

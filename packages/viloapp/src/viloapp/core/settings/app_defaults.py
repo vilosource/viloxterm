@@ -8,7 +8,7 @@ are validated and have safe fallbacks to prevent crashes.
 """
 
 import logging
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from PySide6.QtCore import QSettings
 
@@ -423,8 +423,66 @@ def set_app_default(key: str, value: Any) -> bool:
     return get_app_defaults().set(key, value)
 
 
+def get_default_widget_preference() -> Optional[str]:
+    """
+    Get user's preferred default widget ID.
+
+    Returns:
+        Widget ID if set, None if not set
+    """
+    pref = get_app_default("workspace.default_widget_id", None)
+    if pref and isinstance(pref, str):
+        return pref
+    return None
+
+
+def set_default_widget_preference(widget_id: str) -> bool:
+    """
+    Set user's preferred default widget ID.
+
+    Args:
+        widget_id: Widget ID to set as default
+
+    Returns:
+        True if successfully set
+    """
+    return set_app_default("workspace.default_widget_id", widget_id)
+
+
+def get_default_widget_for_context(context: str) -> Optional[str]:
+    """
+    Get user's preferred widget for a specific context.
+
+    Args:
+        context: Context like "terminal", "editor", "shell"
+
+    Returns:
+        Widget ID if set, None if not set
+    """
+    key = f"workspace.default_widget.{context}"
+    pref = get_app_default(key, None)
+    if pref and isinstance(pref, str):
+        return pref
+    return None
+
+
+def set_default_widget_for_context(context: str, widget_id: str) -> bool:
+    """
+    Set user's preferred widget for a specific context.
+
+    Args:
+        context: Context like "terminal", "editor", "shell"
+        widget_id: Widget ID to set as default for this context
+
+    Returns:
+        True if successfully set
+    """
+    key = f"workspace.default_widget.{context}"
+    return set_app_default(key, widget_id)
+
+
 def get_default_widget_type() -> str:
-    """Get the default widget type for new tabs."""
+    """Get the default widget type for new tabs (legacy compatibility)."""
     return get_app_default("workspace.default_new_tab_widget", "terminal")
 
 

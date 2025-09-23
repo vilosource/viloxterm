@@ -11,7 +11,9 @@ from typing import Any, Optional
 
 from viloapp.core.settings.app_defaults import get_default_split_direction
 from viloapp.models.compatibility import SplitPaneRequest, WidgetStateUpdateRequest
-from viloapp.models.workspace_model import WidgetType, WorkspaceModel
+from viloapp.models.workspace_model import WorkspaceModel
+
+# Widget IDs are now defined in the widget classes themselves
 from viloapp.services.base import Service
 from viloapp.services.workspace_widget_registry import WorkspaceWidgetRegistry
 
@@ -167,7 +169,7 @@ class WorkspaceService(Service):
         if self._model:
             # Use model interface for business logic
             tab_name = name or f"Editor {len(self._model.get_state().tabs) + 1}"
-            result = self._model.add_tab(tab_name, WidgetType.EDITOR.value)
+            result = self._model.add_tab(tab_name, EDITOR.value)
 
             if result.success:
                 # Get the new tab index
@@ -213,7 +215,7 @@ class WorkspaceService(Service):
         if self._model:
             # Use model interface for business logic
             tab_name = name or f"Terminal {len(self._model.get_state().tabs) + 1}"
-            result = self._model.add_tab(tab_name, WidgetType.TERMINAL.value)
+            result = self._model.add_tab(tab_name, TERMINAL.value)
 
             if result.success:
                 # Get the new tab index
@@ -778,7 +780,7 @@ class WorkspaceService(Service):
                         "panes": {
                             pane_id: {
                                 "id": pane.id,
-                                "widget_type": pane.widget_type.value,
+                                "widget_id": pane.widget_id.value,
                                 "widget_state": pane.widget_state,
                                 "is_active": pane.is_active,
                             }
@@ -839,7 +841,7 @@ class WorkspaceService(Service):
         self.validate_initialized()
         return self._pane_manager.navigate_to_previous_pane()
 
-    def change_pane_widget_type(self, pane_id: str, widget_type: str) -> bool:
+    def change_pane_widget_type(self, pane_id: str, widget_id: str) -> bool:
         """Change the widget type of a specific pane."""
         self.validate_initialized()
 
@@ -859,7 +861,7 @@ class WorkspaceService(Service):
 
             if result.success:
                 # Notify observers
-                self.notify("pane_widget_changed", {"pane_id": pane_id, "widget_type": widget_type})
+                self.notify("pane_widget_changed", {"pane_id": pane_id, "widget_id": widget_type})
                 return True
             else:
                 logger.error(f"Failed to change pane widget type: {result.error}")

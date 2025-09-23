@@ -13,9 +13,9 @@ from typing import Any
 
 from PySide6.QtWidgets import QWidget
 
+from viloapp.core.widget_ids import TERMINAL
 from viloapp.ui.terminal.terminal_config import terminal_config
 from viloapp.ui.terminal.terminal_widget import TerminalWidget
-from viloapp.ui.widgets.widget_registry import WidgetType, widget_registry
 
 
 def create_terminal_widget(pane_id: str) -> QWidget:
@@ -67,7 +67,7 @@ def deserialize_terminal_state(widget: QWidget, state: dict[str, Any]) -> None:
 def register_terminal_widget():
     """Register terminal widget with the widget registry."""
     # Get existing config and update it
-    config = widget_registry.get_config(WidgetType.TERMINAL)
+    config = widget_registry.get_config(TERMINAL)
     if config:
         config.factory = create_terminal_widget
         config.serializer = serialize_terminal_state

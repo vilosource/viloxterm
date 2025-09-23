@@ -358,8 +358,8 @@ def replace_with_theme_editor_command(context: CommandContext) -> CommandResult:
 def open_theme_editor_command(context: CommandContext) -> CommandResult:
     """Open the theme editor in a new pane."""
     try:
+        from viloapp.core.widget_ids import SETTINGS
         from viloapp.services.workspace_service import WorkspaceService
-        from viloapp.ui.widgets.widget_registry import WidgetType
 
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
@@ -380,9 +380,9 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
             )
 
         # Add theme editor widget to workspace using the registered factory
-        # Note: Theme Editor is registered with WidgetType.SETTINGS in app_widget_registry.py
+        # Note: Theme Editor is registered with SETTINGS in app_widget_registry.py
         success = workspace_service.add_app_widget(
-            widget_type=WidgetType.SETTINGS,  # Must match registration
+            widget_type=SETTINGS,  # Must match registration
             widget_id=widget_id,
             name="Theme Editor",
         )

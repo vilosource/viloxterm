@@ -18,7 +18,6 @@ from PySide6.QtWidgets import (
 )
 
 from viloapp.core.commands.executor import execute_command
-from viloapp.ui.widgets.widget_registry import WidgetType, widget_registry
 
 logger = logging.getLogger(__name__)
 
@@ -250,26 +249,27 @@ class PaneHeaderBar(QWidget):
         view_types = []
         special_types = []
 
-        # Get available widget types from registry
-        for widget_type in WidgetType:
-            config = widget_registry.get_config(widget_type)
-            if not config or not config.allow_type_change:
-                continue
-
-            # Categorize widget types
-            if widget_type in [WidgetType.TEXT_EDITOR, WidgetType.OUTPUT]:
-                editor_types.append(widget_type)
-            elif widget_type == WidgetType.TERMINAL:
-                terminal_types.append(widget_type)
-            elif widget_type in [
-                WidgetType.EXPLORER,
-                WidgetType.TABLE_VIEW,
-                WidgetType.TREE_VIEW,
-                WidgetType.IMAGE_VIEWER,
-            ]:
-                view_types.append(widget_type)
-            elif widget_type in [WidgetType.SETTINGS, WidgetType.CUSTOM]:
-                special_types.append(widget_type)
+        # TODO: Get available widget types from registry
+        # This code is commented out until registry integration is complete
+        # for widget_type in widget_registry.get_all():
+        #     config = widget_registry.get_config(widget_type)
+        #     if not config or not config.allow_type_change:
+        #         continue
+        #
+        #     # Categorize widget types
+        #     if widget_type in [EDITOR, OUTPUT]:
+        #         editor_types.append(widget_type)
+        #     elif widget_id == TERMINAL:
+        #         terminal_types.append(widget_type)
+        #     elif widget_type in [
+        #         FILE_EXPLORER,
+        #         "viloapp.table_view",
+        #         "viloapp.tree_view",
+        #         "viloapp.image_viewer",
+        #     ]:
+        #         view_types.append(widget_type)
+        #     elif widget_type in [SETTINGS, "plugin.unknown"]:
+        #         special_types.append(widget_type)
 
         # Add editor types
         if editor_types:
@@ -277,7 +277,7 @@ class PaneHeaderBar(QWidget):
             for widget_type in editor_types:
                 action = QAction(self._get_widget_type_display_name(widget_type), self)
                 action.triggered.connect(
-                    lambda checked, wt=widget_type: self._change_widget_type(wt)
+                    lambda checked, wt=widget_id: self._change_widget_type(wt)
                 )
                 menu.addAction(action)
 
@@ -287,7 +287,7 @@ class PaneHeaderBar(QWidget):
             for widget_type in terminal_types:
                 action = QAction(self._get_widget_type_display_name(widget_type), self)
                 action.triggered.connect(
-                    lambda checked, wt=widget_type: self._change_widget_type(wt)
+                    lambda checked, wt=widget_id: self._change_widget_type(wt)
                 )
                 menu.addAction(action)
 
@@ -297,7 +297,7 @@ class PaneHeaderBar(QWidget):
             for widget_type in view_types:
                 action = QAction(self._get_widget_type_display_name(widget_type), self)
                 action.triggered.connect(
-                    lambda checked, wt=widget_type: self._change_widget_type(wt)
+                    lambda checked, wt=widget_id: self._change_widget_type(wt)
                 )
                 menu.addAction(action)
 
@@ -307,7 +307,7 @@ class PaneHeaderBar(QWidget):
             for widget_type in special_types:
                 action = QAction(self._get_widget_type_display_name(widget_type), self)
                 action.triggered.connect(
-                    lambda checked, wt=widget_type: self._change_widget_type(wt)
+                    lambda checked, wt=widget_id: self._change_widget_type(wt)
                 )
                 menu.addAction(action)
 
@@ -326,21 +326,21 @@ class PaneHeaderBar(QWidget):
         )
         menu.addAction(shortcuts_action)
 
-    def _get_widget_type_display_name(self, widget_type: WidgetType) -> str:
+    def _get_widget_type_display_name(self, widget_id: str) -> str:
         """Get display name for widget type."""
         display_names = {
-            WidgetType.TEXT_EDITOR: "📝 Text Editor",
-            WidgetType.TERMINAL: "💻 Terminal",
-            WidgetType.OUTPUT: "📤 Output",
-            WidgetType.EXPLORER: "📁 Explorer",
-            WidgetType.TABLE_VIEW: "📊 Table View",
-            WidgetType.TREE_VIEW: "🌳 Tree View",
-            WidgetType.IMAGE_VIEWER: "🖼️ Image Viewer",
-            WidgetType.SETTINGS: "⚙️ Settings",
-            WidgetType.CUSTOM: "🔧 Custom Widget",
-            WidgetType.PLACEHOLDER: "⬜ Empty Pane",
+            EDITOR: "📝 Text Editor",
+            TERMINAL: "💻 Terminal",
+            OUTPUT: "📤 Output",
+            FILE_EXPLORER: "📁 Explorer",
+            "viloapp.table_view": "📊 Table View",
+            "viloapp.tree_view": "🌳 Tree View",
+            "viloapp.image_viewer": "🖼️ Image Viewer",
+            SETTINGS: "⚙️ Settings",
+            "plugin.unknown": "🔧 Custom Widget",
+            PLACEHOLDER: "⬜ Empty Pane",
         }
-        return display_names.get(widget_type, widget_type.value.replace("_", " ").title())
+        return display_names.get(widget_type, widget_id.split(".")[-1].replace("_", " ").title())
 
     def _handle_widget_selection(self, widget_meta):
         """
@@ -372,18 +372,18 @@ class PaneHeaderBar(QWidget):
             )
         else:
             # Fallback to type change for basic widgets
-            if hasattr(widget_meta, "widget_type"):
-                self._change_widget_type(widget_meta.widget_type)
+            if hasattr(widget_meta, "widget_id"):
+                self._change_widget_type(widget_meta.widget_id)
             elif widget_meta.open_command:
                 # Last resort: use open command (will create new tab)
                 execute_command(widget_meta.open_command)
 
-    def _change_widget_type(self, widget_type: WidgetType):
+    def _change_widget_type(self, widget_id: str):
         """Change the widget type of the current pane."""
         execute_command(
             "workbench.action.changePaneType",
             pane=self.parent(),
-            widget_type=widget_type,
+            widget_id=widget_id,
         )
 
     def set_pane_id(self, pane_id: str):

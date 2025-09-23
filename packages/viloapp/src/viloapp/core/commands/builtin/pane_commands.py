@@ -11,7 +11,8 @@ from typing import Optional
 
 from viloapp.core.commands.base import Command, CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
-from viloapp.models.workspace_model import WidgetType
+
+# WidgetType removed - now using string widget_ids
 
 logger = logging.getLogger(__name__)
 
@@ -250,9 +251,9 @@ def replace_widget_in_pane_command(context: CommandContext) -> CommandResult:
             manager = AppWidgetManager.get_instance()
             metadata = manager.get_widget_metadata(widget_id)
 
-            if metadata and hasattr(metadata, "widget_type"):
+            if metadata and hasattr(metadata, "widget_id"):
                 # Change pane widget type using model
-                success = context.model.change_pane_widget_type(pane_id, metadata.widget_type)
+                success = context.model.change_pane_widget_type(pane_id, metadata.widget_id)
                 if success:
                     logger.info(f"Replaced pane {pane_id} with widget {widget_id}")
                     return CommandResult(
@@ -298,8 +299,8 @@ def change_pane_type_command(context: CommandContext) -> CommandResult:
             return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
         # Get widget type from context
-        widget_type = context.parameters.get("widget_type")
-        if not widget_type:
+        widget_id = context.parameters.get("widget_id")
+        if not widget_id:
             return CommandResult(status=CommandStatus.FAILURE, message="No widget type specified")
 
         # Get pane from context or use active pane
@@ -321,11 +322,17 @@ def change_pane_type_command(context: CommandContext) -> CommandResult:
 
         if pane_id:
             # Change widget type using model
-            success = context.model.change_pane_widget_type(pane_id, widget_type)
+            widget_id = context.parameters.get("widget_id")
+            if not widget_id:
+                return CommandResult(
+                    status=CommandStatus.FAILURE,
+                    message="Widget ID not specified"
+                )
+            success = context.model.change_pane_widget(pane_id, widget_id)
             if success:
                 return CommandResult(
                     status=CommandStatus.SUCCESS,
-                    data={"widget_type": widget_type, "pane_id": pane_id},
+                    data={"widget_id": widget_id, "pane_id": pane_id},
                 )
             else:
                 return CommandResult(
@@ -358,13 +365,13 @@ class SplitPaneCommand(Command):
         self,
         orientation: str = "horizontal",
         pane_id: Optional[str] = None,
-        widget_type: Optional[WidgetType] = None,
+        widget_id: Optional[str] = None,
     ):
         """Initialize split pane command."""
         super().__init__()
         self.orientation = orientation
         self.pane_id = pane_id
-        self.widget_type = widget_type
+        self.widget_id = widget_id
 
     def execute(self, context: CommandContext) -> CommandResult:
         """Split a pane."""
@@ -386,8 +393,8 @@ class SplitPaneCommand(Command):
 
             if new_pane_id:
                 # Set widget type if specified
-                if self.widget_type:
-                    context.model.change_pane_widget(new_pane_id, self.widget_type)
+                if self.widget_id:
+                    context.model.change_pane_widget(new_pane_id, self.widget_id)
 
                 return CommandResult(
                     status=CommandStatus.SUCCESS,
@@ -499,10 +506,10 @@ class FocusPaneCommand(Command):
 class ChangeWidgetTypeCommand(Command):
     """Command to change widget type of a pane."""
 
-    def __init__(self, widget_type: WidgetType, pane_id: Optional[str] = None):
+    def __init__(self, widget_id: str, pane_id: Optional[str] = None):
         """Initialize change widget type command."""
         super().__init__()
-        self.widget_type = widget_type
+        self.widget_id = widget_id
         self.pane_id = pane_id
 
     def execute(self, context: CommandContext) -> CommandResult:
@@ -521,13 +528,13 @@ class ChangeWidgetTypeCommand(Command):
                 pane_id = pane.id
 
             # Change widget type
-            success = context.model.change_pane_widget(pane_id, self.widget_type)
+            success = context.model.change_pane_widget(pane_id, self.widget_id)
 
             if success:
                 return CommandResult(
                     status=CommandStatus.SUCCESS,
-                    message=f"Changed widget to {self.widget_type.value}",
-                    data={"pane_id": pane_id, "widget_type": self.widget_type.value},
+                    message=f"Changed widget to {self.widget_id.value}",
+                    data={"pane_id": pane_id, "widget_id": self.widget_id.value},
                 )
             else:
                 return CommandResult(

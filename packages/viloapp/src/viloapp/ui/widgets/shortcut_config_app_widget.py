@@ -28,7 +28,8 @@ from PySide6.QtWidgets import (
 
 from viloapp.core.commands.registry import command_registry
 from viloapp.ui.widgets.app_widget import AppWidget
-from viloapp.ui.widgets.widget_registry import WidgetType
+
+# Widget ID defined in class
 
 logger = logging.getLogger(__name__)
 
@@ -153,9 +154,12 @@ class ShortcutConfigAppWidget(AppWidget):
     all keyboard shortcuts in the application.
     """
 
+    # Widget ID for this widget type
+    WIDGET_ID = "com.viloapp.shortcuts"
+
     def __init__(self, widget_id: str, parent=None):
         """Initialize the shortcut configuration widget."""
-        super().__init__(widget_id, WidgetType.SETTINGS, parent)
+        super().__init__(widget_id, self.WIDGET_ID, parent)
 
         # Services will be accessed through commands
         self.keyboard_service = None

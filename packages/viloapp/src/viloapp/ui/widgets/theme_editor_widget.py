@@ -68,10 +68,10 @@ class ThemeEditorAppWidget(AppWidget):
             widget_id = str(uuid.uuid4())[:8]
 
         # Import WidgetType here to avoid circular imports
-        from viloapp.ui.widgets.widget_registry import WidgetType
+        from viloapp.core.widget_ids import SETTINGS
 
         # Initialize AppWidget with SETTINGS type
-        super().__init__(widget_id, WidgetType.SETTINGS, parent)
+        super().__init__(widget_id, SETTINGS, parent)
 
         self._current_theme: Optional[Theme] = None
         self._modified = False

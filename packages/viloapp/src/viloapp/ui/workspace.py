@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
 # Import our new architecture
 from viloapp.core.commands.base import CommandContext
 from viloapp.core.commands.registry import CommandRegistry
-from viloapp.models.workspace_model import WidgetType, WorkspaceModel
+from viloapp.models.workspace_model import WorkspaceModel
 from viloapp.ui.workspace_view import TabView
 
 logger = logging.getLogger(__name__)
@@ -96,12 +96,19 @@ class Workspace(QWidget):
     def create_default_tab(self):
         """Create the default tab on startup."""
         logger.info("Creating default tab...")
+        # Get default widget from registry
+        from viloapp.core.app_widget_manager import app_widget_manager
+        default_widget = app_widget_manager.get_default_widget_id()
+        if not default_widget:
+            logger.warning("No default widget available, using placeholder")
+            default_widget = "com.viloapp.placeholder"
+
         context = CommandContext(model=self.model)
         result = self.command_registry.execute(
             "tab.create",
             context,
             name="Terminal",
-            widget_type=WidgetType.TERMINAL,
+            widget_id=default_widget,
         )
         logger.info(f"Default tab creation result: {result}")
 
@@ -280,22 +287,22 @@ class Workspace(QWidget):
     # Compatibility methods for existing code
     def create_new_tab(self, name: str = "New Tab", widget_type: str = "terminal"):
         """Create a new tab (compatibility method)."""
-        # Map old widget types to new enum
+        # Map old widget types to new widget IDs
         type_map = {
-            "terminal": WidgetType.TERMINAL,
-            "editor": WidgetType.EDITOR,
-            "text_editor": WidgetType.EDITOR,
-            "output": WidgetType.OUTPUT,
+            "terminal": TERMINAL,
+            "editor": EDITOR,
+            "text_editor": EDITOR,
+            "output": OUTPUT,
         }
 
-        wtype = type_map.get(widget_type.lower(), WidgetType.TERMINAL)
+        widget_id = type_map.get(widget_type.lower(), TERMINAL)
 
         context = CommandContext(model=self.model)
         self.command_registry.execute(
             "tab.create",
             context,
             name=name,
-            widget_type=wtype,
+            widget_id=widget_id,
         )
 
     def split_pane(self, orientation: str = "horizontal"):

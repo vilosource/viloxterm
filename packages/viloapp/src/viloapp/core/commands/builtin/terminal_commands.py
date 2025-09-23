@@ -57,9 +57,9 @@ def new_terminal_handler(context: CommandContext) -> CommandResult:
         name = f"Terminal {terminal_count + 1}"
 
         # Create new terminal tab using model directly
-        from viloapp.models.workspace_model import WidgetType
+        from viloapp.core.widget_ids import TERMINAL
 
-        tab_id = context.model.create_tab(name, WidgetType.TERMINAL)
+        tab_id = context.model.create_tab(name, TERMINAL)
         index = len(context.model.state.tabs) - 1
 
         return CommandResult(

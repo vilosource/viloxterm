@@ -5,6 +5,7 @@ Workspace-related commands using the service layer.
 
 import logging
 
+from viloapp.core.app_widget_manager import app_widget_manager
 from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
 from viloapp.core.commands.validation import (
@@ -15,7 +16,6 @@ from viloapp.core.commands.validation import (
     String,
     validate,
 )
-from viloapp.core.settings.app_defaults import get_default_widget_type
 from viloapp.services.terminal_service import TerminalService
 
 logger = logging.getLogger(__name__)
@@ -38,13 +38,17 @@ def new_tab_command(context: CommandContext) -> CommandResult:
                 status=CommandStatus.FAILURE, message="Workspace model not available"
             )
 
-        # Get widget type from args or settings
-        widget_type = context.parameters.get("widget_type") if context.parameters else None
-        if not widget_type:
-            widget_type = get_default_widget_type()
+        # Get widget type from args or use default
+        widget_id = context.parameters.get("widget_id") if context.parameters else None
+        if not widget_id:
+            # Use app_widget_manager to get the default widget
+            widget_id = app_widget_manager.get_default_widget_id()
+            if not widget_id:
+                # Fallback to terminal if no widgets available
+                widget_id = "com.viloapp.terminal"
 
         # Special handling for terminal
-        if widget_type == "terminal":
+        if widget_id == "terminal":
             # Keep terminal service for now as it's external
             terminal_service = (
                 context.parameters.get("terminal_service") if context.parameters else None
@@ -62,33 +66,20 @@ def new_tab_command(context: CommandContext) -> CommandResult:
         # Create the tab
         name = context.parameters.get("name") if context.parameters else None
         if not name:
-            name = f"New {widget_type.title()}"
+            # Extract simple name from widget_id for display
+            # e.g., "com.viloapp.terminal" -> "Terminal"
+            widget_name = widget_id.split('.')[-1] if widget_id else "Tab"
+            name = f"New {widget_name.title()}"
 
-        # Map string widget type to WidgetType enum
-        from viloapp.models.workspace_model import WidgetType as ModelWidgetType
-
-        widget_type_map = {
-            "terminal": ModelWidgetType.TERMINAL,
-            "editor": ModelWidgetType.EDITOR,
-            "theme_editor": ModelWidgetType.EDITOR,
-            "explorer": ModelWidgetType.EXPLORER,
-            "output": ModelWidgetType.OUTPUT,
-            "settings": ModelWidgetType.SETTINGS,
-            "shortcuts": ModelWidgetType.SETTINGS,
-            "placeholder": ModelWidgetType.EDITOR,
-        }
-
-        widget_enum = widget_type_map.get(widget_type, ModelWidgetType.TERMINAL)
-
-        # Create tab using model
-        tab_id = model.create_tab(name, widget_enum)
+        # Create tab using model - it expects widget_id as string
+        tab_id = model.create_tab(name, widget_id)
 
         # Get the index of the newly added tab
         index = len(model.state.tabs) - 1
 
         return CommandResult(
             status=CommandStatus.SUCCESS,
-            data={"index": index, "widget_type": widget_type, "name": name, "tab_id": tab_id},
+            data={"index": index, "widget_id": widget_id, "name": name, "tab_id": tab_id},
         )
 
     except Exception as e:
@@ -105,7 +96,7 @@ def new_tab_command(context: CommandContext) -> CommandResult:
 )
 @validate(
     widget_type=ParameterSpec(
-        "widget_type",
+        "widget_id",
         OneOf(
             "terminal",
             "editor",
@@ -130,10 +121,10 @@ def new_tab_with_type_command(context: CommandContext) -> CommandResult:
     """Create a new tab, prompting for widget type."""
     from PySide6.QtWidgets import QInputDialog
 
-    # Check if widget_type provided in parameters (for testing/programmatic use)
-    widget_type = context.parameters.get("widget_type") if context.parameters else None
+    # Check if widget_id provided in parameters (for testing/programmatic use)
+    widget_id = context.parameters.get("widget_id") if context.parameters else None
 
-    if not widget_type and context.main_window:
+    if not widget_id and context.main_window:
         # Show selection dialog
         widget_types = ["Terminal", "Editor", "Theme Editor", "Explorer", "Settings"]
         widget_type_map = {
@@ -156,9 +147,9 @@ def new_tab_with_type_command(context: CommandContext) -> CommandResult:
         if not ok or not selected:
             return CommandResult(status=CommandStatus.FAILURE, message="User cancelled")
 
-        widget_type = widget_type_map[selected]
+        widget_id = widget_type_map[selected]
 
-    if not widget_type:
+    if not widget_id:
         return CommandResult(
             success=False,
             error="Widget type must be specified",
@@ -173,10 +164,10 @@ def new_tab_with_type_command(context: CommandContext) -> CommandResult:
             },
         )
 
-    # Delegate to new_tab_command with the specified type
+    # Delegate to new_tab_command with the specified widget_id
     if not context.parameters:
         context.parameters = {}
-    context.parameters["widget_type"] = widget_type
+    context.parameters["widget_id"] = widget_id
     return new_tab_command(context)
 
 

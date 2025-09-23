@@ -24,7 +24,6 @@ from viloapp.ui.terminal.terminal_bridge import TerminalBridge
 from viloapp.ui.terminal.terminal_config import TerminalConfig
 from viloapp.ui.terminal.terminal_themes import get_terminal_theme
 from viloapp.ui.widgets.app_widget import AppWidget
-from viloapp.ui.widgets.widget_registry import WidgetType
 
 logger = logging.getLogger(__name__)
 
@@ -36,12 +35,15 @@ class TerminalAppWidget(AppWidget):
     Manages its own terminal session and WebEngine view.
     """
 
+    # Widget ID for this widget type
+    WIDGET_ID = "com.viloapp.terminal"
+
     # Signal emitted when terminal process exits and pane should be closed
     pane_close_requested = Signal()
 
     def __init__(self, widget_id: str, parent=None):
         """Initialize the terminal widget."""
-        super().__init__(widget_id, WidgetType.TERMINAL, parent)
+        super().__init__(widget_id, self.WIDGET_ID, parent)
         self.session_id = None
         self.web_view = None
         self.config = TerminalConfig()

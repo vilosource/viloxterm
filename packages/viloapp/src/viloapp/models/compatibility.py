@@ -7,7 +7,7 @@ This is a temporary bridge until we update all the interfaces.
 from dataclasses import dataclass
 from typing import Optional
 
-from .workspace_model import WidgetType as NewWidgetType
+# WidgetType removed - now using string widget_ids
 
 
 # Map old model classes to satisfy imports
@@ -16,7 +16,7 @@ class PaneState:
     """Compatibility class for old PaneState."""
 
     id: str
-    widget_type: str
+    widget_id: str
     focused: bool = False
 
 
@@ -43,7 +43,7 @@ class SplitPaneRequest:
 
     pane_id: str
     orientation: str = "horizontal"
-    widget_type: Optional[str] = None
+    widget_id: Optional[str] = None
 
 
 @dataclass
@@ -68,7 +68,7 @@ class TabOperationRequest:
     operation: str  # "create", "close", "rename", etc.
     tab_id: Optional[str] = None
     name: Optional[str] = None
-    widget_type: Optional[str] = None
+    widget_id: Optional[str] = None
 
 
 @dataclass
@@ -95,5 +95,4 @@ class WidgetStateUpdateRequest:
     state: dict
 
 
-# Re-export WidgetType from new model
-WidgetType = NewWidgetType
+# WidgetType no longer exists - removed in refactoring

@@ -164,7 +164,7 @@ class ContextManager:
         from viloapp.ui.widgets.app_widget import AppWidget
 
         # Determine widget type and set appropriate context
-        widget_type = type(widget).__name__
+        widget_id = type(widget).__name__
 
         if isinstance(widget, AppWidget):
             from viloapp.ui.terminal.terminal_app_widget import TerminalAppWidget

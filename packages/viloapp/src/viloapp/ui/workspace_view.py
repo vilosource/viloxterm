@@ -21,14 +21,20 @@ from PySide6.QtWidgets import (
 
 from viloapp.core.commands.base import CommandContext
 from viloapp.core.commands.registry import CommandRegistry
-from viloapp.models.workspace_model import Pane, PaneNode, Tab, WidgetType, WorkspaceModel
+from viloapp.core.widget_metadata import get_widget_display_name
+from viloapp.models.workspace_model import (
+    Pane,
+    PaneNode,
+    Tab,
+    WorkspaceModel,
+)
 
 
 class WidgetFactory:
     """Factory for creating actual widget instances through the plugin system."""
 
     @staticmethod
-    def create(widget_type: WidgetType, pane_id: str) -> QWidget:
+    def create(widget_id: str, pane_id: str) -> QWidget:
         """
         Create a widget instance based on type using the plugin system.
 
@@ -43,15 +49,15 @@ class WidgetFactory:
             from viloapp.core.app_widget_manager import app_widget_manager
 
             # Create widget through the plugin system
-            widget = app_widget_manager.create_widget_by_type(widget_type, pane_id)
+            widget = app_widget_manager.create_widget_by_id(widget_id, pane_id)
 
             if widget:
                 logger.debug(
-                    f"Created widget {widget_type.value} with id {pane_id} via plugin system"
+                    f"Created widget {widget_id} with id {pane_id} via plugin system"
                 )
                 return widget
             else:
-                logger.warning(f"AppWidgetManager could not create widget for type {widget_type}")
+                logger.warning(f"AppWidgetManager could not create widget for type {widget_id}")
 
         except ImportError as e:
             logger.error(f"Could not import AppWidgetManager: {e}")
@@ -61,7 +67,7 @@ class WidgetFactory:
         # Fallback to a placeholder widget if plugin system fails
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        label = QLabel(f"{widget_type.value.upper()}\n(Plugin not available)")
+        label = QLabel(f"{widget_id.split('.')[-1].upper()}\n(Plugin not available)")
         label.setAlignment(Qt.AlignCenter)
         label.setStyleSheet(
             """
@@ -110,7 +116,7 @@ class PaneView(QWidget):
         layout.addWidget(header)
 
         # Actual widget content
-        widget = WidgetFactory.create(self.pane.widget_type, self.pane.id)
+        widget = WidgetFactory.create(self.pane.widget_id, self.pane.id)
         layout.addWidget(widget)
 
         # Style based on focus
@@ -125,7 +131,8 @@ class PaneView(QWidget):
         layout.setSpacing(2)
 
         # Widget type label
-        type_label = QLabel(self.pane.widget_type.value.title())
+        display_name = get_widget_display_name(self.pane.widget_id)
+        type_label = QLabel(display_name)
         type_label.setStyleSheet("color: #cccccc; font-weight: bold; font-size: 12px;")
         layout.addWidget(type_label)
 
@@ -382,9 +389,9 @@ class WorkspaceView(QWidget):
         layout.addWidget(new_tab_btn)
 
         # Tab type buttons
-        for widget_type in [WidgetType.EDITOR, WidgetType.TERMINAL, WidgetType.OUTPUT]:
-            btn = QPushButton(f"+ {widget_type.value.title()}")
-            btn.clicked.connect(lambda checked, wt=widget_type: self.create_new_tab(wt))
+        for widget_id in [EDITOR, TERMINAL, OUTPUT]:
+            btn = QPushButton(f"+ {widget_id.split('.')[-1].title()}")
+            btn.clicked.connect(lambda checked, wt=widget_id: self.create_new_tab(wt))
             layout.addWidget(btn)
 
         layout.addStretch()
@@ -439,14 +446,23 @@ class WorkspaceView(QWidget):
         ]:
             self.render()
 
-    def create_new_tab(self, widget_type: WidgetType = WidgetType.EDITOR):
+    def create_new_tab(self, widget_id: Optional[str] = None):
         """Create a new tab through command."""
+        # Use provided widget_id or get default editor
+        if not widget_id:
+            from viloapp.core.app_widget_manager import app_widget_manager
+            widget_id = app_widget_manager.get_default_editor_id()
+            if not widget_id:
+                widget_id = app_widget_manager.get_default_widget_id()
+            if not widget_id:
+                widget_id = "com.viloapp.placeholder"
+
         context = CommandContext(model=self.model)
         self.command_registry.execute(
             "tab.create",
             context,
-            name=f"New {widget_type.value.title()}",
-            widget_type=widget_type,
+            name=f"New {widget_id.split('.')[-1].title()}",
+            widget_id=widget_id,
         )
 
     def on_tab_close_requested(self, index: int):
@@ -483,8 +499,8 @@ def create_test_app():
     context = CommandContext(model=model)
 
     # Create tabs through commands
-    registry.execute("tab.create", context, name="Editor", widget_type=WidgetType.EDITOR)
-    registry.execute("tab.create", context, name="Terminal", widget_type=WidgetType.TERMINAL)
+    registry.execute("tab.create", context, name="Editor", widget_id=EDITOR)
+    registry.execute("tab.create", context, name="Terminal", widget_id=TERMINAL)
 
     # Switch to first tab and split panes through commands
     if model.state.tabs:

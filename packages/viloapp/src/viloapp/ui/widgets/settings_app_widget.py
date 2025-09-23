@@ -41,7 +41,8 @@ from viloapp.core.settings.app_defaults import (
 from viloapp.ui.widgets.app_widget import AppWidget
 from viloapp.ui.widgets.shortcut_config_app_widget import ShortcutConfigAppWidget
 from viloapp.ui.widgets.theme_editor_widget import ThemeEditorAppWidget
-from viloapp.ui.widgets.widget_registry import WidgetType
+
+# Widget ID defined in class
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,9 @@ class SettingsAppWidget(AppWidget):
     Provides a tabbed interface for configuring all application settings
     with validation, import/export, and reset capabilities.
     """
+
+    # Widget ID for this widget type
+    WIDGET_ID = "com.viloapp.settings"
 
     settings_changed = Signal(str, object)  # key, value
 
@@ -69,7 +73,7 @@ class SettingsAppWidget(AppWidget):
 
             widget_id = str(uuid.uuid4())[:8]
 
-        super().__init__(widget_id, WidgetType.SETTINGS, parent)
+        super().__init__(widget_id, self.WIDGET_ID, parent)
 
         self._defaults_manager = get_app_defaults()
         self._modified_settings = {}
@@ -617,7 +621,7 @@ class SettingsAppWidget(AppWidget):
         # Only load settings for tabs that have been created
         # General tab (always created)
         if hasattr(self, "_default_tab_combo"):
-            widget_type = get_app_default("workspace.default_new_tab_widget", "terminal")
+            widget_id = get_app_default("workspace.default_new_tab_widget", "terminal")
             index = self._default_tab_combo.findData(widget_type)
             if index >= 0:
                 self._default_tab_combo.setCurrentIndex(index)

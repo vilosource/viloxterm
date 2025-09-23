@@ -77,13 +77,13 @@ class CommandRouter:
         return execute_command("workbench.action.maximizePane", **args)
 
     @staticmethod
-    def change_pane_type(pane_id: str, widget_type: str) -> CommandResult:
+    def change_pane_type(pane_id: str, widget_id: str) -> CommandResult:
         """
         Change the widget type of a pane.
 
         Args:
             pane_id: ID of the pane to change
-            widget_type: New widget type
+            widget_id: New widget type
 
         Returns:
             CommandResult with operation outcome

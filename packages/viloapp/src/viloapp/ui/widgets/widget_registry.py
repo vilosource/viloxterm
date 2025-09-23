@@ -4,10 +4,9 @@ Stub for widget_registry.
 This bridges to our new WidgetType in the model.
 """
 
-# Import and re-export WidgetType from new model
-from viloapp.models.workspace_model import WidgetType
+# WidgetType removed - now using string widget_ids
 
-__all__ = ["WidgetType", "WidgetRegistry", "widget_registry"]
+__all__ = ["WidgetRegistry", "widget_registry"]
 
 
 # For compatibility, create a stub registry

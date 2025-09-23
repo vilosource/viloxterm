@@ -10,7 +10,6 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QVBoxLayout
 
 from viloapp.ui.widgets.app_widget import AppWidget
-from viloapp.ui.widgets.widget_registry import WidgetType
 
 
 class PlaceholderAppWidget(AppWidget):
@@ -20,14 +19,17 @@ class PlaceholderAppWidget(AppWidget):
     Shows a simple label with widget information.
     """
 
+    # Widget ID for this widget type
+    WIDGET_ID = "com.viloapp.placeholder"
+
     def __init__(
         self,
         widget_id: str,
-        widget_type: WidgetType = WidgetType.PLACEHOLDER,
+        instance_id: str,
         parent=None,
     ):
         """Initialize the placeholder widget."""
-        super().__init__(widget_id, widget_type, parent)
+        super().__init__(widget_id, instance_id, parent)
         self.label = None
         self.setup_placeholder()
 
@@ -65,7 +67,7 @@ class PlaceholderAppWidget(AppWidget):
     def update_label(self):
         """Update the label text."""
         self.label.setText(
-            f"{self.widget_type.value.replace('_', ' ').title()}\n"
+            f"{self.widget_id.value.replace('_', ' ').title()}\n"
             f"Widget ID: {self.widget_id}\n\n"
             f"This is a placeholder widget.\n"
             f"Right-click for options."
@@ -85,7 +87,7 @@ class PlaceholderAppWidget(AppWidget):
 
     def get_title(self) -> str:
         """Get placeholder title."""
-        return self.widget_type.value.replace("_", " ").title()
+        return self.widget_id.value.replace("_", " ").title()
 
     def can_close(self) -> bool:
         """Placeholder can always be closed."""

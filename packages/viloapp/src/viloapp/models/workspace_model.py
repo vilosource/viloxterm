@@ -11,28 +11,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
-
-class WidgetType(Enum):
-    """Types of widgets that can be in panes."""
-
-    TERMINAL = "terminal"
-    EDITOR = "editor"
-    TEXT_EDITOR = "editor"  # Alias for compatibility
-    OUTPUT = "output"
-    SETTINGS = "settings"
-    FILE_EXPLORER = "file_explorer"
-    EXPLORER = "file_explorer"  # Alias
-    CUSTOM = "custom"  # For custom widgets
-    PREVIEW = "preview"
-    DEBUG = "debug"
-    PLACEHOLDER = "placeholder"
-    SEARCH = "search"
-    GIT = "git"
-    IMAGE_VIEWER = "image_viewer"
-    TABLE_VIEW = "table_view"
-    TREE_VIEW = "tree_view"
-    MY_TYPE = "custom"  # For testing
-    APPROPRIATE_TYPE = "custom"  # For testing
+from viloapp.core.widget_ids import migrate_widget_type
 
 
 class NodeType(Enum):
@@ -49,12 +28,27 @@ class Orientation(Enum):
     VERTICAL = "vertical"
 
 
+def _get_default_widget_id() -> str:
+    """Get default widget ID from registry."""
+    try:
+        from viloapp.core.app_widget_manager import app_widget_manager
+        widget_id = app_widget_manager.get_default_widget_id()
+        if widget_id:
+            return widget_id
+    except ImportError:
+        pass
+
+    # If no widgets available or registry not ready, return a placeholder
+    # This will be validated when actually creating widgets
+    return "com.viloapp.placeholder"
+
+
 @dataclass
 class Pane:
     """Leaf node data - actual pane content."""
 
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    widget_type: WidgetType = WidgetType.TERMINAL
+    widget_id: str = field(default_factory=_get_default_widget_id)
     widget_state: Dict[str, Any] = field(default_factory=dict)
     focused: bool = False
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -355,12 +349,14 @@ class WorkspaceModel:
         self.operation_history.append({"event": event, "data": data})
 
     # Tab Operations
-    def create_tab(self, name: str = "New Tab", widget_type: WidgetType = WidgetType.EDITOR) -> str:
+    def create_tab(self, name: str = "New Tab", widget_id: Optional[str] = None) -> str:
         """Create a new tab with initial pane."""
         tab = Tab(name=name)
         # Set up initial pane
         if tab.tree.root.pane:
-            tab.tree.root.pane.widget_type = widget_type
+            if widget_id:
+                tab.tree.root.pane.widget_id = widget_id
+            # else: use the default from Pane dataclass
             tab.active_pane_id = tab.tree.root.pane.id
 
         self.state.tabs.append(tab)
@@ -462,7 +458,7 @@ class WorkspaceModel:
 
         return success
 
-    def change_pane_widget(self, pane_id: str, widget_type: WidgetType) -> bool:
+    def change_pane_widget(self, pane_id: str, widget_id: str) -> bool:
         """Change the widget type of a pane."""
         tab = self.state.get_active_tab()
         if not tab:
@@ -472,10 +468,10 @@ class WorkspaceModel:
         if not pane:
             return False
 
-        pane.widget_type = widget_type
+        pane.widget_id = widget_id
         self._notify(
             "pane_widget_changed",
-            {"tab_id": tab.id, "pane_id": pane_id, "widget_type": widget_type.value},
+            {"tab_id": tab.id, "pane_id": pane_id, "widget_id": widget_id},
         )
         return True
 
@@ -565,7 +561,7 @@ class WorkspaceModel:
         """Serialize a pane."""
         return {
             "id": pane.id,
-            "widget_type": pane.widget_type.value,
+            "widget_id": pane.widget_id,  # Save widget_id instead
             "widget_state": pane.widget_state,
             "focused": pane.focused,
             "metadata": pane.metadata,
@@ -608,19 +604,21 @@ class WorkspaceModel:
         return node
 
     def _deserialize_pane(self, data: Dict[str, Any]) -> Pane:
-        """Deserialize a pane."""
-        widget_type_str = data.get("widget_type", "editor")
-        widget_type = WidgetType.EDITOR  # Default
-
-        # Map string to enum
-        for wt in WidgetType:
-            if wt.value == widget_type_str:
-                widget_type = wt
-                break
+        """Deserialize a pane with migration from old format."""
+        # Check for new format first
+        if "widget_id" in data:
+            widget_id = data["widget_id"]
+        elif "widget_type" in data:
+            # Migrate from old format
+            old_type = data["widget_type"]
+            widget_id = migrate_widget_type(old_type)
+        else:
+            # Default to terminal
+            widget_id = TERMINAL
 
         return Pane(
             id=data.get("id", str(uuid.uuid4())),
-            widget_type=widget_type,
+            widget_id=widget_id,
             widget_state=data.get("widget_state", {}),
             focused=data.get("focused", False),
             metadata=data.get("metadata", {}),
@@ -934,7 +932,7 @@ class WorkspaceModel:
             return None
 
         # Create new tab with the pane's widget type
-        new_tab_id = self.create_tab(f"Extracted from {source_tab.name}", pane.widget_type)
+        new_tab_id = self.create_tab(f"Extracted from {source_tab.name}", pane.widget_id)
         if not new_tab_id:
             return None
 
@@ -1003,7 +1001,7 @@ class WorkspaceModel:
             # Validate state
             if not self.state.tabs:
                 # Create default tab if none exist
-                self.create_tab("Default", WidgetType.EDITOR)
+                self.create_tab("Default", EDITOR)
 
             if not self.state.active_tab_id and self.state.tabs:
                 self.state.active_tab_id = self.state.tabs[0].id

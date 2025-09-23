@@ -57,14 +57,15 @@ def duplicate_tab_command(context: CommandContext) -> CommandResult:
         source_tab = context.model.state.tabs[tab_index]
         # Get the root widget type from the source tab
         root_pane = source_tab.tree.root
-        widget_type = root_pane.widget_type if hasattr(root_pane, "widget_type") else None
+        widget_id = root_pane.widget_id if hasattr(root_pane, "widget_id") else None
 
-        from viloapp.models.workspace_model import WidgetType
+        if not widget_id:
+            from viloapp.core.app_widget_manager import app_widget_manager
+            widget_id = app_widget_manager.get_default_widget_id()
+            if not widget_id:
+                widget_id = "com.viloapp.placeholder"
 
-        if not widget_type:
-            widget_type = WidgetType.EDITOR  # Default to editor
-
-        new_tab_id = context.model.create_tab(f"{source_tab.name} (Copy)", widget_type)
+        new_tab_id = context.model.create_tab(f"{source_tab.name} (Copy)", widget_id)
         new_index = len(context.model.state.tabs) - 1
 
         return CommandResult(
@@ -270,22 +271,35 @@ def register_tab_commands():
 from typing import Optional
 
 from viloapp.core.commands.base import Command
-from viloapp.models.workspace_model import WidgetType
+
+
+def _get_default_editor_id() -> str:
+    """Get default editor widget ID."""
+    try:
+        from viloapp.core.app_widget_manager import app_widget_manager
+        # Try to find an editor widget
+        for widget in app_widget_manager.get_all_widgets():
+            if "editor" in widget.widget_id.lower():
+                return widget.widget_id
+        # Fall back to default
+        return app_widget_manager.get_default_widget_id()
+    except ImportError:
+        return "com.viloapp.editor"
 
 
 class CreateTabCommand(Command):
     """Command to create a new tab."""
 
-    def __init__(self, name: str = "New Tab", widget_type: WidgetType = WidgetType.EDITOR):
+    def __init__(self, name: str = "New Tab", widget_id: Optional[str] = None):
         """Initialize create tab command."""
         super().__init__()
         self.tab_name = name
-        self.widget_type = widget_type
+        self.widget_id = widget_id or _get_default_editor_id()
 
     def execute(self, context: CommandContext) -> CommandResult:
         """Create a new tab."""
         try:
-            tab_id = context.model.create_tab(self.tab_name, self.widget_type)
+            tab_id = context.model.create_tab(self.tab_name, self.widget_id)
             return CommandResult(
                 status=CommandStatus.SUCCESS,
                 message=f"Created tab '{self.tab_name}'",

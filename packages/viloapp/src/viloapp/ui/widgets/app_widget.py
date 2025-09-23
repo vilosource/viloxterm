@@ -14,7 +14,8 @@ from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import QWidget
 
 from viloapp.ui.widgets.signal_manager import SignalManager
-from viloapp.ui.widgets.widget_registry import WidgetType
+
+# Widget IDs are now defined in each widget class
 from viloapp.ui.widgets.widget_state import WidgetState, WidgetStateValidator
 
 logger = logging.getLogger(__name__)
@@ -45,18 +46,18 @@ class AppWidget(QWidget):
     state_changed = Signal(dict)  # state_data
     focus_requested = Signal()  # Request focus on this widget
 
-    def __init__(self, widget_id: str, widget_type: WidgetType, parent=None):
+    def __init__(self, widget_id: str, instance_id: str, parent=None):
         """
         Initialize the AppWidget.
 
         Args:
-            widget_id: Unique identifier for this widget
-            widget_type: Type of widget (TERMINAL, TEXT_EDITOR, etc.)
+            widget_id: Widget type identifier (e.g., 'viloapp.terminal')
+            instance_id: Unique identifier for this widget instance
             parent: Parent QWidget
         """
         super().__init__(parent)
         self.widget_id = widget_id
-        self.widget_type = widget_type
+        self.instance_id = instance_id
         self.leaf_node = None  # Back-reference to tree node (set by model)
 
         # Windows-specific optimizations to prevent flashing during creation
@@ -191,7 +192,7 @@ class AppWidget(QWidget):
         Returns:
             Dictionary containing widget state that can be serialized
         """
-        return {"type": self.widget_type.value, "widget_id": self.widget_id}
+        return {"type": self.widget_id.value, "widget_id": self.widget_id}
 
     def set_state(self, state: dict[str, Any]):
         """
@@ -278,7 +279,7 @@ class AppWidget(QWidget):
         Returns:
             String to display in tabs, headers, etc.
         """
-        return f"{self.widget_type.value.replace('_', ' ').title()}"
+        return f"{self.widget_id.value.replace('_', ' ').title()}"
 
     def get_icon_name(self) -> Optional[str]:
         """
@@ -287,17 +288,17 @@ class AppWidget(QWidget):
         Returns:
             Icon name or None if no icon
         """
-        # Map widget types to icons
+        # Map widget IDs to icons
         icon_map = {
-            WidgetType.TERMINAL: "terminal",
-            WidgetType.TEXT_EDITOR: "file-text",
-            WidgetType.FILE_EXPLORER: "folder",
-            WidgetType.SEARCH: "search",
-            WidgetType.GIT: "git-branch",
-            WidgetType.SETTINGS: "settings",
-            WidgetType.PLACEHOLDER: "layout",
+            "com.viloapp.terminal": "terminal",
+            "com.viloapp.editor": "file-text",
+            "com.viloapp.explorer": "folder",
+            "com.viloapp.search": "search",
+            "com.viloapp.git": "git-branch",
+            "com.viloapp.settings": "settings",
+            "com.viloapp.placeholder": "layout",
         }
-        return icon_map.get(self.widget_type)
+        return icon_map.get(self.widget_id)
 
     @property
     def has_focus(self) -> bool:

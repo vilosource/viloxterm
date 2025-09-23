@@ -9,7 +9,6 @@ from PySide6.QtGui import QFont, QTextOption
 from PySide6.QtWidgets import QPlainTextEdit, QVBoxLayout
 
 from viloapp.ui.widgets.app_widget import AppWidget
-from viloapp.ui.widgets.widget_registry import WidgetType
 
 
 class EditorAppWidget(AppWidget):
@@ -19,9 +18,12 @@ class EditorAppWidget(AppWidget):
     Provides a simple text editing interface with basic features.
     """
 
+    # Widget ID for this widget type
+    WIDGET_ID = "com.viloapp.editor"
+
     def __init__(self, widget_id: str, parent=None):
         """Initialize the editor widget."""
-        super().__init__(widget_id, WidgetType.TEXT_EDITOR, parent)
+        super().__init__(widget_id, self.WIDGET_ID, parent)
         self.editor = None
         self.file_path = None
         self.is_modified = False

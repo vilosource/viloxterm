@@ -32,7 +32,7 @@ class WidgetStateData:
     """Container for widget state data (separate from lifecycle state)."""
 
     widget_id: str
-    widget_type: str
+    instance_id: str
     state: WidgetState = WidgetState.CREATED
     state_data: Dict[str, Any] = None
 
@@ -71,9 +71,9 @@ class WidgetStateManager:
         """Set state for a widget."""
         self.states[widget_id] = state
 
-    def create_state(self, widget_id: str, widget_type: str) -> WidgetStateData:
+    def create_state(self, widget_id: str, instance_id: str) -> WidgetStateData:
         """Create a new state for a widget."""
-        state = WidgetStateData(widget_id, widget_type)
+        state = WidgetStateData(widget_id, instance_id)
         self.states[widget_id] = state
         return state
 
@@ -110,7 +110,7 @@ class WidgetStateValidator:
     @staticmethod
     def validate(state: WidgetStateData) -> bool:
         """Validate a widget state data object."""
-        return state is not None and state.widget_id and state.widget_type
+        return state is not None and state.widget_id and state.widget_id
 
     @staticmethod
     def validate_data(data: Dict[str, Any]) -> bool:

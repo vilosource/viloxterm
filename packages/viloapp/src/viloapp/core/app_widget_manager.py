@@ -8,12 +8,12 @@ for all widget metadata and factories.
 """
 
 import logging
-import warnings
 from typing import Callable, Optional
 
 from viloapp.core.app_widget_metadata import AppWidgetMetadata, WidgetCategory
 from viloapp.ui.widgets.app_widget import AppWidget
-from viloapp.ui.widgets.widget_registry import WidgetType
+
+# WidgetType removed - now using string widget_ids
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class AppWidgetManager:
         """Initialize the manager (only runs once due to singleton)."""
         if not self._initialized:
             self._widgets: dict[str, AppWidgetMetadata] = {}
-            self._type_mapping: dict[WidgetType, str] = {}  # For backward compatibility
+            # Type mapping removed - now using widget IDs directly
             self._factories: dict[str, Callable] = {}
             self._category_cache: dict[WidgetCategory, list[str]] = {}
             self._initialized = True
@@ -67,7 +67,7 @@ class AppWidgetManager:
             logger.warning(f"Widget {metadata.widget_id} already registered, updating")
 
         self._widgets[metadata.widget_id] = metadata
-        self._type_mapping[metadata.widget_type] = metadata.widget_id
+        # Type mapping removed - no longer needed
 
         # Cache by category
         if metadata.category not in self._category_cache:
@@ -80,6 +80,31 @@ class AppWidgetManager:
             self._factories[metadata.widget_id] = metadata.factory
 
         logger.debug(f"Registered widget: {metadata.widget_id} ({metadata.display_name})")
+
+    def get_widget(self, widget_id: str) -> Optional[AppWidgetMetadata]:
+        """
+        Get widget metadata by ID.
+
+        Args:
+            widget_id: Widget ID to look up
+
+        Returns:
+            Widget metadata or None if not found
+        """
+        return self._widgets.get(widget_id)
+
+    def is_widget_available(self, widget_id: str) -> bool:
+        """
+        Check if a widget is available.
+
+        Args:
+            widget_id: Widget ID to check
+
+        Returns:
+            True if widget exists and is available
+        """
+        widget = self.get_widget(widget_id)
+        return widget is not None and widget.is_available()
 
     def unregister_widget(self, widget_id: str) -> bool:
         """
@@ -100,9 +125,7 @@ class AppWidgetManager:
         del self._widgets[widget_id]
 
         # Remove from type mapping
-        if metadata.widget_type in self._type_mapping:
-            if self._type_mapping[metadata.widget_type] == widget_id:
-                del self._type_mapping[metadata.widget_type]
+        # Type mapping cleanup removed - no longer needed
 
         # Remove from category cache
         if metadata.category in self._category_cache:
@@ -156,24 +179,19 @@ class AppWidgetManager:
             logger.error(f"Failed to create widget {widget_id}: {e}")
             return None
 
-    def create_widget_by_type(
-        self, widget_type: WidgetType, instance_id: str
+    def create_widget_by_id(
+        self, widget_id: str, instance_id: str
     ) -> Optional[AppWidget]:
         """
-        Create a widget by WidgetType enum (backward compatibility).
+        Create a widget by widget ID.
 
         Args:
-            widget_type: WidgetType enum value
+            widget_id: Widget ID string (e.g., 'viloapp.terminal')
             instance_id: Unique instance identifier
 
         Returns:
-            New AppWidget instance or None if type not found
+            New AppWidget instance or None if not found
         """
-        widget_id = self._type_mapping.get(widget_type)
-        if not widget_id:
-            logger.error(f"No widget registered for type {widget_type}")
-            return None
-
         return self.create_widget(widget_id, instance_id)
 
     def get_widget_metadata(self, widget_id: str) -> Optional[AppWidgetMetadata]:
@@ -188,20 +206,7 @@ class AppWidgetManager:
         """
         return self._widgets.get(widget_id)
 
-    def get_widget_by_type(self, widget_type: WidgetType) -> Optional[AppWidgetMetadata]:
-        """
-        Get widget metadata by WidgetType enum.
-
-        Args:
-            widget_type: WidgetType enum value
-
-        Returns:
-            Widget metadata or None if not found
-        """
-        widget_id = self._type_mapping.get(widget_type)
-        if widget_id:
-            return self._widgets.get(widget_id)
-        return None
+    # Method removed - use get_widget_metadata with widget ID instead
 
     def get_all_widgets(self) -> list[AppWidgetMetadata]:
         """
@@ -280,37 +285,153 @@ class AppWidgetManager:
         """
         return [w for w in self._widgets.values() if w.show_in_menu and w.is_available()]
 
-    def register_factory_compat(self, widget_type: WidgetType, factory: Callable) -> None:
+    def get_default_widget_id(self, context: Optional[str] = None) -> Optional[str]:
         """
-        Register a factory using old WidgetType pattern (backward compatibility).
+        Get the default widget ID based on registry and preferences.
 
-        This method is deprecated and provided only for backward compatibility
-        with existing code that uses widget_registry.register_factory().
+        Uses a multi-level fallback system:
+        1. User preference for the specific context (if provided)
+        2. User general preference
+        3. Widgets that declare themselves as defaults (sorted by priority)
+        4. First available widget in the context category
+        5. Any available widget
 
         Args:
-            widget_type: WidgetType enum value
-            factory: Factory function
-        """
-        warnings.warn(
-            "register_factory_compat is deprecated. "
-            "Use register_widget() with full metadata instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
+            context: Optional context like "terminal", "editor", "shell"
 
-        # Find widget with this type
-        widget_id = self._type_mapping.get(widget_type)
-        if widget_id and widget_id in self._widgets:
-            self._widgets[widget_id].factory = factory
-            self._factories[widget_id] = factory
-            logger.debug(f"Updated factory for {widget_id} via compatibility method")
-        else:
-            logger.warning(f"Cannot register factory for unknown widget type {widget_type}")
+        Returns:
+            Default widget ID or None if no widgets are available
+        """
+        # Step 1: Check user preference for specific context
+        if context:
+            from viloapp.core.settings.app_defaults import get_default_widget_for_context
+            pref = get_default_widget_for_context(context)
+            if pref and self.is_widget_available(pref):
+                return pref
+
+        # Step 2: Check user's general preference
+        from viloapp.core.settings.app_defaults import get_default_widget_preference
+        general_pref = get_default_widget_preference()
+        if general_pref and self.is_widget_available(general_pref):
+            return general_pref
+
+        # Step 3: Find widgets that can be defaults
+        candidates = [
+            w for w in self._widgets.values()
+            if w.can_be_default and w.is_available()
+        ]
+
+        # If context provided, prefer widgets that support that context
+        if context and candidates:
+            context_widgets = [
+                w for w in candidates
+                if context in w.default_for_contexts
+            ]
+            if context_widgets:
+                candidates = context_widgets
+
+        # Sort by priority (lower number = higher priority)
+        if candidates:
+            candidates.sort(key=lambda w: w.default_priority)
+            return candidates[0].widget_id
+
+        # Step 4: Fall back to any available widget
+        available = self.get_available_widgets()
+        if available:
+            return available[0].widget_id
+
+        # Step 5: No widgets available
+        return None
+
+    def get_default_terminal_id(self) -> Optional[str]:
+        """
+        Get the default terminal widget ID.
+
+        Returns:
+            Widget ID for default terminal or None if no terminal available
+        """
+        return self.get_default_widget_id(context="terminal")
+
+    def get_default_editor_id(self) -> Optional[str]:
+        """
+        Get the default editor widget ID.
+
+        Returns:
+            Widget ID for default editor or None if no editor available
+        """
+        return self.get_default_widget_id(context="editor")
+
+    def get_widgets_for_context(self, context: str) -> list[str]:
+        """
+        Get all widget IDs that support a specific context.
+
+        Args:
+            context: Context like "terminal", "editor", "shell"
+
+        Returns:
+            List of widget IDs that support the context
+        """
+        widgets = [
+            w.widget_id for w in self._widgets.values()
+            if context in w.default_for_contexts and w.is_available()
+        ]
+        return widgets
+
+    def get_available_widget_ids(self) -> list[str]:
+        """
+        Get list of all available widget IDs.
+
+        Returns:
+            List of widget IDs that are currently available
+        """
+        return [w.widget_id for w in self.get_available_widgets()]
+
+    def is_terminal_widget(self, widget_id: str) -> bool:
+        """
+        Check if a widget ID represents a terminal widget.
+
+        Args:
+            widget_id: Widget ID to check
+
+        Returns:
+            True if this is a terminal widget
+        """
+        metadata = self.get_widget(widget_id)
+        if metadata:
+            return "terminal" in metadata.default_for_contexts or "shell" in metadata.default_for_contexts
+        return False
+
+    def is_editor_widget(self, widget_id: str) -> bool:
+        """
+        Check if a widget ID represents an editor widget.
+
+        Args:
+            widget_id: Widget ID to check
+
+        Returns:
+            True if this is an editor widget
+        """
+        metadata = self.get_widget(widget_id)
+        if metadata:
+            return "editor" in metadata.default_for_contexts or "text" in metadata.default_for_contexts
+        return False
+
+    def is_settings_widget(self, widget_id: str) -> bool:
+        """
+        Check if a widget ID represents a settings widget.
+
+        Args:
+            widget_id: Widget ID to check
+
+        Returns:
+            True if this is a settings widget
+        """
+        return widget_id == "com.viloapp.settings" or widget_id.endswith(".settings")
 
     def clear(self) -> None:
         """Clear all registered widgets (mainly for testing)."""
         self._widgets.clear()
-        self._type_mapping.clear()
+        # Type mapping clear removed - no longer needed
         self._factories.clear()
         self._category_cache.clear()
         logger.debug("Cleared all registered widgets")

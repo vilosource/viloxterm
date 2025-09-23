@@ -35,6 +35,19 @@ User Input → Command → Service → Model → View (via Observer)
 - **NO** validation MessageBoxes in UI layer
 - **NO** "if can_close" checks in UI
 
+### Rule 5: No Implementation Details in Core
+- Core modules define **PATTERNS** not **INSTANCES**
+- **NO** hardcoded widget IDs, plugin names, or specific types in core
+- **EVERYTHING** extensible uses registries for runtime discovery
+- **ZERO** core file changes required to add new features/plugins
+
+### Rule 6: Verification-First Refactoring
+- **NEVER** refactor without continuous static analysis
+- **ALWAYS** run tests after every file change
+- **VERIFY** completeness with automated tools, not manual inspection
+- **TEST** actual code paths, not mocked abstractions
+- **ENSURE** variable naming consistency across all files
+
 ---
 
 ## 📋 LAYER RESPONSIBILITIES
@@ -387,16 +400,204 @@ class WidgetFactory:
 
 ---
 
+## 🔄 REFACTORING PROCESS (MANDATORY)
+
+### Before Starting Any Refactoring
+
+1. **Run Full Validation Suite**
+```bash
+# ALL must pass before starting
+pytest packages/viloapp/tests
+python -m py_compile packages/viloapp/src/**/*.py
+grep -r "undefined" <(python -m pyflakes packages/viloapp/src 2>&1)
+```
+
+2. **Document Change Impact**
+```python
+# Create a refactoring manifest
+REFACTORING = {
+    "removing": ["WidgetType", "TERMINAL_CONSTANT"],
+    "replacing_with": ["widget_id: str"],
+    "affected_patterns": ["widget_type", "widget_id", "widgetType"],
+    "files_count_estimate": 50
+}
+```
+
+3. **Create Verification Script**
+```python
+#!/usr/bin/env python3
+"""Verify refactoring completeness."""
+def find_all_usages(symbol):
+    # Use AST parsing, not just grep
+    import ast
+    import os
+
+    usages = []
+    for root, _, files in os.walk("packages/viloapp/src"):
+        for file in files:
+            if file.endswith(".py"):
+                # Parse and find symbol usage
+                pass
+    return usages
+
+# Find EVERY usage before changing ANYTHING
+usages = find_all_usages("WidgetType")
+print(f"Found {len(usages)} usages to update")
+```
+
+### During Refactoring
+
+1. **Continuous Validation Loop**
+```bash
+# Run this in a terminal during ALL refactoring
+while true; do
+    clear
+    echo "=== Static Analysis ==="
+    python -m pyflakes packages/viloapp/src 2>&1 | grep "undefined"
+
+    echo "=== Quick Test ==="
+    pytest packages/viloapp/tests -x -q --tb=no
+
+    echo "=== Variable Consistency ==="
+    # Check for mixed variable names
+    grep -r "widget_type" packages/viloapp/src --include="*.py" | wc -l
+    grep -r "widget_id" packages/viloapp/src --include="*.py" | wc -l
+
+    sleep 2
+done
+```
+
+2. **Incremental Verification**
+- Change ONE file
+- Run tests for that module
+- Check for undefined variables
+- Commit with message: "refactor(scope): description [n/total]"
+- NEVER batch multiple files without testing
+
+3. **Variable Naming Consistency**
+```python
+# FORBIDDEN: Mixed variable names for same concept
+widget_type = "terminal"  # OLD - remove
+widget_id = "com.viloapp.terminal"  # NEW - use everywhere
+widgetType = "terminal"  # WRONG - wrong style AND old concept
+```
+
+### After Refactoring
+
+1. **Complete Validation Suite**
+```bash
+# Every command must execute without NameError
+python test_all_commands.py
+
+# Full test suite must pass
+pytest packages/viloapp/tests --cov=viloapp
+
+# No undefined variables
+python -m pyflakes packages/viloapp/src
+
+# Application must start
+python packages/viloapp/src/viloapp/main.py --test-startup
+```
+
+2. **Document Migration Path**
+```markdown
+# Migration Guide: WidgetType to widget_id
+
+## What Changed
+- Removed: WidgetType enum
+- Added: String-based widget_id
+
+## How to Update Your Code
+```python
+# Before
+from viloapp.core.widget_ids import WidgetType
+widget_type = WidgetType.TERMINAL
+
+# After
+widget_id = "com.viloapp.terminal"
+```
+```
+
+### Common Refactoring Failures
+
+❌ **The Silent NameError**
+```python
+name = f"New {widget_type.title()}"  # widget_type undefined!
+# Should be: widget_id
+```
+
+❌ **The Incomplete Import Update**
+```python
+from viloapp.core.widget_ids import TERMINAL  # Import fails!
+# TERMINAL was removed but import wasn't updated
+```
+
+❌ **The Mixed Variable Names**
+```python
+widget_id = get_default_widget_type()  # Returns widget_id
+if widget_type == "terminal":  # But code uses widget_type!
+```
+
+❌ **The Mock That Hides Reality**
+```python
+@patch("module.WorkspaceService")  # Mock hides the real error
+def test_command(mock_service):
+    mock_service.add_tab()  # Test passes but real code fails!
+```
+
 ## 🔧 ENFORCEMENT TOOLS
 
+### Required Static Analysis
+
+```yaml
+# .github/workflows/static-analysis.yml
+name: Static Analysis
+on: [push, pull_request]
+
+jobs:
+  check-undefined:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check for undefined variables
+        run: |
+          pip install pyflakes
+          pyflakes packages/viloapp/src
+          # Any undefined variable fails the build
+
+  check-consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check variable naming consistency
+        run: |
+          # Fail if mixed naming patterns found
+          python scripts/check_variable_consistency.py
+```
+
 ### Pre-commit Hooks
-```bash
+```yaml
 # .pre-commit-config.yaml
-- id: check-architecture
-  name: Check Architecture Rules
-  entry: python scripts/check_architecture.py
-  language: python
-  files: \.py$
+repos:
+  - repo: local
+    hooks:
+      - id: check-architecture
+        name: Check Architecture Rules
+        entry: python scripts/check_architecture.py
+        language: python
+        files: \.py$
+
+      - id: check-undefined-vars
+        name: Check for undefined variables
+        entry: pyflakes
+        language: system
+        files: \.py$
+
+      - id: test-changes
+        name: Test changed files
+        entry: pytest
+        language: system
+        files: \.py$
+        stages: [commit]
 ```
 
 ### Architecture Tests
@@ -418,6 +619,16 @@ def test_no_service_imports_ui():
     python scripts/check_layer_violations.py
     python scripts/check_circular_dependencies.py
     python scripts/check_command_pattern.py
+
+- name: Command Execution Test
+  run: |
+    # Test that every command can at least execute
+    python scripts/test_all_commands.py
+
+- name: Refactoring Completeness
+  run: |
+    # Check for common refactoring mistakes
+    python scripts/check_refactoring_completeness.py
 ```
 
 ---
@@ -497,6 +708,10 @@ By contributing to ViloxTerm, you acknowledge that you have:
 
 *"Architecture is not about perfection, it's about consistency. A consistently followed decent architecture beats a sporadically followed perfect one."*
 
-**Document Version**: 1.0
+**Document Version**: 2.0
 **Last Updated**: 2024
 **Enforcement Level**: MANDATORY
+
+### Change Log
+- v2.0: Added Rule 6 (Verification-First Refactoring) and mandatory refactoring process
+- v1.0: Initial architecture rules

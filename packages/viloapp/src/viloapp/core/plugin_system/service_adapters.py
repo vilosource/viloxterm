@@ -110,12 +110,16 @@ class WorkspaceServiceAdapter(IService):
                 self.workspace_service.open_file(path)
             else:
                 # Fallback: create new editor tab with file
-                from viloapp.ui.widgets.widget_registry import WidgetType
+                from viloapp.core.app_widget_manager import app_widget_manager
+
+                editor_widget_id = app_widget_manager.get_default_editor_id()
+                if not editor_widget_id:
+                    editor_widget_id = "com.viloapp.placeholder"
 
                 widget_id = f"editor_{path.split('/')[-1]}"
                 if hasattr(self.workspace_service, "add_tab"):
                     self.workspace_service.add_tab(
-                        widget_id, WidgetType.TEXT_EDITOR, title=path.split("/")[-1]
+                        widget_id, editor_widget_id, title=path.split("/")[-1]
                     )
         except Exception as e:
             print(f"Failed to open file {path}: {e}")
@@ -125,10 +129,12 @@ class WorkspaceServiceAdapter(IService):
         try:
             if hasattr(self.workspace_service, "get_active_widget"):
                 widget = self.workspace_service.get_active_widget()
-                if widget and hasattr(widget, "widget_type"):
-                    from viloapp.ui.widgets.widget_registry import WidgetType
+                if widget and hasattr(widget, "widget_id"):
+                    # Check if widget is an editor type by checking its metadata
+                    from viloapp.core.app_widget_manager import app_widget_manager
 
-                    if widget.widget_type == WidgetType.TEXT_EDITOR:
+                    metadata = app_widget_manager.get_widget(widget.widget_id)
+                    if metadata and "editor" in metadata.default_for_contexts:
                         return widget
             return None
         except Exception as e:

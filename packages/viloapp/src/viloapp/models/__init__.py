@@ -14,7 +14,7 @@ from .compatibility import (
     TabOperationResponse,
     TabState,
     WidgetStateUpdateRequest,
-    WidgetType,
+    # WidgetType removed - now using string widget_ids
 )
 
 # Import from our new model
@@ -42,7 +42,6 @@ __all__ = [
     "PaneFocusRequest",
     "WidgetStateUpdateRequest",
     # New model classes
-    "WidgetType",
     "Pane",
     "PaneNode",
     "PaneTree",

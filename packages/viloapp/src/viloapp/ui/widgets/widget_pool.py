@@ -114,12 +114,12 @@ class WidgetPool:
 
         return splitter
 
-    def acquire_widget(self, widget_type: type[QWidget], *args, **kwargs) -> QWidget:
+    def acquire_widget(self, widget_id: type[QWidget], *args, **kwargs) -> QWidget:
         """
         Acquire a widget from the pool or create a new one.
 
         Args:
-            widget_type: Type of widget to acquire
+            widget_id: Type of widget to acquire
             *args: Arguments for widget constructor (if creating new)
             **kwargs: Keyword arguments for widget constructor
 
@@ -167,7 +167,7 @@ class WidgetPool:
         self._in_use.discard(widget)
 
         # Get the appropriate pool
-        widget_type = type(widget)
+        widget_id = type(widget)
         pool = self._pools[widget_type]
 
         # Check if pool is full
@@ -230,15 +230,15 @@ class WidgetPool:
         widget.setParent(None)
         widget.deleteLater()
 
-    def clear_pool(self, widget_type: Optional[type[QWidget]] = None):
+    def clear_pool(self, widget_id: Optional[type[QWidget]] = None):
         """
         Clear widgets from pool(s).
 
         Args:
-            widget_type: Specific type to clear, or None for all
+            widget_id: Specific type to clear, or None for all
         """
-        if widget_type:
-            pools_to_clear = {widget_type: self._pools[widget_type]}
+        if widget_id:
+            pools_to_clear = {widget_id: self._pools[widget_type]}
         else:
             pools_to_clear = self._pools
 

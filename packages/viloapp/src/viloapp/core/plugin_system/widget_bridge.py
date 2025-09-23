@@ -17,11 +17,9 @@ except ImportError:
 
 try:
     from viloapp.ui.widgets.app_widget import AppWidget
-    from viloapp.ui.widgets.widget_registry import WidgetType
 except ImportError:
     logger.debug("AppWidget not available for import")
     AppWidget = None
-    WidgetType = None
 
 
 class PluginWidgetBridge:
@@ -58,10 +56,10 @@ class PluginWidgetBridge:
             plugin_widget = self._plugin_widgets[widget_id]
             qt_widget = plugin_widget.create_instance(instance_id)
 
-            if AppWidget and WidgetType:
+            if AppWidget:
                 return PluginAppWidgetAdapter(plugin_widget, qt_widget, instance_id)
             else:
-                logger.error("AppWidget or WidgetType not available - cannot create adapter")
+                logger.error("AppWidget not available - cannot create adapter")
                 return qt_widget  # Return raw widget as fallback
 
         except Exception as e:
@@ -74,8 +72,9 @@ class PluginAppWidgetAdapter(AppWidget):
 
     def __init__(self, plugin_widget, qt_widget, instance_id: str):
         try:
-            widget_type = self._determine_widget_type(plugin_widget.get_widget_id())
-            super().__init__(widget_id=instance_id, widget_type=widget_type)
+            # Use plugin's widget ID with proper namespacing
+            widget_id = f"plugin.{plugin_widget.get_widget_id()}"
+            super().__init__(widget_id=widget_id, instance_id=instance_id)
             self.plugin_widget = plugin_widget
             self.qt_widget = qt_widget
 
@@ -89,19 +88,6 @@ class PluginAppWidgetAdapter(AppWidget):
         except Exception as e:
             logger.error(f"Failed to create PluginAppWidgetAdapter: {e}")
             raise
-
-    def _determine_widget_type(self, widget_id: str):
-        """Determine WidgetType from plugin widget ID."""
-        if not WidgetType:
-            return None
-
-        widget_id_lower = widget_id.lower()
-        if "terminal" in widget_id_lower:
-            return WidgetType.TERMINAL
-        elif "editor" in widget_id_lower or "text" in widget_id_lower:
-            return WidgetType.TEXT_EDITOR
-        else:
-            return WidgetType.CUSTOM
 
     def get_state(self) -> Dict[str, Any]:
         """Get widget state."""

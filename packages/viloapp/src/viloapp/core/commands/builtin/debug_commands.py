@@ -50,10 +50,10 @@ def reset_app_state_command(context: CommandContext) -> CommandResult:
         # Reset model state if available
         if context.model:
             # Reset to default state
-            from viloapp.models.workspace_model import WidgetType
+            from viloapp.core.widget_ids import TERMINAL
 
             context.model.state.tabs.clear()
-            context.model.create_tab("Terminal 1", WidgetType.TERMINAL)
+            context.model.create_tab("Terminal 1", TERMINAL)
 
         # Show confirmation message
         if context.main_window and hasattr(context.main_window, "status_bar"):

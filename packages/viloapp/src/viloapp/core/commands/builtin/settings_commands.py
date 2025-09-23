@@ -45,9 +45,9 @@ def open_settings_command(context: CommandContext) -> CommandResult:
                 )
 
         # Create new settings tab
-        from viloapp.models.workspace_model import WidgetType
+        from viloapp.core.widget_ids import SETTINGS
 
-        tab_id = context.model.create_tab("Settings", WidgetType.SETTINGS)
+        tab_id = context.model.create_tab("Settings", SETTINGS)
 
         if tab_id:
             return CommandResult(
@@ -334,8 +334,8 @@ def reset_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
 def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
     """Open keyboard shortcuts configuration widget."""
     try:
+        from viloapp.core.widget_ids import SETTINGS
         from viloapp.services.workspace_service import WorkspaceService
-        from viloapp.ui.widgets.widget_registry import WidgetType
 
         workspace_service = context.get_service(WorkspaceService)
         if not workspace_service:
@@ -362,7 +362,7 @@ def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
         # Create and add shortcut configuration widget in a new tab
         # The factory is already registered at module load time
         success = workspace_service.add_app_widget(
-            WidgetType.SETTINGS, widget_id, "Keyboard Shortcuts"
+            SETTINGS, widget_id, "Keyboard Shortcuts"
         )
 
         if success:
