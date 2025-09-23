@@ -89,9 +89,9 @@ class MainWindowStateManager:
         self.save_state()
 
         # Clean up workspace widgets first
-        if hasattr(self.window, 'workspace') and self.window.workspace:
-            if hasattr(self.window.workspace, 'cleanup'):
-                self.window.workspace.cleanup()
+        if hasattr(self.main_window, "workspace") and self.main_window.workspace:
+            if hasattr(self.main_window.workspace, "cleanup"):
+                self.main_window.workspace.cleanup()
 
         # Terminal cleanup is now handled by the terminal plugin
         # from viloapp.services.terminal_server import terminal_server
