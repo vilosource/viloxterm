@@ -40,6 +40,7 @@ from typing import Optional
 
 from viloapp.core.app_widget_manager import AppWidgetManager
 from viloapp.core.app_widget_metadata import AppWidgetMetadata, WidgetCategory
+from viloapp.core.widget_placement import WidgetPlacement
 
 logger = logging.getLogger(__name__)
 
@@ -54,164 +55,22 @@ def register_builtin_widgets():
     manager = AppWidgetManager.get_instance()
 
     # ========================================
-    # SERVICE-BACKED PATTERN: Terminal Widget
+    # Terminal Widget - Now provided by viloxterm plugin
     # ========================================
-    # Terminal uses a service-backed pattern:
-    # - Multiple UI widgets (TerminalAppWidget instances)
-    # - Shared background service (TerminalService) manages PTY sessions
-    # - Service persists after UI widgets are closed
-    # - Each UI widget connects to a unique session in the service
-    #
-    # Instance ID Pattern: Generate unique IDs like "terminal_abc123"
-    # Widget Commands: file.newTerminalTab (creates new instance each time)
-    try:
-        from viloapp.core.widget_placement import WidgetPlacement
-        from viloapp.ui.terminal.terminal_app_widget import TerminalAppWidget
-
-        metadata = AppWidgetMetadata(
-            widget_id="com.viloapp.terminal",
-            display_name="Terminal",
-            description="Integrated terminal emulator with shell access",
-            icon="terminal",
-            category=WidgetCategory.TERMINAL,
-            widget_class=TerminalAppWidget,
-            # Note: No factory needed - TerminalAppWidget can be instantiated directly
-            # Service dependency: TerminalService must be running before widget creation
-            open_command="file.newTerminalTab",
-            provides_capabilities=[
-                "shell_execution",
-                "ansi_colors",
-                "terminal_emulation",
-            ],
-            requires_services=["terminal_service"],
-            preserve_context_menu=True,
-            can_suspend=False,  # Terminal should never be suspended (has background PTY process)
-            min_width=300,
-            min_height=200,
-            # Intent metadata
-            default_placement=WidgetPlacement.SMART,
-            supports_replacement=True,
-            supports_new_tab=True,
-            # Default widget support
-            can_be_default=True,
-            default_priority=10,  # High priority - common default choice
-            default_for_contexts=["terminal", "shell", "command"],
-        )
-
-        # Add context-specific commands
-        metadata.commands = {
-            "open_new_tab": "file.newTerminalTab",
-            "replace_pane": "file.replaceWithTerminal",
-        }
-
-        manager.register_widget(metadata)
-        logger.debug("Registered Terminal widget")
-    except ImportError as e:
-        logger.warning(f"Could not register Terminal widget: {e}")
+    # Terminal functionality is now provided by the viloxterm plugin
+    # which registers with widget_id="com.viloapp.terminal"
 
     # ========================================
-    # MULTI-INSTANCE PATTERN: Text Editor Widget
+    # Text Editor Widget - Now provided by viloedit plugin
     # ========================================
-    # Text Editor uses a multi-instance pattern:
-    # - Each command call creates a new independent editor
-    # - No shared state between instances
-    # - Each editor manages its own file and resources
-    #
-    # Instance ID Pattern: Generate unique IDs like "editor_def456"
-    # Widget Commands: file.newEditorTab (creates new instance each time)
-    try:
-        from viloapp.ui.widgets.editor_app_widget import EditorAppWidget
-
-        metadata = AppWidgetMetadata(
-            widget_id="com.viloapp.editor",
-            display_name="Text Editor",
-            description="Simple text editor for code and documents",
-            icon="file-text",
-            category=WidgetCategory.EDITOR,
-            widget_class=EditorAppWidget,
-            open_command="file.newEditorTab",
-            provides_capabilities=["text_editing", "syntax_highlighting"],
-            supported_file_types=["txt", "py", "js", "json", "md", "yml", "yaml"],
-            preserve_context_menu=True,
-            can_suspend=True,  # Editor can be suspended (no background processes)
-            min_width=400,
-            min_height=300,
-            # Intent metadata
-            default_placement=WidgetPlacement.SMART,
-            supports_replacement=True,
-            supports_new_tab=True,
-            # Default widget support
-            can_be_default=True,
-            default_priority=20,  # Medium priority - common for editor contexts
-            default_for_contexts=["editor", "text", "code"],
-        )
-
-        # Add context-specific commands
-        metadata.commands = {
-            "open_new_tab": "file.newEditorTab",
-            "replace_pane": "file.replaceWithEditor",
-        }
-
-        manager.register_widget(metadata)
-        logger.debug("Registered Text Editor widget")
-    except ImportError as e:
-        logger.warning(f"Could not register Text Editor widget: {e}")
+    # Editor functionality is now provided by the viloedit plugin
+    # which registers with widget_id="com.viloapp.editor"
 
     # ========================================
-    # SINGLETON PATTERN: Theme Editor Widget
+    # Theme Editor Widget - Removed from core
     # ========================================
-    # Theme Editor uses a singleton pattern:
-    # - Only one instance allowed at a time
-    # - Opening again switches to existing tab
-    # - Uses widget_id as instance_id for consistency
-    #
-    # Instance ID Pattern: Use "com.viloapp.theme_editor" (same as widget_id)
-    # Widget Commands: theme.openEditor (reuses existing or creates new)
-    # 🚨 CRITICAL: Commands must use widget_id as instance_id for singletons!
-    try:
-        from viloapp.ui.widgets.theme_editor_widget import ThemeEditorAppWidget
-
-        def create_theme_editor_widget(widget_id: str) -> "ThemeEditorAppWidget":
-            return ThemeEditorAppWidget(widget_id)
-
-        from viloapp.core.widget_placement import WidgetPlacement
-
-        metadata = AppWidgetMetadata(
-            widget_id="com.viloapp.theme_editor",
-            display_name="Theme Editor",
-            description="Visual theme customization tool with live preview",
-            icon="palette",
-            category=WidgetCategory.TOOLS,
-            widget_class=ThemeEditorAppWidget,
-            factory=create_theme_editor_widget,
-            open_command="theme.openEditor",
-            singleton=True,  # 🚨 CRITICAL: This makes it a singleton widget
-            # Commands MUST use "com.viloapp.theme_editor" as instance_id
-            provides_capabilities=[
-                "theme_editing",
-                "live_preview",
-                "color_customization",
-            ],
-            requires_services=["theme_service"],
-            min_width=800,
-            min_height=600,
-            show_header=True,
-            # New intent fields
-            default_placement=WidgetPlacement.SMART,
-            supports_replacement=True,
-            supports_new_tab=True,
-        )
-
-        # Add context-specific commands
-        metadata.commands = {
-            "open_new_tab": "theme.openEditor",
-            "replace_pane": "theme.replaceInPane",
-        }
-
-        manager.register_widget(metadata)
-        logger.debug("Registered Theme Editor widget")
-    except ImportError as e:
-        logger.warning(f"Could not register Theme Editor widget: {e}")
+    # Theme Editor was removed from core - could be implemented as a plugin
+    # if theme editing functionality is needed in the future
 
     # ========================================
     # SINGLETON PATTERN: Keyboard Shortcuts Widget
@@ -432,7 +291,7 @@ When adding a new widget, follow these exact patterns:
            widget_id=instance_id,  # ← Unique each time
            name="My Widget"
        )
-       return CommandResult(success=success)
+       return CommandResult(status=CommandStatus.SUCCESS if success else CommandStatus.FAILURE)
 
    b) SINGLETON COMMAND:
 
@@ -445,7 +304,7 @@ When adding a new widget, follow these exact patterns:
        # Check for existing instance
        if workspace_service.has_widget(widget_id):
            workspace_service.focus_widget(widget_id)
-           return CommandResult(success=True)
+           return CommandResult(status=CommandStatus.SUCCESS)
 
        # Create singleton instance
        success = workspace_service.add_app_widget(
@@ -453,7 +312,7 @@ When adding a new widget, follow these exact patterns:
            widget_id=widget_id,  # ← Always same for singleton
            name="My Widget"
        )
-       return CommandResult(success=success)
+       return CommandResult(status=CommandStatus.SUCCESS if success else CommandStatus.FAILURE)
 
    c) SERVICE-BACKED COMMAND:
 
@@ -475,7 +334,7 @@ When adding a new widget, follow these exact patterns:
            widget_id=instance_id,
            name="My Widget"
        )
-       return CommandResult(success=success)
+       return CommandResult(status=CommandStatus.SUCCESS if success else CommandStatus.FAILURE)
 
 4. COMMON MISTAKES TO AVOID:
 

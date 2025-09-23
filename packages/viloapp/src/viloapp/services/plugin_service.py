@@ -47,10 +47,15 @@ class PluginService(Service):
         """Get the underlying plugin manager."""
         return self._plugin_manager
 
-    def register_widget(self, widget_factory) -> None:
-        """Register a plugin widget factory."""
+    def register_widget(self, widget_factory, plugin_id: str = None) -> None:
+        """Register a plugin widget factory.
+
+        Args:
+            widget_factory: The widget factory from the plugin
+            plugin_id: The ID of the plugin registering this widget
+        """
         if self._widget_bridge:
-            self._widget_bridge.register_plugin_widget(widget_factory)
-            logger.info(f"Registered plugin widget: {widget_factory}")
+            self._widget_bridge.register_plugin_widget(widget_factory, plugin_id)
+            logger.info(f"Registered plugin widget: {widget_factory} from plugin: {plugin_id}")
         else:
             logger.warning("Widget bridge not available for widget registration")

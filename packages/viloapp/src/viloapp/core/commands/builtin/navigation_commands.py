@@ -157,9 +157,12 @@ def close_all_tabs_command(context: CommandContext) -> CommandResult:
 
         # Create a new default tab if we closed everything
         if len(context.model.state.tabs) == 0:
-            from viloapp.core.widget_ids import TERMINAL
+            from viloapp.core.app_widget_manager import app_widget_manager
 
-            context.model.create_tab("Default", TERMINAL)
+            # Get the system's default widget
+            default_widget_id = app_widget_manager.get_default_widget_id()
+            if default_widget_id:
+                context.model.create_tab("Default", default_widget_id)
 
         return CommandResult(
             status=CommandStatus.SUCCESS,

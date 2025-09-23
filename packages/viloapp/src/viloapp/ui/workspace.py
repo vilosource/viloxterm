@@ -287,15 +287,15 @@ class Workspace(QWidget):
     # Compatibility methods for existing code
     def create_new_tab(self, name: str = "New Tab", widget_type: str = "terminal"):
         """Create a new tab (compatibility method)."""
-        # Map old widget types to new widget IDs
-        type_map = {
-            "terminal": TERMINAL,
-            "editor": EDITOR,
-            "text_editor": EDITOR,
-            "output": OUTPUT,
-        }
+        # Use the proper migration system - no hardcoded widget IDs!
+        from viloapp.core.widget_ids import get_default_widget_id, migrate_widget_type
 
-        widget_id = type_map.get(widget_type.lower(), TERMINAL)
+        # Migrate old type to new widget ID using the system
+        widget_id = migrate_widget_type(widget_type)
+
+        # If migration returns unknown, use registry default
+        if widget_id.startswith("plugin.unknown."):
+            widget_id = get_default_widget_id() or widget_id
 
         context = CommandContext(model=self.model)
         self.command_registry.execute(
@@ -322,6 +322,32 @@ class Workspace(QWidget):
             context,
             orientation=orientation,
         )
+
+    def cleanup(self):
+        """Clean up all workspace resources including all AppWidgets."""
+        logger.info("Cleaning up workspace...")
+
+        # Clean up all tab views
+        for tab_id, tab_view in self.tab_views.items():
+            try:
+                # Find all AppWidgets in the tab view and clean them up
+                from viloapp.ui.widgets.app_widget import AppWidget
+                app_widgets = tab_view.findChildren(AppWidget)
+                for widget in app_widgets:
+                    try:
+                        widget.cleanup()
+                        logger.debug(f"Cleaned up AppWidget: {widget.widget_id}")
+                    except Exception as e:
+                        logger.error(f"Error cleaning up widget {widget.widget_id}: {e}")
+
+                logger.debug(f"Cleaned up tab view: {tab_id}")
+            except Exception as e:
+                logger.error(f"Error cleaning up tab {tab_id}: {e}")
+
+        # Clear tab views
+        self.tab_views.clear()
+
+        logger.info("Workspace cleanup complete")
 
     def close_current_pane(self):
         """Close the current pane (compatibility method)."""

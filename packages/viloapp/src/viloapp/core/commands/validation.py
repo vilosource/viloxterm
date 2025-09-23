@@ -14,7 +14,7 @@ from abc import ABC, abstractmethod
 from functools import wraps
 from typing import Any, Callable, List, Optional, Type
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 
 logger = logging.getLogger(__name__)
 
@@ -467,7 +467,7 @@ def validate(**parameter_specs) -> Callable:
         )
         def test_command(context: CommandContext) -> CommandResult:
             # Parameters are guaranteed to be valid here
-            return CommandResult(success=True)
+            return CommandResult(status=CommandStatus.SUCCESS)
     """
 
     def decorator(func_or_command):
@@ -500,7 +500,7 @@ def validate(**parameter_specs) -> Callable:
                     return original_handler(validated_context)
                 except ValidationError as e:
                     logger.warning(f"Validation failed for command {command.id}: {e}")
-                    return CommandResult(success=False, error=str(e))
+                    return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
             command.handler = validated_handler
             # Store validation spec for introspection
@@ -517,7 +517,7 @@ def validate(**parameter_specs) -> Callable:
                     return func_or_command(validated_context)
                 except ValidationError as e:
                     logger.warning(f"Validation failed: {e}")
-                    return CommandResult(success=False, error=str(e))
+                    return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
             # Store validation spec for introspection
             # The @command decorator will check for this and transfer it to the Command object

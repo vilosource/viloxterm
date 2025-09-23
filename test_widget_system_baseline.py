@@ -3,7 +3,6 @@
 
 import sys
 import subprocess
-import glob
 import os
 sys.path.insert(0, "packages/viloapp/src")
 
@@ -56,7 +55,7 @@ def test_all_commands_execute():
         import viloapp.core.commands.builtin.file_commands
         import viloapp.core.commands.builtin.terminal_commands
 
-        print(f"✅ Command modules can be imported")
+        print("✅ Command modules can be imported")
         return True
 
     except (NameError, ImportError) as e:
@@ -172,7 +171,6 @@ def test_app_startup():
 
     # Just test imports work
     try:
-        from viloapp.main import main
         print("✅ Application can be imported")
         return True
     except Exception as e:
@@ -203,7 +201,7 @@ def test_model_has_no_ui_imports():
                     violations.append(f"{filepath}: imports PyQt")
 
     if violations:
-        print(f"❌ Model layer has UI imports:")
+        print("❌ Model layer has UI imports:")
         for v in violations:
             print(f"  {v}")
         return False

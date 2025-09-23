@@ -298,6 +298,7 @@ class WorkspaceState:
     tabs: List[Tab] = field(default_factory=list)
     active_tab_id: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
+    widget_preferences: Dict[str, str] = field(default_factory=dict)  # context -> widget_id mapping
 
     def get_active_tab(self) -> Optional[Tab]:
         """Get the active tab."""
@@ -459,19 +460,46 @@ class WorkspaceModel:
         return success
 
     def change_pane_widget(self, pane_id: str, widget_id: str) -> bool:
-        """Change the widget type of a pane."""
-        tab = self.state.get_active_tab()
-        if not tab:
+        """Change the widget type of a pane.
+
+        Args:
+            pane_id: ID of pane to change
+            widget_id: New widget ID to use
+
+        Returns:
+            True if successful, False otherwise
+        """
+        # Validate widget ID exists
+        if not self.validate_widget_id(widget_id):
             return False
 
-        pane = tab.tree.root.find_pane(pane_id)
+        # Find the pane in any tab
+        pane = self.find_pane(pane_id)
         if not pane:
             return False
 
+        # Find which tab contains this pane
+        tab_id = None
+        for tab in self.state.tabs:
+            if self._find_pane_in_tree(tab.tree.root, pane_id):
+                tab_id = tab.id
+                break
+
+        # Store old widget ID for notification
+        old_widget_id = pane.widget_id
+
+        # Update widget ID
         pane.widget_id = widget_id
+
+        # Notify observers with full context
         self._notify(
             "pane_widget_changed",
-            {"tab_id": tab.id, "pane_id": pane_id, "widget_id": widget_id},
+            {
+                "tab_id": tab_id,
+                "pane_id": pane_id,
+                "old_widget_id": old_widget_id,
+                "new_widget_id": widget_id
+            },
         )
         return True
 
@@ -613,8 +641,8 @@ class WorkspaceModel:
             old_type = data["widget_type"]
             widget_id = migrate_widget_type(old_type)
         else:
-            # Default to terminal
-            widget_id = TERMINAL
+            # Default to placeholder, will be replaced when widget is created
+            widget_id = "com.viloapp.placeholder"
 
         return Pane(
             id=data.get("id", str(uuid.uuid4())),
@@ -969,6 +997,168 @@ class WorkspaceModel:
         self._notify("pane_numbers_toggled", {"show": show_numbers})
         return True
 
+    # Widget Management Methods
+    def get_available_widget_ids(self) -> List[str]:
+        """Get widget IDs that can be used in panes.
+
+        Returns:
+            List of available widget IDs from registry
+        """
+        from viloapp.core.app_widget_manager import app_widget_manager
+        return app_widget_manager.get_available_widget_ids()
+
+    def validate_widget_id(self, widget_id: str) -> bool:
+        """Check if a widget ID is valid and available.
+
+        Args:
+            widget_id: Widget ID to validate
+
+        Returns:
+            True if widget is available
+        """
+        from viloapp.core.app_widget_manager import app_widget_manager
+        return app_widget_manager.is_widget_available(widget_id)
+
+    def _find_pane_in_tree(self, node: PaneNode, pane_id: str) -> Optional[Pane]:
+        """Recursively find pane in tree.
+
+        Args:
+            node: Tree node to search
+            pane_id: ID of pane to find
+
+        Returns:
+            Pane if found, None otherwise
+        """
+        if node.node_type == NodeType.LEAF:
+            if node.pane and node.pane.id == pane_id:
+                return node.pane
+        else:
+            # Search in split children
+            if node.first:
+                result = self._find_pane_in_tree(node.first, pane_id)
+                if result:
+                    return result
+            if node.second:
+                result = self._find_pane_in_tree(node.second, pane_id)
+                if result:
+                    return result
+        return None
+
+    def find_pane(self, pane_id: str) -> Optional[Pane]:
+        """Find a pane by ID in any tab.
+
+        Args:
+            pane_id: ID of pane to find
+
+        Returns:
+            Pane if found, None otherwise
+        """
+        for tab in self.state.tabs:
+            pane = self._find_pane_in_tree(tab.tree.root, pane_id)
+            if pane:
+                return pane
+        return None
+
+    def get_pane_widget_id(self, pane_id: str) -> Optional[str]:
+        """Get the widget ID of a pane.
+
+        Args:
+            pane_id: ID of the pane
+
+        Returns:
+            Widget ID or None if pane not found
+        """
+        pane = self.find_pane(pane_id)
+        return pane.widget_id if pane else None
+
+    # Widget Preference Methods
+    def set_widget_preference(self, context: str, widget_id: str) -> bool:
+        """Set user preference for default widget in a context.
+
+        Args:
+            context: Context for the preference (e.g., "general", "file:python", "split:right")
+            widget_id: Preferred widget ID for this context
+
+        Returns:
+            True if preference was set successfully
+        """
+        if not self.validate_widget_id(widget_id):
+            return False
+
+        self.state.widget_preferences[context] = widget_id
+        self._notify("widget_preference_changed", {
+            "context": context,
+            "widget_id": widget_id
+        })
+        return True
+
+    def get_widget_preference(self, context: str) -> Optional[str]:
+        """Get user preference for default widget in a context.
+
+        Args:
+            context: Context to get preference for
+
+        Returns:
+            Preferred widget ID or None if no preference set
+        """
+        return self.state.widget_preferences.get(context)
+
+    def get_default_widget_for_context(self, context: Optional[str] = None) -> str:
+        """Get the default widget ID for a given context.
+
+        This follows a resolution chain:
+        1. User preference for specific context
+        2. User preference for "general" context
+        3. Registry default for context
+        4. Global registry default
+
+        Args:
+            context: Optional context to get default for
+
+        Returns:
+            Widget ID to use (always returns a value)
+        """
+        # Check user preference for specific context
+        if context:
+            pref = self.get_widget_preference(context)
+            if pref and self.validate_widget_id(pref):
+                return pref
+
+        # Check general user preference
+        general_pref = self.get_widget_preference("general")
+        if general_pref and self.validate_widget_id(general_pref):
+            return general_pref
+
+        # Delegate to registry for default
+        from viloapp.core.app_widget_manager import app_widget_manager
+        default_id = app_widget_manager.get_default_widget_id(context)
+
+        # Registry always returns something, even if placeholder
+        return default_id or "com.viloapp.placeholder"
+
+    def clear_widget_preference(self, context: str) -> bool:
+        """Clear a widget preference.
+
+        Args:
+            context: Context to clear preference for
+
+        Returns:
+            True if a preference was cleared
+        """
+        if context in self.state.widget_preferences:
+            del self.state.widget_preferences[context]
+            self._notify("widget_preference_cleared", {"context": context})
+            return True
+        return False
+
+    def get_all_widget_preferences(self) -> Dict[str, str]:
+        """Get all widget preferences.
+
+        Returns:
+            Copy of all widget preferences
+        """
+        return self.state.widget_preferences.copy()
+
     # State Persistence Methods
     def save_state(self) -> Dict[str, Any]:
         """Save model state for persistence."""
@@ -977,6 +1167,7 @@ class WorkspaceModel:
             "tabs": [self._serialize_tab(tab) for tab in self.state.tabs],
             "active_tab_id": self.state.active_tab_id,
             "metadata": self.state.metadata,
+            "widget_preferences": self.state.widget_preferences,
             "timestamp": datetime.now().isoformat(),
         }
 
@@ -985,6 +1176,11 @@ class WorkspaceModel:
         try:
             # Clear current state
             self.state = WorkspaceState()
+
+            # Check version and migrate if needed
+            version = state.get("version", "1.0")
+            if version == "1.0":
+                state = self._migrate_from_v1(state)
 
             # Load tabs
             for tab_data in state.get("tabs", []):
@@ -998,10 +1194,18 @@ class WorkspaceModel:
             # Load metadata
             self.state.metadata = state.get("metadata", {})
 
+            # Load widget preferences
+            self.state.widget_preferences = state.get("widget_preferences", {})
+
+            # Migrate any old preference formats
+            self._migrate_preferences()
+
             # Validate state
             if not self.state.tabs:
                 # Create default tab if none exist
-                self.create_tab("Default", EDITOR)
+                # Use the default widget from context
+                default_widget = self.get_default_widget_for_context("new_tab")
+                self.create_tab("Default", default_widget)
 
             if not self.state.active_tab_id and self.state.tabs:
                 self.state.active_tab_id = self.state.tabs[0].id
@@ -1015,6 +1219,37 @@ class WorkspaceModel:
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to load state: {e}")
             return False
+
+    def _migrate_from_v1(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Migrate state from version 1.0 to 2.0.
+
+        Version 1.0 used WidgetType enum values.
+        Version 2.0 uses string widget IDs.
+        """
+        # Mark as version 2.0
+        state["version"] = "2.0"
+
+        # Migration happens in _deserialize_pane via migrate_widget_type
+        # Just return the state as-is
+        return state
+
+    def _migrate_preferences(self):
+        """Migrate widget preferences to new format if needed.
+
+        Old format might have used enum values or old widget names.
+        New format uses widget IDs like "com.viloapp.terminal".
+        """
+        migrated = {}
+        for context, pref in self.state.widget_preferences.items():
+            # Migrate old widget types to new IDs
+            if not pref.startswith("com.viloapp.") and not pref.startswith("plugin."):
+                # This is an old format, migrate it
+                migrated[context] = migrate_widget_type(pref)
+            else:
+                # Already in new format
+                migrated[context] = pref
+
+        self.state.widget_preferences = migrated
 
     def notify_observers(self, event: str, data: Any = None):
         """Public method to notify observers (alias for _notify)."""

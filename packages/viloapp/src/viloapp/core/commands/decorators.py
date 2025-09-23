@@ -68,7 +68,7 @@ def command(
         )
         def new_tab_command(context: CommandContext) -> CommandResult:
             # Implementation
-            return CommandResult(success=True)
+            return CommandResult(status=CommandStatus.SUCCESS)
     """
 
     def decorator(func: Callable) -> FunctionCommand:
@@ -227,7 +227,7 @@ def command_handler(
         @command_handler("file.newTab", undo=undo_new_tab)
         def enhance_new_tab(context: CommandContext) -> CommandResult:
             # Enhanced implementation
-            return CommandResult(success=True)
+            return CommandResult(status=CommandStatus.SUCCESS)
     """
 
     def decorator(func: Callable) -> Callable:
@@ -245,11 +245,11 @@ def command_handler(
                 try:
                     result = func(context)
                     if not isinstance(result, CommandResult):
-                        return CommandResult(success=True, value=result)
+                        return CommandResult(status=CommandStatus.SUCCESS, value=result)
                     return result
                 except Exception as e:
                     logger.error(f"Error in command {command_id}: {e}", exc_info=True)
-                    return CommandResult(success=False, error=str(e))
+                    return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
             cmd.handler = handler
 
@@ -260,11 +260,11 @@ def command_handler(
                 try:
                     result = undo(context)
                     if not isinstance(result, CommandResult):
-                        return CommandResult(success=True, value=result)
+                        return CommandResult(status=CommandStatus.SUCCESS, value=result)
                     return result
                 except Exception as e:
                     logger.error(f"Error in undo for {command_id}: {e}", exc_info=True)
-                    return CommandResult(success=False, error=str(e))
+                    return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
             cmd.undo_handler = undo_handler
             cmd.supports_undo = True
@@ -276,11 +276,11 @@ def command_handler(
                 try:
                     result = redo(context)
                     if not isinstance(result, CommandResult):
-                        return CommandResult(success=True, value=result)
+                        return CommandResult(status=CommandStatus.SUCCESS, value=result)
                     return result
                 except Exception as e:
                     logger.error(f"Error in redo for {command_id}: {e}", exc_info=True)
-                    return CommandResult(success=False, error=str(e))
+                    return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
             cmd.redo_handler = redo_handler
 

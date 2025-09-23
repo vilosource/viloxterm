@@ -24,16 +24,7 @@ class BaseKeymapShortcuts:
         """
         return [
             # ========== File Operations ==========
-            {
-                "id": "file.new_terminal",
-                "sequence": "ctrl+n",
-                "command_id": "file.newTerminalTab",
-            },
-            {
-                "id": "file.new_editor",
-                "sequence": "ctrl+shift+n",
-                "command_id": "file.newEditorTab",
-            },
+            # Terminal and Editor shortcuts removed - provided by plugins
             {
                 "id": "file.open",
                 "sequence": "ctrl+o",
@@ -51,27 +42,7 @@ class BaseKeymapShortcuts:
             },
             {"id": "file.close", "sequence": "ctrl+w", "command_id": "file.closeTab"},
             # ========== Edit Operations ==========
-            {"id": "edit.cut", "sequence": "ctrl+x", "command_id": CommandID.Edit.CUT},
-            {
-                "id": "edit.copy",
-                "sequence": "ctrl+c",
-                "command_id": CommandID.Edit.COPY,
-            },
-            {
-                "id": "edit.paste",
-                "sequence": "ctrl+v",
-                "command_id": CommandID.Edit.PASTE,
-            },
-            {
-                "id": "edit.undo",
-                "sequence": "ctrl+z",
-                "command_id": CommandID.Edit.UNDO,
-            },
-            {
-                "id": "edit.select_all",
-                "sequence": "ctrl+a",
-                "command_id": CommandID.Edit.SELECT_ALL,
-            },
+            # Editor-specific shortcuts removed - provided by editor plugins
             # ========== View Operations ==========
             {
                 "id": "view.sidebar",
@@ -109,17 +80,7 @@ class BaseKeymapShortcuts:
                 "sequence": "ctrl+shift+\\",
                 "command_id": "workbench.action.splitDown",
             },
-            # ========== Terminal Operations ==========
-            {
-                "id": "terminal.new",
-                "sequence": "ctrl+shift+`",
-                "command_id": "file.newTerminalTab",
-            },
-            {
-                "id": "terminal.clear",
-                "sequence": "ctrl+l",
-                "command_id": "terminal.clear",
-            },
+            # Terminal shortcuts removed - provided by terminal plugins
             # ========== Navigation ==========
             {
                 "id": "nav.next_tab",

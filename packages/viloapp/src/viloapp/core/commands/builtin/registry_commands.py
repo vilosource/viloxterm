@@ -163,7 +163,7 @@ def get_widget_tab_index_command(context: CommandContext) -> CommandResult:
     widget_id = context.parameters.get("widget_id") if context.parameters else None
 
     if widget_id is None:
-        return CommandResult(success=False, error="widget_id is required")
+        return CommandResult(status=CommandStatus.FAILURE, message="widget_id is required")
 
     if not context.model:
         return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
@@ -203,7 +203,7 @@ def is_widget_registered_command(context: CommandContext) -> CommandResult:
     widget_id = context.parameters.get("widget_id") if context.parameters else None
 
     if widget_id is None:
-        return CommandResult(success=False, error="widget_id is required")
+        return CommandResult(status=CommandStatus.FAILURE, message="widget_id is required")
 
     if not context.model:
         return CommandResult(status=CommandStatus.FAILURE, message="Model not available")

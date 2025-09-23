@@ -42,7 +42,7 @@
   "contributes": {
     "widgets": [
       {
-        "id": "editor",
+        "id": "com.viloapp.editor",
         "factory": "viloedit.widget:EditorWidgetFactory"
       }
     ],

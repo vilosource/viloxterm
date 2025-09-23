@@ -49,11 +49,18 @@ def reset_app_state_command(context: CommandContext) -> CommandResult:
 
         # Reset model state if available
         if context.model:
-            # Reset to default state
-            from viloapp.core.widget_ids import TERMINAL
+            # Reset to default state - get default terminal widget
+            from viloapp.core.app_widget_manager import app_widget_manager
+            from viloapp.core.app_widget_metadata import WidgetCategory
+
+            terminal_widget_id = app_widget_manager.get_default_widget_for_category(WidgetCategory.TERMINAL)
+            if not terminal_widget_id:
+                # Fallback to any available widget
+                terminal_widget_id = app_widget_manager.get_default_widget_id()
 
             context.model.state.tabs.clear()
-            context.model.create_tab("Terminal 1", TERMINAL)
+            if terminal_widget_id:
+                context.model.create_tab("Terminal 1", terminal_widget_id)
 
         # Show confirmation message
         if context.main_window and hasattr(context.main_window, "status_bar"):

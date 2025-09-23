@@ -1,64 +1,381 @@
 #!/usr/bin/env python3
 """
-Split pane widget - TEMPORARY STUB during Big Bang refactor.
+Split pane widget - Pure view implementation.
 
-TODO: This will be rebuilt as a pure view that renders from WorkspaceModel.
-All model logic has been removed. This is just a minimal placeholder
-to prevent import errors.
+This widget renders the pane tree structure from WorkspaceModel.
+It has NO state or business logic - it's purely a view that observes
+and reacts to model changes.
 """
 
 import logging
-from typing import Optional
+from typing import Dict, Optional
 
-from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
+    QSplitter,
+    QVBoxLayout,
+    QWidget,
+)
+
+from viloapp.models.workspace_model import Orientation, PaneNode, WorkspaceModel
 
 logger = logging.getLogger(__name__)
 
 
+class PaneContainer(QWidget):
+    """Container for a single pane's widget."""
+
+    def __init__(self, pane_id: str, parent=None):
+        """Initialize pane container.
+
+        Args:
+            pane_id: ID of the pane this container represents
+            parent: Parent widget
+        """
+        super().__init__(parent)
+        self.pane_id = pane_id
+        self.widget = None
+
+        # Simple layout to hold the widget
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+
+    def set_widget(self, widget: QWidget):
+        """Set the widget to display in this pane.
+
+        Args:
+            widget: The widget to display
+        """
+        # Clear old widget
+        if self.widget:
+            self.layout.removeWidget(self.widget)
+
+            # Properly cleanup AppWidget if it has a cleanup method
+            if hasattr(self.widget, 'cleanup') and callable(self.widget.cleanup):
+                try:
+                    self.widget.cleanup()
+                except Exception as e:
+                    logger.error(f"Error cleaning up widget: {e}")
+
+            self.widget.setParent(None)
+            self.widget.deleteLater()
+
+        # Add new widget
+        self.widget = widget
+        if widget:
+            self.layout.addWidget(widget)
+
+
 class SplitPaneWidget(QWidget):
     """
-    TEMPORARY STUB - Will be pure view after Big Bang refactor.
+    Pure view widget that renders pane tree from WorkspaceModel.
 
-    This widget will:
-    - Render tree structure from WorkspaceModel
-    - Handle only UI events
-    - Have NO state or model logic
+    This widget:
+    - Observes WorkspaceModel for changes
+    - Renders tree structure using Qt splitters
+    - Forwards UI events to commands
+    - Has NO state or business logic
     """
 
-    # Signals needed by other components
-    pane_added = Signal(str)
-    pane_removed = Signal(str)
+    # Signals for UI events (will trigger commands)
+    pane_focused = Signal(str)  # pane_id
+    split_requested = Signal(str, str)  # pane_id, orientation
+    close_requested = Signal(str)  # pane_id
+
+    # Signals for other components
     active_pane_changed = Signal(str)
     layout_changed = Signal()
 
-    def __init__(self, parent=None):
-        """TODO: Will accept WorkspaceModel reference after refactor."""
+    def __init__(self, model: WorkspaceModel, parent=None):
+        """Initialize split pane widget with model reference.
+
+        Args:
+            model: The WorkspaceModel to observe
+            parent: Parent widget
+        """
         super().__init__(parent)
 
-        # Minimal UI to prevent crashes
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.model = model
+        self._pane_containers: Dict[str, PaneContainer] = {}
+        self._current_root_widget = None
 
-        logger.warning("SplitPaneWidget is a stub - Big Bang refactor in progress")
+        # Main layout
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
 
-    # Stub methods to prevent AttributeErrors
+        # Subscribe to model changes
+        self._connect_model_observers()
+
+        # Initial render
+        self.refresh_view()
+
+        logger.debug("SplitPaneWidget initialized as pure view")
+
+    def _connect_model_observers(self):
+        """Connect to model observer events."""
+        # Subscribe to relevant model events
+        self.model.add_observer("pane_split", self._on_model_changed)
+        self.model.add_observer("pane_closed", self._on_model_changed)
+        self.model.add_observer("pane_focused", self._on_pane_focused)
+        self.model.add_observer("widget_changed", self._on_widget_changed)
+        self.model.add_observer("tab_switched", self._on_tab_switched)
+
+    def _on_model_changed(self, data: Dict):
+        """Handle model structure changes.
+
+        Args:
+            data: Event data from model
+        """
+        logger.debug(f"Model changed: {data}")
+        self.refresh_view()
+        self.layout_changed.emit()
+
+    def _on_pane_focused(self, data: Dict):
+        """Handle pane focus change.
+
+        Args:
+            data: Event data with pane_id
+        """
+        pane_id = data.get("pane_id")
+        if pane_id:
+            self.active_pane_changed.emit(pane_id)
+
+            # Update visual focus indicator
+            for pid, container in self._pane_containers.items():
+                if container:
+                    container.setProperty("focused", pid == pane_id)
+                    container.style().polish(container)
+
+    def _on_widget_changed(self, data: Dict):
+        """Handle widget change in a pane.
+
+        Args:
+            data: Event data with pane_id and widget_id
+        """
+        pane_id = data.get("pane_id")
+        if pane_id and pane_id in self._pane_containers:
+            # Widget creation is handled by WidgetFactory
+            # We just need to refresh to pick up the change
+            self.refresh_view()
+
+    def _on_tab_switched(self, data: Dict):
+        """Handle tab switch.
+
+        Args:
+            data: Event data
+        """
+        self.refresh_view()
+
     def refresh_view(self):
-        """TODO: Will render from model."""
-        pass
+        """Render the current state from the model."""
+        # Get active tab from model
+        tab = self.model.state.get_active_tab()
+        if not tab:
+            logger.debug("No active tab to render")
+            return
+
+        # Clear current view
+        if self._current_root_widget:
+            self.main_layout.removeWidget(self._current_root_widget)
+
+            # Cleanup all AppWidgets in the tree before deleting
+            self._cleanup_widget_tree(self._current_root_widget)
+
+            self._current_root_widget.deleteLater()
+            self._current_root_widget = None
+
+        # Clear pane containers
+        self._pane_containers.clear()
+
+        # Build new tree
+        root_widget = self._build_tree_widget(tab.tree.root)
+        if root_widget:
+            self._current_root_widget = root_widget
+            self.main_layout.addWidget(root_widget)
+
+            # Set active pane focus
+            if tab.active_pane_id and tab.active_pane_id in self._pane_containers:
+                container = self._pane_containers[tab.active_pane_id]
+                container.setProperty("focused", True)
+                container.style().polish(container)
+
+    def _build_tree_widget(self, node: PaneNode) -> Optional[QWidget]:
+        """Build Qt widget tree from model node.
+
+        Args:
+            node: The PaneNode to build from
+
+        Returns:
+            QWidget representing the node, or None
+        """
+        if not node:
+            return None
+
+        if node.is_leaf() and node.pane:
+            # Create container for this pane
+            container = PaneContainer(node.pane.id)
+            self._pane_containers[node.pane.id] = container
+
+            # Request widget creation from factory
+            self._request_widget_for_pane(node.pane.id, node.pane.widget_id)
+
+            # Connect focus handling
+            container.mousePressEvent = lambda e: self._handle_pane_click(node.pane.id, e)
+
+            return container
+
+        elif node.is_split() and node.first and node.second:
+            # Create splitter
+            if node.orientation == Orientation.HORIZONTAL:
+                splitter = QSplitter(Qt.Horizontal)
+            else:
+                splitter = QSplitter(Qt.Vertical)
+
+            # Build child widgets
+            first_widget = self._build_tree_widget(node.first)
+            second_widget = self._build_tree_widget(node.second)
+
+            if first_widget and second_widget:
+                splitter.addWidget(first_widget)
+                splitter.addWidget(second_widget)
+
+                # Set split ratio
+                sizes = splitter.sizes()
+                total = sum(sizes)
+                if total > 0:
+                    ratio = node.ratio
+                    first_size = int(total * ratio)
+                    second_size = total - first_size
+                    splitter.setSizes([first_size, second_size])
+
+                # Update model ratio when user drags splitter
+                splitter.splitterMoved.connect(
+                    lambda: self._update_split_ratio(node, splitter)
+                )
+
+                return splitter
+
+        return None
+
+    def _request_widget_for_pane(self, pane_id: str, widget_id: str):
+        """Request widget creation from factory.
+
+        Args:
+            pane_id: ID of the pane
+            widget_id: ID of the widget type to create
+        """
+        # This will be handled by WidgetFactory in Phase 7
+        # For now, just log
+        logger.debug(f"Would create widget {widget_id} for pane {pane_id}")
+
+    def _cleanup_widget_tree(self, widget: QWidget):
+        """Recursively cleanup all AppWidgets in a widget tree.
+
+        Args:
+            widget: Root widget of the tree to cleanup
+        """
+        if not widget:
+            return
+
+        # Check if this widget is a PaneContainer with an AppWidget
+        if isinstance(widget, PaneContainer) and widget.widget:
+            if hasattr(widget.widget, 'cleanup') and callable(widget.widget.cleanup):
+                try:
+                    widget.widget.cleanup()
+                    logger.debug(f"Cleaned up AppWidget in pane {widget.pane_id}")
+                except Exception as e:
+                    logger.error(f"Error cleaning up widget in pane {widget.pane_id}: {e}")
+
+        # Recursively cleanup children
+        for child in widget.findChildren(QWidget):
+            if isinstance(child, PaneContainer) and child.widget:
+                if hasattr(child.widget, 'cleanup') and callable(child.widget.cleanup):
+                    try:
+                        child.widget.cleanup()
+                        logger.debug(f"Cleaned up AppWidget in pane {child.pane_id}")
+                    except Exception as e:
+                        logger.error(f"Error cleaning up widget in pane {child.pane_id}: {e}")
+
+    def _handle_pane_click(self, pane_id: str, event):
+        """Handle click on a pane.
+
+        Args:
+            pane_id: ID of clicked pane
+            event: Mouse event
+        """
+        # Emit signal to trigger focus command
+        self.pane_focused.emit(pane_id)
+
+        # Continue with normal event processing
+        if pane_id in self._pane_containers:
+            QWidget.mousePressEvent(self._pane_containers[pane_id], event)
+
+    def _update_split_ratio(self, node: PaneNode, splitter: QSplitter):
+        """Update model when splitter is moved.
+
+        Args:
+            node: The split node
+            splitter: The QSplitter widget
+        """
+        sizes = splitter.sizes()
+        total = sum(sizes)
+        if total > 0 and len(sizes) >= 2:
+            ratio = sizes[0] / total
+            node.ratio = ratio
+            # Could emit a model update event here if needed
+
+    # Public API for compatibility (delegate to model)
 
     def get_active_pane_id(self) -> Optional[str]:
-        """TODO: Will read from model."""
-        return None
+        """Get active pane ID from model.
+
+        Returns:
+            Active pane ID or None
+        """
+        tab = self.model.state.get_active_tab()
+        return tab.active_pane_id if tab else None
 
     def set_active_pane(self, pane_id: str):
-        """TODO: Will update model."""
-        pass
+        """Request pane focus through model.
 
-    def get_pane_widget(self, pane_id: str):
-        """TODO: Will get from model."""
-        return None
+        Args:
+            pane_id: ID of pane to focus
+        """
+        self.pane_focused.emit(pane_id)
+
+    def get_pane_widget(self, pane_id: str) -> Optional[QWidget]:
+        """Get widget for a pane.
+
+        Args:
+            pane_id: ID of the pane
+
+        Returns:
+            The widget or None
+        """
+        container = self._pane_containers.get(pane_id)
+        return container.widget if container else None
+
+    def set_pane_widget(self, pane_id: str, widget: QWidget):
+        """Set widget for a pane container.
+
+        Args:
+            pane_id: ID of the pane
+            widget: Widget to set
+        """
+        container = self._pane_containers.get(pane_id)
+        if container:
+            container.set_widget(widget)
 
     def cleanup(self):
-        """TODO: Cleanup when done."""
-        pass
+        """Clean up observers when done."""
+        # Remove model observers
+        self.model.remove_observer("pane_split", self._on_model_changed)
+        self.model.remove_observer("pane_closed", self._on_model_changed)
+        self.model.remove_observer("pane_focused", self._on_pane_focused)
+        self.model.remove_observer("widget_changed", self._on_widget_changed)
+        self.model.remove_observer("tab_switched", self._on_tab_switched)
+
+        # Clear containers
+        self._pane_containers.clear()

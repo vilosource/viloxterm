@@ -24,7 +24,7 @@ class EditorPlugin(IPlugin):
     def get_metadata(self) -> PluginMetadata:
         """Get plugin metadata."""
         return PluginMetadata(
-            id="viloedit",
+            id="editor",
             name="ViloEdit",
             version="1.0.0",
             description="Professional code editor with syntax highlighting",

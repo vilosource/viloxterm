@@ -16,8 +16,7 @@ class ContextKey:
     """
 
     # Focus contexts - which part of the UI has focus
-    EDITOR_FOCUS = "editorFocus"
-    TERMINAL_FOCUS = "terminalFocus"
+    # Editor and Terminal focus removed - provided by plugins
     SIDEBAR_FOCUS = "sidebarFocus"
     ACTIVITY_BAR_FOCUS = "activityBarFocus"
     COMMAND_PALETTE_FOCUS = "commandPaletteFocus"
@@ -31,10 +30,9 @@ class ContextKey:
     STATUS_BAR_VISIBLE = "statusBarVisible"
     COMMAND_PALETTE_VISIBLE = "commandPaletteVisible"
 
-    # Editor state contexts
-    HAS_OPEN_EDITORS = "hasOpenEditors"
-    HAS_MULTIPLE_EDITORS = "hasMultipleEditors"
-    HAS_SELECTION = "hasSelection"
+    # Editor state contexts - removed, provided by editor plugins
+    # Plugins can register their own context keys
+    HAS_SELECTION = "hasSelection"  # Generic, can be used by any widget
     HAS_MULTIPLE_SELECTIONS = "hasMultipleSelections"
     IS_READ_ONLY = "isReadOnly"
     IS_DIRTY = "isDirty"
@@ -47,7 +45,7 @@ class ContextKey:
     TAB_COUNT = "tabCount"
 
     # Content type contexts
-    ACTIVE_TAB_TYPE = "activeTabType"  # Values: "editor", "terminal", "output"
+    ACTIVE_TAB_TYPE = "activeTabType"  # Values determined by registered widgets
     ACTIVE_PANE_TYPE = "activePaneType"  # Values: "editor", "terminal", "output"
     RESOURCE_EXTENSION = "resourceExtension"  # File extension
     RESOURCE_SCHEME = "resourceScheme"  # "file", "untitled", etc.

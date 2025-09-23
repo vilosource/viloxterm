@@ -16,7 +16,6 @@ from viloapp.core.commands.validation import (
     String,
     validate,
 )
-from viloapp.services.terminal_service import TerminalService
 
 logger = logging.getLogger(__name__)
 
@@ -44,24 +43,10 @@ def new_tab_command(context: CommandContext) -> CommandResult:
             # Use app_widget_manager to get the default widget
             widget_id = app_widget_manager.get_default_widget_id()
             if not widget_id:
-                # Fallback to terminal if no widgets available
-                widget_id = "com.viloapp.terminal"
+                # Fallback to placeholder if no widgets available
+                widget_id = "com.viloapp.placeholder"
 
-        # Special handling for terminal
-        if widget_id == "terminal":
-            # Keep terminal service for now as it's external
-            terminal_service = (
-                context.parameters.get("terminal_service") if context.parameters else None
-            )
-            if not terminal_service:
-                try:
-                    from viloapp.services.service_locator import ServiceLocator
-
-                    terminal_service = ServiceLocator.get_instance().get(TerminalService)
-                except:
-                    pass
-            if terminal_service and not terminal_service.is_server_running():
-                terminal_service.start_server()
+        # Widget-specific setup is now handled by plugins
 
         # Create the tab
         name = context.parameters.get("name") if context.parameters else None
@@ -95,21 +80,6 @@ def new_tab_command(context: CommandContext) -> CommandResult:
     shortcut="ctrl+shift+t",
 )
 @validate(
-    widget_type=ParameterSpec(
-        "widget_id",
-        OneOf(
-            "terminal",
-            "editor",
-            "theme_editor",
-            "explorer",
-            "settings",
-            "shortcuts",
-            "output",
-            "placeholder",
-        ),
-        required=False,
-        description="Type of widget to create in the new tab",
-    ),
     name=ParameterSpec(
         "name",
         Optional(String(max_length=100, non_empty=True)),
@@ -125,43 +95,40 @@ def new_tab_with_type_command(context: CommandContext) -> CommandResult:
     widget_id = context.parameters.get("widget_id") if context.parameters else None
 
     if not widget_id and context.main_window:
-        # Show selection dialog
-        widget_types = ["Terminal", "Editor", "Theme Editor", "Explorer", "Settings"]
-        widget_type_map = {
-            "Terminal": "terminal",
-            "Editor": "editor",
-            "Theme Editor": "theme_editor",
-            "Explorer": "explorer",
-            "Settings": "settings",
-        }
+        # Get available widgets from registry
+        from viloapp.core.app_widget_manager import app_widget_manager
+
+        available_widgets = app_widget_manager.get_available_widgets()
+        if not available_widgets:
+            return CommandResult(status=CommandStatus.FAILURE, message="No widgets available")
+
+        widget_names = [widget.display_name for widget in available_widgets]
+        widget_id_map = {widget.display_name: widget.widget_id for widget in available_widgets}
 
         selected, ok = QInputDialog.getItem(
             context.main_window,
             "New Tab",
             "Select widget type:",
-            widget_types,
-            0,  # Default to Terminal
+            widget_names,
+            0,  # Default to first available
             False,  # Not editable
         )
 
         if not ok or not selected:
             return CommandResult(status=CommandStatus.FAILURE, message="User cancelled")
 
-        widget_id = widget_type_map[selected]
+        widget_id = widget_id_map[selected]
 
     if not widget_id:
+        # Get available widgets from registry
+        from viloapp.core.app_widget_manager import app_widget_manager
+        available_widgets = app_widget_manager.get_available_widgets()
+        available_ids = [widget.widget_id for widget in available_widgets]
+
         return CommandResult(
-            success=False,
-            error="Widget type must be specified",
-            value={
-                "available_types": [
-                    "terminal",
-                    "editor",
-                    "theme_editor",
-                    "explorer",
-                    "settings",
-                ]
-            },
+            status=CommandStatus.FAILURE,
+            message="Widget type must be specified",
+            data={"available_types": available_ids},
         )
 
     # Delegate to new_tab_command with the specified widget_id
@@ -563,7 +530,7 @@ def restore_layout_command(context: CommandContext) -> CommandResult:
 
                 return CommandResult(status=CommandStatus.SUCCESS)
 
-        return CommandResult(status=CommandStatus.FAILURE, error="No layout to restore")
+        return CommandResult(status=CommandStatus.FAILURE, message="No layout to restore")
 
     except Exception as e:
         logger.error(f"Failed to restore layout: {e}")
@@ -581,7 +548,7 @@ def restore_layout_command(context: CommandContext) -> CommandResult:
 def rename_pane_command(context: CommandContext) -> CommandResult:
     """Rename the active pane."""
     # Will be implemented with UI integration
-    return CommandResult(success=True)
+    return CommandResult(status=CommandStatus.SUCCESS)
 
 
 def register_workspace_commands():

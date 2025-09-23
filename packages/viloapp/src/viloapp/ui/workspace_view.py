@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 
 from viloapp.core.commands.base import CommandContext
 from viloapp.core.commands.registry import CommandRegistry
-from viloapp.core.widget_metadata import get_widget_display_name
+from viloapp.core.widget_metadata import widget_metadata_registry
 from viloapp.models.workspace_model import (
     Pane,
     PaneNode,
@@ -131,7 +131,7 @@ class PaneView(QWidget):
         layout.setSpacing(2)
 
         # Widget type label
-        display_name = get_widget_display_name(self.pane.widget_id)
+        display_name = widget_metadata_registry.get_display_name(self.pane.widget_id)
         type_label = QLabel(display_name)
         type_label.setStyleSheet("color: #cccccc; font-weight: bold; font-size: 12px;")
         layout.addWidget(type_label)

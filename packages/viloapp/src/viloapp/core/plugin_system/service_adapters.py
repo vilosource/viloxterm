@@ -25,7 +25,7 @@ class CommandServiceAdapter(IService):
 
     def register_command(self, command_id: str, handler: callable) -> None:
         """Register a command with the command registry."""
-        from viloapp.core.commands.base import Command, CommandContext, CommandResult
+        from viloapp.core.commands.base import Command, CommandContext, CommandResult, CommandStatus
         from viloapp.core.commands.registry import command_registry
 
         # Create wrapper that converts plugin handler to command handler
@@ -38,9 +38,9 @@ class CommandServiceAdapter(IService):
                     **context.args,
                 }
                 result = handler(plugin_args)
-                return CommandResult(success=True, value=result)
+                return CommandResult(status=CommandStatus.SUCCESS, value=result)
             except Exception as e:
-                return CommandResult(success=False, error=str(e))
+                return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
         # Create Command instance
         command = Command(

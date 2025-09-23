@@ -7,10 +7,8 @@ enabling better testability, reusability, and maintainability.
 """
 
 from viloapp.services.base import Service, ServiceEvent
-from viloapp.services.editor_service import EditorService
 from viloapp.services.service_locator import ServiceLocator
 from viloapp.services.state_service import StateService
-from viloapp.services.terminal_service import TerminalService
 from viloapp.services.theme_service import ThemeService
 from viloapp.services.ui_service import UIService
 from viloapp.services.workspace_service import WorkspaceService
@@ -21,9 +19,7 @@ __all__ = [
     "ServiceLocator",
     "WorkspaceService",
     "UIService",
-    "TerminalService",
     "StateService",
-    "EditorService",
     "ThemeService",
     "initialize_plugin_system",
 ]
@@ -98,15 +94,19 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
     # Enable new architecture - create model and pass to service
     from viloapp.core.commands.router import CommandRouter
     from viloapp.models.workspace_model import WorkspaceModel
+    from viloapp.services.widget_service import initialize_widget_service
 
     workspace_model = WorkspaceModel()  # Model doesn't need workspace - it's pure data
     workspace_service = WorkspaceService(workspace=workspace, model=workspace_model)
 
+    # Initialize widget service with the model
+    from viloapp.services.widget_service import get_widget_service
+    initialize_widget_service(workspace_model)
+    widget_service = get_widget_service()
+
     # Make CommandRouter available globally (will be used by UI components)
     _ = CommandRouter()  # Instance created for future use
     ui_service = UIService(main_window)
-    terminal_service = TerminalService()
-    editor_service = EditorService()
 
     # Initialize plugin system
     plugin_manager = initialize_plugin_system(
@@ -115,9 +115,8 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
             "theme_service": theme_service,
             "settings_service": settings_service,
             "workspace_service": workspace_service,
+            "widget_service": widget_service,
             "ui_service": ui_service,
-            "terminal_service": terminal_service,
-            "editor_service": editor_service,
         }
     )
 
@@ -126,9 +125,8 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
     locator.register(ThemeService, theme_service)
     locator.register(SettingsService, settings_service)
     locator.register(WorkspaceService, workspace_service)
+    locator.register("WidgetService", widget_service)  # Register by string name since we don't have a class
     locator.register(UIService, ui_service)
-    locator.register(TerminalService, terminal_service)
-    locator.register(EditorService, editor_service)
 
     # Register plugin manager
     if plugin_manager:

@@ -127,16 +127,18 @@ def validate_widget_id(widget_id: str) -> bool:
 # This mapping exists ONLY for backward compatibility with old saves
 # New code should NEVER use these old names
 LEGACY_WIDGET_MAP = {
-    "terminal": "com.viloapp.terminal",
-    "editor": "com.viloapp.editor",
-    "text_editor": "com.viloapp.editor",  # Alias
+    # Terminal and Editor removed - now provided by plugins
+    # Plugins should register with their own IDs (e.g., plugin.viloxterm.terminal)
     "output": "com.viloapp.output",
+    "OUTPUT": "com.viloapp.output",  # Old enum value
     "settings": "com.viloapp.settings",
+    "SETTINGS": "com.viloapp.settings",  # Old enum value
     "file_explorer": "com.viloapp.explorer",
     "explorer": "com.viloapp.explorer",  # Alias
     "theme_editor": "com.viloapp.theme_editor",
     "shortcut_config": "com.viloapp.shortcuts",
     "placeholder": "com.viloapp.placeholder",
+    "PLACEHOLDER": "com.viloapp.placeholder",  # Old enum value
     "custom": "plugin.unknown",  # Generic plugin widget
 }
 

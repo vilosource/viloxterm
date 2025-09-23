@@ -274,17 +274,22 @@ from viloapp.core.commands.base import Command
 
 
 def _get_default_editor_id() -> str:
-    """Get default editor widget ID."""
+    """Get default editor widget ID using capabilities."""
     try:
+        from viloapp.core.capabilities import WidgetCapability
+        from viloapp.core.commands.capability_commands import get_widget_for_file_operation
+
+        # Get widget based on file editing capability
+        widget_id = get_widget_for_file_operation()
+        if widget_id:
+            return widget_id
+
+        # Fall back to general default
         from viloapp.core.app_widget_manager import app_widget_manager
-        # Try to find an editor widget
-        for widget in app_widget_manager.get_all_widgets():
-            if "editor" in widget.widget_id.lower():
-                return widget.widget_id
-        # Fall back to default
         return app_widget_manager.get_default_widget_id()
     except ImportError:
-        return "com.viloapp.editor"
+        # During initialization, use placeholder
+        return "com.viloapp.placeholder"
 
 
 class CreateTabCommand(Command):

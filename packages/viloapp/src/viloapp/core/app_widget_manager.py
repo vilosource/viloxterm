@@ -230,6 +230,43 @@ class AppWidgetManager:
         widget_ids = self._category_cache.get(category, [])
         return [self._widgets[wid] for wid in widget_ids if wid in self._widgets]
 
+    def widget_has_category(self, widget_id: str, category: WidgetCategory) -> bool:
+        """
+        Check if a widget belongs to a specific category.
+
+        Args:
+            widget_id: Widget identifier
+            category: Category to check
+
+        Returns:
+            True if widget belongs to the category
+        """
+        metadata = self.get_widget_metadata(widget_id)
+        return metadata.category == category if metadata else False
+
+    def get_default_widget_for_category(self, category: WidgetCategory) -> Optional[str]:
+        """
+        Get the default widget ID for a category.
+
+        Args:
+            category: Widget category
+
+        Returns:
+            Widget ID of the default widget for the category, or None
+        """
+        widgets = self.get_widgets_by_category(category)
+        if not widgets:
+            return None
+
+        # Sort by default priority (lower is better) and return the first
+        default_widgets = [w for w in widgets if w.can_be_default]
+        if default_widgets:
+            default_widgets.sort(key=lambda w: w.default_priority)
+            return default_widgets[0].widget_id
+
+        # If no default widgets, return the first available
+        return widgets[0].widget_id if widgets else None
+
     def get_widgets_by_source(self, source: str) -> list[AppWidgetMetadata]:
         """
         Get widgets by source (builtin/plugin).
@@ -343,24 +380,6 @@ class AppWidgetManager:
         # Step 5: No widgets available
         return None
 
-    def get_default_terminal_id(self) -> Optional[str]:
-        """
-        Get the default terminal widget ID.
-
-        Returns:
-            Widget ID for default terminal or None if no terminal available
-        """
-        return self.get_default_widget_id(context="terminal")
-
-    def get_default_editor_id(self) -> Optional[str]:
-        """
-        Get the default editor widget ID.
-
-        Returns:
-            Widget ID for default editor or None if no editor available
-        """
-        return self.get_default_widget_id(context="editor")
-
     def get_widgets_for_context(self, context: str) -> list[str]:
         """
         Get all widget IDs that support a specific context.
@@ -426,7 +445,12 @@ class AppWidgetManager:
         Returns:
             True if this is a settings widget
         """
-        return widget_id == "com.viloapp.settings" or widget_id.endswith(".settings")
+        # Check if widget has settings category
+        metadata = self.get_widget_metadata(widget_id)
+        if metadata and "settings" in metadata.categories:
+            return True
+        # Fallback to ID-based check for plugins
+        return widget_id.endswith(".settings")
 
     def clear(self) -> None:
         """Clear all registered widgets (mainly for testing)."""

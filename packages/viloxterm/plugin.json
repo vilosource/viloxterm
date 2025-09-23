@@ -46,7 +46,7 @@
   "contributes": {
     "widgets": [
       {
-        "id": "terminal",
+        "id": "com.viloapp.terminal",
         "factory": "viloxterm.widget:TerminalWidgetFactory"
       }
     ],

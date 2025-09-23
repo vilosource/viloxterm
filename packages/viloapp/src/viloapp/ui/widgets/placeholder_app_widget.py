@@ -4,11 +4,12 @@ Placeholder implementation as an AppWidget.
 Used for testing and as a fallback for unknown widget types.
 """
 
-from typing import Any
+from typing import Any, Set
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QVBoxLayout
 
+from viloapp.core.capabilities import WidgetCapability
 from viloapp.ui.widgets.app_widget import AppWidget
 
 
@@ -92,3 +93,46 @@ class PlaceholderAppWidget(AppWidget):
     def can_close(self) -> bool:
         """Placeholder can always be closed."""
         return True
+
+    # === Capability Implementation ===
+
+    def get_capabilities(self) -> Set[WidgetCapability]:
+        """
+        Placeholder widgets have minimal capabilities.
+
+        Returns:
+            Set of supported capabilities
+        """
+        # Placeholder can display text and that's about it
+        return {
+            WidgetCapability.TEXT_VIEWING,
+            WidgetCapability.FOCUS_MANAGEMENT,
+        }
+
+    def execute_capability(
+        self,
+        capability: WidgetCapability,
+        **kwargs: Any
+    ) -> Any:
+        """
+        Execute capability-based actions.
+
+        Args:
+            capability: The capability to execute
+            **kwargs: Capability-specific arguments
+
+        Returns:
+            Capability-specific return value
+        """
+        if capability == WidgetCapability.TEXT_VIEWING:
+            # Return the current text being displayed
+            return self.label.text() if self.label else ""
+        elif capability == WidgetCapability.FOCUS_MANAGEMENT:
+            # Handle focus operations
+            if kwargs.get('action') == 'focus':
+                self.setFocus()
+                return True
+            return self.hasFocus()
+        else:
+            # Delegate to base class for unsupported capabilities
+            return super().execute_capability(capability, **kwargs)

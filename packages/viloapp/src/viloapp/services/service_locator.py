@@ -82,7 +82,9 @@ class ServiceLocator:
         if service_type not in self._initialization_order:
             self._initialization_order.append(service_type)
 
-        logger.debug(f"Registered service: {service_type.__name__} ({instance.name})")
+        # Handle both class types and string names
+        service_name = service_type if isinstance(service_type, str) else service_type.__name__
+        logger.debug(f"Registered service: {service_name} ({instance.name})")
 
     def unregister(self, service_type: type[Service]) -> bool:
         """

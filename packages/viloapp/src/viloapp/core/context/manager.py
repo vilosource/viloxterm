@@ -55,8 +55,7 @@ class ContextManager:
     def _set_defaults(self):
         """Set default context values."""
         # Default focus states
-        self._context[ContextKey.EDITOR_FOCUS] = False
-        self._context[ContextKey.TERMINAL_FOCUS] = False
+        # Editor and Terminal focus removed - provided by plugins
         self._context[ContextKey.SIDEBAR_FOCUS] = False
         self._context[ContextKey.ACTIVITY_BAR_FOCUS] = False
         self._context[ContextKey.COMMAND_PALETTE_FOCUS] = False
@@ -66,8 +65,8 @@ class ContextManager:
         self._context[ContextKey.MENU_BAR_VISIBLE] = True
         self._context[ContextKey.STATUS_BAR_VISIBLE] = True
 
-        # Default editor states
-        self._context[ContextKey.HAS_OPEN_EDITORS] = False
+        # Default widget states
+        # Editor-specific states removed - provided by editor plugins
         self._context[ContextKey.HAS_SELECTION] = False
         self._context[ContextKey.IS_DIRTY] = False
 
@@ -136,8 +135,7 @@ class ContextManager:
     def clear_focus(self) -> None:
         """Clear all focus-related context keys."""
         focus_keys = [
-            ContextKey.EDITOR_FOCUS,
-            ContextKey.TERMINAL_FOCUS,
+            # Editor and Terminal focus removed - provided by plugins
             ContextKey.SIDEBAR_FOCUS,
             ContextKey.ACTIVITY_BAR_FOCUS,
             ContextKey.COMMAND_PALETTE_FOCUS,
@@ -167,15 +165,19 @@ class ContextManager:
         widget_id = type(widget).__name__
 
         if isinstance(widget, AppWidget):
-            from viloapp.ui.terminal.terminal_app_widget import TerminalAppWidget
-            from viloapp.ui.widgets.editor_app_widget import EditorAppWidget
+            # Use widget metadata to determine context dynamically
+            widget_id = getattr(widget, 'widget_id', None)
 
-            if isinstance(widget, EditorAppWidget):
-                self.set(ContextKey.EDITOR_FOCUS, True)
-                self.set(ContextKey.ACTIVE_PANE_TYPE, "editor")
-            elif isinstance(widget, TerminalAppWidget):
-                self.set(ContextKey.TERMINAL_FOCUS, True)
-                self.set(ContextKey.ACTIVE_PANE_TYPE, "terminal")
+            if widget_id:
+                # Query the registry for widget capabilities/category
+                from viloapp.core.app_widget_manager import app_widget_manager
+                metadata = app_widget_manager.get_widget_metadata(widget_id)
+
+                if metadata:
+                    # Set context based on widget capabilities
+                    # Plugins can register their own context keys for specific focus types
+                    # Just set the active pane type based on category
+                    self.set(ContextKey.ACTIVE_PANE_TYPE, metadata.category.value.lower())
         elif isinstance(widget, Sidebar):
             self.set(ContextKey.SIDEBAR_FOCUS, True)
         elif isinstance(widget, ActivityBar):

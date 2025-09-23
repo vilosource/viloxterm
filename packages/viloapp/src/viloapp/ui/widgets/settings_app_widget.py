@@ -8,7 +8,7 @@ settings including workspace defaults, appearance, keyboard shortcuts, and more.
 
 import json
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, Set
 
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QIcon
@@ -33,6 +33,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from viloapp.core.capabilities import WidgetCapability
 from viloapp.core.settings.app_defaults import (
     get_app_default,
     get_app_defaults,
@@ -40,7 +41,6 @@ from viloapp.core.settings.app_defaults import (
 )
 from viloapp.ui.widgets.app_widget import AppWidget
 from viloapp.ui.widgets.shortcut_config_app_widget import ShortcutConfigAppWidget
-from viloapp.ui.widgets.theme_editor_widget import ThemeEditorAppWidget
 
 # Widget ID defined in class
 
@@ -288,9 +288,14 @@ class SettingsAppWidget(AppWidget):
         tab_widget_layout.addWidget(QLabel("Default new tab:"))
         self._default_tab_combo = QComboBox()
         self._default_tab_combo.addItems(["Terminal", "Editor", "Theme Editor", "Explorer"])
-        self._default_tab_combo.setItemData(0, "terminal")
-        self._default_tab_combo.setItemData(1, "editor")
-        self._default_tab_combo.setItemData(2, "theme_editor")
+        # Dynamically populate widget options from registry - NO HARDCODING
+        from viloapp.core.app_widget_manager import app_widget_manager
+        available_widgets = app_widget_manager.get_available_widgets()
+
+        # Clear and repopulate combo with actual available widgets
+        self._default_tab_combo.clear()
+        for widget in available_widgets[:5]:  # Show up to 5 options
+            self._default_tab_combo.addItem(widget.display_name, widget.widget_id)
         self._default_tab_combo.setItemData(3, "explorer")
         self._default_tab_combo.currentIndexChanged.connect(
             lambda: self._on_setting_changed(
@@ -464,12 +469,13 @@ class SettingsAppWidget(AppWidget):
         """Create the appearance settings tab."""
         logger.debug("Creating appearance tab with theme editor")
 
-        # Create Theme Editor without its own Apply/Save/Reset buttons
-        # We'll use the main settings dialog buttons instead
-        self._theme_editor = ThemeEditorAppWidget(parent=self, show_bottom_buttons=False)
-
-        # Connect theme modified signal to update our buttons
-        self._theme_editor.theme_modified.connect(self._on_theme_modified)
+        # Theme editor functionality moved to plugin system
+        # Create placeholder for theme settings
+        theme_placeholder = QLabel("Theme editing is now provided by plugins.\n\nInstall a theme editor plugin to customize themes.")
+        theme_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        theme_placeholder.setStyleSheet("color: #888; font-style: italic; padding: 40px;")
+        self._theme_editor = theme_placeholder
+        # No signal to connect for placeholder
 
         logger.debug(f"Theme editor created: {self._theme_editor}")
 
@@ -595,8 +601,8 @@ class SettingsAppWidget(AppWidget):
 
     def _on_theme_modified(self, is_modified: bool):
         """Handle theme modification signal."""
-        # Update button states when theme is modified or saved
-        self._update_button_states()
+        # Theme editing now handled by plugins
+        pass
 
     def _on_split_ratio_changed(self, value: int):
         """Handle split ratio slider change."""
@@ -611,7 +617,8 @@ class SettingsAppWidget(AppWidget):
 
         # Also check if theme editor has unsaved changes
         if hasattr(self, "_theme_editor") and self._theme_editor:
-            has_changes = has_changes or self._theme_editor.has_unsaved_changes()
+            # Theme editor is now a placeholder - no changes to track
+            pass
 
         self._apply_button.setEnabled(has_changes)
         self._save_button.setEnabled(has_changes)
@@ -622,7 +629,7 @@ class SettingsAppWidget(AppWidget):
         # General tab (always created)
         if hasattr(self, "_default_tab_combo"):
             widget_id = get_app_default("workspace.default_new_tab_widget", "terminal")
-            index = self._default_tab_combo.findData(widget_type)
+            index = self._default_tab_combo.findData(widget_id)
             if index >= 0:
                 self._default_tab_combo.setCurrentIndex(index)
 
@@ -697,8 +704,8 @@ class SettingsAppWidget(AppWidget):
 
             # Apply theme editor changes if present
             if hasattr(self, "_theme_editor") and self._theme_editor:
-                if self._theme_editor.has_unsaved_changes():
-                    if not self._theme_editor.apply_changes():
+                # Theme changes now handled by plugins
+                if False:  # Placeholder condition
                         logger.warning("Failed to apply theme changes")
 
             self._modified_settings.clear()
@@ -723,8 +730,8 @@ class SettingsAppWidget(AppWidget):
 
         # Save theme editor changes if present
         if hasattr(self, "_theme_editor") and self._theme_editor:
-            if self._theme_editor.has_unsaved_changes():
-                if not self._theme_editor.save_changes():
+            # Theme saving now handled by plugins
+            if False:  # Placeholder condition
                     success = False
 
         if success:
@@ -747,7 +754,8 @@ class SettingsAppWidget(AppWidget):
 
             # If on Appearance tab and theme editor exists, reset theme
             if current_tab == 1 and hasattr(self, "_theme_editor") and self._theme_editor:
-                self._theme_editor.reset_changes()
+                # Theme reset now handled by plugins
+                pass
             else:
                 # Reset regular settings
                 self._load_current_settings()
@@ -802,3 +810,66 @@ class SettingsAppWidget(AppWidget):
             except Exception as e:
                 logger.error(f"Failed to import settings: {e}")
                 QMessageBox.critical(self, "Error", f"Failed to import settings: {e}")
+
+    # === Capability Implementation ===
+
+    def get_capabilities(self) -> Set[WidgetCapability]:
+        """
+        Settings widget capabilities.
+
+        Returns:
+            Set of supported capabilities
+        """
+        return {
+            WidgetCapability.SETTINGS_MANAGEMENT,
+            WidgetCapability.CONFIGURATION_EDITING,
+            WidgetCapability.PREFERENCES_HANDLING,
+            WidgetCapability.STATE_PERSISTENCE,
+            WidgetCapability.FOCUS_MANAGEMENT,
+        }
+
+    def execute_capability(
+        self,
+        capability: WidgetCapability,
+        **kwargs: Any
+    ) -> Any:
+        """
+        Execute capability-based actions.
+
+        Args:
+            capability: The capability to execute
+            **kwargs: Capability-specific arguments
+
+        Returns:
+            Capability-specific return value
+        """
+        if capability == WidgetCapability.SETTINGS_MANAGEMENT:
+            action = kwargs.get('action', 'get')
+            if action == 'apply':
+                # Apply pending changes
+                self._apply_settings()
+                return True
+            elif action == 'save':
+                # Save settings
+                self._save_settings()
+                return True
+            elif action == 'reset':
+                # Reset to defaults
+                self._reset_settings()
+                return True
+        elif capability == WidgetCapability.STATE_PERSISTENCE:
+            action = kwargs.get('action', 'save')
+            if action == 'export':
+                self._export_settings()
+                return True
+            elif action == 'import':
+                self._import_settings()
+                return True
+        elif capability == WidgetCapability.FOCUS_MANAGEMENT:
+            if kwargs.get('action') == 'focus':
+                self.setFocus()
+                return True
+            return self.hasFocus()
+        else:
+            # Delegate to base class for unsupported capabilities
+            return super().execute_capability(capability, **kwargs)

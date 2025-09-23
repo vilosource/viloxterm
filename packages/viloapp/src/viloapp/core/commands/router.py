@@ -9,7 +9,7 @@ go through commands, enforcing the Command Pattern and maintaining single respon
 import logging
 from typing import Optional
 
-from viloapp.core.commands.base import CommandResult
+from viloapp.core.commands.base import CommandResult, CommandStatus
 from viloapp.core.commands.executor import execute_command
 
 logger = logging.getLogger(__name__)
@@ -89,7 +89,7 @@ class CommandRouter:
             CommandResult with operation outcome
         """
         return execute_command(
-            "workbench.action.changePaneType", pane_id=pane_id, widget_type=widget_type
+            "workbench.action.changePaneType", pane_id=pane_id, widget_id=widget_id
         )
 
     @staticmethod
@@ -120,12 +120,23 @@ class CommandRouter:
         Returns:
             CommandResult with operation outcome
         """
+        # Map legacy tab types to capabilities and find appropriate widgets
+        from viloapp.core.commands.capability_commands import (
+            get_widget_for_file_operation,
+            get_widget_for_shell_operation,
+        )
+
+        widget_id = None
         if tab_type == "terminal":
-            return execute_command("file.newTerminal", name=name)
+            widget_id = get_widget_for_shell_operation()
         elif tab_type == "editor":
-            return execute_command("file.newEditor", name=name)
+            widget_id = get_widget_for_file_operation()
+
+        if widget_id:
+            return execute_command("workspace.newTab", name=name, widget_id=widget_id)
         else:
-            return CommandResult(success=False, error=f"Unknown tab type: {tab_type}")
+            # Use default widget if no specific capability match
+            return execute_command("workspace.newTab", name=name)
 
     @staticmethod
     def close_tab(tab_index: Optional[int] = None) -> CommandResult:
@@ -323,7 +334,7 @@ class CommandRouter:
 
         command_id = operation_map.get(operation)
         if not command_id:
-            return CommandResult(success=False, error=f"Unknown operation: {operation}")
+            return CommandResult(status=CommandStatus.FAILURE, message=f"Unknown operation: {operation}")
 
         return execute_command(command_id, **kwargs)
 

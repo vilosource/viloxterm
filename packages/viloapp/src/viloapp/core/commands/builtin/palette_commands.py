@@ -5,7 +5,7 @@ Command palette related commands.
 
 import logging
 
-from viloapp.core.commands.base import CommandContext, CommandResult
+from viloapp.core.commands.base import CommandContext, CommandResult, CommandStatus
 from viloapp.core.commands.decorators import command
 
 logger = logging.getLogger(__name__)
@@ -27,18 +27,18 @@ def show_command_palette_command(context: CommandContext) -> CommandResult:
         if not context.main_window or not hasattr(
             context.main_window, "command_palette_controller"
         ):
-            return CommandResult(success=False, error="Command palette not available")
+            return CommandResult(status=CommandStatus.FAILURE, message="Command palette not available")
 
         controller = context.main_window.command_palette_controller
 
         # Show the palette
         controller.show_palette()
 
-        return CommandResult(success=True, value="Command palette shown")
+        return CommandResult(status=CommandStatus.SUCCESS, value="Command palette shown")
 
     except Exception as e:
         logger.error(f"Failed to show command palette: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -56,18 +56,18 @@ def hide_command_palette_command(context: CommandContext) -> CommandResult:
         if not context.main_window or not hasattr(
             context.main_window, "command_palette_controller"
         ):
-            return CommandResult(success=False, error="Command palette not available")
+            return CommandResult(status=CommandStatus.FAILURE, message="Command palette not available")
 
         controller = context.main_window.command_palette_controller
 
         # Hide the palette
         controller.hide_palette()
 
-        return CommandResult(success=True, value="Command palette hidden")
+        return CommandResult(status=CommandStatus.SUCCESS, value="Command palette hidden")
 
     except Exception as e:
         logger.error(f"Failed to hide command palette: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 @command(
@@ -84,18 +84,18 @@ def refresh_command_palette_command(context: CommandContext) -> CommandResult:
         if not context.main_window or not hasattr(
             context.main_window, "command_palette_controller"
         ):
-            return CommandResult(success=False, error="Command palette not available")
+            return CommandResult(status=CommandStatus.FAILURE, message="Command palette not available")
 
         controller = context.main_window.command_palette_controller
 
         # Refresh commands
         controller.refresh_commands()
 
-        return CommandResult(success=True, value="Command palette refreshed")
+        return CommandResult(status=CommandStatus.SUCCESS, value="Command palette refreshed")
 
     except Exception as e:
         logger.error(f"Failed to refresh command palette: {e}")
-        return CommandResult(success=False, error=str(e))
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 def register_palette_commands():

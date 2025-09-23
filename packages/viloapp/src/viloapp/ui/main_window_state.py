@@ -88,9 +88,13 @@ class MainWindowStateManager:
         """Handle close event by saving state."""
         self.save_state()
 
-        # Clean up all terminal sessions before closing
-        from viloapp.services.terminal_server import terminal_server
+        # Clean up workspace widgets first
+        if hasattr(self.window, 'workspace') and self.window.workspace:
+            if hasattr(self.window.workspace, 'cleanup'):
+                self.window.workspace.cleanup()
 
-        terminal_server.cleanup_all_sessions()
+        # Terminal cleanup is now handled by the terminal plugin
+        # from viloapp.services.terminal_server import terminal_server
+        # terminal_server.cleanup_all_sessions()
 
         event.accept()

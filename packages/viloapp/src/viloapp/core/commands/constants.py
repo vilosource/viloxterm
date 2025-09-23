@@ -13,8 +13,7 @@ class CommandID:
     # ========== File Commands ==========
     class File:
         NEW_FILE = "file.new"
-        NEW_EDITOR_TAB = "file.newEditorTab"
-        NEW_TERMINAL_TAB = "file.newTerminalTab"
+        # Editor and Terminal commands removed - provided by plugins
         OPEN = "file.open"
         SAVE = "file.save"
         SAVE_AS = "file.saveAs"
@@ -26,15 +25,9 @@ class CommandID:
 
     # ========== Edit Commands ==========
     class Edit:
-        UNDO = "editor.undo"
-        REDO = "editor.redo"
-        CUT = "editor.cut"
-        COPY = "editor.copy"
-        PASTE = "editor.paste"
-        SELECT_ALL = "editor.selectAll"
-        FIND = "editor.find"
-        REPLACE = "editor.replace"
-        GO_TO_LINE = "editor.goToLine"
+        # Editor-specific commands removed - provided by editor plugins
+        # Generic edit commands can be added here if needed
+        pass
 
     # ========== View Commands ==========
     class View:
@@ -81,16 +74,7 @@ class CommandID:
         FOCUS_NEXT_GROUP = "workbench.action.focusNextGroup"
         FOCUS_PREVIOUS_GROUP = "workbench.action.focusPreviousGroup"
 
-    # ========== Terminal Commands ==========
-    class Terminal:
-        CLEAR = "terminal.clear"
-        NEW = "terminal.new"
-        COPY = "terminal.copy"
-        PASTE = "terminal.paste"
-        KILL = "terminal.kill"
-        RESTART = "terminal.restart"
-        FOCUS = "terminal.focus"
-        SPLIT = "terminal.split"
+    # Terminal commands removed - provided by terminal plugins
 
     # ========== Command Palette ==========
     class CommandPalette:
@@ -141,11 +125,7 @@ FILE_SAVE = CommandID.File.SAVE
 FILE_SAVE_AS = CommandID.File.SAVE_AS
 FILE_CLOSE = CommandID.File.CLOSE_ACTIVE_TAB
 
-EDIT_UNDO = CommandID.Edit.UNDO
-EDIT_REDO = CommandID.Edit.REDO
-EDIT_CUT = CommandID.Edit.CUT
-EDIT_COPY = CommandID.Edit.COPY
-EDIT_PASTE = CommandID.Edit.PASTE
+# Editor commands removed - provided by editor plugins
 
 VIEW_TOGGLE_SIDEBAR = CommandID.View.TOGGLE_SIDEBAR
 VIEW_TOGGLE_TERMINAL = CommandID.View.TOGGLE_TERMINAL

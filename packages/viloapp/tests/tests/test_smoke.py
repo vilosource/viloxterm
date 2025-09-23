@@ -27,8 +27,8 @@ def test_imports() -> tuple[bool, str]:
         # Service imports
         from viloapp.services.service_locator import ServiceLocator
 
-        # Terminal imports
-        from viloapp.services.terminal_server import terminal_server
+        # Terminal server removed - now provided by plugins
+        # from viloapp.services.terminal_server import terminal_server
         from viloapp.ui.command_palette.palette_widget import CommandPaletteWidget
 
         # UI imports
@@ -44,11 +44,11 @@ def test_imports() -> tuple[bool, str]:
 def test_command_creation() -> tuple[bool, str]:
     """Test that commands can be created properly."""
     try:
-        from viloapp.core.commands.base import Command, CommandContext, CommandResult
+        from viloapp.core.commands.base import Command, CommandContext, CommandResult, CommandStatus
 
         # Test creating a command with handler function
         def test_handler(context: CommandContext) -> CommandResult:
-            return CommandResult(success=True)
+            return CommandResult(status=CommandStatus.SUCCESS)
 
         cmd = Command(
             id="test.command",
@@ -67,7 +67,7 @@ def test_command_creation() -> tuple[bool, str]:
         context = CommandContext()
         result = cmd.handler(context)
 
-        if not result.success:
+        if result.status != CommandStatus.SUCCESS:
             return False, "❌ Command execution failed"
 
         return True, "✅ Command creation and execution works"

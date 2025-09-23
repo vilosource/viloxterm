@@ -3,7 +3,13 @@
 Minimal tests for terminal pane auto-close functionality - no Qt widget creation.
 
 Tests the existence of required methods and signal definitions.
+
+NOTE: These tests are currently DISABLED because terminal functionality
+has been moved to the viloxterm plugin. The tests remain as documentation
+of the expected plugin interface.
 """
+
+import pytest
 
 from unittest.mock import Mock
 
@@ -11,32 +17,39 @@ from unittest.mock import Mock
 class TestCodeChangesExist:
     """Test that all required code changes exist."""
 
+    @pytest.mark.skip(reason="Terminal functionality moved to viloxterm plugin")
     def test_terminal_server_has_session_ended_signal(self):
         """Test that TerminalServerManager class has session_ended signal."""
-        from viloapp.services.terminal_server import TerminalServerManager
+        # from viloapp.services.terminal_server import TerminalServerManager
+        pytest.skip("Terminal server is now in viloxterm plugin")
 
         # Check signal exists on class
         assert hasattr(TerminalServerManager, "session_ended")
 
+    @pytest.mark.skip(reason="Terminal functionality moved to viloxterm plugin")
     def test_terminal_server_inherits_qobject(self):
         """Test that TerminalServerManager inherits from QObject."""
-        from PySide6.QtCore import QObject
-
-        from viloapp.services.terminal_server import TerminalServerManager
+        # from PySide6.QtCore import QObject
+        # from viloapp.services.terminal_server import TerminalServerManager
+        pytest.skip("Terminal server is now in viloxterm plugin")
 
         # Check inheritance
         assert issubclass(TerminalServerManager, QObject)
 
+    @pytest.mark.skip(reason="Terminal functionality moved to viloxterm plugin")
     def test_terminal_app_widget_has_pane_close_signal(self):
         """Test that TerminalAppWidget has pane_close_requested signal."""
-        from viloapp.ui.terminal.terminal_app_widget import TerminalAppWidget
+        # from viloapp.ui.terminal.terminal_app_widget import TerminalAppWidget
+        pytest.skip("Terminal widgets are now in viloxterm plugin")
 
         # Check signal exists on class
         assert hasattr(TerminalAppWidget, "pane_close_requested")
 
+    @pytest.mark.skip(reason="Terminal functionality moved to viloxterm plugin")
     def test_terminal_app_widget_has_session_handler(self):
         """Test that TerminalAppWidget has session end handler."""
-        from viloapp.ui.terminal.terminal_app_widget import TerminalAppWidget
+        # from viloapp.ui.terminal.terminal_app_widget import TerminalAppWidget
+        pytest.skip("Terminal widgets are now in viloxterm plugin")
 
         # Check method exists
         assert hasattr(TerminalAppWidget, "on_session_ended")
@@ -127,17 +140,9 @@ class TestCallbackLogic:
 class TestDataStructures:
     """Test data structures without Qt."""
 
+    @pytest.mark.skip(reason="Terminal functionality moved to viloxterm plugin")
     def test_terminal_session_dataclass(self):
         """Test TerminalSession dataclass."""
-        from viloapp.services.terminal_server import TerminalSession
-
-        session = TerminalSession(session_id="test_123", fd=1, child_pid=1234, active=True)
-
-        assert session.session_id == "test_123"
-        assert session.fd == 1
-        assert session.child_pid == 1234
-        assert session.active is True
-
-        # Test active flag change
-        session.active = False
-        assert session.active is False
+        # from viloapp.services.terminal_server import TerminalSession
+        # session = TerminalSession(session_id="test_123", fd=1, child_pid=1234, active=True)
+        pytest.skip("TerminalSession is now in viloxterm plugin")

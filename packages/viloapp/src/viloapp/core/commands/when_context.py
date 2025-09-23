@@ -51,18 +51,19 @@ class WhenContext:
                 # Active pane
                 active_pane = active_tab.get_active_pane()
                 if active_pane:
-                    # Widget type checks
-                    from viloapp.core.widget_ids import EDITOR, FILE_EXPLORER, TERMINAL
+                    # Widget type checks using registry
+                    from viloapp.core.app_widget_manager import app_widget_manager
+                    from viloapp.core.app_widget_metadata import WidgetCategory
 
-                    variables["editorFocus"] = active_pane.widget_id in [
-                        EDITOR,
-                        EDITOR,
-                    ]
-                    variables["terminalFocus"] = active_pane.widget_id == TERMINAL
-                    variables["explorerFocus"] = active_pane.widget_id in [
-                        FILE_EXPLORER,
-                        FILE_EXPLORER,
-                    ]
+                    variables["editorFocus"] = app_widget_manager.widget_has_category(
+                        active_pane.widget_id, WidgetCategory.EDITOR
+                    )
+                    variables["terminalFocus"] = app_widget_manager.widget_has_category(
+                        active_pane.widget_id, WidgetCategory.TERMINAL
+                    )
+                    # Note: FILE_EXPLORER doesn't have a direct category, it's likely in TOOLS or VIEWER
+                    # For now, check if it's the explorer widget specifically
+                    variables["explorerFocus"] = active_pane.widget_id == "com.viloapp.explorer"
 
                     # Widget state checks
                     widget_state = active_pane.widget_state or {}

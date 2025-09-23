@@ -28,7 +28,7 @@ class TerminalPlugin(IPlugin):
     def get_metadata(self) -> PluginMetadata:
         """Get plugin metadata."""
         return PluginMetadata(
-            id="viloxterm",
+            id="terminal",
             name="ViloxTerm Terminal",
             version="1.0.0",
             description="Professional terminal emulator with full xterm compatibility",

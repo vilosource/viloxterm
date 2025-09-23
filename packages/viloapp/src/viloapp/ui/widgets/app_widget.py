@@ -4,15 +4,25 @@ AppWidget base class for all application content widgets.
 
 This is the foundation of our content widget architecture. All content widgets
 (terminal, editor, browser, etc.) extend this base class.
+
+ARCHITECTURE COMPLIANCE:
+- Widgets declare capabilities through ICapabilityProvider interface
+- Platform interacts through capabilities, not widget types
+- No hardcoded widget knowledge in base class
 """
 
 import logging
 import time
-from typing import Any, Optional
+from typing import Any, Optional, Set
 
 from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import QWidget
 
+from viloapp.core.capabilities import WidgetCapability
+from viloapp.core.capability_provider import (
+    CapabilityNotSupportedError,
+    ICapabilityProvider,
+)
 from viloapp.ui.widgets.signal_manager import SignalManager
 
 # Widget IDs are now defined in each widget class
@@ -21,7 +31,7 @@ from viloapp.ui.widgets.widget_state import WidgetState, WidgetStateValidator
 logger = logging.getLogger(__name__)
 
 
-class AppWidget(QWidget):
+class AppWidget(QWidget, ICapabilityProvider):
     """
     Base class for all application content widgets.
 
@@ -88,6 +98,10 @@ class AppWidget(QWidget):
 
         # Signal management
         self._signal_manager = SignalManager(self)
+
+        # Register with capability manager when ready
+        self.widget_ready.connect(self._register_capabilities)
+        self.widget_destroying.connect(self._unregister_capabilities)
 
     def initialize(self):
         """
@@ -288,17 +302,81 @@ class AppWidget(QWidget):
         Returns:
             Icon name or None if no icon
         """
-        # Map widget IDs to icons
+        # Get icon from widget metadata registry - no hardcoding!
+        from viloapp.core.app_widget_manager import app_widget_manager
+
+        metadata = app_widget_manager.get_widget_metadata(widget_id)
+        if metadata and metadata.icon:
+            return metadata.icon
+
+        # Fallback icon map for unknown widgets
         icon_map = {
-            "com.viloapp.terminal": "terminal",
-            "com.viloapp.editor": "file-text",
-            "com.viloapp.explorer": "folder",
-            "com.viloapp.search": "search",
-            "com.viloapp.git": "git-branch",
-            "com.viloapp.settings": "settings",
-            "com.viloapp.placeholder": "layout",
         }
         return icon_map.get(self.widget_id)
+
+    # === Capability Provider Implementation ===
+
+    def get_capabilities(self) -> Set[WidgetCapability]:
+        """
+        Get the capabilities this widget supports.
+
+        Base implementation returns empty set.
+        Subclasses override to declare their capabilities.
+
+        Returns:
+            Set of supported capabilities
+        """
+        return set()
+
+    def execute_capability(
+        self,
+        capability: WidgetCapability,
+        **kwargs: Any
+    ) -> Any:
+        """
+        Execute a capability-based action.
+
+        Base implementation raises CapabilityNotSupportedError.
+        Subclasses override to implement capability execution.
+
+        Args:
+            capability: The capability to execute
+            **kwargs: Capability-specific arguments
+
+        Returns:
+            Capability-specific return value
+
+        Raises:
+            CapabilityNotSupportedError: If capability not supported
+            CapabilityExecutionError: If execution fails
+        """
+        raise CapabilityNotSupportedError(self.instance_id, capability)
+
+    def _register_capabilities(self) -> None:
+        """
+        Register this widget's capabilities with the manager.
+
+        Called automatically when widget is ready.
+        """
+        try:
+            from viloapp.core.capability_manager import register_widget_capabilities
+            register_widget_capabilities(self.instance_id, self)
+            logger.debug(f"Registered capabilities for widget {self.instance_id}")
+        except Exception as e:
+            logger.error(f"Failed to register capabilities: {e}")
+
+    def _unregister_capabilities(self) -> None:
+        """
+        Unregister this widget's capabilities.
+
+        Called automatically when widget is destroyed.
+        """
+        try:
+            from viloapp.core.capability_manager import unregister_widget_capabilities
+            unregister_widget_capabilities(self.instance_id)
+            logger.debug(f"Unregistered capabilities for widget {self.instance_id}")
+        except Exception as e:
+            logger.error(f"Failed to unregister capabilities: {e}")
 
     @property
     def has_focus(self) -> bool:

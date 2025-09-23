@@ -119,7 +119,7 @@ class PluginLoader:
 
                     if plugin_service:
                         for widget in plugin_info.instance.get_widgets():
-                            plugin_service.register_widget(widget)
+                            plugin_service.register_widget(widget, plugin_id)
                             logger.info(
                                 f"Registered widget from plugin {plugin_id}: {widget.get_widget_id()}"
                             )

@@ -4,6 +4,11 @@ Widget metadata registry for ViloxTerm.
 This module provides a registry for widget metadata including display names,
 icons, categories, and capabilities. It replaces the old WidgetType enum
 with a flexible, extensible system.
+
+ARCHITECTURE COMPLIANCE:
+- This registry starts EMPTY
+- Widgets register themselves at runtime
+- No hardcoded widget IDs or metadata in core
 """
 
 from dataclasses import dataclass, field
@@ -14,7 +19,7 @@ from typing import Dict, List, Optional, Set
 class WidgetMetadata:
     """Complete widget identity and capabilities."""
 
-    widget_id: str  # Unique identifier (e.g., "viloapp.terminal")
+    widget_id: str  # Unique identifier (e.g., "com.viloapp.terminal")
     display_name: str  # Human-readable name
     icon: Optional[str] = None  # Icon identifier
     category: str = "general"  # For grouping (terminal, editor, tool, etc.)
@@ -26,7 +31,11 @@ class WidgetMetadata:
 
 
 class WidgetMetadataRegistry:
-    """Central registry for all widget metadata."""
+    """Central registry for all widget metadata.
+
+    This registry is populated at RUNTIME by widgets registering themselves.
+    It contains NO hardcoded widget information - true platform architecture.
+    """
 
     _instance = None
 
@@ -37,200 +46,81 @@ class WidgetMetadataRegistry:
         return cls._instance
 
     def __init__(self):
-        """Initialize registry with built-in widgets."""
+        """Initialize EMPTY registry - widgets register themselves."""
         if not hasattr(self, '_initialized'):
             self._metadata: Dict[str, WidgetMetadata] = {}
             self._by_category: Dict[str, List[str]] = {}
             self._by_capability: Dict[str, Set[str]] = {}
-            self._register_builtin_widgets()
+            # NO HARDCODED WIDGETS - registry starts empty
+            # Widgets register themselves when loaded
             self._initialized = True
 
-    def _register_builtin_widgets(self):
-        """Register all built-in widget types."""
-        # Widget IDs are now defined as strings directly
-        # This maintains the registry for backward compatibility
-
-        # Terminal widget
-        self.register(WidgetMetadata(
-            widget_id="com.viloapp.terminal",
-            display_name="Terminal",
-            icon="terminal",
-            category="terminal",
-            capabilities={"shell", "command_execution", "ansi"},
-            description="Terminal emulator for running commands"
-        ))
-
-        # Editor widget
-        self.register(WidgetMetadata(
-            widget_id="com.viloapp.editor",
-            display_name="Text Editor",
-            icon="file-text",
-            category="editor",
-            capabilities={"text_editing", "syntax_highlighting", "file_operations"},
-            description="Text editor with syntax highlighting"
-        ))
-
-        # File Explorer widget
-        self.register(WidgetMetadata(
-            widget_id="com.viloapp.explorer",
-            display_name="File Explorer",
-            icon="folder",
-            category="navigation",
-            capabilities={"file_browsing", "file_operations"},
-            default_position="sidebar",
-            description="Browse and manage files"
-        ))
-
-        # Output widget
-        self.register(WidgetMetadata(
-            widget_id="com.viloapp.output",
-            display_name="Output",
-            icon="list",
-            category="output",
-            capabilities={"text_display", "logging"},
-            default_position="panel",
-            description="Display command output and logs"
-        ))
-
-        # Settings widget
-        self.register(WidgetMetadata(
-            widget_id="com.viloapp.settings",
-            display_name="Settings",
-            icon="settings",
-            category="configuration",
-            capabilities={"configuration", "preferences"},
-            singleton=True,
-            description="Application settings and preferences"
-        ))
-
-        # Theme Editor widget
-        self.register(WidgetMetadata(
-            widget_id="com.viloapp.theme_editor",
-            display_name="Theme Editor",
-            icon="palette",
-            category="configuration",
-            capabilities={"theming", "customization"},
-            singleton=True,
-            description="Customize application appearance"
-        ))
-
-        # Shortcut Config widget
-        self.register(WidgetMetadata(
-            widget_id="com.viloapp.shortcuts",
-            display_name="Keyboard Shortcuts",
-            icon="keyboard",
-            category="configuration",
-            capabilities={"shortcuts", "keybindings"},
-            singleton=True,
-            description="Configure keyboard shortcuts"
-        ))
-
-        # Placeholder widget
-        self.register(WidgetMetadata(
-            widget_id="com.viloapp.placeholder",
-            display_name="Placeholder",
-            icon="layout",
-            category="utility",
-            capabilities={"placeholder"},
-            description="Placeholder for development"
-        ))
-
     def register(self, metadata: WidgetMetadata) -> None:
-        """
-        Register widget metadata.
+        """Register widget metadata.
+
+        This is called by widgets themselves at load time.
+        Core never calls this with hardcoded data.
 
         Args:
             metadata: Widget metadata to register
         """
-        self._metadata[metadata.widget_id] = metadata
+        widget_id = metadata.widget_id
+
+        # Store metadata
+        self._metadata[widget_id] = metadata
 
         # Update category index
         if metadata.category not in self._by_category:
             self._by_category[metadata.category] = []
-        if metadata.widget_id not in self._by_category[metadata.category]:
-            self._by_category[metadata.category].append(metadata.widget_id)
+        if widget_id not in self._by_category[metadata.category]:
+            self._by_category[metadata.category].append(widget_id)
 
         # Update capability index
-        for capability in metadata.capabilities:
-            if capability not in self._by_capability:
-                self._by_capability[capability] = set()
-            self._by_capability[capability].add(metadata.widget_id)
+        for cap in metadata.capabilities:
+            if cap not in self._by_capability:
+                self._by_capability[cap] = set()
+            self._by_capability[cap].add(widget_id)
 
     def unregister(self, widget_id: str) -> None:
-        """
-        Unregister widget metadata.
+        """Remove widget metadata from registry.
 
         Args:
-            widget_id: Widget ID to unregister
+            widget_id: Widget to unregister
         """
-        if widget_id in self._metadata:
-            metadata = self._metadata[widget_id]
+        if widget_id not in self._metadata:
+            return
 
-            # Remove from category index
-            if metadata.category in self._by_category:
-                self._by_category[metadata.category].remove(widget_id)
+        metadata = self._metadata[widget_id]
 
-            # Remove from capability index
-            for capability in metadata.capabilities:
-                if capability in self._by_capability:
-                    self._by_capability[capability].discard(widget_id)
+        # Remove from category index
+        if metadata.category in self._by_category:
+            self._by_category[metadata.category].remove(widget_id)
+            if not self._by_category[metadata.category]:
+                del self._by_category[metadata.category]
 
-            del self._metadata[widget_id]
+        # Remove from capability index
+        for cap in metadata.capabilities:
+            if cap in self._by_capability:
+                self._by_capability[cap].discard(widget_id)
+                if not self._by_capability[cap]:
+                    del self._by_capability[cap]
 
-    def get_metadata(self, widget_id: str) -> Optional[WidgetMetadata]:
-        """
-        Get metadata for a widget.
+        # Remove metadata
+        del self._metadata[widget_id]
+
+    def get(self, widget_id: str) -> Optional[WidgetMetadata]:
+        """Get widget metadata by ID.
 
         Args:
-            widget_id: Widget ID
+            widget_id: Widget ID to look up
 
         Returns:
             Widget metadata or None if not found
         """
         return self._metadata.get(widget_id)
 
-    def get_display_name(self, widget_id: str) -> str:
-        """
-        Get display name for a widget.
-
-        Args:
-            widget_id: Widget ID
-
-        Returns:
-            Display name or extracted name from ID
-        """
-        metadata = self.get_metadata(widget_id)
-        if metadata:
-            return metadata.display_name
-
-        # Fallback: extract from widget ID
-        # e.g., "viloapp.terminal" -> "Terminal"
-        # e.g., "plugin.markdown_editor" -> "Markdown Editor"
-        parts = widget_id.split('.')
-        if len(parts) > 1:
-            name = parts[-1]
-        else:
-            name = widget_id
-
-        # Convert snake_case to Title Case
-        return name.replace('_', ' ').title()
-
-    def get_icon(self, widget_id: str) -> Optional[str]:
-        """
-        Get icon for a widget.
-
-        Args:
-            widget_id: Widget ID
-
-        Returns:
-            Icon identifier or None
-        """
-        metadata = self.get_metadata(widget_id)
-        return metadata.icon if metadata else None
-
     def get_by_category(self, category: str) -> List[WidgetMetadata]:
-        """
-        Get all widgets in a category.
+        """Get all widgets in a category.
 
         Args:
             category: Category name
@@ -239,11 +129,10 @@ class WidgetMetadataRegistry:
             List of widget metadata in the category
         """
         widget_ids = self._by_category.get(category, [])
-        return [self._metadata[wid] for wid in widget_ids if wid in self._metadata]
+        return [self._metadata[wid] for wid in widget_ids]
 
     def get_by_capability(self, capability: str) -> List[WidgetMetadata]:
-        """
-        Get all widgets with a specific capability.
+        """Get all widgets with a specific capability.
 
         Args:
             capability: Capability name
@@ -252,59 +141,93 @@ class WidgetMetadataRegistry:
             List of widget metadata with the capability
         """
         widget_ids = self._by_capability.get(capability, set())
-        return [self._metadata[wid] for wid in widget_ids if wid in self._metadata]
+        return [self._metadata[wid] for wid in widget_ids]
 
     def get_all(self) -> List[WidgetMetadata]:
-        """
-        Get all registered widget metadata.
+        """Get all registered widget metadata.
 
         Returns:
             List of all widget metadata
         """
         return list(self._metadata.values())
 
-    def get_categories(self) -> List[str]:
-        """
-        Get all registered categories.
-
-        Returns:
-            List of category names
-        """
-        return list(self._by_category.keys())
-
-    def has_widget(self, widget_id: str) -> bool:
-        """
-        Check if a widget is registered.
+    def get_display_name(self, widget_id: str) -> str:
+        """Get display name for widget.
 
         Args:
             widget_id: Widget ID
 
         Returns:
-            True if widget is registered
+            Display name or widget ID if not found
         """
-        return widget_id in self._metadata
+        metadata = self.get(widget_id)
+        return metadata.display_name if metadata else widget_id
+
+    def get_icon(self, widget_id: str) -> Optional[str]:
+        """Get icon for widget.
+
+        Args:
+            widget_id: Widget ID
+
+        Returns:
+            Icon name or None
+        """
+        metadata = self.get(widget_id)
+        return metadata.icon if metadata else None
+
+    def has_capability(self, widget_id: str, capability: str) -> bool:
+        """Check if widget has a specific capability.
+
+        Args:
+            widget_id: Widget ID
+            capability: Capability to check
+
+        Returns:
+            True if widget has the capability
+        """
+        metadata = self.get(widget_id)
+        return capability in metadata.capabilities if metadata else False
+
+    def is_singleton(self, widget_id: str) -> bool:
+        """Check if widget is a singleton.
+
+        Args:
+            widget_id: Widget ID
+
+        Returns:
+            True if widget is a singleton
+        """
+        metadata = self.get(widget_id)
+        return metadata.singleton if metadata else False
 
 
 # Global registry instance
 widget_metadata_registry = WidgetMetadataRegistry()
 
 
-# Convenience functions
 def register_widget_metadata(metadata: WidgetMetadata) -> None:
-    """Register widget metadata."""
+    """Convenience function to register widget metadata.
+
+    This is called by widgets themselves, not by core code.
+
+    Args:
+        metadata: Widget metadata to register
+    """
     widget_metadata_registry.register(metadata)
 
 
-def get_widget_display_name(widget_id: str) -> str:
-    """Get display name for a widget."""
-    return widget_metadata_registry.get_display_name(widget_id)
-
-
-def get_widget_icon(widget_id: str) -> Optional[str]:
-    """Get icon for a widget."""
-    return widget_metadata_registry.get_icon(widget_id)
-
-
 def get_widget_metadata(widget_id: str) -> Optional[WidgetMetadata]:
-    """Get complete metadata for a widget."""
-    return widget_metadata_registry.get_metadata(widget_id)
+    """Convenience function to get widget metadata.
+
+    Args:
+        widget_id: Widget ID to look up
+
+    Returns:
+        Widget metadata or None if not found
+    """
+    return widget_metadata_registry.get(widget_id)
+
+
+# NO HARDCODED WIDGET REGISTRATIONS HERE
+# Widgets register themselves when they load
+# This maintains true platform architecture

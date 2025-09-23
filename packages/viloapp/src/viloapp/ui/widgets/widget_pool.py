@@ -227,6 +227,14 @@ class WidgetPool:
             widget: Widget to destroy
         """
         self._stats["destructions"] += 1
+
+        # Cleanup AppWidget if it has a cleanup method
+        if hasattr(widget, 'cleanup') and callable(widget.cleanup):
+            try:
+                widget.cleanup()
+            except Exception as e:
+                logger.error(f"Error cleaning up widget: {e}")
+
         widget.setParent(None)
         widget.deleteLater()
 
