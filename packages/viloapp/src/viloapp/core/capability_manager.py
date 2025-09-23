@@ -59,11 +59,7 @@ class CapabilityManager:
         self._initialized = True
         logger.info("CapabilityManager initialized")
 
-    def register_widget(
-        self,
-        widget_id: str,
-        widget: ICapabilityProvider
-    ) -> None:
+    def register_widget(self, widget_id: str, widget: ICapabilityProvider) -> None:
         """
         Register a widget and its capabilities.
 
@@ -93,9 +89,7 @@ class CapabilityManager:
                 self._capability_index[capability] = set()
             self._capability_index[capability].add(widget_id)
 
-        logger.debug(
-            f"Registered widget {widget_id} with {len(capabilities)} capabilities"
-        )
+        logger.debug(f"Registered widget {widget_id} with {len(capabilities)} capabilities")
 
     def unregister_widget(self, widget_id: str) -> None:
         """
@@ -126,10 +120,7 @@ class CapabilityManager:
 
         logger.debug(f"Unregistered widget {widget_id}")
 
-    def find_widgets_with_capability(
-        self,
-        capability: WidgetCapability
-    ) -> List[str]:
+    def find_widgets_with_capability(self, capability: WidgetCapability) -> List[str]:
         """
         Find all widgets that support a specific capability.
 
@@ -153,11 +144,7 @@ class CapabilityManager:
         """
         return self._capability_cache.get(widget_id, set())
 
-    def widget_has_capability(
-        self,
-        widget_id: str,
-        capability: WidgetCapability
-    ) -> bool:
+    def widget_has_capability(self, widget_id: str, capability: WidgetCapability) -> bool:
         """
         Check if a widget supports a specific capability.
 
@@ -171,10 +158,7 @@ class CapabilityManager:
         return capability in self._capability_cache.get(widget_id, set())
 
     def execute_capability(
-        self,
-        widget_id: str,
-        capability: WidgetCapability,
-        **kwargs: Any
+        self, widget_id: str, capability: WidgetCapability, **kwargs: Any
     ) -> Any:
         """
         Execute a capability on a widget.
@@ -197,11 +181,7 @@ class CapabilityManager:
         # Get the widget
         widget = self._widgets.get(widget_id)
         if not widget:
-            raise CapabilityExecutionError(
-                widget_id,
-                capability,
-                "Widget not registered"
-            )
+            raise CapabilityExecutionError(widget_id, capability, "Widget not registered")
 
         # Check if widget supports the capability
         if not self.widget_has_capability(widget_id, capability):
@@ -215,16 +195,9 @@ class CapabilityManager:
         except CapabilityExecutionError:
             raise
         except Exception as e:
-            raise CapabilityExecutionError(
-                widget_id,
-                capability,
-                str(e)
-            ) from e
+            raise CapabilityExecutionError(widget_id, capability, str(e)) from e
 
-    def get_first_widget_with_capability(
-        self,
-        capability: WidgetCapability
-    ) -> Optional[str]:
+    def get_first_widget_with_capability(self, capability: WidgetCapability) -> Optional[str]:
         """
         Get the first widget that supports a capability.
 
@@ -240,9 +213,7 @@ class CapabilityManager:
         return widgets[0] if widgets else None
 
     def get_active_widget_with_capability(
-        self,
-        capability: WidgetCapability,
-        active_widget_id: Optional[str] = None
+        self, capability: WidgetCapability, active_widget_id: Optional[str] = None
     ) -> Optional[str]:
         """
         Get a widget with a capability, preferring the active widget.
@@ -328,9 +299,8 @@ class CapabilityManager:
                 for capability, widgets in self._capability_index.items()
             },
             "widgets_by_capability_count": {
-                widget_id: len(caps)
-                for widget_id, caps in self._capability_cache.items()
-            }
+                widget_id: len(caps) for widget_id, caps in self._capability_cache.items()
+            },
         }
 
 
@@ -338,10 +308,7 @@ class CapabilityManager:
 capability_manager = CapabilityManager()
 
 
-def register_widget_capabilities(
-    widget_id: str,
-    widget: ICapabilityProvider
-) -> None:
+def register_widget_capabilities(widget_id: str, widget: ICapabilityProvider) -> None:
     """
     Convenience function to register widget capabilities.
 

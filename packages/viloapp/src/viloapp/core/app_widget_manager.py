@@ -179,9 +179,7 @@ class AppWidgetManager:
             logger.error(f"Failed to create widget {widget_id}: {e}")
             return None
 
-    def create_widget_by_id(
-        self, widget_id: str, instance_id: str
-    ) -> Optional[AppWidget]:
+    def create_widget_by_id(self, widget_id: str, instance_id: str) -> Optional[AppWidget]:
         """
         Create a widget by widget ID.
 
@@ -342,28 +340,24 @@ class AppWidgetManager:
         # Step 1: Check user preference for specific context
         if context:
             from viloapp.core.settings.app_defaults import get_default_widget_for_context
+
             pref = get_default_widget_for_context(context)
             if pref and self.is_widget_available(pref):
                 return pref
 
         # Step 2: Check user's general preference
         from viloapp.core.settings.app_defaults import get_default_widget_preference
+
         general_pref = get_default_widget_preference()
         if general_pref and self.is_widget_available(general_pref):
             return general_pref
 
         # Step 3: Find widgets that can be defaults
-        candidates = [
-            w for w in self._widgets.values()
-            if w.can_be_default and w.is_available()
-        ]
+        candidates = [w for w in self._widgets.values() if w.can_be_default and w.is_available()]
 
         # If context provided, prefer widgets that support that context
         if context and candidates:
-            context_widgets = [
-                w for w in candidates
-                if context in w.default_for_contexts
-            ]
+            context_widgets = [w for w in candidates if context in w.default_for_contexts]
             if context_widgets:
                 candidates = context_widgets
 
@@ -391,7 +385,8 @@ class AppWidgetManager:
             List of widget IDs that support the context
         """
         widgets = [
-            w.widget_id for w in self._widgets.values()
+            w.widget_id
+            for w in self._widgets.values()
             if context in w.default_for_contexts and w.is_available()
         ]
         return widgets
@@ -417,7 +412,10 @@ class AppWidgetManager:
         """
         metadata = self.get_widget(widget_id)
         if metadata:
-            return "terminal" in metadata.default_for_contexts or "shell" in metadata.default_for_contexts
+            return (
+                "terminal" in metadata.default_for_contexts
+                or "shell" in metadata.default_for_contexts
+            )
         return False
 
     def is_editor_widget(self, widget_id: str) -> bool:
@@ -432,7 +430,9 @@ class AppWidgetManager:
         """
         metadata = self.get_widget(widget_id)
         if metadata:
-            return "editor" in metadata.default_for_contexts or "text" in metadata.default_for_contexts
+            return (
+                "editor" in metadata.default_for_contexts or "text" in metadata.default_for_contexts
+            )
         return False
 
     def is_settings_widget(self, widget_id: str) -> bool:

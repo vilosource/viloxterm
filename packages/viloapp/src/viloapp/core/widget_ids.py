@@ -184,6 +184,7 @@ def get_default_widget_id() -> Optional[str]:
     """
     try:
         from viloapp.core.app_widget_manager import app_widget_manager
+
         return app_widget_manager.get_default_widget_id()
     except ImportError:
         # During early initialization, registry might not be available yet

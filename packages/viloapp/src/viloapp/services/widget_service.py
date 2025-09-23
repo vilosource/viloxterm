@@ -47,14 +47,16 @@ class WidgetService:
         for widget_id in widget_ids:
             metadata = app_widget_manager.get_widget_metadata(widget_id)
             if metadata:
-                widgets.append({
-                    "id": widget_id,
-                    "name": metadata.display_name,
-                    "description": metadata.description,
-                    "icon": metadata.icon,
-                    "can_be_default": metadata.can_be_default,
-                    "categories": metadata.categories,
-                })
+                widgets.append(
+                    {
+                        "id": widget_id,
+                        "name": metadata.display_name,
+                        "description": metadata.description,
+                        "icon": metadata.icon,
+                        "can_be_default": metadata.can_be_default,
+                        "categories": metadata.categories,
+                    }
+                )
 
         return widgets
 

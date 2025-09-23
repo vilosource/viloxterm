@@ -27,7 +27,9 @@ def show_command_palette_command(context: CommandContext) -> CommandResult:
         if not context.main_window or not hasattr(
             context.main_window, "command_palette_controller"
         ):
-            return CommandResult(status=CommandStatus.FAILURE, message="Command palette not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Command palette not available"
+            )
 
         controller = context.main_window.command_palette_controller
 
@@ -56,7 +58,9 @@ def hide_command_palette_command(context: CommandContext) -> CommandResult:
         if not context.main_window or not hasattr(
             context.main_window, "command_palette_controller"
         ):
-            return CommandResult(status=CommandStatus.FAILURE, message="Command palette not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Command palette not available"
+            )
 
         controller = context.main_window.command_palette_controller
 
@@ -84,7 +88,9 @@ def refresh_command_palette_command(context: CommandContext) -> CommandResult:
         if not context.main_window or not hasattr(
             context.main_window, "command_palette_controller"
         ):
-            return CommandResult(status=CommandStatus.FAILURE, message="Command palette not available")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Command palette not available"
+            )
 
         controller = context.main_window.command_palette_controller
 

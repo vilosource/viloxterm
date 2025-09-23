@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 def find_widget_for_capability(
     capability: WidgetCapability,
     prefer_active: bool = True,
-    context: Optional[CommandContext] = None
+    context: Optional[CommandContext] = None,
 ) -> Optional[str]:
     """
     Find a widget that supports a specific capability.
@@ -54,7 +54,7 @@ def find_widget_for_capabilities(
     capabilities: List[WidgetCapability],
     require_all: bool = True,
     prefer_active: bool = True,
-    context: Optional[CommandContext] = None
+    context: Optional[CommandContext] = None,
 ) -> Optional[str]:
     """
     Find a widget that supports multiple capabilities.
@@ -103,9 +103,7 @@ def find_widget_for_capabilities(
 
 
 def execute_on_capable_widget(
-    capability: WidgetCapability,
-    context: CommandContext,
-    **kwargs: Any
+    capability: WidgetCapability, context: CommandContext, **kwargs: Any
 ) -> CommandResult:
     """
     Execute a capability on any widget that supports it.
@@ -124,7 +122,7 @@ def execute_on_capable_widget(
     if not widget_id:
         return CommandResult(
             status=CommandStatus.FAILURE,
-            message=f"No widget found with capability: {capability.value}"
+            message=f"No widget found with capability: {capability.value}",
         )
 
     try:
@@ -132,15 +130,11 @@ def execute_on_capable_widget(
         result = capability_manager.execute_capability(widget_id, capability, **kwargs)
 
         return CommandResult(
-            status=CommandStatus.SUCCESS,
-            data={"widget_id": widget_id, "result": result}
+            status=CommandStatus.SUCCESS, data={"widget_id": widget_id, "result": result}
         )
     except Exception as e:
         logger.error(f"Failed to execute capability {capability.value}: {e}")
-        return CommandResult(
-            status=CommandStatus.FAILURE,
-            message=str(e)
-        )
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 def get_default_widget_for_capability(capability: WidgetCapability) -> Optional[str]:
@@ -265,16 +259,11 @@ class CapabilityCommand:
             Widget instance ID or None
         """
         return find_widget_for_capability(
-            self.required_capability,
-            prefer_active=True,
-            context=context
+            self.required_capability, prefer_active=True, context=context
         )
 
     def execute_on_widget(
-        self,
-        widget_id: str,
-        context: CommandContext,
-        **kwargs: Any
+        self, widget_id: str, context: CommandContext, **kwargs: Any
     ) -> CommandResult:
         """
         Execute the capability on a specific widget.
@@ -289,18 +278,12 @@ class CapabilityCommand:
         """
         try:
             result = capability_manager.execute_capability(
-                widget_id,
-                self.required_capability,
-                **kwargs
+                widget_id, self.required_capability, **kwargs
             )
 
             return CommandResult(
-                status=CommandStatus.SUCCESS,
-                data={"widget_id": widget_id, "result": result}
+                status=CommandStatus.SUCCESS, data={"widget_id": widget_id, "result": result}
             )
         except Exception as e:
             logger.error(f"Capability execution failed: {e}")
-            return CommandResult(
-                status=CommandStatus.FAILURE,
-                message=str(e)
-            )
+            return CommandResult(status=CommandStatus.FAILURE, message=str(e))

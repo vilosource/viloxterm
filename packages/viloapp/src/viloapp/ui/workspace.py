@@ -48,6 +48,7 @@ class Workspace(QWidget):
         self.tab_widget = None
         self.tab_views = {}  # tab_id -> TabView
         self._state_restored = False  # Track if state has been restored
+        self._deferred_init = True  # True when using deferred initialization
 
         self.setup_ui()
         # Don't create default tab here - wait for restore_state or explicit call
@@ -455,13 +456,17 @@ class Workspace(QWidget):
                             name=tab_state.get("name", "Restored Tab"), widget_id=widget_id
                         )
                         restored_any = True
-                        logger.info(f"Restored tab: {tab_state.get('name')} with widget {widget_id}")
+                        logger.info(
+                            f"Restored tab: {tab_state.get('name')} with widget {widget_id}"
+                        )
 
                         # Set active if it was active
                         if tab_state.get("active"):
                             self.model.set_active_tab(tab_id)
                     else:
-                        logger.warning(f"Widget {widget_id} is not available, skipping tab restoration")
+                        logger.warning(
+                            f"Widget {widget_id} is not available, skipping tab restoration"
+                        )
 
             # If no tabs were restored, create default
             if not restored_any:

@@ -32,7 +32,7 @@ class MainWindowStateManager:
         settings.endGroup()
 
     def restore_state(self):
-        """Restore window state and geometry."""
+        """Restore window state and geometry (but not workspace state yet)."""
         settings = QSettings()
         settings.beginGroup("MainWindow")
 
@@ -71,6 +71,13 @@ class MainWindowStateManager:
             self.main_window.activity_bar.hide()
 
         settings.endGroup()
+
+        # NOTE: Workspace state restoration is deferred until after plugins are loaded
+        # See restore_workspace_state() method
+
+    def restore_workspace_state(self):
+        """Restore workspace state (tabs). Should be called after plugins are loaded."""
+        settings = QSettings()
 
         # Restore workspace state (new tab-based workspace)
         settings.beginGroup("Workspace")

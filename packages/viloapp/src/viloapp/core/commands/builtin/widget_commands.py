@@ -30,28 +30,24 @@ class SetDefaultWidgetCommand(Command):
             widget_service = context.get_service("WidgetService")
             if not widget_service:
                 return CommandResult(
-                    status=CommandStatus.FAILURE,
-                    message="Widget service not available"
+                    status=CommandStatus.FAILURE, message="Widget service not available"
                 )
 
             # Set the default
             if widget_service.set_default_widget(self.context, self.widget_id):
                 return CommandResult(
                     status=CommandStatus.SUCCESS,
-                    message=f"Set default widget for {self.context} to {self.widget_id}"
+                    message=f"Set default widget for {self.context} to {self.widget_id}",
                 )
             else:
                 return CommandResult(
                     status=CommandStatus.FAILURE,
-                    message=f"Failed to set default widget: {self.widget_id} not available"
+                    message=f"Failed to set default widget: {self.widget_id} not available",
                 )
 
         except Exception as e:
             logger.error(f"Error setting default widget: {e}", exc_info=True)
-            return CommandResult(
-                status=CommandStatus.FAILURE,
-                message=f"Error: {str(e)}"
-            )
+            return CommandResult(status=CommandStatus.FAILURE, message=f"Error: {str(e)}")
 
 
 class ClearDefaultWidgetCommand(Command):
@@ -72,28 +68,24 @@ class ClearDefaultWidgetCommand(Command):
             widget_service = context.get_service("WidgetService")
             if not widget_service:
                 return CommandResult(
-                    status=CommandStatus.FAILURE,
-                    message="Widget service not available"
+                    status=CommandStatus.FAILURE, message="Widget service not available"
                 )
 
             # Clear the default
             if widget_service.clear_default_widget(self.context):
                 return CommandResult(
                     status=CommandStatus.SUCCESS,
-                    message=f"Cleared default widget for {self.context}"
+                    message=f"Cleared default widget for {self.context}",
                 )
             else:
                 return CommandResult(
                     status=CommandStatus.SUCCESS,
-                    message=f"No default widget set for {self.context}"
+                    message=f"No default widget set for {self.context}",
                 )
 
         except Exception as e:
             logger.error(f"Error clearing default widget: {e}", exc_info=True)
-            return CommandResult(
-                status=CommandStatus.FAILURE,
-                message=f"Error: {str(e)}"
-            )
+            return CommandResult(status=CommandStatus.FAILURE, message=f"Error: {str(e)}")
 
 
 class ShowWidgetPreferencesCommand(Command):
@@ -106,8 +98,7 @@ class ShowWidgetPreferencesCommand(Command):
             widget_service = context.get_service("WidgetService")
             if not widget_service:
                 return CommandResult(
-                    status=CommandStatus.FAILURE,
-                    message="Widget service not available"
+                    status=CommandStatus.FAILURE, message="Widget service not available"
                 )
 
             # Get all preferences
@@ -122,17 +113,12 @@ class ShowWidgetPreferencesCommand(Command):
                 message = "No widget preferences set"
 
             return CommandResult(
-                status=CommandStatus.SUCCESS,
-                message=message,
-                data={"preferences": preferences}
+                status=CommandStatus.SUCCESS, message=message, data={"preferences": preferences}
             )
 
         except Exception as e:
             logger.error(f"Error showing widget preferences: {e}", exc_info=True)
-            return CommandResult(
-                status=CommandStatus.FAILURE,
-                message=f"Error: {str(e)}"
-            )
+            return CommandResult(status=CommandStatus.FAILURE, message=f"Error: {str(e)}")
 
 
 class ListAvailableWidgetsCommand(Command):
@@ -153,8 +139,7 @@ class ListAvailableWidgetsCommand(Command):
             widget_service = context.get_service("WidgetService")
             if not widget_service:
                 return CommandResult(
-                    status=CommandStatus.FAILURE,
-                    message="Widget service not available"
+                    status=CommandStatus.FAILURE, message="Widget service not available"
                 )
 
             # Get available widgets
@@ -169,24 +154,19 @@ class ListAvailableWidgetsCommand(Command):
                 lines = [f"Available Widgets{f' in {self.category}' if self.category else ''}:"]
                 for widget in widgets:
                     lines.append(f"  {widget['id']}: {widget['name']}")
-                    if widget.get('description'):
+                    if widget.get("description"):
                         lines.append(f"    {widget['description']}")
                 message = "\n".join(lines)
             else:
                 message = f"No widgets available{f' in category {self.category}' if self.category else ''}"
 
             return CommandResult(
-                status=CommandStatus.SUCCESS,
-                message=message,
-                data={"widgets": widgets}
+                status=CommandStatus.SUCCESS, message=message, data={"widgets": widgets}
             )
 
         except Exception as e:
             logger.error(f"Error listing widgets: {e}", exc_info=True)
-            return CommandResult(
-                status=CommandStatus.FAILURE,
-                message=f"Error: {str(e)}"
-            )
+            return CommandResult(status=CommandStatus.FAILURE, message=f"Error: {str(e)}")
 
 
 class ChangePaneWidgetCommand(Command):
@@ -209,28 +189,23 @@ class ChangePaneWidgetCommand(Command):
             widget_service = context.get_service("WidgetService")
             if not widget_service:
                 return CommandResult(
-                    status=CommandStatus.FAILURE,
-                    message="Widget service not available"
+                    status=CommandStatus.FAILURE, message="Widget service not available"
                 )
 
             # Change the pane widget
             if widget_service.change_pane_widget(self.pane_id, self.widget_id):
                 return CommandResult(
                     status=CommandStatus.SUCCESS,
-                    message=f"Changed pane {self.pane_id} to widget {self.widget_id}"
+                    message=f"Changed pane {self.pane_id} to widget {self.widget_id}",
                 )
             else:
                 return CommandResult(
-                    status=CommandStatus.FAILURE,
-                    message="Failed to change pane widget"
+                    status=CommandStatus.FAILURE, message="Failed to change pane widget"
                 )
 
         except Exception as e:
             logger.error(f"Error changing pane widget: {e}", exc_info=True)
-            return CommandResult(
-                status=CommandStatus.FAILURE,
-                message=f"Error: {str(e)}"
-            )
+            return CommandResult(status=CommandStatus.FAILURE, message=f"Error: {str(e)}")
 
 
 # Register commands
@@ -247,9 +222,9 @@ def register_widget_commands():
             category="Widget",
             handler=lambda ctx: SetDefaultWidgetCommand(
                 ctx.parameters.get("context", "general"),
-                ctx.parameters.get("widget_id", "com.viloapp.placeholder")
+                ctx.parameters.get("widget_id", "com.viloapp.placeholder"),
             ).execute(ctx),
-            description="Set default widget for a context"
+            description="Set default widget for a context",
         )
     )
 
@@ -261,7 +236,7 @@ def register_widget_commands():
             handler=lambda ctx: ClearDefaultWidgetCommand(
                 ctx.parameters.get("context", "general")
             ).execute(ctx),
-            description="Clear default widget for a context"
+            description="Clear default widget for a context",
         )
     )
 
@@ -271,7 +246,7 @@ def register_widget_commands():
             title="Show Widget Preferences",
             category="Widget",
             handler=lambda ctx: ShowWidgetPreferencesCommand().execute(ctx),
-            description="Show all widget preferences"
+            description="Show all widget preferences",
         )
     )
 
@@ -284,7 +259,7 @@ def register_widget_commands():
             handler=lambda ctx: ListAvailableWidgetsCommand(
                 ctx.parameters.get("category") if ctx.parameters else None
             ).execute(ctx),
-            description="List available widgets"
+            description="List available widgets",
         )
     )
 
@@ -296,9 +271,9 @@ def register_widget_commands():
             category="Widget",
             handler=lambda ctx: ChangePaneWidgetCommand(
                 ctx.parameters.get("pane_id", ""),
-                ctx.parameters.get("widget_id", "com.viloapp.placeholder")
+                ctx.parameters.get("widget_id", "com.viloapp.placeholder"),
             ).execute(ctx),
-            description="Change widget in a pane"
+            description="Change widget in a pane",
         )
     )
 

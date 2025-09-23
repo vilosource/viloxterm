@@ -334,7 +334,9 @@ class CommandRouter:
 
         command_id = operation_map.get(operation)
         if not command_id:
-            return CommandResult(status=CommandStatus.FAILURE, message=f"Unknown operation: {operation}")
+            return CommandResult(
+                status=CommandStatus.FAILURE, message=f"Unknown operation: {operation}"
+            )
 
         return execute_command(command_id, **kwargs)
 

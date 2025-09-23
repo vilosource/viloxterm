@@ -43,7 +43,9 @@ class MainWindowActionManager:
             all_widgets = app_widget_manager.get_all_widgets()
             logger.info(f"Apps menu: Total registered widgets: {len(all_widgets)}")
             for w_meta in all_widgets:
-                logger.debug(f"  Widget: {w_meta.widget_id}, show_in_menu: {w_meta.show_in_menu}, available: {w_meta.is_available()}")
+                logger.debug(
+                    f"  Widget: {w_meta.widget_id}, show_in_menu: {w_meta.show_in_menu}, available: {w_meta.is_available()}"
+                )
 
             if not menu_widgets:
                 # Add placeholder if no widgets available
@@ -63,23 +65,19 @@ class MainWindowActionManager:
 
             # Define category order for consistent UX
             category_order = [
-                "editor",      # Text/code editors first
-                "terminal",    # Terminal emulators
-                "viewer",      # File viewers
-                "tools",       # Development tools
-                "development", # Debug/profiling tools
-                "system",      # System/settings widgets
-                "plugin",      # Plugin-provided widgets
+                "editor",  # Text/code editors first
+                "terminal",  # Terminal emulators
+                "viewer",  # File viewers
+                "tools",  # Development tools
+                "development",  # Debug/profiling tools
+                "system",  # System/settings widgets
+                "plugin",  # Plugin-provided widgets
             ]
 
             # Sort categories by defined order
             sorted_categories = sorted(
                 categories.items(),
-                key=lambda x: (
-                    category_order.index(x[0])
-                    if x[0] in category_order
-                    else 999
-                )
+                key=lambda x: (category_order.index(x[0]) if x[0] in category_order else 999),
             )
 
             # Add menu items organized by category
@@ -113,10 +111,8 @@ class MainWindowActionManager:
 
                         # Connect to workspace.newTab command with widget_id
                         action.triggered.connect(
-                            lambda checked, wid=widget_meta.widget_id:
-                            self.main_window.execute_command(
-                                "workspace.newTab",
-                                widget_id=wid
+                            lambda checked, wid=widget_meta.widget_id: self.main_window.execute_command(
+                                "workspace.newTab", widget_id=wid
                             )
                         )
 

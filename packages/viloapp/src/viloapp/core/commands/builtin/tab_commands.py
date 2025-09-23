@@ -61,6 +61,7 @@ def duplicate_tab_command(context: CommandContext) -> CommandResult:
 
         if not widget_id:
             from viloapp.core.app_widget_manager import app_widget_manager
+
             widget_id = app_widget_manager.get_default_widget_id()
             if not widget_id:
                 widget_id = "com.viloapp.placeholder"
@@ -286,6 +287,7 @@ def _get_default_editor_id() -> str:
 
         # Fall back to general default
         from viloapp.core.app_widget_manager import app_widget_manager
+
         return app_widget_manager.get_default_widget_id()
     except ImportError:
         # During initialization, use placeholder

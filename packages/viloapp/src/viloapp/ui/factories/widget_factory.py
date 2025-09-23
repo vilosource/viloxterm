@@ -70,10 +70,7 @@ class WidgetFactory:
         return self.create_split_pane_widget(model, initial_widget_id, parent)
 
     def create_widget(
-        self,
-        widget_id: str,
-        pane_id: str,
-        context: Optional[Dict[str, Any]] = None
+        self, widget_id: str, pane_id: str, context: Optional[Dict[str, Any]] = None
     ) -> Optional[QWidget]:
         """Create a UI widget for the given widget ID using the registry.
 
@@ -100,11 +97,11 @@ class WidgetFactory:
                 widget.setProperty("instance_id", instance_id)
 
                 # If context has specific initialization data, apply it
-                if context and hasattr(widget, 'initialize_with_context'):
+                if context and hasattr(widget, "initialize_with_context"):
                     widget.initialize_with_context(context)
-                elif context and hasattr(widget, 'load_file') and 'file_path' in context:
+                elif context and hasattr(widget, "load_file") and "file_path" in context:
                     # Support for file-based widgets
-                    widget.load_file(context['file_path'])
+                    widget.load_file(context["file_path"])
 
                 return widget
             else:
@@ -127,7 +124,8 @@ class WidgetFactory:
         widget = QLabel(f"⚠️ {message}")
         widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
         widget.setObjectName("errorWidget")
-        widget.setStyleSheet("""
+        widget.setStyleSheet(
+            """
             QLabel#errorWidget {
                 color: #ff6b6b;
                 font-size: 14px;
@@ -136,7 +134,8 @@ class WidgetFactory:
                 border: 1px solid rgba(255, 107, 107, 0.3);
                 border-radius: 4px;
             }
-        """)
+        """
+        )
         return widget
 
 
@@ -157,9 +156,7 @@ def get_widget_factory() -> WidgetFactory:
 
 
 def create_widget_for_pane(
-    widget_id: str,
-    pane_id: str,
-    context: Optional[Dict[str, Any]] = None
+    widget_id: str, pane_id: str, context: Optional[Dict[str, Any]] = None
 ) -> Optional[QWidget]:
     """Convenience function to create a widget for a pane.
 

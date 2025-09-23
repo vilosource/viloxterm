@@ -166,11 +166,12 @@ class ContextManager:
 
         if isinstance(widget, AppWidget):
             # Use widget metadata to determine context dynamically
-            widget_id = getattr(widget, 'widget_id', None)
+            widget_id = getattr(widget, "widget_id", None)
 
             if widget_id:
                 # Query the registry for widget capabilities/category
                 from viloapp.core.app_widget_manager import app_widget_manager
+
                 metadata = app_widget_manager.get_widget_metadata(widget_id)
 
                 if metadata:

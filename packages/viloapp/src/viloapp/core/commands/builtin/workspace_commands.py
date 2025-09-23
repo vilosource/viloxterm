@@ -53,7 +53,7 @@ def new_tab_command(context: CommandContext) -> CommandResult:
         if not name:
             # Extract simple name from widget_id for display
             # e.g., "com.viloapp.terminal" -> "Terminal"
-            widget_name = widget_id.split('.')[-1] if widget_id else "Tab"
+            widget_name = widget_id.split(".")[-1] if widget_id else "Tab"
             name = f"New {widget_name.title()}"
 
         # Create tab using model - it expects widget_id as string
@@ -122,6 +122,7 @@ def new_tab_with_type_command(context: CommandContext) -> CommandResult:
     if not widget_id:
         # Get available widgets from registry
         from viloapp.core.app_widget_manager import app_widget_manager
+
         available_widgets = app_widget_manager.get_available_widgets()
         available_ids = [widget.widget_id for widget in available_widgets]
 

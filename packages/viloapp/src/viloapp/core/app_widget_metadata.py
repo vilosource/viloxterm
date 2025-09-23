@@ -74,7 +74,9 @@ class AppWidgetMetadata:
     # === Default Widget Support ===
     can_be_default: bool = False  # Can this widget be used as a default widget
     default_priority: int = 100  # Priority for default selection (lower = higher priority)
-    default_for_contexts: list[str] = field(default_factory=list)  # Contexts where this can be default
+    default_for_contexts: list[str] = field(
+        default_factory=list
+    )  # Contexts where this can be default
 
     # === Placement Intent ===
     default_placement: WidgetPlacement = WidgetPlacement.SMART

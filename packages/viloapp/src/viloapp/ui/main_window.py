@@ -534,3 +534,7 @@ class MainWindow(QMainWindow):
     def restore_state(self):
         """Restore window state - delegate to state manager."""
         self.state_manager.restore_state()
+
+    def restore_workspace_state(self):
+        """Restore workspace state (tabs) - should be called after plugins are loaded."""
+        self.state_manager.restore_workspace_state()

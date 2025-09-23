@@ -37,11 +37,7 @@ class ICapabilityProvider:
         """
         raise NotImplementedError("Subclasses must implement get_capabilities()")
 
-    def execute_capability(
-        self,
-        capability: WidgetCapability,
-        **kwargs: Any
-    ) -> Any:
+    def execute_capability(self, capability: WidgetCapability, **kwargs: Any) -> Any:
         """
         Execute a capability-based action.
 
@@ -76,10 +72,7 @@ class ICapabilityProvider:
         """
         return capability in self.get_capabilities()
 
-    def get_capability_metadata(
-        self,
-        capability: WidgetCapability
-    ) -> Optional[Dict[str, Any]]:
+    def get_capability_metadata(self, capability: WidgetCapability) -> Optional[Dict[str, Any]]:
         """
         Get metadata about a specific capability.
 
@@ -110,9 +103,7 @@ class CapabilityNotSupportedError(Exception):
         """
         self.widget_id = widget_id
         self.capability = capability
-        super().__init__(
-            f"Widget '{widget_id}' does not support capability '{capability.value}'"
-        )
+        super().__init__(f"Widget '{widget_id}' does not support capability '{capability.value}'")
 
 
 class CapabilityExecutionError(Exception):
@@ -120,12 +111,7 @@ class CapabilityExecutionError(Exception):
     Raised when capability execution fails.
     """
 
-    def __init__(
-        self,
-        widget_id: str,
-        capability: WidgetCapability,
-        reason: str
-    ):
+    def __init__(self, widget_id: str, capability: WidgetCapability, reason: str):
         """
         Initialize the error.
 
@@ -155,7 +141,7 @@ class CapabilityResult:
         success: bool,
         value: Any = None,
         error: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize the result.

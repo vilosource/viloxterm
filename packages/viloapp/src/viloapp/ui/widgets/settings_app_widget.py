@@ -290,6 +290,7 @@ class SettingsAppWidget(AppWidget):
         self._default_tab_combo.addItems(["Terminal", "Editor", "Theme Editor", "Explorer"])
         # Dynamically populate widget options from registry - NO HARDCODING
         from viloapp.core.app_widget_manager import app_widget_manager
+
         available_widgets = app_widget_manager.get_available_widgets()
 
         # Clear and repopulate combo with actual available widgets
@@ -471,7 +472,9 @@ class SettingsAppWidget(AppWidget):
 
         # Theme editor functionality moved to plugin system
         # Create placeholder for theme settings
-        theme_placeholder = QLabel("Theme editing is now provided by plugins.\n\nInstall a theme editor plugin to customize themes.")
+        theme_placeholder = QLabel(
+            "Theme editing is now provided by plugins.\n\nInstall a theme editor plugin to customize themes."
+        )
         theme_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         theme_placeholder.setStyleSheet("color: #888; font-style: italic; padding: 40px;")
         self._theme_editor = theme_placeholder
@@ -706,7 +709,7 @@ class SettingsAppWidget(AppWidget):
             if hasattr(self, "_theme_editor") and self._theme_editor:
                 # Theme changes now handled by plugins
                 if False:  # Placeholder condition
-                        logger.warning("Failed to apply theme changes")
+                    logger.warning("Failed to apply theme changes")
 
             self._modified_settings.clear()
             self._update_button_states()
@@ -732,7 +735,7 @@ class SettingsAppWidget(AppWidget):
         if hasattr(self, "_theme_editor") and self._theme_editor:
             # Theme saving now handled by plugins
             if False:  # Placeholder condition
-                    success = False
+                success = False
 
         if success:
             QMessageBox.information(self, "Success", "Settings saved successfully!")
@@ -828,11 +831,7 @@ class SettingsAppWidget(AppWidget):
             WidgetCapability.FOCUS_MANAGEMENT,
         }
 
-    def execute_capability(
-        self,
-        capability: WidgetCapability,
-        **kwargs: Any
-    ) -> Any:
+    def execute_capability(self, capability: WidgetCapability, **kwargs: Any) -> Any:
         """
         Execute capability-based actions.
 
@@ -844,29 +843,29 @@ class SettingsAppWidget(AppWidget):
             Capability-specific return value
         """
         if capability == WidgetCapability.SETTINGS_MANAGEMENT:
-            action = kwargs.get('action', 'get')
-            if action == 'apply':
+            action = kwargs.get("action", "get")
+            if action == "apply":
                 # Apply pending changes
                 self._apply_settings()
                 return True
-            elif action == 'save':
+            elif action == "save":
                 # Save settings
                 self._save_settings()
                 return True
-            elif action == 'reset':
+            elif action == "reset":
                 # Reset to defaults
                 self._reset_settings()
                 return True
         elif capability == WidgetCapability.STATE_PERSISTENCE:
-            action = kwargs.get('action', 'save')
-            if action == 'export':
+            action = kwargs.get("action", "save")
+            if action == "export":
                 self._export_settings()
                 return True
-            elif action == 'import':
+            elif action == "import":
                 self._import_settings()
                 return True
         elif capability == WidgetCapability.FOCUS_MANAGEMENT:
-            if kwargs.get('action') == 'focus':
+            if kwargs.get("action") == "focus":
                 self.setFocus()
                 return True
             return self.hasFocus()

@@ -109,11 +109,7 @@ class PlaceholderAppWidget(AppWidget):
             WidgetCapability.FOCUS_MANAGEMENT,
         }
 
-    def execute_capability(
-        self,
-        capability: WidgetCapability,
-        **kwargs: Any
-    ) -> Any:
+    def execute_capability(self, capability: WidgetCapability, **kwargs: Any) -> Any:
         """
         Execute capability-based actions.
 
@@ -129,7 +125,7 @@ class PlaceholderAppWidget(AppWidget):
             return self.label.text() if self.label else ""
         elif capability == WidgetCapability.FOCUS_MANAGEMENT:
             # Handle focus operations
-            if kwargs.get('action') == 'focus':
+            if kwargs.get("action") == "focus":
                 self.setFocus()
                 return True
             return self.hasFocus()

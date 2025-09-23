@@ -32,6 +32,7 @@ def _get_default_widget_id() -> str:
     """Get default widget ID from registry."""
     try:
         from viloapp.core.app_widget_manager import app_widget_manager
+
         widget_id = app_widget_manager.get_default_widget_id()
         if widget_id:
             return widget_id
@@ -498,7 +499,7 @@ class WorkspaceModel:
                 "tab_id": tab_id,
                 "pane_id": pane_id,
                 "old_widget_id": old_widget_id,
-                "new_widget_id": widget_id
+                "new_widget_id": widget_id,
             },
         )
         return True
@@ -1005,6 +1006,7 @@ class WorkspaceModel:
             List of available widget IDs from registry
         """
         from viloapp.core.app_widget_manager import app_widget_manager
+
         return app_widget_manager.get_available_widget_ids()
 
     def validate_widget_id(self, widget_id: str) -> bool:
@@ -1017,6 +1019,7 @@ class WorkspaceModel:
             True if widget is available
         """
         from viloapp.core.app_widget_manager import app_widget_manager
+
         return app_widget_manager.is_widget_available(widget_id)
 
     def _find_pane_in_tree(self, node: PaneNode, pane_id: str) -> Optional[Pane]:
@@ -1086,10 +1089,7 @@ class WorkspaceModel:
             return False
 
         self.state.widget_preferences[context] = widget_id
-        self._notify("widget_preference_changed", {
-            "context": context,
-            "widget_id": widget_id
-        })
+        self._notify("widget_preference_changed", {"context": context, "widget_id": widget_id})
         return True
 
     def get_widget_preference(self, context: str) -> Optional[str]:
@@ -1131,6 +1131,7 @@ class WorkspaceModel:
 
         # Delegate to registry for default
         from viloapp.core.app_widget_manager import app_widget_manager
+
         default_id = app_widget_manager.get_default_widget_id(context)
 
         # Registry always returns something, even if placeholder

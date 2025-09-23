@@ -374,7 +374,8 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
         # Check for existing Theme Editor instance
         if workspace_service.has_widget(widget_id):
             workspace_service.focus_widget(widget_id)
-            return CommandResult(status=CommandStatus.SUCCESS,
+            return CommandResult(
+                status=CommandStatus.SUCCESS,
                 value={"widget_id": widget_id, "action": "focused_existing"},
             )
 
@@ -388,7 +389,9 @@ def open_theme_editor_command(context: CommandContext) -> CommandResult:
 
         if success:
             logger.info("Opened theme editor")
-            return CommandResult(status=CommandStatus.SUCCESS, value={"widget_id": widget_id, "action": "created_new"}
+            return CommandResult(
+                status=CommandStatus.SUCCESS,
+                value={"widget_id": widget_id, "action": "created_new"},
             )
         else:
             return CommandResult(

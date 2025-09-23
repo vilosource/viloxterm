@@ -47,7 +47,7 @@ class WidgetMetadataRegistry:
 
     def __init__(self):
         """Initialize EMPTY registry - widgets register themselves."""
-        if not hasattr(self, '_initialized'):
+        if not hasattr(self, "_initialized"):
             self._metadata: Dict[str, WidgetMetadata] = {}
             self._by_category: Dict[str, List[str]] = {}
             self._by_capability: Dict[str, Set[str]] = {}

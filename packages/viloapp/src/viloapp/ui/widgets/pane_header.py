@@ -276,9 +276,7 @@ class PaneHeaderBar(QWidget):
             menu.addSection("Editors")
             for widget_type in editor_types:
                 action = QAction(self._get_widget_type_display_name(widget_type), self)
-                action.triggered.connect(
-                    lambda checked, wt=widget_id: self._change_widget_type(wt)
-                )
+                action.triggered.connect(lambda checked, wt=widget_id: self._change_widget_type(wt))
                 menu.addAction(action)
 
         # Add terminal
@@ -286,9 +284,7 @@ class PaneHeaderBar(QWidget):
             menu.addSection("Terminal")
             for widget_type in terminal_types:
                 action = QAction(self._get_widget_type_display_name(widget_type), self)
-                action.triggered.connect(
-                    lambda checked, wt=widget_id: self._change_widget_type(wt)
-                )
+                action.triggered.connect(lambda checked, wt=widget_id: self._change_widget_type(wt))
                 menu.addAction(action)
 
         # Add view types
@@ -296,9 +292,7 @@ class PaneHeaderBar(QWidget):
             menu.addSection("Views")
             for widget_type in view_types:
                 action = QAction(self._get_widget_type_display_name(widget_type), self)
-                action.triggered.connect(
-                    lambda checked, wt=widget_id: self._change_widget_type(wt)
-                )
+                action.triggered.connect(lambda checked, wt=widget_id: self._change_widget_type(wt))
                 menu.addAction(action)
 
         # Add special types
@@ -306,9 +300,7 @@ class PaneHeaderBar(QWidget):
             menu.addSection("Special")
             for widget_type in special_types:
                 action = QAction(self._get_widget_type_display_name(widget_type), self)
-                action.triggered.connect(
-                    lambda checked, wt=widget_id: self._change_widget_type(wt)
-                )
+                action.triggered.connect(lambda checked, wt=widget_id: self._change_widget_type(wt))
                 menu.addAction(action)
 
         # Add Theme Editor as a special app widget

@@ -116,9 +116,7 @@ def restore_state_command(context: CommandContext) -> CommandResult:
 
         if not state_dict:
             # In a real implementation, this would load from persistent storage
-            return CommandResult(
-                status=CommandStatus.FAILURE, message="No state data provided"
-            )
+            return CommandResult(status=CommandStatus.FAILURE, message="No state data provided")
 
         # Restore the state
         context.model.restore_state(state_dict)

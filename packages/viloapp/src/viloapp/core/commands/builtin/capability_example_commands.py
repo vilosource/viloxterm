@@ -38,10 +38,7 @@ def clear_display_command(context: CommandContext) -> CommandResult:
     This command works with ANY widget that has CLEAR_DISPLAY capability,
     not just terminals. It could work with editors, output panels, etc.
     """
-    return execute_on_capable_widget(
-        WidgetCapability.CLEAR_DISPLAY,
-        context
-    )
+    return execute_on_capable_widget(WidgetCapability.CLEAR_DISPLAY, context)
 
 
 @command(
@@ -57,10 +54,7 @@ def copy_selection_command(context: CommandContext) -> CommandResult:
 
     Works with terminals, editors, viewers - anything with CLIPBOARD_COPY.
     """
-    return execute_on_capable_widget(
-        WidgetCapability.CLIPBOARD_COPY,
-        context
-    )
+    return execute_on_capable_widget(WidgetCapability.CLIPBOARD_COPY, context)
 
 
 @command(
@@ -76,10 +70,7 @@ def paste_content_command(context: CommandContext) -> CommandResult:
 
     The widget determines how to handle the pasted content.
     """
-    return execute_on_capable_widget(
-        WidgetCapability.CLIPBOARD_PASTE,
-        context
-    )
+    return execute_on_capable_widget(WidgetCapability.CLIPBOARD_PASTE, context)
 
 
 @command(
@@ -99,11 +90,7 @@ def save_content_command(context: CommandContext) -> CommandResult:
     # Get optional file path from context
     file_path = context.parameters.get("file_path") if context.parameters else None
 
-    return execute_on_capable_widget(
-        WidgetCapability.FILE_SAVING,
-        context,
-        file_path=file_path
-    )
+    return execute_on_capable_widget(WidgetCapability.FILE_SAVING, context, file_path=file_path)
 
 
 @command(
@@ -124,16 +111,9 @@ def find_text_command(context: CommandContext) -> CommandResult:
     if not search_term:
         # Could open a find dialog here
         # For now, just indicate that search term is needed
-        return CommandResult(
-            status=CommandStatus.FAILURE,
-            message="Search term required"
-        )
+        return CommandResult(status=CommandStatus.FAILURE, message="Search term required")
 
-    return execute_on_capable_widget(
-        WidgetCapability.TEXT_SEARCH,
-        context,
-        search_term=search_term
-    )
+    return execute_on_capable_widget(WidgetCapability.TEXT_SEARCH, context, search_term=search_term)
 
 
 @command(
@@ -150,10 +130,7 @@ def zoom_in_command(context: CommandContext) -> CommandResult:
     Each widget handles zoom in its own way.
     """
     return execute_on_capable_widget(
-        WidgetCapability.ZOOM_CONTENT,
-        context,
-        action="zoom_in",
-        amount=1.1  # 10% zoom
+        WidgetCapability.ZOOM_CONTENT, context, action="zoom_in", amount=1.1  # 10% zoom
     )
 
 
@@ -169,10 +146,7 @@ def zoom_out_command(context: CommandContext) -> CommandResult:
     Zoom out on any widget that supports zoom operations.
     """
     return execute_on_capable_widget(
-        WidgetCapability.ZOOM_CONTENT,
-        context,
-        action="zoom_out",
-        amount=0.9  # 10% zoom out
+        WidgetCapability.ZOOM_CONTENT, context, action="zoom_out", amount=0.9  # 10% zoom out
     )
 
 
@@ -191,15 +165,10 @@ def execute_command_in_shell(context: CommandContext) -> CommandResult:
     command_text = context.parameters.get("command") if context.parameters else None
 
     if not command_text:
-        return CommandResult(
-            status=CommandStatus.FAILURE,
-            message="Command text required"
-        )
+        return CommandResult(status=CommandStatus.FAILURE, message="Command text required")
 
     return execute_on_capable_widget(
-        WidgetCapability.SHELL_EXECUTION,
-        context,
-        command=command_text
+        WidgetCapability.SHELL_EXECUTION, context, command=command_text
     )
 
 
@@ -218,30 +187,22 @@ def open_file_command(context: CommandContext) -> CommandResult:
     file_path = context.parameters.get("file_path") if context.parameters else None
 
     if not file_path:
-        return CommandResult(
-            status=CommandStatus.FAILURE,
-            message="File path required"
-        )
+        return CommandResult(status=CommandStatus.FAILURE, message="File path required")
 
     # First try FILE_OPENING capability
     widget_id = find_widget_for_capability(
-        WidgetCapability.FILE_OPENING,
-        prefer_active=True,
-        context=context
+        WidgetCapability.FILE_OPENING, prefer_active=True, context=context
     )
 
     # Fall back to FILE_VIEWING if no opener found
     if not widget_id:
         widget_id = find_widget_for_capability(
-            WidgetCapability.FILE_VIEWING,
-            prefer_active=True,
-            context=context
+            WidgetCapability.FILE_VIEWING, prefer_active=True, context=context
         )
 
     if not widget_id:
         return CommandResult(
-            status=CommandStatus.FAILURE,
-            message="No widget found that can open files"
+            status=CommandStatus.FAILURE, message="No widget found that can open files"
         )
 
     # Execute the appropriate capability
@@ -251,28 +212,21 @@ def open_file_command(context: CommandContext) -> CommandResult:
         # Try opening first
         if capability_manager.widget_has_capability(widget_id, WidgetCapability.FILE_OPENING):
             result = capability_manager.execute_capability(
-                widget_id,
-                WidgetCapability.FILE_OPENING,
-                file_path=file_path
+                widget_id, WidgetCapability.FILE_OPENING, file_path=file_path
             )
         else:
             # Fall back to viewing
             result = capability_manager.execute_capability(
-                widget_id,
-                WidgetCapability.FILE_VIEWING,
-                file_path=file_path
+                widget_id, WidgetCapability.FILE_VIEWING, file_path=file_path
             )
 
         return CommandResult(
             status=CommandStatus.SUCCESS,
-            data={"widget_id": widget_id, "file_path": file_path, "result": result}
+            data={"widget_id": widget_id, "file_path": file_path, "result": result},
         )
     except Exception as e:
         logger.error(f"Failed to open file: {e}")
-        return CommandResult(
-            status=CommandStatus.FAILURE,
-            message=str(e)
-        )
+        return CommandResult(status=CommandStatus.FAILURE, message=str(e))
 
 
 def register_capability_example_commands():

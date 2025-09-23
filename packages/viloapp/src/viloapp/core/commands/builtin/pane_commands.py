@@ -325,8 +325,7 @@ def change_pane_type_command(context: CommandContext) -> CommandResult:
             widget_id = context.parameters.get("widget_id")
             if not widget_id:
                 return CommandResult(
-                    status=CommandStatus.FAILURE,
-                    message="Widget ID not specified"
+                    status=CommandStatus.FAILURE, message="Widget ID not specified"
                 )
             success = context.model.change_pane_widget(pane_id, widget_id)
             if success:

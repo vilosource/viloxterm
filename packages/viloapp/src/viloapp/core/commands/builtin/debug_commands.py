@@ -53,7 +53,9 @@ def reset_app_state_command(context: CommandContext) -> CommandResult:
             from viloapp.core.app_widget_manager import app_widget_manager
             from viloapp.core.app_widget_metadata import WidgetCategory
 
-            terminal_widget_id = app_widget_manager.get_default_widget_for_category(WidgetCategory.TERMINAL)
+            terminal_widget_id = app_widget_manager.get_default_widget_for_category(
+                WidgetCategory.TERMINAL
+            )
             if not terminal_widget_id:
                 # Fallback to any available widget
                 terminal_widget_id = app_widget_manager.get_default_widget_id()

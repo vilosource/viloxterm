@@ -52,7 +52,7 @@ class PaneContainer(QWidget):
             self.layout.removeWidget(self.widget)
 
             # Properly cleanup AppWidget if it has a cleanup method
-            if hasattr(self.widget, 'cleanup') and callable(self.widget.cleanup):
+            if hasattr(self.widget, "cleanup") and callable(self.widget.cleanup):
                 try:
                     self.widget.cleanup()
                 except Exception as e:
@@ -251,9 +251,7 @@ class SplitPaneWidget(QWidget):
                     splitter.setSizes([first_size, second_size])
 
                 # Update model ratio when user drags splitter
-                splitter.splitterMoved.connect(
-                    lambda: self._update_split_ratio(node, splitter)
-                )
+                splitter.splitterMoved.connect(lambda: self._update_split_ratio(node, splitter))
 
                 return splitter
 
@@ -281,7 +279,7 @@ class SplitPaneWidget(QWidget):
 
         # Check if this widget is a PaneContainer with an AppWidget
         if isinstance(widget, PaneContainer) and widget.widget:
-            if hasattr(widget.widget, 'cleanup') and callable(widget.widget.cleanup):
+            if hasattr(widget.widget, "cleanup") and callable(widget.widget.cleanup):
                 try:
                     widget.widget.cleanup()
                     logger.debug(f"Cleaned up AppWidget in pane {widget.pane_id}")
@@ -291,7 +289,7 @@ class SplitPaneWidget(QWidget):
         # Recursively cleanup children
         for child in widget.findChildren(QWidget):
             if isinstance(child, PaneContainer) and child.widget:
-                if hasattr(child.widget, 'cleanup') and callable(child.widget.cleanup):
+                if hasattr(child.widget, "cleanup") and callable(child.widget.cleanup):
                     try:
                         child.widget.cleanup()
                         logger.debug(f"Cleaned up AppWidget in pane {child.pane_id}")

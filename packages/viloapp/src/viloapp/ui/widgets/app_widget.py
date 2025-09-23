@@ -310,8 +310,7 @@ class AppWidget(QWidget, ICapabilityProvider):
             return metadata.icon
 
         # Fallback icon map for unknown widgets
-        icon_map = {
-        }
+        icon_map = {}
         return icon_map.get(self.widget_id)
 
     # === Capability Provider Implementation ===
@@ -328,11 +327,7 @@ class AppWidget(QWidget, ICapabilityProvider):
         """
         return set()
 
-    def execute_capability(
-        self,
-        capability: WidgetCapability,
-        **kwargs: Any
-    ) -> Any:
+    def execute_capability(self, capability: WidgetCapability, **kwargs: Any) -> Any:
         """
         Execute a capability-based action.
 
@@ -360,6 +355,7 @@ class AppWidget(QWidget, ICapabilityProvider):
         """
         try:
             from viloapp.core.capability_manager import register_widget_capabilities
+
             register_widget_capabilities(self.instance_id, self)
             logger.debug(f"Registered capabilities for widget {self.instance_id}")
         except Exception as e:
@@ -373,6 +369,7 @@ class AppWidget(QWidget, ICapabilityProvider):
         """
         try:
             from viloapp.core.capability_manager import unregister_widget_capabilities
+
             unregister_widget_capabilities(self.instance_id)
             logger.debug(f"Unregistered capabilities for widget {self.instance_id}")
         except Exception as e:

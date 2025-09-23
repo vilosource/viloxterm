@@ -101,6 +101,7 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
 
     # Initialize widget service with the model
     from viloapp.services.widget_service import get_widget_service
+
     initialize_widget_service(workspace_model)
     widget_service = get_widget_service()
 
@@ -125,7 +126,9 @@ def initialize_services(main_window=None, workspace=None, sidebar=None, activity
     locator.register(ThemeService, theme_service)
     locator.register(SettingsService, settings_service)
     locator.register(WorkspaceService, workspace_service)
-    locator.register("WidgetService", widget_service)  # Register by string name since we don't have a class
+    locator.register(
+        "WidgetService", widget_service
+    )  # Register by string name since we don't have a class
     locator.register(UIService, ui_service)
 
     # Register plugin manager

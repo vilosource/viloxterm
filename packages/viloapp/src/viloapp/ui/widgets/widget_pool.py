@@ -229,7 +229,7 @@ class WidgetPool:
         self._stats["destructions"] += 1
 
         # Cleanup AppWidget if it has a cleanup method
-        if hasattr(widget, 'cleanup') and callable(widget.cleanup):
+        if hasattr(widget, "cleanup") and callable(widget.cleanup):
             try:
                 widget.cleanup()
             except Exception as e:

@@ -448,7 +448,9 @@ def update_theme_colors_command(
                     status=CommandStatus.FAILURE, message="Failed to save theme changes"
                 )
 
-        return CommandResult(status=CommandStatus.SUCCESS, value={"theme_id": theme_id, "updated_colors": len(colors)}
+        return CommandResult(
+            status=CommandStatus.SUCCESS,
+            value={"theme_id": theme_id, "updated_colors": len(colors)},
         )
     except Exception as e:
         logger.error(f"Failed to update theme colors: {e}")

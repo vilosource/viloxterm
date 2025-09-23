@@ -34,9 +34,13 @@ def open_settings_command(context: CommandContext) -> CommandResult:
         # This ensures only one Settings instance exists at a time
         # Get the settings widget ID from registry
         from viloapp.core.app_widget_manager import app_widget_manager
-        settings_widgets = [w for w in app_widget_manager.get_available_widget_ids()
-                          if app_widget_manager.get_widget_metadata(w) and
-                          "settings" in app_widget_manager.get_widget_metadata(w).categories]
+
+        settings_widgets = [
+            w
+            for w in app_widget_manager.get_available_widget_ids()
+            if app_widget_manager.get_widget_metadata(w)
+            and "settings" in app_widget_manager.get_widget_metadata(w).categories
+        ]
         widget_id = settings_widgets[0] if settings_widgets else "com.viloapp.placeholder"
 
         # Check if settings tab already exists
@@ -203,7 +207,9 @@ def toggle_theme_command(context: CommandContext) -> CommandResult:
             if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message(message, 2000)
 
-            return CommandResult(status=CommandStatus.SUCCESS, message=message, data={"theme": new_theme})
+            return CommandResult(
+                status=CommandStatus.SUCCESS, message=message, data={"theme": new_theme}
+            )
         else:
             return CommandResult(status=CommandStatus.FAILURE, message="Failed to toggle theme")
 
@@ -262,7 +268,9 @@ def change_font_size_command(context: CommandContext) -> CommandResult:
             if context.main_window and hasattr(context.main_window, "status_bar"):
                 context.main_window.status_bar.set_message(message, 2000)
 
-            return CommandResult(status=CommandStatus.SUCCESS, message=message, data={"font_size": new_size})
+            return CommandResult(
+                status=CommandStatus.SUCCESS, message=message, data={"font_size": new_size}
+            )
         else:
             return CommandResult(status=CommandStatus.FAILURE, message="Failed to change font size")
 
@@ -352,15 +360,20 @@ def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
         # This ensures only one Shortcuts configuration instance exists at a time
         # Get the shortcuts widget ID from registry
         from viloapp.core.app_widget_manager import app_widget_manager
-        shortcut_widgets = [w for w in app_widget_manager.get_available_widget_ids()
-                          if app_widget_manager.get_widget_metadata(w) and
-                          "shortcuts" in app_widget_manager.get_widget_metadata(w).categories]
+
+        shortcut_widgets = [
+            w
+            for w in app_widget_manager.get_available_widget_ids()
+            if app_widget_manager.get_widget_metadata(w)
+            and "shortcuts" in app_widget_manager.get_widget_metadata(w).categories
+        ]
         widget_id = shortcut_widgets[0] if shortcut_widgets else "com.viloapp.placeholder"
 
         # Check for existing Shortcuts instance
         if workspace_service.has_widget(widget_id):
             workspace_service.focus_widget(widget_id)
-            return CommandResult(status=CommandStatus.SUCCESS,
+            return CommandResult(
+                status=CommandStatus.SUCCESS,
                 value={
                     "widget_id": widget_id,
                     "message": "Focused existing keyboard shortcuts configuration",
@@ -370,12 +383,11 @@ def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
 
         # Create and add shortcut configuration widget in a new tab
         # The factory is already registered at module load time
-        success = workspace_service.add_app_widget(
-            SETTINGS, widget_id, "Keyboard Shortcuts"
-        )
+        success = workspace_service.add_app_widget(SETTINGS, widget_id, "Keyboard Shortcuts")
 
         if success:
-            return CommandResult(status=CommandStatus.SUCCESS,
+            return CommandResult(
+                status=CommandStatus.SUCCESS,
                 value={
                     "widget_id": widget_id,
                     "message": "Opened keyboard shortcuts configuration",
@@ -383,7 +395,8 @@ def open_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
                 },
             )
         else:
-            return CommandResult(status=CommandStatus.FAILURE, message="Failed to create shortcuts configuration tab"
+            return CommandResult(
+                status=CommandStatus.FAILURE, message="Failed to create shortcuts configuration tab"
             )
 
     except Exception as e:
@@ -435,7 +448,9 @@ def replace_with_keyboard_shortcuts_command(context: CommandContext) -> CommandR
                 logger.info(f"Replaced pane {pane_id} with keyboard shortcuts editor")
                 return CommandResult(status=CommandStatus.SUCCESS)
 
-        return CommandResult(status=CommandStatus.FAILURE, message="Could not identify pane for replacement")
+        return CommandResult(
+            status=CommandStatus.FAILURE, message="Could not identify pane for replacement"
+        )
 
     except Exception as e:
         logger.error(f"Failed to replace pane with keyboard shortcuts editor: {e}")
@@ -478,7 +493,8 @@ def show_keyboard_shortcuts_command(context: CommandContext) -> CommandResult:
                 f"Shortcuts: {active_count} active of {total_shortcuts} total", 3000
             )
 
-        return CommandResult(status=CommandStatus.SUCCESS,
+        return CommandResult(
+            status=CommandStatus.SUCCESS,
             value={
                 "shortcuts": shortcuts,
                 "active_shortcuts": active_shortcuts,

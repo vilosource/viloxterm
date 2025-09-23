@@ -104,7 +104,9 @@ def initialize_plugins(window):
             all_plugins = {}
             for plugin_info in registry.get_all_plugins():
                 all_plugins[plugin_info.metadata.id] = plugin_info
-                logger.debug(f"Plugin in registry: {plugin_info.metadata.id} (path: {plugin_info.path})")
+                logger.debug(
+                    f"Plugin in registry: {plugin_info.metadata.id} (path: {plugin_info.path})"
+                )
 
             logger.info(f"Found {len(all_plugins)} plugins to process")
 
@@ -119,12 +121,16 @@ def initialize_plugins(window):
 
                 # Check if plugin is already loaded or activated
                 if plugin_info.state in [LifecycleState.ACTIVATED, LifecycleState.LOADED]:
-                    logger.info(f"Plugin already loaded/activated: {plugin_id} (state: {plugin_info.state})")
+                    logger.info(
+                        f"Plugin already loaded/activated: {plugin_id} (state: {plugin_info.state})"
+                    )
                     # Just register widget if available
                     plugin = plugin_manager.get_plugin(plugin_id)
                     if plugin and hasattr(plugin, "widget_factory"):
                         widget_bridge.register_plugin_widget(plugin.widget_factory, plugin_id)
-                        logger.info(f"Registered widget factory for already loaded plugin: {plugin_id}")
+                        logger.info(
+                            f"Registered widget factory for already loaded plugin: {plugin_id}"
+                        )
                     continue
 
                 # Load the plugin
@@ -140,7 +146,9 @@ def initialize_plugins(window):
                         if plugin:
                             # Register widget factory if available
                             if hasattr(plugin, "widget_factory"):
-                                widget_bridge.register_plugin_widget(plugin.widget_factory, plugin_id)
+                                widget_bridge.register_plugin_widget(
+                                    plugin.widget_factory, plugin_id
+                                )
                                 logger.info(f"Registered widget factory for: {plugin_id}")
                     else:
                         logger.error(f"Failed to activate plugin: {plugin_id}")
@@ -149,8 +157,13 @@ def initialize_plugins(window):
 
             logger.info("Plugin system initialization complete")
 
+            # Now that plugins are loaded, restore workspace state
+            if hasattr(window, "restore_workspace_state"):
+                window.restore_workspace_state()
+                logger.info("Restored workspace state after plugin initialization")
+
             # Refresh Apps menu now that plugins are loaded
-            if hasattr(window, 'action_manager') and window.action_manager:
+            if hasattr(window, "action_manager") and window.action_manager:
                 window.action_manager.refresh_apps_menu()
                 logger.info("Refreshed Apps menu with plugin widgets")
     except Exception as e:
@@ -237,6 +250,7 @@ def main():
         if "--validate-startup" in sys.argv:
             logger.info("Validation mode: Exiting after successful startup")
             from PySide6.QtCore import QTimer
+
             QTimer.singleShot(100, lambda: app.quit())
             return 0
 

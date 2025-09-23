@@ -52,9 +52,7 @@ class WidgetFactory:
             widget = app_widget_manager.create_widget_by_id(widget_id, pane_id)
 
             if widget:
-                logger.debug(
-                    f"Created widget {widget_id} with id {pane_id} via plugin system"
-                )
+                logger.debug(f"Created widget {widget_id} with id {pane_id} via plugin system")
                 return widget
             else:
                 logger.warning(f"AppWidgetManager could not create widget for type {widget_id}")
@@ -451,6 +449,7 @@ class WorkspaceView(QWidget):
         # Use provided widget_id or get default editor
         if not widget_id:
             from viloapp.core.app_widget_manager import app_widget_manager
+
             widget_id = app_widget_manager.get_default_editor_id()
             if not widget_id:
                 widget_id = app_widget_manager.get_default_widget_id()
