@@ -383,11 +383,16 @@ class Workspace(QWidget):
         # Get state from the model
         tabs_state = []
         for tab in self.model.state.tabs:
+            # Get widget_id from the root pane
+            widget_id = None
+            if tab.tree.root.pane:
+                widget_id = tab.tree.root.pane.widget_id
+
             tab_state = {
-                "id": tab.tab_id,
+                "id": tab.id,  # Use 'id', not 'tab_id'
                 "name": tab.name,
-                "widget_id": tab.widget_id,
-                "active": tab.tab_id == self.model.state.active_tab_id,
+                "widget_id": widget_id,
+                "active": tab.id == self.model.state.active_tab_id,
             }
             tabs_state.append(tab_state)
 
@@ -410,7 +415,7 @@ class Workspace(QWidget):
         try:
             # Clear existing tabs
             for tab in list(self.model.state.tabs):
-                self.model.close_tab(tab.tab_id)
+                self.model.close_tab(tab.id)  # Use 'id', not 'tab_id'
 
             # Restore tabs
             restored_any = False
