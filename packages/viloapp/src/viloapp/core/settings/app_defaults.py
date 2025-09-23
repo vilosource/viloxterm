@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # ============= Hard-coded Ultimate Fallbacks =============
 # These are the last line of defense, used when everything else fails
 HARD_CODED_FALLBACKS = {
-    "workspace.default_new_tab_widget": "terminal",
+    "workspace.default_new_tab_widget": "com.viloapp.placeholder",
     "workspace.tab_auto_naming_pattern": "{type} {index}",
     "workspace.max_tabs": 20,
     "workspace.close_last_tab_behavior": "create_default",

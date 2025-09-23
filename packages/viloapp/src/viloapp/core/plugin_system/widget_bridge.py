@@ -79,6 +79,7 @@ class PluginWidgetBridge:
                 if AppWidgetMetadata is None:
                     from viloapp.core.app_widget_manager import app_widget_manager
                     from viloapp.core.app_widget_metadata import AppWidgetMetadata, WidgetCategory
+
                     logger.debug("Successfully imported AppWidgetMetadata and app_widget_manager")
 
                 metadata = self._create_app_widget_metadata(plugin_widget, widget_id)
@@ -86,7 +87,9 @@ class PluginWidgetBridge:
                     app_widget_manager.register_widget(metadata)
                     logger.info(f"Registered widget metadata for: {widget_id}")
             except ImportError as e:
-                logger.debug(f"Could not import AppWidgetMetadata - skipping metadata registration: {e}")
+                logger.debug(
+                    f"Could not import AppWidgetMetadata - skipping metadata registration: {e}"
+                )
             except Exception as e:
                 logger.error(f"Failed to register widget metadata: {e}")
 
@@ -103,8 +106,8 @@ class PluginWidgetBridge:
         try:
             # Use the full widget ID (with plugin namespace)
             widget_id = full_widget_id
-            title = plugin_widget.get_title() if hasattr(plugin_widget, 'get_title') else widget_id
-            icon = plugin_widget.get_icon() if hasattr(plugin_widget, 'get_icon') else None
+            title = plugin_widget.get_title() if hasattr(plugin_widget, "get_title") else widget_id
+            icon = plugin_widget.get_icon() if hasattr(plugin_widget, "get_icon") else None
 
             # Determine category based on widget ID or capabilities
             category = WidgetCategory.PLUGIN  # Default for plugins
@@ -115,18 +118,33 @@ class PluginWidgetBridge:
 
             # Extract capabilities if available
             provides_capabilities = []
-            if hasattr(plugin_widget, 'get_capabilities'):
+            if hasattr(plugin_widget, "get_capabilities"):
                 capabilities = plugin_widget.get_capabilities()
                 if capabilities:
                     provides_capabilities = [cap.value for cap in capabilities]
 
             # For plugin widgets, we don't have a direct widget_class,
             # but we can use the factory function
-            factory_func = lambda instance_id: self._create_widget_adapter(widget_id, instance_id)
+            def factory_func(instance_id):
+                return self._create_widget_adapter(widget_id, instance_id)
 
             # Create metadata object
             # Import AppWidget here to use as placeholder class
             from viloapp.ui.widgets.app_widget import AppWidget
+
+            # Determine default priority based on widget type
+            # Lower number = higher priority
+            default_priority = 100  # Default for most widgets
+            default_for_contexts = []
+
+            # Widgets can declare themselves as high-priority defaults
+            # by their category or capabilities
+            if category == WidgetCategory.TERMINAL:
+                default_priority = 10  # High priority for terminal widgets
+                default_for_contexts = ["shell", "terminal", "console"]
+            elif category == WidgetCategory.EDITOR:
+                default_priority = 20  # Also high priority for editors
+                default_for_contexts = ["code", "text", "editor"]
 
             metadata = AppWidgetMetadata(
                 widget_id=widget_id,
@@ -143,8 +161,10 @@ class PluginWidgetBridge:
                 source="plugin",  # Mark as plugin-provided
                 provides_capabilities=provides_capabilities,  # Capabilities list
                 can_be_default=True,  # Can be used as default widget
+                default_priority=default_priority,  # Priority for being chosen as default
+                default_for_contexts=default_for_contexts,  # Contexts where this is preferred
                 supports_new_tab=True,  # Can open in new tab
-                supports_replacement=True  # Can replace existing pane
+                supports_replacement=True,  # Can replace existing pane
             )
 
             return metadata
