@@ -98,6 +98,7 @@ class Workspace(QWidget):
         logger.info("Creating default tab...")
         # Get default widget from registry
         from viloapp.core.app_widget_manager import app_widget_manager
+
         default_widget = app_widget_manager.get_default_widget_id()
         if not default_widget:
             logger.warning("No default widget available, using placeholder")
@@ -332,6 +333,7 @@ class Workspace(QWidget):
             try:
                 # Find all AppWidgets in the tab view and clean them up
                 from viloapp.ui.widgets.app_widget import AppWidget
+
                 app_widgets = tab_view.findChildren(AppWidget)
                 for widget in app_widgets:
                     try:
@@ -371,3 +373,68 @@ class Workspace(QWidget):
     def get_tab_count(self) -> int:
         """Get the number of tabs."""
         return len(self.model.state.tabs)
+
+    def save_state(self) -> dict:
+        """Save workspace state for persistence.
+
+        Returns:
+            Dictionary containing workspace state
+        """
+        # Get state from the model
+        tabs_state = []
+        for tab in self.model.state.tabs:
+            tab_state = {
+                "id": tab.tab_id,
+                "name": tab.name,
+                "widget_id": tab.widget_id,
+                "active": tab.tab_id == self.model.state.active_tab_id,
+            }
+            tabs_state.append(tab_state)
+
+        return {
+            "tabs": tabs_state,
+            "active_tab_id": self.model.state.active_tab_id,
+        }
+
+    def restore_state(self, state: dict) -> None:
+        """Restore workspace state from persistence.
+
+        Args:
+            state: Dictionary containing workspace state
+        """
+        if not state or "tabs" not in state:
+            # No valid state, create default tab
+            self.create_default_tab()
+            return
+
+        try:
+            # Clear existing tabs
+            for tab in list(self.model.state.tabs):
+                self.model.close_tab(tab.tab_id)
+
+            # Restore tabs
+            restored_any = False
+            for tab_state in state.get("tabs", []):
+                widget_id = tab_state.get("widget_id")
+                if widget_id:
+                    # Check if widget is available
+                    from viloapp.core.app_widget_manager import app_widget_manager
+
+                    if app_widget_manager.is_widget_available(widget_id):
+                        tab_id = self.model.create_tab(
+                            name=tab_state.get("name", "Restored Tab"), widget_id=widget_id
+                        )
+                        restored_any = True
+
+                        # Set active if it was active
+                        if tab_state.get("active"):
+                            self.model.set_active_tab(tab_id)
+
+            # If no tabs were restored, create default
+            if not restored_any:
+                self.create_default_tab()
+
+        except Exception as e:
+            logger.error(f"Failed to restore workspace state: {e}")
+            # Create default tab on error
+            self.create_default_tab()
