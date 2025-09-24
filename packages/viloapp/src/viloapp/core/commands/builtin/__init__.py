@@ -7,7 +7,6 @@ organized by category.
 """
 
 import viloapp.core.commands.builtin.help_commands
-import viloapp.core.commands.builtin.registry_commands
 import viloapp.core.commands.builtin.theme_management_commands
 
 # Import UI, window, and theme commands to trigger their decorators

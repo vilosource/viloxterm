@@ -168,7 +168,6 @@ class PaneHeaderBar(QWidget):
         # Try to use AppWidgetManager for dynamic menu generation
         try:
             from viloapp.core.app_widget_manager import AppWidgetManager
-            from viloapp.core.app_widget_metadata import WidgetCategory
 
             manager = AppWidgetManager.get_instance()
 
@@ -249,34 +248,17 @@ class PaneHeaderBar(QWidget):
         view_types = []
         special_types = []
 
-        # TODO: Get available widget types from registry
-        # This code is commented out until registry integration is complete
-        # for widget_type in widget_registry.get_all():
-        #     config = widget_registry.get_config(widget_type)
-        #     if not config or not config.allow_type_change:
-        #         continue
-        #
-        #     # Categorize widget types
-        #     if widget_type in [EDITOR, OUTPUT]:
-        #         editor_types.append(widget_type)
-        #     elif widget_id == TERMINAL:
-        #         terminal_types.append(widget_type)
-        #     elif widget_type in [
-        #         FILE_EXPLORER,
-        #         "viloapp.table_view",
-        #         "viloapp.tree_view",
-        #         "viloapp.image_viewer",
-        #     ]:
-        #         view_types.append(widget_type)
-        #     elif widget_type in [SETTINGS, "plugin.unknown"]:
-        #         special_types.append(widget_type)
+        # TODO: Get available widget types from AppWidgetManager
+        # For now, widget types are handled through AppWidgetManager
 
         # Add editor types
         if editor_types:
             menu.addSection("Editors")
             for widget_type in editor_types:
                 action = QAction(self._get_widget_type_display_name(widget_type), self)
-                action.triggered.connect(lambda checked, wt=widget_id: self._change_widget_type(wt))
+                action.triggered.connect(
+                    lambda checked, wt=widget_type: self._change_widget_type(wt)
+                )
                 menu.addAction(action)
 
         # Add terminal
@@ -284,7 +266,9 @@ class PaneHeaderBar(QWidget):
             menu.addSection("Terminal")
             for widget_type in terminal_types:
                 action = QAction(self._get_widget_type_display_name(widget_type), self)
-                action.triggered.connect(lambda checked, wt=widget_id: self._change_widget_type(wt))
+                action.triggered.connect(
+                    lambda checked, wt=widget_type: self._change_widget_type(wt)
+                )
                 menu.addAction(action)
 
         # Add view types
@@ -292,7 +276,9 @@ class PaneHeaderBar(QWidget):
             menu.addSection("Views")
             for widget_type in view_types:
                 action = QAction(self._get_widget_type_display_name(widget_type), self)
-                action.triggered.connect(lambda checked, wt=widget_id: self._change_widget_type(wt))
+                action.triggered.connect(
+                    lambda checked, wt=widget_type: self._change_widget_type(wt)
+                )
                 menu.addAction(action)
 
         # Add special types
@@ -300,7 +286,9 @@ class PaneHeaderBar(QWidget):
             menu.addSection("Special")
             for widget_type in special_types:
                 action = QAction(self._get_widget_type_display_name(widget_type), self)
-                action.triggered.connect(lambda checked, wt=widget_id: self._change_widget_type(wt))
+                action.triggered.connect(
+                    lambda checked, wt=widget_type: self._change_widget_type(wt)
+                )
                 menu.addAction(action)
 
         # Add Theme Editor as a special app widget
@@ -321,18 +309,18 @@ class PaneHeaderBar(QWidget):
     def _get_widget_type_display_name(self, widget_id: str) -> str:
         """Get display name for widget type."""
         display_names = {
-            EDITOR: "📝 Text Editor",
-            TERMINAL: "💻 Terminal",
-            OUTPUT: "📤 Output",
-            FILE_EXPLORER: "📁 Explorer",
+            "com.viloapp.editor": "📝 Text Editor",
+            "plugin.terminal.terminal": "💻 Terminal",
+            "com.viloapp.output": "📤 Output",
+            "com.viloapp.explorer": "📁 Explorer",
             "viloapp.table_view": "📊 Table View",
             "viloapp.tree_view": "🌳 Tree View",
             "viloapp.image_viewer": "🖼️ Image Viewer",
-            SETTINGS: "⚙️ Settings",
+            "com.viloapp.settings": "⚙️ Settings",
             "plugin.unknown": "🔧 Custom Widget",
-            PLACEHOLDER: "⬜ Empty Pane",
+            "com.viloapp.placeholder": "⬜ Empty Pane",
         }
-        return display_names.get(widget_type, widget_id.split(".")[-1].replace("_", " ").title())
+        return display_names.get(widget_id, widget_id.split(".")[-1].replace("_", " ").title())
 
     def _handle_widget_selection(self, widget_meta):
         """
@@ -395,7 +383,7 @@ class PaneHeaderBar(QWidget):
             self.number_label.setText(str(number))
         self.number_label.setVisible(visible and number is not None)
 
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # noqa: N802
         """Custom paint event to draw the background."""
         painter = QPainter(self)
         painter.fillRect(self.rect(), QBrush(self.background_color))
@@ -592,7 +580,7 @@ class CompactPaneHeader(QWidget):
             )
             layout.addWidget(btn)
 
-    def enterEvent(self, event):
+    def enterEvent(self, event):  # noqa: N802
         """Show fully on mouse enter."""
         self.setStyleSheet(
             """
@@ -603,7 +591,7 @@ class CompactPaneHeader(QWidget):
         )
         super().enterEvent(event)
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event):  # noqa: N802
         """Fade on mouse leave."""
         if self.hide_on_mouse_leave:
             self.setStyleSheet(

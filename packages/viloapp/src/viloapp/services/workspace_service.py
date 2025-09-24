@@ -15,7 +15,6 @@ from viloapp.models.workspace_model import WorkspaceModel
 
 # Widget IDs are now defined in the widget classes themselves
 from viloapp.services.base import Service
-from viloapp.services.workspace_widget_registry import WorkspaceWidgetRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +38,6 @@ class WorkspaceService(Service):
         super().__init__("WorkspaceService")
         self._model = model
         self._workspace = workspace  # Keep for backward compatibility during transition
-
-        # Initialize widget registry and factories for plugins
-        self._widget_registry = WorkspaceWidgetRegistry()
         self._widget_factories = {}
 
     def get_workspace(self):
@@ -79,7 +75,6 @@ class WorkspaceService(Service):
     def cleanup(self) -> None:
         """Cleanup service resources."""
         self._workspace = None
-        self._widget_registry.clear()
         self._widget_factories.clear()
         super().cleanup()
 
@@ -128,37 +123,51 @@ class WorkspaceService(Service):
             logger.error(f"Error restoring workspace state: {e}")
             return False
 
-    # ============= Widget Registry Operations (Delegated) =============
+    # ============= Widget Registry Operations (Now handled by AppWidgetManager) =============
 
     def has_widget(self, widget_id: str) -> bool:
         """Check if a widget with the given ID exists."""
-        return self._widget_registry.has_widget(widget_id)
+        from viloapp.core.app_widget_manager import app_widget_manager
+
+        return app_widget_manager.is_registered(widget_id)
 
     def focus_widget(self, widget_id: str) -> bool:
         """Focus (switch to) a widget by its ID."""
-        return self._tab_manager.focus_widget(widget_id)
+        # This should be handled through commands/model now
+        logger.warning("focus_widget is deprecated - use commands instead")
+        return False
 
     def register_widget(self, widget_id: str, tab_index: int) -> bool:
         """Register a widget with its tab index."""
-        return self._widget_registry.register_widget(widget_id, tab_index)
+        # Now handled by AppWidgetManager
+        logger.debug(f"register_widget called for {widget_id} - now handled by AppWidgetManager")
+        return True
 
     def unregister_widget(self, widget_id: str) -> bool:
         """Unregister a widget from the registry."""
-        return self._widget_registry.unregister_widget(widget_id)
+        # Now handled by AppWidgetManager
+        logger.debug(f"unregister_widget called for {widget_id} - now handled by AppWidgetManager")
+        return True
 
     def update_registry_after_tab_close(
         self, closed_index: int, widget_id: Optional[str] = None
     ) -> int:
         """Update registry indices after a tab is closed."""
-        return self._widget_registry.update_registry_after_tab_close(closed_index, widget_id)
+        # No longer needed with AppWidgetManager
+        logger.debug("update_registry_after_tab_close - no longer needed")
+        return 0
 
     def get_widget_tab_index(self, widget_id: str) -> Optional[int]:
         """Get the tab index for a registered widget."""
-        return self._widget_registry.get_widget_tab_index(widget_id)
+        # This information should come from the model now
+        logger.debug(f"get_widget_tab_index for {widget_id} - should use model")
+        return None
 
     def is_widget_registered(self, widget_id: str) -> bool:
         """Check if a widget is registered."""
-        return self._widget_registry.is_widget_registered(widget_id)
+        from viloapp.core.app_widget_manager import app_widget_manager
+
+        return app_widget_manager.is_registered(widget_id)
 
     # ============= Tab Operations (Delegated) =============
 
@@ -169,7 +178,7 @@ class WorkspaceService(Service):
         if self._model:
             # Use model interface for business logic
             tab_name = name or f"Editor {len(self._model.get_state().tabs) + 1}"
-            result = self._model.add_tab(tab_name, EDITOR.value)
+            result = self._model.add_tab(tab_name, "com.viloapp.editor")
 
             if result.success:
                 # Get the new tab index
@@ -215,7 +224,7 @@ class WorkspaceService(Service):
         if self._model:
             # Use model interface for business logic
             tab_name = name or f"Terminal {len(self._model.get_state().tabs) + 1}"
-            result = self._model.add_tab(tab_name, TERMINAL.value)
+            result = self._model.add_tab(tab_name, "plugin.terminal.terminal")
 
             if result.success:
                 # Get the new tab index
@@ -847,28 +856,26 @@ class WorkspaceService(Service):
 
         if self._model:
             # Use model interface for changing widget type
-            try:
-                # Convert string to WidgetType enum
-                widget_type_enum = WidgetType(widget_type)
-            except ValueError:
-                logger.error(f"Invalid widget type: {widget_type}")
+            # Widget IDs are now strings, not enums
+            if not widget_id:
+                logger.error("Invalid widget ID: None")
                 return False
 
             request = WidgetStateUpdateRequest(
-                pane_id=pane_id, widget_type=widget_type_enum, widget_state={}
+                pane_id=pane_id, widget_type=widget_id, widget_state={}
             )
             result = self._model.update_widget_state(request)
 
             if result.success:
                 # Notify observers
-                self.notify("pane_widget_changed", {"pane_id": pane_id, "widget_id": widget_type})
+                self.notify("pane_widget_changed", {"pane_id": pane_id, "widget_id": widget_id})
                 return True
             else:
                 logger.error(f"Failed to change pane widget type: {result.error}")
                 return False
         elif self._pane_manager:
             # Fallback to legacy pane manager
-            return self._pane_manager.change_pane_widget_type(pane_id, widget_type)
+            return self._pane_manager.change_pane_widget_type(pane_id, widget_id)
         else:
             logger.error("No model or pane manager available")
             return False
