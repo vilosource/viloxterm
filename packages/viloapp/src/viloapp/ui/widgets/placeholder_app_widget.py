@@ -48,15 +48,16 @@ class PlaceholderAppWidget(AppWidget):
         # Set text
         self.update_label()
 
-        # Style
+        # Style without border to prevent double borders
         self.label.setStyleSheet(
             """
             QLabel {
                 background-color: #2d2d30;
                 color: #969696;
-                border: 2px dashed #3c3c3c;
+                border: none;
                 border-radius: 4px;
                 padding: 20px;
+                margin: 2px;
                 font-size: 14px;
             }
         """

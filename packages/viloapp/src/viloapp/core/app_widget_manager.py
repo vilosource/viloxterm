@@ -43,6 +43,8 @@ class AppWidgetManager:
             # Type mapping removed - now using widget IDs directly
             self._factories: dict[str, Callable] = {}
             self._category_cache: dict[WidgetCategory, list[str]] = {}
+            # Widget instance cache: pane_id -> widget instance
+            self._widget_instances: dict[str, AppWidget] = {}
             self._initialized = True
             logger.info("AppWidgetManager initialized")
 
@@ -138,6 +140,76 @@ class AppWidgetManager:
 
         logger.debug(f"Unregistered widget: {widget_id}")
         return True
+
+    def get_or_create_widget(self, widget_id: str, pane_id: str) -> Optional[AppWidget]:
+        """
+        Get existing widget instance or create a new one for a pane.
+
+        This method manages widget lifecycle and prevents recreation.
+        It checks if a valid widget exists for the pane and returns it,
+        or creates a new one if needed.
+
+        Args:
+            widget_id: Widget type identifier (e.g., 'com.viloapp.terminal')
+            pane_id: The pane ID this widget belongs to
+
+        Returns:
+            AppWidget instance or None if creation fails
+        """
+        # Check if we have a cached instance for this pane
+        if pane_id in self._widget_instances:
+            widget = self._widget_instances[pane_id]
+
+            # Check if the Qt object is still valid
+            try:
+                # Try to access a Qt method to verify the C++ object is alive
+                _ = widget.isVisible()
+                logger.debug(f"Reusing existing widget for pane {pane_id[:8]}")
+                return widget
+            except (RuntimeError, AttributeError):
+                # Widget was deleted by Qt, remove from cache
+                logger.warning(f"Widget for pane {pane_id[:8]} was deleted by Qt, creating new one")
+                del self._widget_instances[pane_id]
+
+        # Create new widget instance
+        widget = self.create_widget(widget_id, pane_id)
+        if widget:
+            # Cache the instance
+            self._widget_instances[pane_id] = widget
+            logger.debug(f"Created and cached new widget for pane {pane_id[:8]}")
+
+        return widget
+
+    def cleanup_widget(self, pane_id: str) -> None:
+        """
+        Clean up a widget instance when its pane is closed.
+
+        Args:
+            pane_id: The pane ID whose widget should be cleaned up
+        """
+        if pane_id in self._widget_instances:
+            widget = self._widget_instances[pane_id]
+
+            # Call cleanup if the widget has it
+            if hasattr(widget, "cleanup") and callable(widget.cleanup):
+                try:
+                    widget.cleanup()
+                except Exception as e:
+                    logger.error(f"Error cleaning up widget for pane {pane_id[:8]}: {e}")
+
+            # Remove from cache
+            del self._widget_instances[pane_id]
+            logger.debug(f"Cleaned up widget for pane {pane_id[:8]}")
+
+    def cleanup_all_widgets(self) -> None:
+        """
+        Clean up all cached widget instances.
+        Called during shutdown or tab close.
+        """
+        pane_ids = list(self._widget_instances.keys())
+        for pane_id in pane_ids:
+            self.cleanup_widget(pane_id)
+        logger.info(f"Cleaned up {len(pane_ids)} widget instances")
 
     def create_widget(self, widget_id: str, instance_id: str) -> Optional[AppWidget]:
         """

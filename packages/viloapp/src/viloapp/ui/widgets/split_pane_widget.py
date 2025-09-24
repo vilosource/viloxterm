@@ -41,6 +41,24 @@ class PaneContainer(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
 
+        # Phase 1: Comprehensive flicker prevention for containers
+        self.setAutoFillBackground(True)
+
+        # Enhanced Qt attributes for maximum flicker prevention
+        self.setAttribute(Qt.WA_OpaquePaintEvent, True)
+        self.setAttribute(Qt.WA_NoSystemBackground, True)
+        self.setAttribute(Qt.WA_StaticContents, True)  # Content doesn't change often
+        self.setAttribute(Qt.WA_DontCreateNativeAncestors, True)  # Avoid native windows
+
+        # Styling without border to prevent overlapping
+        self.setStyleSheet(
+            """
+            PaneContainer {
+                background-color: #252526;
+            }
+        """
+        )
+
     def set_widget(self, widget: QWidget):
         """Set the widget to display in this pane.
 
@@ -176,30 +194,39 @@ class SplitPaneWidget(QWidget):
             logger.debug("No active tab to render")
             return
 
-        # Clear current view
-        if self._current_root_widget:
-            self.main_layout.removeWidget(self._current_root_widget)
+        # Phase 2: Enhanced double-buffering for flicker prevention
+        # Build new tree completely OFF-SCREEN first
+        new_root = self._build_tree_widget(tab.tree.root)
+        if new_root:
+            # Pre-calculate layout to avoid flicker
+            new_root.resize(self.size())
 
-            # Cleanup all AppWidgets in the tree before deleting
-            self._cleanup_widget_tree(self._current_root_widget)
+            # Now do atomic swap with updates disabled
+            self.setUpdatesEnabled(False)
+            try:
+                if self._current_root_widget:
+                    # Hide old widget first to prevent visual artifacts
+                    self._current_root_widget.hide()
+                    self.main_layout.removeWidget(self._current_root_widget)
+                    # Cleanup all AppWidgets in the tree before deleting
+                    self._cleanup_widget_tree(self._current_root_widget)
+                    self._current_root_widget.deleteLater()
 
-            self._current_root_widget.deleteLater()
-            self._current_root_widget = None
+                # Clear pane containers for clean state
+                self._pane_containers.clear()
 
-        # Clear pane containers
-        self._pane_containers.clear()
+                # Add new widget immediately
+                self._current_root_widget = new_root
+                self.main_layout.addWidget(new_root)
 
-        # Build new tree
-        root_widget = self._build_tree_widget(tab.tree.root)
-        if root_widget:
-            self._current_root_widget = root_widget
-            self.main_layout.addWidget(root_widget)
-
-            # Set active pane focus
-            if tab.active_pane_id and tab.active_pane_id in self._pane_containers:
-                container = self._pane_containers[tab.active_pane_id]
-                container.setProperty("focused", True)
-                container.style().polish(container)
+                # Set active pane focus
+                if tab.active_pane_id and tab.active_pane_id in self._pane_containers:
+                    container = self._pane_containers[tab.active_pane_id]
+                    container.setProperty("focused", True)
+                    container.style().polish(container)
+            finally:
+                # Re-enable updates - triggers single repaint with complete layout
+                self.setUpdatesEnabled(True)
 
     def _build_tree_widget(self, node: PaneNode) -> Optional[QWidget]:
         """Build Qt widget tree from model node.
@@ -216,6 +243,8 @@ class SplitPaneWidget(QWidget):
         if node.is_leaf() and node.pane:
             # Create container for this pane
             container = PaneContainer(node.pane.id)
+
+            # Phase 3: Store container BEFORE requesting widget (pre-styling)
             self._pane_containers[node.pane.id] = container
 
             # Request widget creation from factory
@@ -233,6 +262,45 @@ class SplitPaneWidget(QWidget):
             else:
                 splitter = QSplitter(Qt.Vertical)
 
+            # CRITICAL: QSplitter optimizations to prevent flicker and artifacts
+            # 1. Prevent children from collapsing - major source of artifacts
+            splitter.setChildrenCollapsible(False)
+
+            # 2. Disable opaque resize to prevent intermediate redraws
+            splitter.setOpaqueResize(False)
+
+            # 3. Set handle width explicitly to prevent size calculation issues
+            splitter.setHandleWidth(3)
+
+            # 4. Qt rendering attributes for flicker prevention
+            splitter.setAttribute(Qt.WA_OpaquePaintEvent, True)
+            splitter.setAttribute(Qt.WA_NoSystemBackground, True)
+            splitter.setAttribute(Qt.WA_StaticContents, True)  # Hint that content is static
+
+            # 5. Complete styling with explicit dimensions
+            splitter.setStyleSheet(
+                """
+                QSplitter {
+                    background-color: #252526;
+                }
+                QSplitter::handle {
+                    background-color: #3c3c3c;
+                    border: none;
+                    margin: 0px;
+                }
+                QSplitter::handle:horizontal {
+                    width: 3px;
+                    min-width: 3px;
+                    max-width: 3px;
+                }
+                QSplitter::handle:vertical {
+                    height: 3px;
+                    min-height: 3px;
+                    max-height: 3px;
+                }
+            """
+            )
+
             # Build child widgets
             first_widget = self._build_tree_widget(node.first)
             second_widget = self._build_tree_widget(node.second)
@@ -241,14 +309,17 @@ class SplitPaneWidget(QWidget):
                 splitter.addWidget(first_widget)
                 splitter.addWidget(second_widget)
 
-                # Set split ratio
+                # Set split ratio - ensure minimum sizes to prevent collapse
                 sizes = splitter.sizes()
                 total = sum(sizes)
                 if total > 0:
                     ratio = node.ratio
-                    first_size = int(total * ratio)
-                    second_size = total - first_size
+                    first_size = max(50, int(total * ratio))  # Minimum 50px
+                    second_size = max(50, total - first_size)
                     splitter.setSizes([first_size, second_size])
+                else:
+                    # Fallback sizes if initial size is 0
+                    splitter.setSizes([400, 400])
 
                 # Update model ratio when user drags splitter
                 splitter.splitterMoved.connect(lambda: self._update_split_ratio(node, splitter))
@@ -264,8 +335,34 @@ class SplitPaneWidget(QWidget):
             pane_id: ID of the pane
             widget_id: ID of the widget type to create
         """
+        # Get the container we just created
+        container = self._pane_containers.get(pane_id)
+        if not container:
+            logger.error(f"Container not found for pane {pane_id}")
+            return
+
+        # Phase 3+: Create immediate placeholder with proper background
+        from PySide6.QtWidgets import QLabel
+
+        placeholder = QLabel("Loading...")
+        placeholder.setStyleSheet(
+            """
+            QLabel {
+                background-color: #252526;
+                color: #cccccc;
+                text-align: center;
+                padding: 20px;
+                font-style: italic;
+            }
+        """
+        )
+        placeholder.setAlignment(Qt.AlignCenter)
+
+        # Set placeholder immediately to prevent white flash
+        container.set_widget(placeholder)
+
         # This will be handled by WidgetFactory in Phase 7
-        # For now, just log
+        # For now, just log that we'd create the real widget
         logger.debug(f"Would create widget {widget_id} for pane {pane_id}")
 
     def _cleanup_widget_tree(self, widget: QWidget):

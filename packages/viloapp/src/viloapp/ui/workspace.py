@@ -135,22 +135,60 @@ class Workspace(QWidget):
         logger.info(f"Default tab creation result: {result}")
 
     def _on_model_change(self, event: str, data: Any):
-        """Handle model change events."""
+        """Handle model change events with atomic updates."""
         logger.info(f"Model change event: {event}, data: {data}")
-        if event == "tab_created":
-            self._add_tab_view(data["tab_id"])
-        elif event == "tab_closed":
-            self._remove_tab_view(data["tab_id"])
-        elif event == "tab_switched":
-            self._update_active_tab()
-        elif event == "pane_split":
-            self._refresh_current_tab()
+
+        # Add detailed debugging for pane_closed events
+        if event == "pane_closed":
+            logger.info("=== PANE CLOSE EVENT DEBUG ===")
+            logger.info(f"Closed pane ID: {data.get('pane_id', 'Unknown')[:8]}")
+            logger.info(f"Tab ID: {data.get('tab_id', 'Unknown')[:8]}")
+
+            # Check current model state
+            active_tab = self.model.state.get_active_tab()
+            if active_tab:
+                remaining_panes = active_tab.tree.root.get_all_panes()
+                logger.info(f"Remaining panes after close: {len(remaining_panes)}")
+                logger.info(f"Remaining pane IDs: {[p.id[:8] for p in remaining_panes]}")
+            else:
+                logger.error("No active tab found after pane close!")
+
+            # Check tab view state
+            if active_tab and active_tab.id in self.tab_views:
+                logger.info(f"Tab view exists for tab {active_tab.id[:8]}")
+            else:
+                logger.error("Tab view not found!")
+
+            logger.info("=== END PANE CLOSE DEBUG ===\n")
+
+        # Only use atomic updates for split operations (not close)
+        # Close operations need immediate visual feedback
+        if event == "pane_split":
+            logger.info("Handling pane_split with atomic updates")
+            self.setUpdatesEnabled(False)
+            try:
+                self._refresh_current_tab()
+            finally:
+                self.setUpdatesEnabled(True)
         elif event == "pane_closed":
-            self._refresh_current_tab()
-        elif event == "pane_focused":
-            tab = self.model.state.get_active_tab()
-            if tab:
-                self.active_pane_changed.emit(tab.name, data.get("pane_id", ""))
+            # Handle close without atomic updates to prevent white screen
+            logger.info("Handling pane_closed WITHOUT atomic updates")
+            self._refresh_current_tab(atomic_update=False)
+        else:
+            # Handle other events normally
+            if event == "tab_created":
+                self._add_tab_view(data["tab_id"])
+            elif event == "tab_closed":
+                self._remove_tab_view(data["tab_id"])
+            elif event == "tab_switched":
+                self._update_active_tab()
+            elif event == "pane_focused":
+                logger.info(
+                    f"Handling pane_focused event for pane {data.get('pane_id', 'Unknown')[:8]}"
+                )
+                tab = self.model.state.get_active_tab()
+                if tab:
+                    self.active_pane_changed.emit(tab.name, data.get("pane_id", ""))
 
         # Emit layout changed for any structural change
         if event in ["tab_created", "tab_closed", "pane_split", "pane_closed"]:
@@ -202,31 +240,94 @@ class Workspace(QWidget):
         del self.tab_views[tab_id]
         self.tab_removed.emit(tab_name)
 
-    def _refresh_current_tab(self):
-        """Refresh the current tab view."""
+    def _refresh_current_tab(self, atomic_update=True):
+        """Refresh the current tab view.
+
+        Args:
+            atomic_update: Whether to use atomic updates (disable/enable updates)
+        """
+        logger.info(f"_refresh_current_tab called with atomic_update={atomic_update}")
+
         tab = self.model.state.get_active_tab()
         if tab and tab.id in self.tab_views:
-            # Force a re-render by removing and re-adding
-            tab_view = self.tab_views[tab.id]
+            logger.info(f"Refreshing tab: {tab.name} (ID: {tab.id[:8]})")
 
-            # Find current index
-            current_index = -1
-            for i in range(self.tab_widget.count()):
-                if self.tab_widget.widget(i) == tab_view:
-                    current_index = i
-                    break
+            # Conditionally disable updates during tab refresh
+            if atomic_update:
+                logger.info("Disabling tab widget updates for atomic refresh")
+                self.tab_widget.setUpdatesEnabled(False)
 
-            if current_index >= 0:
-                # Remove old view
-                self.tab_widget.removeTab(current_index)
+            try:
+                # Phase 4: Smart tab updates - update content without removing tab
+                tab_view = self.tab_views[tab.id]
+                logger.info(f"Tab view type: {type(tab_view).__name__}")
 
-                # Create new view with updated tree
-                new_tab_view = TabView(tab, self.command_registry, self.model)
-                self.tab_views[tab.id] = new_tab_view
+                # Check if TabView has a refresh method to update in-place
+                if hasattr(tab_view, "refresh_content") and callable(tab_view.refresh_content):
+                    logger.info("Calling tab_view.refresh_content()")
+                    # Smart update: refresh the existing tab view content
+                    # Pass through atomic_update flag to TabView
+                    if (
+                        hasattr(tab_view.refresh_content, "__code__")
+                        and "atomic_update" in tab_view.refresh_content.__code__.co_varnames
+                    ):
+                        tab_view.refresh_content(atomic_update=atomic_update)
+                    else:
+                        tab_view.refresh_content()
+                    logger.info("tab_view.refresh_content() completed")
+                else:
+                    logger.warning("TabView does not have refresh_content method, falling back")
+                    # Fallback: minimal recreation (keep tab in QTabWidget)
+                    self._fallback_tab_refresh(tab, tab_view)
+            except Exception as e:
+                logger.error(f"ERROR in _refresh_current_tab: {e}")
+                import traceback
 
-                # Insert at same position
-                self.tab_widget.insertTab(current_index, new_tab_view, tab.name)
-                self.tab_widget.setCurrentIndex(current_index)
+                logger.error(traceback.format_exc())
+                raise
+            finally:
+                # Re-enable updates only if we disabled them
+                if atomic_update:
+                    logger.info("Re-enabling tab widget updates")
+                    self.tab_widget.setUpdatesEnabled(True)
+        else:
+            if not tab:
+                logger.error("No active tab found for refresh!")
+            elif tab.id not in self.tab_views:
+                logger.error(f"Tab {tab.id[:8]} not found in tab_views!")
+
+        logger.info("_refresh_current_tab completed")
+
+    def _fallback_tab_refresh(self, tab, tab_view):
+        """Fallback method for tab refresh when refresh_content is not available."""
+        logger.info("Using fallback tab refresh method")
+
+        current_index = -1
+        for i in range(self.tab_widget.count()):
+            if self.tab_widget.widget(i) == tab_view:
+                current_index = i
+                break
+
+        if current_index >= 0:
+            logger.info(f"Recreating tab view at index {current_index}")
+
+            # Create new view with updated tree
+            new_tab_view = TabView(tab, self.command_registry, self.model)
+            self.tab_views[tab.id] = new_tab_view
+
+            # Replace widget at same position (no removal/insertion flash)
+            old_tab_view = self.tab_widget.widget(current_index)
+            self.tab_widget.removeTab(current_index)
+            self.tab_widget.insertTab(current_index, new_tab_view, tab.name)
+            self.tab_widget.setCurrentIndex(current_index)
+
+            # Clean up old view
+            if old_tab_view:
+                old_tab_view.deleteLater()
+
+            logger.info("Fallback tab refresh completed")
+        else:
+            logger.error("Could not find current tab index for fallback refresh!")
 
     def _update_active_tab(self):
         """Update the active tab in the UI."""
@@ -477,7 +578,6 @@ class Workspace(QWidget):
     def _restore_tab_with_tree(self, tab_state: dict) -> bool:
         """Restore a single tab with its pane tree structure."""
         from viloapp.core.app_widget_manager import app_widget_manager
-        from viloapp.models.workspace_model import PaneTree, Tab
 
         # Check if all widgets in the tree are available
         def check_widgets_available(node_data: dict) -> bool:
@@ -516,28 +616,34 @@ class Workspace(QWidget):
             logger.warning(f"Not all widgets available for tab {tab_state.get('name')}")
             return False
 
-        # Create the tab with a placeholder initially
-        tab = Tab(
-            id=tab_state.get("id"),
-            name=tab_state.get("name", "Restored Tab"),
-            active_pane_id=tab_state.get("active_pane_id"),
+        # Build a properly formatted state dict for the model to load
+        formatted_state = {
+            "tabs": [
+                {
+                    "id": tab_state.get("id"),
+                    "name": tab_state.get("name", "Restored Tab"),
+                    "active_pane_id": tab_state.get("active_pane_id"),
+                    "tree": tree_data,
+                    "metadata": tab_state.get("metadata", {}),
+                }
+            ],
+            "active_tab_id": tab_state.get("id") if tab_state.get("active") else None,
+        }
+
+        # Use the model's internal deserialization method
+        # This properly creates the tab through the model's API
+        for tab_data in formatted_state["tabs"]:
+            deserialized_tab = self.model._deserialize_tab(tab_data)
+            if deserialized_tab:
+                self.model.state.tabs.append(deserialized_tab)
+                if formatted_state["active_tab_id"] == deserialized_tab.id:
+                    self.model.state.active_tab_id = deserialized_tab.id
+                # Notify observers
+                self.model._notify("tab_created", {"tab_id": deserialized_tab.id})
+
+        logger.info(
+            f"Restored tab {tab_state.get('name', 'Restored Tab')} with full tree structure"
         )
-
-        # Restore the tree structure
-        root_node = self._deserialize_pane_node(tree_data)
-        tab.tree = PaneTree(root=root_node)
-
-        # Add tab to model
-        self.model.state.tabs.append(tab)
-
-        # Set active if needed
-        if tab_state.get("active"):
-            self.model.state.active_tab_id = tab.id
-
-        # Notify observers
-        self.model._notify("tab_created", {"tab_id": tab.id})
-
-        logger.info(f"Restored tab {tab.name} with full tree structure")
         return True
 
     def restore_state(self, state: dict) -> None:

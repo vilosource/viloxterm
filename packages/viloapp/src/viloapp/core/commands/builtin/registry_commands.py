@@ -41,12 +41,9 @@ def register_widget_command(context: CommandContext) -> CommandResult:
         return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
     try:
-        # Register widget in model's registry
-        # The model tracks widgets internally
-        if not hasattr(context.model, "_widget_registry"):
-            context.model._widget_registry = {}
-
-        context.model._widget_registry[widget_id] = tab_index
+        # Widget registration is now handled by AppWidgetManager
+        # This command is kept for compatibility but doesn't actually register
+        # The AppWidgetManager tracks all widget instances automatically
 
         return CommandResult(
             status=CommandStatus.SUCCESS, data={"widget_id": widget_id, "tab_index": tab_index}
@@ -79,13 +76,9 @@ def unregister_widget_command(context: CommandContext) -> CommandResult:
         return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
     try:
-        # Unregister widget from model's registry
-        if hasattr(context.model, "_widget_registry"):
-            result = widget_id in context.model._widget_registry
-            if result:
-                del context.model._widget_registry[widget_id]
-        else:
-            result = False
+        # Widget unregistration is now handled by AppWidgetManager
+        # This command is kept for compatibility
+        result = False
 
         return CommandResult(
             status=CommandStatus.SUCCESS, data={"widget_id": widget_id, "unregistered": result}
@@ -115,7 +108,7 @@ def update_registry_after_close_command(context: CommandContext) -> CommandResul
     """
     # Get arguments from context
     closed_index = context.parameters.get("closed_index") if context.parameters else None
-    widget_id = context.parameters.get("widget_id") if context.parameters else None
+    # widget_id parameter is no longer used since widget registry is handled by AppWidgetManager
 
     if closed_index is None:
         return CommandResult(status=CommandStatus.FAILURE, message="closed_index is required")
@@ -124,18 +117,9 @@ def update_registry_after_close_command(context: CommandContext) -> CommandResul
         return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
     try:
-        # Update registry indices after tab close
+        # Widget registry updates are now handled by AppWidgetManager
+        # This command is kept for compatibility
         updated_count = 0
-        if hasattr(context.model, "_widget_registry"):
-            # Remove widget if provided
-            if widget_id and widget_id in context.model._widget_registry:
-                del context.model._widget_registry[widget_id]
-
-            # Update indices for widgets after closed index
-            for wid, idx in list(context.model._widget_registry.items()):
-                if idx > closed_index:
-                    context.model._widget_registry[wid] = idx - 1
-                    updated_count += 1
 
         return CommandResult(
             status=CommandStatus.SUCCESS,
@@ -169,11 +153,10 @@ def get_widget_tab_index_command(context: CommandContext) -> CommandResult:
         return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
     try:
-        # Get tab index from model's registry
+        # Widget to tab mapping is handled by the model's tab structure
+        # This command is kept for compatibility but always returns not found
         tab_index = None
-        if hasattr(context.model, "_widget_registry"):
-            tab_index = context.model._widget_registry.get(widget_id)
-        if tab_index is not None:
+        if False:  # Disabled - widget registry no longer exists
             return CommandResult(
                 status=CommandStatus.SUCCESS, data={"widget_id": widget_id, "tab_index": tab_index}
             )
@@ -209,10 +192,10 @@ def is_widget_registered_command(context: CommandContext) -> CommandResult:
         return CommandResult(status=CommandStatus.FAILURE, message="Model not available")
 
     try:
-        # Check registration in model's registry
-        is_registered = False
-        if hasattr(context.model, "_widget_registry"):
-            is_registered = widget_id in context.model._widget_registry
+        # Widget registration check is handled by AppWidgetManager
+        from viloapp.core.app_widget_manager import app_widget_manager
+
+        is_registered = app_widget_manager.is_widget_available(widget_id)
 
         return CommandResult(
             status=CommandStatus.SUCCESS, data={"widget_id": widget_id, "registered": is_registered}

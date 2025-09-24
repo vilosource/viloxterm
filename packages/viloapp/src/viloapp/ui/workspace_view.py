@@ -101,24 +101,63 @@ class PaneView(QWidget):
         self.pane = pane
         self.command_registry = command_registry
         self.model = model
+        self.content_widget = None  # The actual app widget (terminal, editor, etc.)
+
+        # Comprehensive flicker prevention attributes
+        self.setAutoFillBackground(True)
+        self.setAttribute(Qt.WA_OpaquePaintEvent, True)
+        self.setAttribute(Qt.WA_NoSystemBackground, True)
+        self.setAttribute(Qt.WA_StaticContents, True)
+        self.setAttribute(Qt.WA_DontCreateNativeAncestors, True)
+        # No borders for clean appearance
+        self.setStyleSheet(
+            """
+            PaneView {
+                background-color: #252526;
+                border: none;
+            }
+        """
+        )
+
         self.setup_ui()
 
     def setup_ui(self):
         """Set up the UI."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(1, 1, 1, 1)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
         # Header bar with pane controls
         header = self.create_header()
         layout.addWidget(header)
 
-        # Actual widget content
-        widget = WidgetFactory.create(self.pane.widget_id, self.pane.id)
-        layout.addWidget(widget)
+        # Get widget from AppWidgetManager - it handles caching and lifecycle
+        try:
+            from viloapp.core.app_widget_manager import app_widget_manager
 
-        # Style based on focus
-        self.update_style()
+            self.content_widget = app_widget_manager.get_or_create_widget(
+                self.pane.widget_id, self.pane.id
+            )
+        except ImportError:
+            # Fallback if AppWidgetManager not available
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "AppWidgetManager not available, using WidgetFactory directly"
+            )
+            self.content_widget = WidgetFactory.create(self.pane.widget_id, self.pane.id)
+
+        if not self.content_widget:
+            # Create a placeholder if widget creation failed
+            from PySide6.QtWidgets import QLabel
+
+            self.content_widget = QLabel("Widget unavailable")
+            self.content_widget.setAlignment(Qt.AlignCenter)
+            self.content_widget.setStyleSheet("color: #999; background: #2d2d30;")
+
+        layout.addWidget(self.content_widget)
+
+        # Don't call update_style() here - style already set in __init__
 
     def create_header(self) -> QWidget:
         """Create pane header with controls."""
@@ -183,7 +222,9 @@ class PaneView(QWidget):
             self.setStyleSheet(
                 """
                 PaneView {
-                    border: 2px solid #007ACC;
+                    background-color: #252526;
+                    border: 1px solid #007ACC;
+                    outline: 1px solid #007ACC;
                 }
                 """
             )
@@ -191,6 +232,7 @@ class PaneView(QWidget):
             self.setStyleSheet(
                 """
                 PaneView {
+                    background-color: #252526;
                     border: 1px solid #3c3c3c;
                 }
                 """
@@ -218,7 +260,7 @@ class PaneView(QWidget):
 
 class TreeView(QWidget):
     """
-    Pure view for rendering a pane tree.
+    Pure view for rendering a pane tree with widget preservation.
 
     Recursively renders the tree structure as Qt widgets.
     """
@@ -234,6 +276,7 @@ class TreeView(QWidget):
         self.root = root
         self.command_registry = command_registry
         self.model = model
+        self.current_root_widget = None
         self.setup_ui()
 
     def setup_ui(self):
@@ -243,55 +286,261 @@ class TreeView(QWidget):
         layout.setSpacing(0)
 
         # Render the tree starting from root
-        widget = self.render_node(self.root)
-        if widget:
-            layout.addWidget(widget)
+        self.current_root_widget = self.render_node(self.root)
+        if self.current_root_widget:
+            layout.addWidget(self.current_root_widget)
+
+    def refresh_tree(self, new_root: PaneNode, atomic_update=True):
+        """Refresh tree preserving existing widgets.
+
+        Args:
+            atomic_update: Whether to use atomic updates (disable/enable updates)
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        logger.debug(f"TreeView.refresh_tree called with atomic_update={atomic_update}")
+        self.root = new_root
+
+        # Widget lifecycle is now managed by AppWidgetManager
+        # Cleanup happens automatically when panes are closed
+
+        # Conditionally disable all updates during tree reconstruction
+        if atomic_update:
+            self.setUpdatesEnabled(False)
+            # Also prevent child widget updates
+            if self.current_root_widget:
+                self.current_root_widget.setUpdatesEnabled(False)
+
+        try:
+            # Build new tree completely off-screen
+            logger.debug("Building new root widget from model tree")
+            new_root_widget = self.render_node(self.root)
+            logger.debug(
+                f"render_node returned: {type(new_root_widget) if new_root_widget else None}"
+            )
+
+            if new_root_widget:
+                layout = self.layout()
+                logger.debug(f"Layout has {layout.count()} widgets before refresh")
+
+                # For close operations, don't hide widget to prevent white flash
+                if self.current_root_widget:
+                    logger.debug("Removing old root widget")
+                    if atomic_update:
+                        self.current_root_widget.setVisible(False)
+                    layout.removeWidget(self.current_root_widget)
+                    # Don't delete immediately - let Qt handle it
+                    self.current_root_widget.deleteLater()
+
+                # Add new widget and make it visible
+                logger.debug("Adding new root widget to layout")
+                self.current_root_widget = new_root_widget
+                layout.addWidget(new_root_widget)
+                # Always ensure widget is visible
+                new_root_widget.setVisible(True)
+                new_root_widget.show()  # Force show the widget
+
+                logger.debug(f"Layout has {layout.count()} widgets after refresh")
+
+                # Force layout update
+                layout.update()
+                self.update()  # Update the TreeView itself
+            else:
+                logger.error("CRITICAL ERROR: render_node returned None! Layout will be empty!")
+                logger.error("This is the cause of white tabs - attempting recovery...")
+
+                # Attempt recovery by validating and cleaning registry
+                # Validation handled by AppWidgetManager
+                pass
+
+                # Try to build a minimal fallback widget
+                fallback_widget = self._create_fallback_widget()
+                if fallback_widget:
+                    logger.info("Created fallback widget to prevent empty layout")
+                    layout = self.layout()
+                    if self.current_root_widget:
+                        layout.removeWidget(self.current_root_widget)
+                        self.current_root_widget.deleteLater()
+
+                    self.current_root_widget = fallback_widget
+                    layout.addWidget(fallback_widget)
+                else:
+                    logger.error("Could not create fallback widget - tab will be white!")
+
+        except Exception as e:
+            logger.error(f"ERROR in refresh_tree: {e}")
+            import traceback
+
+            logger.error(traceback.format_exc())
+            raise
+        finally:
+            # Re-enable updates only if we disabled them
+            if atomic_update:
+                self.setUpdatesEnabled(True)
+
+        # Refresh complete
+
+        logger.debug("TreeView.refresh_tree completed")
+
+    def _create_fallback_widget(self):
+        """Create a fallback widget when tree building fails.
+
+        Returns:
+            QWidget: A minimal widget to prevent empty layout
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        try:
+            from PySide6.QtWidgets import QLabel, QVBoxLayout
+
+            fallback = QWidget()
+            layout = QVBoxLayout(fallback)
+            layout.setContentsMargins(20, 20, 20, 20)
+
+            label = QLabel(
+                "Layout Error Recovery\n\nThe pane layout failed to build.\nTry creating a new split."
+            )
+            label.setAlignment(Qt.AlignCenter)
+            label.setStyleSheet(
+                """
+                QLabel {
+                    background-color: #2d2d30;
+                    color: #cccccc;
+                    padding: 20px;
+                    border: 2px dashed #555;
+                    font-size: 14px;
+                }
+                """
+            )
+            layout.addWidget(label)
+
+            fallback.setStyleSheet("QWidget { background-color: #252526; }")
+            logger.info("Created fallback error recovery widget")
+            return fallback
+
+        except Exception as e:
+            logger.error(f"Failed to create fallback widget: {e}")
+            return None
 
     def render_node(self, node: PaneNode) -> Optional[QWidget]:
-        """Recursively render a node."""
+        """Recursively render a node preserving existing widgets."""
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        if not node:
+            logger.error("render_node called with None node!")
+            return None
+
+        logger.debug(f"render_node: processing node type={node.node_type.value}")
+
         if node.is_leaf() and node.pane:
-            # Render leaf as PaneView
-            return PaneView(node.pane, self.command_registry, self.model)
+            pane_id = node.pane.id
+            logger.debug(f"render_node: leaf node with pane {pane_id[:8]}")
+
+            # Create new PaneView - widget reuse is managed by AppWidgetManager
+            # The PaneView itself is just a wrapper that gets recreated
+            # The actual content widget (terminal, editor) is preserved
+            logger.debug(f"render_node: creating PaneView for {pane_id[:8]}")
+            pane_view = PaneView(node.pane, self.command_registry, self.model)
+            return pane_view
 
         elif node.is_split() and node.first and node.second:
-            # Render split as QSplitter
+            logger.debug(f"render_node: split node with orientation={node.orientation}")
+
+            # Always create new splitters - don't reuse them since tree structure changes
+            # Only PaneViews should be reused, not structural widgets
             from viloapp.models.workspace_model import Orientation
 
             splitter = QSplitter(
                 Qt.Horizontal if node.orientation == Orientation.HORIZONTAL else Qt.Vertical
             )
 
-            # Recursively render children
-            first_widget = self.render_node(node.first)
-            if first_widget:
-                splitter.addWidget(first_widget)
+            # CRITICAL: Comprehensive QSplitter optimizations to prevent artifacts
+            # 1. Prevent children collapsing - major source of border artifacts
+            splitter.setChildrenCollapsible(False)
 
-            second_widget = self.render_node(node.second)
-            if second_widget:
-                splitter.addWidget(second_widget)
+            # 2. Disable opaque resize to prevent intermediate redraws during dragging
+            splitter.setOpaqueResize(False)
 
-            # Set split ratio
-            total = 1000
-            first_size = int(total * node.ratio)
-            second_size = total - first_size
-            splitter.setSizes([first_size, second_size])
+            # 3. Set handle width explicitly to prevent size calculation issues
+            splitter.setHandleWidth(3)
 
-            # Style the splitter
+            # 4. Qt rendering attributes for maximum flicker prevention
+            splitter.setAttribute(Qt.WA_OpaquePaintEvent, True)
+            splitter.setAttribute(Qt.WA_NoSystemBackground, True)
+            splitter.setAttribute(Qt.WA_StaticContents, True)  # Hint that content is static
+            splitter.setAttribute(Qt.WA_DontCreateNativeAncestors, True)  # Avoid native windows
+
+            # 5. Complete styling with explicit dimensions to prevent ambiguity
+            splitter.setAutoFillBackground(True)
             splitter.setStyleSheet(
                 """
+                QSplitter {
+                    background-color: #252526;
+                }
                 QSplitter::handle {
                     background-color: #3c3c3c;
+                    border: none;
+                    margin: 0px;
                 }
                 QSplitter::handle:horizontal {
-                    width: 2px;
+                    width: 3px;
+                    min-width: 3px;
+                    max-width: 3px;
                 }
                 QSplitter::handle:vertical {
-                    height: 2px;
+                    height: 3px;
+                    min-height: 3px;
+                    max-height: 3px;
                 }
                 """
             )
 
+            # Recursively render children
+            logger.debug("render_node: rendering first child")
+            first_widget = self.render_node(node.first)
+            if first_widget:
+                logger.debug(
+                    f"render_node: adding first widget {type(first_widget).__name__} to splitter"
+                )
+                splitter.addWidget(first_widget)
+            else:
+                logger.error("render_node: first child returned None!")
+
+            logger.debug("render_node: rendering second child")
+            second_widget = self.render_node(node.second)
+            if second_widget:
+                logger.debug(
+                    f"render_node: adding second widget {type(second_widget).__name__} to splitter"
+                )
+                splitter.addWidget(second_widget)
+            else:
+                logger.error("render_node: second child returned None!")
+
+            # Validate splitter has children
+            final_count = splitter.count()
+            logger.debug(f"render_node: splitter has {final_count} children after building")
+            if final_count == 0:
+                logger.error("render_node: splitter has no children! This will cause empty layout!")
+                return None
+
+            # Set split ratio with minimum sizes to prevent collapse artifacts
+            total = 1000
+            first_size = max(50, int(total * node.ratio))  # Minimum 50px to prevent collapse
+            second_size = max(50, total - first_size)
+            splitter.setSizes([first_size, second_size])
+
             return splitter
+
+        logger.error(
+            f"render_node: Unknown node type or invalid node structure: type={node.node_type}, is_leaf={node.is_leaf()}, is_split={node.is_split()}"
+        )
+        return None
 
         return None
 
@@ -300,7 +549,7 @@ class TabView(QWidget):
     """
     Pure view for a single tab.
 
-    Renders the tab's pane tree.
+    Renders the tab's pane tree with widget preservation.
     """
 
     def __init__(self, tab: Tab, command_registry: CommandRegistry, model: WorkspaceModel):
@@ -309,6 +558,8 @@ class TabView(QWidget):
         self.tab = tab
         self.command_registry = command_registry
         self.model = model
+        self.tree_view = None
+        # Widget registry removed - managed by AppWidgetManager
         self.setup_ui()
 
     def setup_ui(self):
@@ -318,8 +569,51 @@ class TabView(QWidget):
         layout.setSpacing(0)
 
         # Render the tree
-        tree_view = TreeView(self.tab.tree.root, self.command_registry, self.model)
-        layout.addWidget(tree_view)
+        self.tree_view = TreeView(self.tab.tree.root, self.command_registry, self.model)
+        layout.addWidget(self.tree_view)
+
+    def refresh_content(self, atomic_update=True):
+        """Refresh content preserving existing widgets.
+
+        Args:
+            atomic_update: Whether to use atomic updates (disable/enable updates)
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        logger.debug(f"TabView.refresh_content called with atomic_update={atomic_update}")
+        logger.debug(f"Tab ID: {self.tab.id}, Tab name: {self.tab.name}")
+        # Widget tracking moved to AppWidgetManager
+        # Log current model panes for debugging
+        model_panes = self.tab.tree.root.get_all_panes()
+        logger.debug(f"Model has {len(model_panes)} panes: {[p.id[:8] for p in model_panes]}")
+
+        # Proactively clean up orphaned entries before refresh
+        if self.tree_view:
+            # Widget tracking moved to AppWidgetManager
+            pass
+
+        if self.tree_view:
+            # Conditionally ensure the entire TabView update is atomic
+            if atomic_update:
+                self.setUpdatesEnabled(False)
+
+            try:
+                logger.debug("Calling tree_view.refresh_tree()")
+                self.tree_view.refresh_tree(self.tab.tree.root, atomic_update=atomic_update)
+                logger.debug("tree_view.refresh_tree() completed")
+            except Exception as e:
+                logger.error(f"ERROR in tree_view.refresh_tree(): {e}")
+                import traceback
+
+                logger.error(traceback.format_exc())
+                raise
+            finally:
+                if atomic_update:
+                    self.setUpdatesEnabled(True)
+        else:
+            logger.warning("No tree_view available for refresh")
 
 
 class WorkspaceView(QWidget):
@@ -386,11 +680,25 @@ class WorkspaceView(QWidget):
         new_tab_btn.clicked.connect(self.create_new_tab)
         layout.addWidget(new_tab_btn)
 
-        # Tab type buttons
-        for widget_id in [EDITOR, TERMINAL, OUTPUT]:
-            btn = QPushButton(f"+ {widget_id.split('.')[-1].title()}")
-            btn.clicked.connect(lambda checked, wt=widget_id: self.create_new_tab(wt))
-            layout.addWidget(btn)
+        # Tab type buttons - get available widget types from app widget manager
+        try:
+            from viloapp.core.app_widget_manager import app_widget_manager
+
+            available_widgets = app_widget_manager.get_available_widgets()
+
+            for widget_id in available_widgets[:3]:  # Limit to first 3 for space
+                display_name = widget_id.split(".")[-1].title()
+                btn = QPushButton(f"+ {display_name}")
+                btn.clicked.connect(lambda checked, wt=widget_id: self.create_new_tab(wt))
+                layout.addWidget(btn)
+        except (ImportError, AttributeError):
+            # Fallback to basic widget types
+            fallback_widgets = ["com.viloapp.terminal", "com.viloapp.editor", "com.viloapp.output"]
+            for widget_id in fallback_widgets:
+                display_name = widget_id.split(".")[-1].title()
+                btn = QPushButton(f"+ {display_name}")
+                btn.clicked.connect(lambda checked, wt=widget_id: self.create_new_tab(wt))
+                layout.addWidget(btn)
 
         layout.addStretch()
 
@@ -497,9 +805,9 @@ def create_test_app():
     # Create some test data using commands
     context = CommandContext(model=model)
 
-    # Create tabs through commands
-    registry.execute("tab.create", context, name="Editor", widget_id=EDITOR)
-    registry.execute("tab.create", context, name="Terminal", widget_id=TERMINAL)
+    # Create tabs through commands using proper widget IDs
+    registry.execute("tab.create", context, name="Editor", widget_id="com.viloapp.editor")
+    registry.execute("tab.create", context, name="Terminal", widget_id="com.viloapp.terminal")
 
     # Switch to first tab and split panes through commands
     if model.state.tabs:
