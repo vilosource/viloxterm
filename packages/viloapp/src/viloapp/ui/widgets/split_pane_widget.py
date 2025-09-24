@@ -341,29 +341,32 @@ class SplitPaneWidget(QWidget):
             logger.error(f"Container not found for pane {pane_id}")
             return
 
-        # Phase 3+: Create immediate placeholder with proper background
-        from PySide6.QtWidgets import QLabel
+        # Create the actual widget using AppWidgetManager
+        from viloapp.core.app_widget_manager import app_widget_manager
 
-        placeholder = QLabel("Loading...")
-        placeholder.setStyleSheet(
+        widget = app_widget_manager.get_or_create_widget(widget_id, pane_id)
+
+        if widget:
+            container.set_widget(widget)
+            logger.debug(f"Created widget {widget_id} for pane {pane_id}")
+        else:
+            # Fallback to placeholder if widget creation fails
+            from PySide6.QtWidgets import QLabel
+
+            placeholder = QLabel("Widget unavailable")
+            placeholder.setStyleSheet(
+                """
+                QLabel {
+                    background-color: #252526;
+                    color: #999999;
+                    text-align: center;
+                    padding: 20px;
+                }
             """
-            QLabel {
-                background-color: #252526;
-                color: #cccccc;
-                text-align: center;
-                padding: 20px;
-                font-style: italic;
-            }
-        """
-        )
-        placeholder.setAlignment(Qt.AlignCenter)
-
-        # Set placeholder immediately to prevent white flash
-        container.set_widget(placeholder)
-
-        # This will be handled by WidgetFactory in Phase 7
-        # For now, just log that we'd create the real widget
-        logger.debug(f"Would create widget {widget_id} for pane {pane_id}")
+            )
+            placeholder.setAlignment(Qt.AlignCenter)
+            container.set_widget(placeholder)
+            logger.warning(f"Failed to create widget {widget_id} for pane {pane_id}")
 
     def _cleanup_widget_tree(self, widget: QWidget):
         """Recursively cleanup all AppWidgets in a widget tree.
