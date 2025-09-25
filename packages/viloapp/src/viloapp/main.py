@@ -157,10 +157,10 @@ def initialize_plugins(window):
 
             logger.info("Plugin system initialization complete")
 
-            # Now that plugins are loaded, restore workspace state
-            if hasattr(window, "restore_workspace_state"):
-                window.restore_workspace_state()
-                logger.info("Restored workspace state after plugin initialization")
+            # Now that plugins are loaded, restore all state (window geometry + workspace)
+            if hasattr(window, "restore_state"):
+                window.restore_state()
+                logger.info("Restored window and workspace state after plugin initialization")
 
             # Refresh Apps menu now that plugins are loaded
             if hasattr(window, "action_manager") and window.action_manager:

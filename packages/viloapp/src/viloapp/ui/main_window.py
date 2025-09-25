@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self.initialize_keyboard()
         self.initialize_command_palette()
         self.initialize_focus_sink()  # Add focus sink initialization
-        self.restore_state()
+        # Don't restore state here - it will be called from main.py after plugins are loaded
 
     def setup_ui(self):
         """Initialize the UI components."""
