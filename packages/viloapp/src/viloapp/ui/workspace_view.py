@@ -103,6 +103,9 @@ class PaneView(QWidget):
         self.model = model
         self.content_widget = None  # The actual app widget (terminal, editor, etc.)
 
+        # Make pane focusable to track which pane has focus
+        self.setFocusPolicy(Qt.StrongFocus)
+
         # Comprehensive flicker prevention attributes
         self.setAutoFillBackground(True)
         self.setAttribute(Qt.WA_OpaquePaintEvent, True)
@@ -256,6 +259,25 @@ class PaneView(QWidget):
             context = CommandContext(model=self.model)
             self.command_registry.execute("pane.focus", context, pane_id=self.pane.id)
         super().mousePressEvent(event)
+
+    def focusInEvent(self, event):  # noqa: N802
+        """Handle focus in event to update active pane."""
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        # Update the model's active pane when this pane receives focus
+        if self.model and self.pane:
+            active_tab = self.model.state.get_active_tab()
+            if active_tab:
+                # Update active_pane_id in the tab
+                active_tab.active_pane_id = self.pane.id
+                logger.debug(f"Pane {self.pane.id[:8]} received focus, updated active_pane_id")
+
+                # Emit focus_requested signal for other components
+                self.focus_requested.emit(self.pane.id)
+
+        super().focusInEvent(event)
 
 
 class TreeView(QWidget):
