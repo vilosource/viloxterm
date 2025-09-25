@@ -438,7 +438,25 @@ class TreeView(QWidget):
 
         logger.debug(f"render_node: processing node type={node.node_type.value}")
 
-        if node.is_leaf() and node.pane:
+        if node.is_leaf():
+            # Defensive: Ensure leaf node has a pane
+            if not node.pane:
+                logger.error(
+                    f"render_node: leaf node {node.id[:8] if node.id else 'unknown'} has no pane! Creating emergency fallback"
+                )
+                import uuid
+
+                from viloapp.models.workspace_model import Pane
+
+                # Create emergency pane with shortcuts widget
+                node.pane = Pane(
+                    id=str(uuid.uuid4()),
+                    widget_id="com.viloapp.shortcuts",
+                    widget_state={},
+                    focused=False,
+                    metadata={},
+                )
+
             pane_id = node.pane.id
             logger.debug(f"render_node: leaf node with pane {pane_id[:8]}")
 

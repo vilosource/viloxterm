@@ -563,15 +563,30 @@ class Workspace(QWidget):
                 node.first = self._deserialize_pane_node(data["first"])
             if "second" in data:
                 node.second = self._deserialize_pane_node(data["second"])
-        elif node.is_leaf() and "pane" in data:
-            pane_data = data["pane"]
-            node.pane = Pane(
-                id=pane_data.get("id"),
-                widget_id=pane_data.get("widget_id"),
-                widget_state=pane_data.get("widget_state", {}),
-                focused=pane_data.get("focused", False),
-                metadata=pane_data.get("metadata", {}),
-            )
+        elif node.is_leaf():
+            if "pane" in data:
+                pane_data = data["pane"]
+                node.pane = Pane(
+                    id=pane_data.get("id"),
+                    widget_id=pane_data.get("widget_id"),
+                    widget_state=pane_data.get("widget_state", {}),
+                    focused=pane_data.get("focused", False),
+                    metadata=pane_data.get("metadata", {}),
+                )
+            else:
+                # Leaf node without pane data - create default pane to prevent white tab
+                logger.warning(
+                    f"Leaf node {node.id[:8]} has no pane data, creating default pane with shortcuts widget"
+                )
+                import uuid
+
+                node.pane = Pane(
+                    id=str(uuid.uuid4()),
+                    widget_id="com.viloapp.shortcuts",
+                    widget_state={},
+                    focused=False,
+                    metadata={},
+                )
 
         return node
 
