@@ -265,11 +265,14 @@ class PaneView(QWidget):
         super().mousePressEvent(event)
 
     def eventFilter(self, obj, event):  # noqa: N802
-        """Filter events from child widgets to catch focus."""
+        """Filter events from child widgets to catch focus and clicks."""
         from PySide6.QtCore import QEvent
 
         # Catch FocusIn events from content widget or its children
         if event.type() == QEvent.FocusIn:
+            self._update_active_pane()
+        # Also catch mouse clicks on content widget to update active pane
+        elif event.type() == QEvent.MouseButtonPress:
             self._update_active_pane()
 
         return super().eventFilter(obj, event)
