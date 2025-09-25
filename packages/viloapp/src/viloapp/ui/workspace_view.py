@@ -291,7 +291,9 @@ class PaneView(QWidget):
                 # Only update if it's actually changed to avoid spam
                 if active_tab.active_pane_id != self.pane.id:
                     active_tab.active_pane_id = self.pane.id
-                    logger.debug(f"Pane {self.pane.id[:8]} received focus, updated active_pane_id")
+                    logger.info(
+                        f"🎯 Pane {self.pane.id[:8]} received focus, updated active_pane_id"
+                    )
 
                     # Emit focus_requested signal for other components
                     self.focus_requested.emit(self.pane.id)

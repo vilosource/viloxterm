@@ -43,6 +43,10 @@ def split_pane_horizontal_command(context: CommandContext) -> CommandResult:
         if not active_tab or not active_tab.active_pane_id:
             return CommandResult(status=CommandStatus.FAILURE, message="No active pane to split")
 
+        logger.info(
+            f"Splitting pane horizontally: active_pane_id={active_tab.active_pane_id[:8] if active_tab.active_pane_id else None}"
+        )
+
         # Split the active pane horizontally
         new_pane_id = context.model.split_pane(active_tab.active_pane_id, "horizontal")
 
@@ -84,6 +88,10 @@ def split_pane_vertical_command(context: CommandContext) -> CommandResult:
         active_tab = context.model.state.get_active_tab()
         if not active_tab or not active_tab.active_pane_id:
             return CommandResult(status=CommandStatus.FAILURE, message="No active pane to split")
+
+        logger.info(
+            f"Splitting pane vertically: active_pane_id={active_tab.active_pane_id[:8] if active_tab.active_pane_id else None}"
+        )
 
         # Split the active pane vertically
         new_pane_id = context.model.split_pane(active_tab.active_pane_id, "vertical")
