@@ -158,6 +158,10 @@ class PaneView(QWidget):
             self.content_widget.setAlignment(Qt.AlignCenter)
             self.content_widget.setStyleSheet("color: #999; background: #2d2d30;")
 
+        # Install event filter on content widget to catch its focus events
+        # This ensures we track focus even when child widgets receive it
+        self.content_widget.installEventFilter(self)
+
         layout.addWidget(self.content_widget)
 
         # Don't call update_style() here - style already set in __init__
@@ -260,24 +264,37 @@ class PaneView(QWidget):
             self.command_registry.execute("pane.focus", context, pane_id=self.pane.id)
         super().mousePressEvent(event)
 
+    def eventFilter(self, obj, event):  # noqa: N802
+        """Filter events from child widgets to catch focus."""
+        from PySide6.QtCore import QEvent
+
+        # Catch FocusIn events from content widget or its children
+        if event.type() == QEvent.FocusIn:
+            self._update_active_pane()
+
+        return super().eventFilter(obj, event)
+
     def focusInEvent(self, event):  # noqa: N802
         """Handle focus in event to update active pane."""
+        self._update_active_pane()
+        super().focusInEvent(event)
+
+    def _update_active_pane(self):
+        """Update the model's active pane ID."""
         import logging
 
         logger = logging.getLogger(__name__)
 
-        # Update the model's active pane when this pane receives focus
         if self.model and self.pane:
             active_tab = self.model.state.get_active_tab()
             if active_tab:
-                # Update active_pane_id in the tab
-                active_tab.active_pane_id = self.pane.id
-                logger.debug(f"Pane {self.pane.id[:8]} received focus, updated active_pane_id")
+                # Only update if it's actually changed to avoid spam
+                if active_tab.active_pane_id != self.pane.id:
+                    active_tab.active_pane_id = self.pane.id
+                    logger.debug(f"Pane {self.pane.id[:8]} received focus, updated active_pane_id")
 
-                # Emit focus_requested signal for other components
-                self.focus_requested.emit(self.pane.id)
-
-        super().focusInEvent(event)
+                    # Emit focus_requested signal for other components
+                    self.focus_requested.emit(self.pane.id)
 
 
 class TreeView(QWidget):
